@@ -21,10 +21,15 @@ describe('routes', () => {
     expect(screen.getByRole('link', { name: 'Skip to content' })).toHaveAttribute('href', '#main')
   })
 
-  it('serves the join page', async () => {
+  it('serves the member sign-in page', async () => {
+    renderAt('/login')
+    expect(await screen.findByRole('heading', { level: 1, name: 'Member sign-in' })).toBeInTheDocument()
+    expect(document.title).toBe('Member sign-in · 13Parbon Community')
+  })
+
+  it('no longer has a join page, since membership is by invitation', async () => {
     renderAt('/join')
-    expect(await screen.findByRole('heading', { level: 1, name: 'Join the community' })).toBeInTheDocument()
-    expect(document.title).toBe('Join the community · 13Parbon Community')
+    expect(await screen.findByRole('heading', { level: 1, name: 'Page not found' })).toBeInTheDocument()
   })
 
   it('shows not found for unknown paths', async () => {

@@ -24,7 +24,7 @@ export const about = {
   faq: [
     {
       q: 'Do I need to be a member to come to an event?',
-      a: 'No. Our programmes are open to everyone. Membership gets you a say at the annual general meeting, member pricing where it applies, and the member portal when it launches.',
+      a: 'No. Our programmes are open to everyone, member or not. Membership gets you a say at the annual general meeting and, when it launches, the member portal.',
     },
     {
       q: 'Do I need to be Bengali?',
@@ -39,8 +39,8 @@ export const about = {
       a: 'Yes. Speak to the cultural secretary through the contact form before the programme is finalised, usually [N] weeks before the event.',
     },
     {
-      q: 'How much is membership?',
-      a: 'Membership is [fee] a year per household. Details are on the join page once applications open.',
+      q: 'How do I become a member?',
+      a: 'Membership is [fee] a year per household. While we are getting started there is no sign-up form: come to an event or send the committee a message, and we will add you.',
     },
     {
       q: 'Where do events happen?',
