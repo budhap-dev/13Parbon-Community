@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
-import { MemoryRouter } from 'react-router'
-import { ThemeProvider } from '@/app/theme/ThemeContext'
+import userEvent from '@testing-library/user-event'
+import { Link, MemoryRouter } from 'react-router'
+import { ThemeProvider, useTheme } from '@/app/theme/ThemeContext'
 import type { ThemeName } from '@/app/theme/themes'
 import { Hero } from './Hero'
 
@@ -37,5 +38,43 @@ describe('Hero', () => {
     const { container } = renderHero(theme)
     expect(container.querySelector(`[data-backdrop="${motif}"]`)).toBeInTheDocument()
     expect(container.querySelectorAll('[data-backdrop]')).toHaveLength(1)
+  })
+
+  it('reassembles the logo when the theme changes', async () => {
+    function Switch() {
+      const { setTheme } = useTheme()
+      return (
+        <button type="button" onClick={() => setTheme('holi')}>
+          holi
+        </button>
+      )
+    }
+    render(
+      <MemoryRouter>
+        <ThemeProvider initialTheme="festival">
+          <Hero />
+          <Switch />
+        </ThemeProvider>
+      </MemoryRouter>,
+    )
+    const before = screen.getByRole('img', { name: '13Parbon Community logo' })
+    await userEvent.click(screen.getByRole('button', { name: 'holi' }))
+    const after = screen.getByRole('img', { name: '13Parbon Community logo' })
+    expect(after).not.toBe(before)
+  })
+
+  it('reassembles the logo when the viewer comes back to home', async () => {
+    render(
+      <MemoryRouter>
+        <ThemeProvider>
+          <Hero />
+          <Link to="/">home</Link>
+        </ThemeProvider>
+      </MemoryRouter>,
+    )
+    const before = screen.getByRole('img', { name: '13Parbon Community logo' })
+    await userEvent.click(screen.getByRole('link', { name: 'home' }))
+    const after = screen.getByRole('img', { name: '13Parbon Community logo' })
+    expect(after).not.toBe(before)
   })
 })
