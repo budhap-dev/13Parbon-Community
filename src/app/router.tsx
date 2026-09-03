@@ -1,8 +1,13 @@
 import { createBrowserRouter, type RouteObject } from 'react-router'
+import { AboutPage } from '@/features/about'
+import { ContactPage } from '@/features/contact'
 import { EventPage, EventsPage } from '@/features/events'
+import { AlbumPage, GalleryPage } from '@/features/gallery'
+import { JoinPage, LoginPage } from '@/features/membership'
+import { PrivacyPage } from '@/features/privacy'
 import { HomePage } from '@/features/home'
 import { ArticlePage, NewsPage } from '@/features/news'
-import { ComingSoonPage, NotFoundPage } from '@/features/placeholder'
+import { NotFoundPage } from '@/features/placeholder'
 import { PublicLayout } from './layouts/PublicLayout'
 
 export const routes: RouteObject[] = [
@@ -13,14 +18,15 @@ export const routes: RouteObject[] = [
       { index: true, Component: HomePage },
       { path: 'events', Component: EventsPage },
       { path: 'events/:slug', Component: EventPage },
-      { path: 'gallery', element: <ComingSoonPage title="Gallery" /> },
+      { path: 'gallery', Component: GalleryPage },
+      { path: 'gallery/:slug', Component: AlbumPage },
       { path: 'news', Component: NewsPage },
       { path: 'news/:slug', Component: ArticlePage },
-      { path: 'about', element: <ComingSoonPage title="About us" /> },
-      { path: 'contact', element: <ComingSoonPage title="Contact us" /> },
-      { path: 'join', element: <ComingSoonPage title="Join the community" /> },
-      { path: 'login', element: <ComingSoonPage title="Member login" /> },
-      { path: 'privacy', element: <ComingSoonPage title="Privacy" /> },
+      { path: 'about', Component: AboutPage },
+      { path: 'contact', Component: ContactPage },
+      { path: 'join', Component: JoinPage },
+      { path: 'login', Component: LoginPage },
+      { path: 'privacy', Component: PrivacyPage },
       { path: '*', Component: NotFoundPage },
     ],
   },

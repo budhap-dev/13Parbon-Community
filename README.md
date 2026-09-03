@@ -42,12 +42,12 @@ npm run dev        # http://localhost:5173
 src/
   main.tsx           # entry point
   App.tsx            # providers + router
-  app/               # router, providers, layouts, theme tokens, site config
+  app/               # router, providers, layouts, theme tokens, site and about content
   domain/            # TypeScript types and pure helpers (dates, volunteers)
   lib/api/           # typed API client interface, hooks, mock adapter with fixtures
   lib/clock.tsx      # injectable "now" for countdowns and tests
   components/        # shared UI (Button, Container, Carousel, Icon, SectionHeading)
-  features/          # one folder per capability (home, events, news, placeholder)
+  features/          # one folder per capability (home, events, news, gallery, about, contact, membership, privacy, placeholder)
   test/              # Vitest setup and render helpers
 public/photos/       # placeholder photos for the mock gallery
 docs/
