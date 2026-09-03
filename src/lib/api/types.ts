@@ -1,6 +1,8 @@
 import type { Event } from '@/domain/event'
 import type { Festival } from '@/domain/festival'
-import type { Media } from '@/domain/gallery'
+import type { AlbumWithMedia, Media } from '@/domain/gallery'
+import type { ContactInput, ContactMessage } from '@/domain/contact'
+import type { MembershipApplication, MembershipApplicationInput } from '@/domain/membership'
 import type { Announcement, NewsPost, Newsletter } from '@/domain/news'
 import type { VolunteerRole } from '@/domain/volunteer'
 
@@ -24,6 +26,9 @@ export interface ApiClient {
   gallery: {
     /** Approved media from public albums, newest first. */
     listRecentMedia(limit?: number): Promise<Media[]>
+    /** Public albums with their approved media, newest first. */
+    listAlbums(): Promise<AlbumWithMedia[]>
+    getAlbum(slug: string): Promise<AlbumWithMedia | null>
   }
   news: {
     /** Published posts, newest first. */
@@ -33,6 +38,14 @@ export interface ApiClient {
     listAnnouncements(): Promise<Announcement[]>
     /** Newsletters, newest first. */
     listNewsletters(): Promise<Newsletter[]>
+  }
+  contact: {
+    /** Sends a message to the committee. Rejects with an Error when the input is invalid. */
+    send(input: ContactInput): Promise<ContactMessage>
+  }
+  membership: {
+    /** Submits a membership application for the committee to approve. Rejects when invalid. */
+    apply(input: MembershipApplicationInput): Promise<MembershipApplication>
   }
   volunteering: {
     /** Roles that still have free slots. */

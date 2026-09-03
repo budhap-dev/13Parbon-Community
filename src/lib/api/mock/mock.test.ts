@@ -53,6 +53,20 @@ describe('createMockApi', () => {
     expect((await api.news.listNewsletters()).map((n) => n.id)).toEqual(['nl-3', 'nl-2'])
   })
 
+  it('accepts a valid contact message and rejects an invalid one', async () => {
+    const sent = await api.contact.send({ name: 'Rina Sen', email: 'rina@example.com', subject: 'Parking', message: 'Where do we park on the night?' })
+    expect(sent.id).toBe('cm-1')
+    expect(sent.createdAt).toBe(now().toISOString())
+    await expect(api.contact.send({ name: '', email: '', subject: '', message: '' })).rejects.toThrow(/check the form/)
+  })
+
+  it('accepts a membership application and rejects an invalid one', async () => {
+    const sent = await api.membership.apply({ householdName: 'The Sens', contactName: 'Rina Sen', email: 'rina@example.com', phone: '', adults: 2, children: 1, message: '' })
+    expect(sent.id).toBe('ma-1')
+    expect(sent.status).toBe('pending')
+    await expect(api.membership.apply({ householdName: '', contactName: '', email: '', phone: '', adults: 0, children: 0, message: '' })).rejects.toThrow(/check the form/)
+  })
+
   it('returns the soonest event as next', async () => {
     const next = await api.events.getNext()
     expect(next?.slug).toBe('mahalaya-cultural-programme-2026')
@@ -67,6 +81,15 @@ describe('createMockApi', () => {
     expect(media).toHaveLength(6)
     expect(media.every((m) => m.approved)).toBe(true)
     expect(media.some((m) => m.albumId === 'al-private')).toBe(false)
+  })
+
+  it('lists public albums newest first with their approved media and a cover', async () => {
+    const albums = await api.gallery.listAlbums()
+    expect(albums.map((a) => a.slug)).toEqual(['poila-boishakh-2026', 'holi-2026', 'saraswati-puja-2026', 'mahalaya-2025'])
+    const holi = await api.gallery.getAlbum('holi-2026')
+    expect(holi?.media.map((m) => m.id)).toEqual(['m-3'])
+    expect(holi?.cover?.id).toBe('m-3')
+    expect(await api.gallery.getAlbum('committee-dinner')).toBeNull()
   })
 
   it('returns only volunteer roles with free slots', async () => {

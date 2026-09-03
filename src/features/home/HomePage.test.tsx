@@ -84,7 +84,9 @@ describe('HomePage', () => {
     const empty: ApiClient = {
       events: { listUpcoming: async () => [], listPast: async () => [], getNext: async () => null, getBySlug: async () => null },
       festivals: { list: async () => [] },
-      gallery: { listRecentMedia: async () => [] },
+      gallery: { listRecentMedia: async () => [], listAlbums: async () => [], getAlbum: async () => null },
+      membership: { apply: async () => ({ id: 'x', householdName: '', contactName: '', email: '', phone: '', adults: 1, children: 0, message: '', status: 'pending', submittedAt: '' }) },
+      contact: { send: async () => ({ id: 'x', name: '', email: '', subject: '', message: '', createdAt: '' }) },
       news: { listPosts: async () => [], getPost: async () => null, listAnnouncements: async () => [], listNewsletters: async () => [] },
       volunteering: { listOpenRoles: async () => [], listRolesForEvent: async () => [] },
     }

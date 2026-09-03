@@ -116,10 +116,10 @@ export function buildFixtures() {
   ]
 
   const albums: Album[] = [
-    { id: 'al-poila-2026', slug: 'poila-boishakh-2026', title: 'Poila Boishakh 2026', publishedAt: '2026-04-20T12:00:00', visibility: 'public' },
-    { id: 'al-holi-2026', slug: 'holi-2026', title: 'Holi 2026', publishedAt: '2026-03-10T12:00:00', visibility: 'public' },
-    { id: 'al-saraswati-2026', slug: 'saraswati-puja-2026', title: 'Saraswati Puja 2026', publishedAt: '2026-02-05T12:00:00', visibility: 'public' },
-    { id: 'al-mahalaya-2025', slug: 'mahalaya-2025', title: 'Mahalaya 2025', publishedAt: '2025-09-25T12:00:00', visibility: 'public' },
+    { id: 'al-poila-2026', slug: 'poila-boishakh-2026', title: 'Poila Boishakh 2026', description: 'New year evening at [Venue], April 2026.', publishedAt: '2026-04-20T12:00:00', visibility: 'public' },
+    { id: 'al-holi-2026', slug: 'holi-2026', title: 'Holi 2026', description: 'Colours in the park, March 2026.', publishedAt: '2026-03-10T12:00:00', visibility: 'public' },
+    { id: 'al-saraswati-2026', slug: 'saraswati-puja-2026', title: 'Saraswati Puja 2026', description: 'Morning pujo and hatekhori, February 2026.', publishedAt: '2026-02-05T12:00:00', visibility: 'public' },
+    { id: 'al-mahalaya-2025', slug: 'mahalaya-2025', title: 'Mahalaya 2025', description: 'Last year’s cultural programme.', publishedAt: '2025-09-25T12:00:00', visibility: 'public' },
     { id: 'al-private', slug: 'committee-dinner', title: 'Committee dinner', publishedAt: '2026-06-01T12:00:00', visibility: 'members' },
   ]
 
