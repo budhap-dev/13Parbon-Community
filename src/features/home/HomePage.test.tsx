@@ -1,6 +1,5 @@
 import { screen, within } from '@testing-library/react'
-import type { ApiClient } from '@/lib/api'
-import { renderWithProviders } from '@/test/render'
+import { createEmptyApi, renderWithProviders } from '@/test/render'
 import { HomePage } from './HomePage'
 
 describe('HomePage', () => {
@@ -39,7 +38,7 @@ describe('HomePage', () => {
   })
 
   it('lists the three events after the featured one for members', async () => {
-    renderWithProviders(<HomePage />, { viewer: { role: 'member' } })
+    renderWithProviders(<HomePage />, { session: { role: 'member', householdId: 'hh-sen', householdName: 'The Sens', name: 'Rina Sen', email: 'rina.sen@gmail.com' } })
     const section = (await screen.findByRole('heading', { name: 'Coming up' })).closest('section')!
     const titles = within(section)
       .getAllByRole('heading', { level: 3 })
@@ -82,16 +81,8 @@ describe('HomePage', () => {
   })
 
   it('hides data-driven sections when there is nothing to show', async () => {
-    const empty: ApiClient = {
-      delivers: false,
-      events: { listUpcoming: async () => [], listPast: async () => [], getNext: async () => null, getBySlug: async () => null },
-      festivals: { list: async () => [] },
-      gallery: { listRecentMedia: async () => [], listAlbums: async () => [], getAlbum: async () => null },
-      contact: { send: async () => ({ id: 'x', name: '', email: '', subject: '', message: '', createdAt: '' }) },
-      news: { listPosts: async () => [], getPost: async () => null, listAnnouncements: async () => [], listNewsletters: async () => [] },
-      volunteering: { listOpenRoles: async () => [], listRolesForEvent: async () => [] },
-    }
-    renderWithProviders(<HomePage />, { api: empty, viewer: { role: 'member' } })
+    const empty = createEmptyApi()
+    renderWithProviders(<HomePage />, { api: empty, session: { role: 'member', householdId: 'hh-sen', householdName: 'The Sens', name: 'Rina Sen', email: 'rina.sen@gmail.com' } })
     await screen.findByRole('heading', { name: 'Who we are' })
     expect(screen.queryByText('Next event')).not.toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Coming up' })).not.toBeInTheDocument()

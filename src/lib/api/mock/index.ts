@@ -4,6 +4,7 @@ import type { Event } from '@/domain/event'
 import type { AlbumWithMedia } from '@/domain/gallery'
 import type { ApiClient } from '../types'
 import { buildFixtures } from './fixtures'
+import { buildPortalFixtures } from './portal-fixtures'
 
 export type MockApiOptions = {
   /** Clock used to decide what counts as upcoming. */
@@ -19,6 +20,7 @@ function delay<T>(value: T, ms: number): Promise<T> {
 
 export function createMockApi({ now = () => new Date(), latencyMs = 0 }: MockApiOptions = {}): ApiClient {
   const fixtures = buildFixtures()
+  const portal = buildPortalFixtures()
 
   const visible = (event: Event) => event.isPublic && event.status !== 'draft' && event.status !== 'cancelled'
 
@@ -81,6 +83,37 @@ export function createMockApi({ now = () => new Date(), latencyMs = 0 }: MockApi
         sentMessages.push(message)
         return delay(message, latencyMs)
       },
+      listMessages: () =>
+        delay(
+          [...portal.messages, ...sentMessages].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+          latencyMs,
+        ),
+    },
+    portal: {
+      getHousehold: (id) => delay(portal.households.find((h) => h.id === id) ?? null, latencyMs),
+      listHouseholds: () => delay([...portal.households].sort((a, b) => a.name.localeCompare(b.name)), latencyMs),
+      listDirectory: () =>
+        delay(
+          portal.households.filter((h) => h.listedInDirectory).sort((a, b) => a.name.localeCompare(b.name)),
+          latencyMs,
+        ),
+      listDocuments: () => delay([...portal.documents].sort((a, b) => b.addedOn.localeCompare(a.addedOn)), latencyMs),
+      listRegistrationsForHousehold: (householdId) =>
+        delay(
+          portal.registrations
+            .filter((r) => r.householdId === householdId)
+            .sort((a, b) => b.registeredAt.localeCompare(a.registeredAt)),
+          latencyMs,
+        ),
+      listRegistrationsForEvent: (eventId) =>
+        delay(
+          portal.registrations
+            .filter((r) => r.eventId === eventId)
+            .sort((a, b) => b.registeredAt.localeCompare(a.registeredAt)),
+          latencyMs,
+        ),
+      listSignInAttempts: () =>
+        delay([...portal.signInAttempts].sort((a, b) => b.lastTriedAt.localeCompare(a.lastTriedAt)), latencyMs),
     },
     volunteering: {
       listOpenRoles: () => delay(fixtures.volunteerRoles.filter((r) => r.filled < r.slots), latencyMs),

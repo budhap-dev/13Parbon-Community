@@ -3,6 +3,7 @@ import {
   daysUntil,
   describeCountdown,
   formatDayMonth,
+  formatDateWithYear,
   formatLongDate,
   formatMonthYear,
   formatTime,
@@ -40,8 +41,9 @@ describe('dates', () => {
     expect(formatDayMonth('2026-10-05T18:00:00')).toEqual({ day: '05', month: 'OCT' })
   })
 
-  it('formats a long date', () => {
+  it('formats a long date, and one with the year where that matters', () => {
     expect(formatLongDate('2026-10-05T18:00:00')).toBe('Monday 5 October')
+    expect(formatDateWithYear('2027-03-31')).toBe('31 March 2027')
   })
 
   it('formats a time, a month heading and a month key', () => {

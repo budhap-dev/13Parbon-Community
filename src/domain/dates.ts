@@ -34,6 +34,11 @@ export function formatDayMonth(iso: string, locale = 'en-GB'): DayMonth {
   }
 }
 
+/** "12 October 2026". Use where the year matters and the weekday does not. */
+export function formatDateWithYear(iso: string, locale = 'en-GB'): string {
+  return new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(iso))
+}
+
 /** "Sunday 12 October" */
 export function formatLongDate(iso: string, locale = 'en-GB'): string {
   return new Intl.DateTimeFormat(locale, { weekday: 'long', day: 'numeric', month: 'long' }).format(

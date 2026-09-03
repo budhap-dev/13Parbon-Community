@@ -37,4 +37,19 @@ describe('Button', () => {
     expect(button.className).toContain('inkLine')
     expect(button.className).toContain('extra')
   })
+
+  it('renders a plain anchor for an address the router should not handle', () => {
+    render(<Button href="mailto:rina@example.com">Reply by email</Button>)
+    expect(screen.getByRole('link', { name: 'Reply by email' })).toHaveAttribute('href', 'mailto:rina@example.com')
+  })
+
+  it('opens an address on another site in a new tab, but not a mailto', () => {
+    const { unmount } = render(<Button href="https://example.com/plan">Open the planner</Button>)
+    const external = screen.getByRole('link', { name: 'Open the planner' })
+    expect(external).toHaveAttribute('target', '_blank')
+    expect(external).toHaveAttribute('rel', 'noreferrer')
+    unmount()
+    render(<Button href="mailto:a@example.com">Email</Button>)
+    expect(screen.getByRole('link', { name: 'Email' })).not.toHaveAttribute('target')
+  })
 })

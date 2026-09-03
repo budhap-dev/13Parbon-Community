@@ -2,6 +2,9 @@ import type { Event } from '@/domain/event'
 import type { Festival } from '@/domain/festival'
 import type { AlbumWithMedia, Media } from '@/domain/gallery'
 import type { ContactInput, ContactMessage } from '@/domain/contact'
+import type { CommunityDocument, SignInAttempt } from '@/domain/document'
+import type { Household } from '@/domain/household'
+import type { Registration } from '@/domain/registration'
 import type { Announcement, NewsPost, Newsletter } from '@/domain/news'
 import type { VolunteerRole } from '@/domain/volunteer'
 
@@ -46,6 +49,27 @@ export interface ApiClient {
   contact: {
     /** Sends a message to the committee. Rejects with an Error when the input is invalid. */
     send(input: ContactInput): Promise<ContactMessage>
+    /**
+     * The committee's inbox, newest first. Admin only. The public table is insert-only,
+     * so reading this from the browser will need a policy for signed-in admins.
+     */
+    listMessages(): Promise<(ContactMessage & { handledBy?: string })[]>
+  }
+  /** Everything behind the sign-in. */
+  portal: {
+    /** The household the signed-in person belongs to. */
+    getHousehold(id: string): Promise<Household | null>
+    /** Every household, for the committee. */
+    listHouseholds(): Promise<Household[]>
+    /** Households that chose to appear, for members. */
+    listDirectory(): Promise<Household[]>
+    listDocuments(): Promise<CommunityDocument[]>
+    /** One household's registrations, newest event first. */
+    listRegistrationsForHousehold(householdId: string): Promise<Registration[]>
+    /** Every registration for one event, newest first. */
+    listRegistrationsForEvent(eventId: string): Promise<Registration[]>
+    /** Google accounts that signed in but matched no household. */
+    listSignInAttempts(): Promise<SignInAttempt[]>
   }
   volunteering: {
     /** Roles that still have free slots. */
