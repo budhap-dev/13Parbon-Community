@@ -1,7 +1,12 @@
 import { isUpcoming } from '@/domain/dates'
 import { isValidContact, type ContactMessage } from '@/domain/contact'
 import type { Event } from '@/domain/event'
+import { isValidEventRegistration, type EventRegistration } from '@/domain/event-registration'
 import type { AlbumWithMedia } from '@/domain/gallery'
+import type { Household } from '@/domain/household'
+import type { Registration } from '@/domain/registration'
+import { defaultSiteText } from '@/app/site'
+import type { SiteText } from '@/domain/site-text'
 import type { ApiClient } from '../types'
 import { buildFixtures } from './fixtures'
 import { buildPortalFixtures } from './portal-fixtures'
@@ -11,6 +16,11 @@ export type MockApiOptions = {
   now?: () => Date
   /** Simulated network delay in milliseconds. */
   latencyMs?: number
+  /**
+   * Whether to claim that submissions reach somebody. False by default, because they do
+   * not: the mock keeps them in memory. Turn it on to exercise a form without a backend.
+   */
+  delivers?: boolean
 }
 
 function delay<T>(value: T, ms: number): Promise<T> {
@@ -18,7 +28,7 @@ function delay<T>(value: T, ms: number): Promise<T> {
   return new Promise((resolve) => setTimeout(() => resolve(value), ms))
 }
 
-export function createMockApi({ now = () => new Date(), latencyMs = 0 }: MockApiOptions = {}): ApiClient {
+export function createMockApi({ now = () => new Date(), latencyMs = 0, delivers = false }: MockApiOptions = {}): ApiClient {
   const fixtures = buildFixtures()
   const portal = buildPortalFixtures()
 
@@ -35,6 +45,18 @@ export function createMockApi({ now = () => new Date(), latencyMs = 0 }: MockApi
       .sort((a, b) => b.startsAt.localeCompare(a.startsAt))
 
   const sentMessages: ContactMessage[] = []
+  const guestRegistrations: EventRegistration[] = []
+  let siteText: SiteText = { ...defaultSiteText }
+  let nextId = 1
+  const id = (prefix: string) => `${prefix}-${nextId++}`
+
+  const household = (householdId: string) => portal.households.find((h) => h.id === householdId)
+
+  /** Keeps the public headcount honest when somebody registers or withdraws. */
+  const recountEvent = (eventId: string) => {
+    const event = fixtures.events.find((e) => e.id === eventId)
+    if (event) event.householdsRegistered = portal.registrations.filter((r) => r.eventId === eventId).length
+  }
 
   const withMedia = (album: (typeof fixtures.albums)[number]): AlbumWithMedia => {
     const media = fixtures.media.filter((m) => m.albumId === album.id && m.approved)
@@ -47,12 +69,28 @@ export function createMockApi({ now = () => new Date(), latencyMs = 0 }: MockApi
       .map(withMedia)
 
   return {
-    delivers: false,
+    delivers,
     events: {
       listUpcoming: (limit = 10) => delay(upcomingEvents().slice(0, limit), latencyMs),
       listPast: (limit = 10) => delay(pastEvents().slice(0, limit), latencyMs),
       getNext: () => delay(upcomingEvents()[0] ?? null, latencyMs),
       getBySlug: (slug) => delay(fixtures.events.find((e) => e.slug === slug && visible(e)) ?? null, latencyMs),
+      register: (slug, input) => {
+        const event = fixtures.events.find((e) => e.slug === slug && visible(e))
+        if (!event) return Promise.reject(new Error('That event is not open for registration.'))
+        if (!event.registrationOpen) return Promise.reject(new Error('Registration for this one has closed.'))
+        if (!isValidEventRegistration(input)) return Promise.reject(new Error('Please check the form and try again.'))
+        const saved: EventRegistration = {
+          ...input,
+          id: id('ereg'),
+          eventSlug: slug,
+          registeredAt: now().toISOString(),
+        }
+        guestRegistrations.push(saved)
+        // The headcount on the public page is the point of all this, so keep it true.
+        event.householdsRegistered += 1
+        return delay(saved, latencyMs)
+      },
     },
     festivals: {
       list: () => delay([...fixtures.festivals], latencyMs),
@@ -114,6 +152,98 @@ export function createMockApi({ now = () => new Date(), latencyMs = 0 }: MockApi
         ),
       listSignInAttempts: () =>
         delay([...portal.signInAttempts].sort((a, b) => b.lastTriedAt.localeCompare(a.lastTriedAt)), latencyMs),
+
+      register: (input) => {
+        if (!household(input.householdId)) return Promise.reject(new Error('That household is not on the list.'))
+        if (input.adults < 1) return Promise.reject(new Error('At least one adult has to come.'))
+        const existing = portal.registrations.find(
+          (r) => r.eventId === input.eventId && r.householdId === input.householdId,
+        )
+        const saved: Registration = {
+          id: existing?.id ?? id('reg'),
+          eventId: input.eventId,
+          householdId: input.householdId,
+          adults: input.adults,
+          children: input.children,
+          helping: input.helping?.trim() || undefined,
+          notes: input.notes?.trim() || undefined,
+          registeredAt: existing?.registeredAt ?? now().toISOString(),
+        }
+        if (existing) Object.assign(existing, saved)
+        else portal.registrations.push(saved)
+        recountEvent(input.eventId)
+        return delay(saved, latencyMs)
+      },
+
+      cancelRegistration: (registrationId) => {
+        const index = portal.registrations.findIndex((r) => r.id === registrationId)
+        if (index === -1) return Promise.reject(new Error('That registration has already gone.'))
+        const [removed] = portal.registrations.splice(index, 1)
+        recountEvent(removed.eventId)
+        return delay(undefined, latencyMs)
+      },
+
+      updateHousehold: (householdId, patch) => {
+        const found = household(householdId)
+        if (!found) return Promise.reject(new Error('That household is not on the list.'))
+        Object.assign(found, patch)
+        return delay({ ...found }, latencyMs)
+      },
+
+      addHousehold: (input) => {
+        const address = input.googleEmail.trim().toLowerCase()
+        if (portal.households.some((h) => h.googleEmail === address)) {
+          return Promise.reject(new Error('That Google address already belongs to a household.'))
+        }
+        const created: Household = {
+          id: id('hh'),
+          name: input.name.trim(),
+          contactName: input.contactName.trim(),
+          email: input.email.trim(),
+          phone: input.phone?.trim() || undefined,
+          googleEmail: address,
+          // Only the contact to begin with. The household names the rest themselves, so the
+          // committee is never asked to invent people it has not met.
+          people: [{ id: id('p'), name: input.contactName.trim(), ageGroup: 'adult' }],
+          interests: [],
+          memberSince: now().toISOString().slice(0, 10),
+          membership: { status: 'active', paidTo: '' },
+          role: input.role,
+          listedInDirectory: false,
+          shareEmail: false,
+          sharePhone: false,
+        }
+        portal.households.push(created)
+        const knocking = portal.signInAttempts.find((a) => a.email === address)
+        if (knocking) knocking.resolved = true
+        return delay(created, latencyMs)
+      },
+
+      setRole: (householdId, role) => {
+        const found = household(householdId)
+        if (!found) return Promise.reject(new Error('That household is not on the list.'))
+        const admins = portal.households.filter((h) => h.role === 'admin')
+        if (role === 'member' && admins.length === 1 && admins[0].id === householdId) {
+          return Promise.reject(
+            new Error('Somebody has to be able to let people in. Make another household an admin first.'),
+          )
+        }
+        found.role = role
+        return delay({ ...found }, latencyMs)
+      },
+
+      resolveSignInAttempt: (attemptId) => {
+        const found = portal.signInAttempts.find((a) => a.id === attemptId)
+        if (found) found.resolved = true
+        return delay(undefined, latencyMs)
+      },
+    },
+    siteText: {
+      get: () => delay({ ...siteText }, latencyMs),
+      update: (patch) => {
+        siteText = { ...siteText, ...patch }
+        return delay({ ...siteText }, latencyMs)
+      },
     },
     volunteering: {
       listOpenRoles: () => delay(fixtures.volunteerRoles.filter((r) => r.filled < r.slots), latencyMs),

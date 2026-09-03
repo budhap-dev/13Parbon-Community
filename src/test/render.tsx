@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, type RenderOptions } from '@testing-library/react'
 import type { ReactElement, ReactNode } from 'react'
 import { MemoryRouter } from 'react-router'
+import { defaultSiteText } from '@/app/site'
 import { ApiProvider, createMockApi, type ApiClient } from '@/lib/api'
 import { ClockProvider } from '@/lib/clock'
 import { ThemeProvider } from '@/app/theme/ThemeContext'
@@ -14,6 +15,11 @@ export function createTestApi(): ApiClient {
   return createMockApi({ now: () => TEST_NOW })
 }
 
+/** A client that behaves as though a backend is connected, for testing what a form does. */
+export function createDeliveringApi(): ApiClient {
+  return createMockApi({ now: () => TEST_NOW, delivers: true })
+}
+
 /**
  * A client where every query comes back empty, for testing what a page does with nothing.
  * Spread over it to make one thing non-empty.
@@ -21,7 +27,7 @@ export function createTestApi(): ApiClient {
 export function createEmptyApi(): ApiClient {
   return {
     delivers: false,
-    events: { listUpcoming: async () => [], listPast: async () => [], getNext: async () => null, getBySlug: async () => null },
+    events: { listUpcoming: async () => [], listPast: async () => [], getNext: async () => null, getBySlug: async () => null, register: async () => { throw new Error('not connected') } },
     festivals: { list: async () => [] },
     gallery: { listRecentMedia: async () => [], listAlbums: async () => [], getAlbum: async () => null },
     news: { listPosts: async () => [], getPost: async () => null, listAnnouncements: async () => [], listNewsletters: async () => [] },
@@ -34,6 +40,16 @@ export function createEmptyApi(): ApiClient {
       listRegistrationsForHousehold: async () => [],
       listRegistrationsForEvent: async () => [],
       listSignInAttempts: async () => [],
+      register: async () => { throw new Error('not connected') },
+      cancelRegistration: async () => { throw new Error('not connected') },
+      updateHousehold: async () => { throw new Error('not connected') },
+      addHousehold: async () => { throw new Error('not connected') },
+      setRole: async () => { throw new Error('not connected') },
+      resolveSignInAttempt: async () => { throw new Error('not connected') },
+    },
+    siteText: {
+      get: async () => defaultSiteText,
+      update: async () => { throw new Error('not connected') },
     },
     volunteering: { listOpenRoles: async () => [], listRolesForEvent: async () => [] },
   }

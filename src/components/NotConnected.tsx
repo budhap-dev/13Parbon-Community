@@ -3,6 +3,8 @@ import { Icon } from './Icon'
 import styles from './NotConnected.module.css'
 
 type Props = {
+  /** Where to write instead. Hidden when it is still a placeholder. */
+  email: string
   /** What the visitor was trying to do, e.g. "send a message". */
   action: string
 }
@@ -11,8 +13,8 @@ type Props = {
  * Shown in place of the contact form while submissions have nowhere to go. Better an
  * honest detour than a form that thanks people for a message nobody receives.
  */
-export function NotConnected({ action }: Props) {
-  const emailKnown = !isPlaceholder(site.email)
+export function NotConnected({ action, email }: Props) {
+  const emailKnown = !isPlaceholder(email)
   return (
     <section className={styles.box} aria-labelledby="not-connected-title">
       <Icon name="megaphone" className={styles.icon} />
@@ -26,7 +28,7 @@ export function NotConnected({ action }: Props) {
         <p className={styles.text}>
           {emailKnown ? 'In the meantime, write to us at ' : 'In the meantime, please reach us on '}
           {emailKnown ? (
-            <a href={`mailto:${site.email}`}>{site.email}</a>
+            <a href={`mailto:${email}`}>{email}</a>
           ) : (
             site.social.map((channel, i) => (
               <span key={channel.name}>

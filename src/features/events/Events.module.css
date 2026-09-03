@@ -108,6 +108,9 @@
 }
 
 .crumb {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   font-size: 16px;
   font-weight: 600;
 }
@@ -237,5 +240,121 @@
   .detail {
     grid-template-columns: minmax(0, 1fr);
     gap: 32px;
+  }
+}
+
+/* Registering, on the event page */
+.register,
+.registerDone {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 8px;
+  padding: 28px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-card);
+}
+
+.registerDone {
+  border: 2px solid var(--color-accent);
+}
+
+.registerTitle {
+  font-size: 26px;
+}
+
+.registerText {
+  font-size: 17px;
+  line-height: 1.5;
+  color: var(--color-fg-muted);
+  max-width: 60ch;
+  text-wrap: pretty;
+}
+
+.registerForm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 4px;
+}
+
+.registerRow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.label {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.optional {
+  font-weight: 400;
+  color: var(--color-fg-muted);
+}
+
+.input,
+.textarea {
+  width: 100%;
+  min-height: 48px;
+  padding: 11px 14px;
+  border: 1.5px solid var(--color-border);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--color-bg-raised) 55%, transparent);
+  color: var(--color-fg);
+  font: inherit;
+  font-size: 16px;
+  transition: border-color var(--motion-fast) ease;
+}
+
+.textarea {
+  min-height: 88px;
+  resize: vertical;
+}
+
+.input:hover,
+.textarea:hover {
+  border-color: var(--color-fg);
+}
+
+.input[aria-invalid='true'],
+.textarea[aria-invalid='true'] {
+  border-color: var(--color-accent);
+}
+
+.hint {
+  font-size: 14px;
+  color: var(--color-fg-muted);
+}
+
+.error {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-accent);
+}
+
+.registerActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  padding-top: 2px;
+}
+
+@media (max-width: 600px) {
+  .registerRow {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .register,
+  .registerDone {
+    padding: 20px;
   }
 }

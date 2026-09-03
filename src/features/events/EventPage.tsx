@@ -7,6 +7,7 @@ import { daysUntil, describeCountdown, formatLongDate, formatTime } from '@/doma
 import { NotFoundPage } from '@/features/placeholder'
 import { useEvent } from '@/lib/api'
 import { useNow } from '@/lib/clock'
+import { RegisterForm } from './RegisterForm'
 import styles from './Events.module.css'
 
 export function EventPage() {
@@ -56,7 +57,7 @@ export function EventPage() {
         {!isPast ? (
           <div className={styles.actions}>
             {event.registrationOpen ? (
-              <Button to="/login" variant="gold">
+              <Button href="#register" variant="gold">
                 Register the family
               </Button>
             ) : null}
@@ -66,14 +67,16 @@ export function EventPage() {
           </div>
         ) : null}
         {!isPast && event.registrationOpen ? (
-          <p className={styles.note}>Members register from their dashboard. Guest registration is coming.</p>
+          <div id="register">
+            <RegisterForm slug={event.slug} eventTitle={event.title} />
+          </div>
         ) : null}
       </article>
 
       <aside className={styles.side}>
         {!isPast ? (
           <p className={styles.countdown}>
-          <span className="sr-only">{`${countdown.value} ${countdown.label}`}</span>
+            <span className="sr-only">{`${countdown.value} ${countdown.label}`}</span>
             <span className={styles.countValue} aria-hidden="true">
               {countdown.value}
             </span>

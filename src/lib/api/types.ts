@@ -1,10 +1,12 @@
 import type { Event } from '@/domain/event'
+import type { EventRegistration, EventRegistrationInput } from '@/domain/event-registration'
 import type { Festival } from '@/domain/festival'
 import type { AlbumWithMedia, Media } from '@/domain/gallery'
 import type { ContactInput, ContactMessage } from '@/domain/contact'
 import type { CommunityDocument, SignInAttempt } from '@/domain/document'
-import type { Household } from '@/domain/household'
+import type { Household, Role } from '@/domain/household'
 import type { Registration } from '@/domain/registration'
+import type { SiteText } from '@/domain/site-text'
 import type { Announcement, NewsPost, Newsletter } from '@/domain/news'
 import type { VolunteerRole } from '@/domain/volunteer'
 
@@ -26,6 +28,11 @@ export interface ApiClient {
     getNext(): Promise<Event | null>
     /** A published, public event by slug, or null. */
     getBySlug(slug: string): Promise<Event | null>
+    /**
+     * Registers a party for an event from the public site. Rejects when the input is
+     * invalid, or when submissions have nowhere to go.
+     */
+    register(slug: string, input: EventRegistrationInput): Promise<EventRegistration>
   }
   festivals: {
     list(): Promise<Festival[]>
@@ -70,6 +77,27 @@ export interface ApiClient {
     listRegistrationsForEvent(eventId: string): Promise<Registration[]>
     /** Google accounts that signed in but matched no household. */
     listSignInAttempts(): Promise<SignInAttempt[]>
+
+    /** Registers a household for an event, or changes what it already said. */
+    register(input: RegistrationInput): Promise<Registration>
+    /** Withdraws a household from an event. */
+    cancelRegistration(id: string): Promise<void>
+
+    /** Changes the parts of a household its own members may change. */
+    updateHousehold(id: string, patch: HouseholdPatch): Promise<Household>
+
+    /** Committee only. Adds a household, which is the only way anybody gets in. */
+    addHousehold(input: NewHousehold): Promise<Household>
+    /** Committee only. Makes somebody an admin, or takes it back. */
+    setRole(id: string, role: Role): Promise<Household>
+    /** Committee only. Marks a knock at the door as dealt with. */
+    resolveSignInAttempt(id: string): Promise<void>
+  }
+  /** The wording on the public site, which the committee owns. */
+  siteText: {
+    get(): Promise<SiteText>
+    /** Committee only. */
+    update(patch: Partial<SiteText>): Promise<SiteText>
   }
   volunteering: {
     /** Roles that still have free slots. */
@@ -77,4 +105,28 @@ export interface ApiClient {
     /** Every role attached to an event, full or not. */
     listRolesForEvent(eventId: string): Promise<VolunteerRole[]>
   }
+}
+
+export type RegistrationInput = {
+  eventId: string
+  householdId: string
+  adults: number
+  children: number
+  helping?: string
+  notes?: string
+}
+
+/** What a household may change about itself. Role, sign-in address and membership are not here. */
+export type HouseholdPatch = Partial<
+  Pick<Household, 'contactName' | 'email' | 'phone' | 'people' | 'interests' | 'listedInDirectory' | 'shareEmail' | 'sharePhone'>
+>
+
+export type NewHousehold = {
+  name: string
+  contactName: string
+  email: string
+  phone?: string
+  googleEmail: string
+  role: Role
+  invite: boolean
 }
