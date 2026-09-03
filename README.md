@@ -47,7 +47,7 @@ src/
   lib/api/           # typed API client interface, hooks, mock adapter with fixtures
   lib/clock.tsx      # injectable "now" for countdowns and tests
   components/        # shared UI (Button, Container, Carousel, Icon, SectionHeading)
-  features/          # one folder per capability (home, placeholder)
+  features/          # one folder per capability (home, events, news, placeholder)
   test/              # Vitest setup and render helpers
 public/photos/       # placeholder photos for the mock gallery
 docs/

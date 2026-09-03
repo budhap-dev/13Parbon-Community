@@ -1,4 +1,15 @@
-import { addDays, daysUntil, describeCountdown, formatDayMonth, formatLongDate, isUpcoming, startOfDay } from './dates'
+import {
+  addDays,
+  daysUntil,
+  describeCountdown,
+  formatDayMonth,
+  formatLongDate,
+  formatMonthYear,
+  formatTime,
+  isUpcoming,
+  monthKey,
+  startOfDay,
+} from './dates'
 
 const now = new Date('2026-09-03T10:30:00')
 
@@ -31,6 +42,13 @@ describe('dates', () => {
 
   it('formats a long date', () => {
     expect(formatLongDate('2026-10-05T18:00:00')).toBe('Monday 5 October')
+  })
+
+  it('formats a time, a month heading and a month key', () => {
+    expect(formatTime('2026-10-10T17:00:00')).toBe('5:00 pm')
+    expect(formatMonthYear('2026-10-10T17:00:00')).toBe('October 2026')
+    expect(monthKey('2026-10-10T17:00:00')).toBe('2026-10')
+    expect(monthKey('2027-02-11T10:00:00')).toBe('2027-02')
   })
 
   it('describes a countdown', () => {

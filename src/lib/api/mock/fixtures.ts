@@ -1,6 +1,7 @@
 import type { Event } from '@/domain/event'
 import type { Festival } from '@/domain/festival'
 import type { Album, Media } from '@/domain/gallery'
+import type { Announcement, NewsPost, Newsletter } from '@/domain/news'
 import type { VolunteerRole } from '@/domain/volunteer'
 
 /**
@@ -25,6 +26,7 @@ export function buildFixtures() {
       isPublic: true,
       registrationOpen: true,
       householdsRegistered: 31,
+      volunteerCall: 'We warmly welcome volunteers for our Cultural Programme on Saturday, 10 October. If you would like to be part of making the day special, please indicate this when registering.',
       status: 'published',
     },
     {
@@ -163,5 +165,82 @@ export function buildFixtures() {
     },
   ]
 
-  return { events, festivals, albums, media, volunteerRoles }
+  const announcements: Announcement[] = [
+    {
+      id: 'an-register',
+      title: 'Registrations are open for the Mahalaya cultural programme',
+      body: 'Tell us how many from your household are coming so we can plan the seating and the food.',
+      pinned: true,
+      audience: 'public',
+      publishAt: '2026-08-28T09:00:00',
+      expiresAt: '2026-10-10T17:00:00',
+      link: { label: 'Register the family', to: '/events/mahalaya-cultural-programme-2026' },
+    },
+    {
+      id: 'an-volunteers',
+      title: 'A Festival is Best Shared',
+      body: 'We warmly welcome volunteers for our Cultural Programme on Saturday, 10 October. If you would like to be part of making the day special, please indicate this when registering.',
+      pinned: false,
+      audience: 'public',
+      publishAt: '2026-09-01T09:00:00',
+      link: { label: 'Register and say so', to: '/events/mahalaya-cultural-programme-2026' },
+    },
+    {
+      id: 'an-agm',
+      title: 'Annual general meeting minutes are in the documents library',
+      body: 'Members only.',
+      pinned: false,
+      audience: 'members',
+      publishAt: '2026-08-20T09:00:00',
+    },
+    {
+      id: 'an-expired',
+      title: 'Poila Boishakh programme: doors open at five',
+      body: 'Already over.',
+      pinned: true,
+      audience: 'public',
+      publishAt: '2026-04-10T09:00:00',
+      expiresAt: '2026-04-16T00:00:00',
+    },
+  ]
+
+  const posts: NewsPost[] = [
+    {
+      id: 'np-mahalaya-lineup',
+      slug: 'mahalaya-programme-what-to-expect',
+      title: 'Mahalaya programme: what to expect on the night',
+      excerpt: 'Songs, dance and a short play, with the children opening the evening. Here is how the night will run.',
+      body: 'The evening opens at five with the children’s choir, followed by the dance group and a short play written by our own members.\n\nThere will be a break for tea and snacks halfway through. Dinner is served after the final act.\n\nIf your family would like a slot on the programme, speak to the cultural secretary before [DATE].',
+      tags: ['Updates'],
+      publishedAt: '2026-09-01T10:00:00',
+      author: 'The committee',
+    },
+    {
+      id: 'np-saraswati-thanks',
+      slug: 'saraswati-puja-2026-thank-you',
+      title: 'Saraswati Puja 2026: thank you',
+      excerpt: 'Forty households came, twelve children had their hatekhori, and nobody went home hungry.',
+      body: 'Thank you to everyone who came, cooked, decorated and cleared up.\n\nTwelve children had their hatekhori this year, the most we have ever had.\n\nPhotos are in the gallery.',
+      tags: ['Success stories'],
+      publishedAt: '2026-02-14T10:00:00',
+      author: 'The committee',
+    },
+    {
+      id: 'np-new-hall',
+      slug: 'we-have-a-hall-for-the-year',
+      title: 'We have a hall for the whole year',
+      excerpt: 'After two years of moving between venues, every programme this year is booked in one place.',
+      body: 'After two years of moving between venues, we have booked [Venue] for every programme this year.\n\nThat means one address to remember, one parking arrangement, and a stage we can decorate the way we want.',
+      tags: ['Success stories', 'Updates'],
+      publishedAt: '2026-05-20T10:00:00',
+      author: 'The committee',
+    },
+  ]
+
+  const newsletters: Newsletter[] = [
+    { id: 'nl-3', title: '[Newsletter title], Autumn 2026', fileUrl: '#', issuedOn: '2026-09-01' },
+    { id: 'nl-2', title: '[Newsletter title], Spring 2026', fileUrl: '#', issuedOn: '2026-04-01' },
+  ]
+
+  return { events, festivals, albums, media, volunteerRoles, announcements, posts, newsletters }
 }

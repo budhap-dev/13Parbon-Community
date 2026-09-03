@@ -15,5 +15,7 @@ export type Event = {
   isPublic: boolean
   registrationOpen: boolean
   householdsRegistered: number
+  /** A plain request for helpers, shown with registration. No slots: people mention it when they register. */
+  volunteerCall?: string
   status: EventStatus
 }

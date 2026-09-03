@@ -1,5 +1,7 @@
 import { createBrowserRouter, type RouteObject } from 'react-router'
+import { EventPage, EventsPage } from '@/features/events'
 import { HomePage } from '@/features/home'
+import { ArticlePage, NewsPage } from '@/features/news'
 import { ComingSoonPage, NotFoundPage } from '@/features/placeholder'
 import { PublicLayout } from './layouts/PublicLayout'
 
@@ -9,10 +11,11 @@ export const routes: RouteObject[] = [
     Component: PublicLayout,
     children: [
       { index: true, Component: HomePage },
-      { path: 'events', element: <ComingSoonPage title="Events" /> },
-      { path: 'events/:slug', element: <ComingSoonPage title="Event" /> },
+      { path: 'events', Component: EventsPage },
+      { path: 'events/:slug', Component: EventPage },
       { path: 'gallery', element: <ComingSoonPage title="Gallery" /> },
-      { path: 'news', element: <ComingSoonPage title="News & announcements" /> },
+      { path: 'news', Component: NewsPage },
+      { path: 'news/:slug', Component: ArticlePage },
       { path: 'about', element: <ComingSoonPage title="About us" /> },
       { path: 'contact', element: <ComingSoonPage title="Contact us" /> },
       { path: 'join', element: <ComingSoonPage title="Join the community" /> },

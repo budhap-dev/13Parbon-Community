@@ -19,6 +19,40 @@ describe('createMockApi', () => {
     expect(await api.events.listUpcoming(2)).toHaveLength(2)
   })
 
+  it('lists past events most recent first, and finds events by slug', async () => {
+    const past = await api.events.listPast()
+    expect(past.map((e) => e.slug)).toEqual(['poila-boishakh-cultural-programme-2026'])
+    expect((await api.events.getBySlug('holi-2027'))?.title).toBe('Holi')
+    expect(await api.events.getBySlug('draft-picnic')).toBeNull()
+    expect(await api.events.getBySlug('committee-meeting')).toBeNull()
+    expect(await api.events.getBySlug('nope')).toBeNull()
+  })
+
+  it('lists every role for an event, full or not', async () => {
+    const roles = await api.volunteering.listRolesForEvent('ev-mahalaya-2026')
+    expect(roles.map((r) => r.id)).toEqual(['vr-stage', 'vr-full'])
+  })
+
+  it('lists news newest first and finds posts by slug', async () => {
+    const posts = await api.news.listPosts()
+    expect(posts.map((p) => p.slug)).toEqual([
+      'mahalaya-programme-what-to-expect',
+      'we-have-a-hall-for-the-year',
+      'saraswati-puja-2026-thank-you',
+    ])
+    expect((await api.news.getPost('saraswati-puja-2026-thank-you'))?.tags).toEqual(['Success stories'])
+    expect(await api.news.getPost('nope')).toBeNull()
+  })
+
+  it('lists live public announcements, pinned first', async () => {
+    const live = await api.news.listAnnouncements()
+    expect(live.map((a) => a.id)).toEqual(['an-register', 'an-volunteers'])
+  })
+
+  it('lists newsletters newest first', async () => {
+    expect((await api.news.listNewsletters()).map((n) => n.id)).toEqual(['nl-3', 'nl-2'])
+  })
+
   it('returns the soonest event as next', async () => {
     const next = await api.events.getNext()
     expect(next?.slug).toBe('mahalaya-cultural-programme-2026')
