@@ -39,13 +39,9 @@ export function NewsPage() {
                 <p className={styles.noticeText}>{a.body}</p>
               </div>
               {a.link ? (
-                a.pinned ? (
-                  <Link to={a.link.to}>{a.link.label}</Link>
-                ) : (
-                  <Button to={a.link.to} variant="line" size="sm">
-                    {a.link.label}
-                  </Button>
-                )
+                <Button to={a.link.to} variant={a.pinned ? 'gold' : 'line'} size="sm">
+                  {a.link.label}
+                </Button>
               ) : null}
             </article>
           ))}

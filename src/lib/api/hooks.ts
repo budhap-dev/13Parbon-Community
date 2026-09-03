@@ -1,5 +1,8 @@
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { defaultSiteText } from '@/app/site'
 import type { ContactInput } from '@/domain/contact'
+import type { EventRegistrationInput } from '@/domain/event-registration'
+import type { SiteText } from '@/domain/site-text'
 import { useApi } from './context'
 
 export function useNextEvent() {
@@ -10,6 +13,16 @@ export function useNextEvent() {
 export function useUpcomingEvents(limit = 4) {
   const api = useApi()
   return useQuery({ queryKey: ['events', 'upcoming', limit], queryFn: () => api.events.listUpcoming(limit) })
+}
+
+export function useRegisterForEvent(slug: string) {
+  const api = useApi()
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: (input: EventRegistrationInput) => api.events.register(slug, input),
+    // The headcount just changed, so anything showing it should say so.
+    onSuccess: () => client.invalidateQueries({ queryKey: ['events'] }),
+  })
 }
 
 export function usePastEvents(limit = 10) {
@@ -106,6 +119,30 @@ export function useSignInAttempts() {
 export function useContactMessages() {
   const api = useApi()
   return useQuery({ queryKey: ['contact', 'messages'], queryFn: () => api.contact.listMessages() })
+}
+
+/**
+ * The wording the committee owns. Starts from the built-in defaults so nothing flashes
+ * empty, then shows the saved version once it arrives.
+ */
+export function useSiteText(): SiteText {
+  const api = useApi()
+  const { data } = useQuery({
+    queryKey: ['site-text'],
+    queryFn: () => api.siteText.get(),
+    initialData: defaultSiteText,
+    staleTime: 60_000,
+  })
+  return data
+}
+
+export function useUpdateSiteText() {
+  const api = useApi()
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: (patch: Partial<SiteText>) => api.siteText.update(patch),
+    onSuccess: (text) => client.setQueryData(['site-text'], text),
+  })
 }
 
 export function useFestivals() {

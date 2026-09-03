@@ -59,9 +59,11 @@ export function SiteHeader() {
           </ul>
           <div className={styles.actions}>
             <ThemeSwitcher />
-            <Button to="/login" size="sm">
-              Member sign-in
-            </Button>
+            {site.showMemberSignIn ? (
+              <Button to="/login" size="sm">
+                Member sign-in
+              </Button>
+            ) : null}
           </div>
         </nav>
       </Container>

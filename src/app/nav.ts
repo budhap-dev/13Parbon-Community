@@ -8,9 +8,11 @@ export const publicNav: NavItem[] = [
   { label: 'Contact', to: '/contact' },
 ]
 
+import { site } from './site'
+
 export const footerNav: NavItem[] = [
   { label: 'Contact', to: '/contact' },
   { label: 'Privacy', to: '/privacy' },
   { label: 'Committee', to: '/about' },
-  { label: 'Member sign-in', to: '/login' },
+  ...(site.showMemberSignIn ? [{ label: 'Member sign-in', to: '/login' }] : []),
 ]
