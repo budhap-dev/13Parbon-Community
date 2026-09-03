@@ -1,0 +1,116 @@
+/*
+ * Geometry comes from the source artwork (544 x 552 after trimming an 18 px border):
+ * arc 544 x 312 at the top, skyline 544 x 240 below it, emblem 256 px square at (151, 159).
+ * Everything is expressed as a fraction of --logo-w so the piece stays sharp at any size.
+ */
+.logo {
+  width: 100%;
+}
+
+/*
+ * No containment or isolation here on purpose: the line-art pieces rely on mix-blend-mode
+ * against the page background, which only works inside the page's own stacking context.
+ */
+.stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 544 / 552;
+}
+
+.arc,
+.skyline,
+.emblem {
+  position: absolute;
+  display: block;
+}
+
+.arc,
+.skyline {
+  left: 0;
+  width: 100%;
+  filter: var(--logo-lineart-filter);
+  mix-blend-mode: var(--logo-lineart-blend);
+}
+
+.arc {
+  top: 0;
+  -webkit-mask: radial-gradient(ellipse 23.9% 41.7% at 51.3% 92%, transparent 97%, #000 100%);
+  mask: radial-gradient(ellipse 23.9% 41.7% at 51.3% 92%, transparent 97%, #000 100%);
+  animation: from-top 900ms cubic-bezier(0.2, 0.7, 0.2, 1) 600ms both;
+}
+
+.skyline {
+  top: 56.52%;
+  -webkit-mask: radial-gradient(ellipse 23.9% 54.2% at 51.3% -10.4%, transparent 97%, #000 100%);
+  mask: radial-gradient(ellipse 23.9% 54.2% at 51.3% -10.4%, transparent 97%, #000 100%);
+  animation: from-bottom 900ms cubic-bezier(0.2, 0.7, 0.2, 1) 750ms both;
+}
+
+.emblem {
+  left: 27.76%;
+  top: 28.8%;
+  width: 47.06%;
+  border-radius: 50%;
+  border: 2px solid var(--color-accent);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+  animation: pop 1000ms cubic-bezier(0.34, 1.56, 0.64, 1) 1000ms both;
+}
+
+.ring {
+  position: absolute;
+  left: 27.76%;
+  top: 28.8%;
+  width: 47.06%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 2px solid var(--color-accent);
+  opacity: 0;
+  animation: settle 1200ms ease-out 1850ms both;
+}
+
+@keyframes from-top {
+  from {
+    opacity: 0;
+    transform: translateY(-48px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes from-bottom {
+  from {
+    opacity: 0;
+    transform: translateY(48px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: scale(0.3) rotate(-25deg);
+  }
+  60% {
+    opacity: 1;
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes settle {
+  from {
+    opacity: 0.9;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.35);
+  }
+}

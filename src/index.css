@@ -1,23 +1,84 @@
-:root {
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  line-height: 1.5;
-  color-scheme: light dark;
-  color: #1f2328;
-  background-color: #fdfcf8;
-}
+@import './app/theme/tokens.css';
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    color: #e6edf3;
-    background-color: #14171a;
-  }
-}
-
-* {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  color-scheme: var(--color-scheme, dark);
 }
 
 body {
   margin: 0;
   min-height: 100vh;
+  font-family: var(--font-body);
+  color: var(--color-fg);
+  /* A soft accent glow in the top corner over a gentle top-to-bottom shift. Solid colour as the fallback. */
+  background-color: var(--color-bg);
+  background-image:
+    radial-gradient(1100px 640px at 88% -8%, var(--color-bg-glow), transparent 65%),
+    linear-gradient(180deg, var(--color-bg-top) 0%, var(--color-bg) 45%, var(--color-bg-bottom) 100%);
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  transition:
+    background-color var(--motion-fast) ease,
+    color var(--motion-fast) ease;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--color-accent-hover);
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+button {
+  font: inherit;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

@@ -1,0 +1,170 @@
+/*
+ * Design tokens. Every theme defines the full set on [data-theme="..."].
+ * Add a theme here and register it in themes.ts; nothing else needs to change.
+ */
+
+/* Festival: sindoor red and marigold. The default. */
+:root,
+[data-theme='festival'] {
+  --color-scheme: dark;
+  --logo-lineart-filter: invert(1) brightness(1.15);
+  --logo-lineart-blend: screen;
+  --color-bg: #7a1a12;
+  --color-bg-top: #8a2016;
+  --color-bg-bottom: #5c110b;
+  --color-bg-glow: rgba(247, 183, 51, 0.16);
+  --color-bg-raised: #8f2419;
+  --color-bg-raised-hover: #9a2a1e;
+  --color-ink: #3a0a06;
+  --color-ink-hover: #2a0704;
+  --color-on-ink: #f7b733;
+  --color-fg: #fff3e3;
+  --color-fg-muted: rgba(255, 243, 227, 0.78);
+  --color-fg-faint: rgba(255, 243, 227, 0.45);
+  --color-border: rgba(255, 243, 227, 0.35);
+  --color-border-faint: rgba(255, 243, 227, 0.2);
+  --color-hover-wash: rgba(255, 255, 255, 0.1);
+  --color-accent: #f7b733;
+  --color-accent-hover: #ffd166;
+  --color-on-accent: #3a0a06;
+  --color-focus: #ffd166;
+  --color-photo-a: #a63b2a;
+  --color-photo-b: #b8482f;
+  --color-photo-c: #93281c;
+  --color-photo-d: #c9553a;
+
+  --font-display: 'Bricolage Grotesque', 'Arial Black', 'Helvetica Neue', Arial, sans-serif;
+  --font-body: 'Hind Siliguri', 'Bricolage Grotesque', 'Helvetica Neue', Arial, sans-serif;
+  --font-script: 'Tiro Bangla', 'Noto Serif Bengali', serif;
+
+  --radius-pill: 999px;
+  --radius-card: 20px;
+  --radius-panel: 24px;
+  --radius-tile: 16px;
+
+  --page-pad: clamp(20px, 5.5vw, 80px);
+  --content-max: 1440px;
+
+  --motion-fast: 160ms;
+  --motion-reveal: 700ms;
+}
+
+/* Poila Boishakh: lal-paar, cream and red for the new year. Light. */
+[data-theme='poila-boishakh'] {
+  --color-scheme: light;
+  --logo-lineart-filter: none;
+  --logo-lineart-blend: multiply;
+  --color-bg: #fff6ea;
+  --color-bg-top: #fffbf4;
+  --color-bg-bottom: #ffecd6;
+  --color-bg-glow: rgba(200, 16, 46, 0.07);
+  --color-bg-raised: #ffe9d2;
+  --color-bg-raised-hover: #ffdfc0;
+  --color-ink: #2b0a06;
+  --color-ink-hover: #1a0503;
+  --color-on-ink: #ffd7a8;
+  --color-fg: #2b1a14;
+  --color-fg-muted: rgba(43, 26, 20, 0.75);
+  --color-fg-faint: rgba(43, 26, 20, 0.4);
+  --color-border: rgba(43, 26, 20, 0.3);
+  --color-border-faint: rgba(43, 26, 20, 0.15);
+  --color-hover-wash: rgba(43, 26, 20, 0.06);
+  --color-accent: #c8102e;
+  --color-accent-hover: #a50d25;
+  --color-on-accent: #fff6ea;
+  --color-focus: #c8102e;
+  --color-photo-a: #d94b4b;
+  --color-photo-b: #e26b5a;
+  --color-photo-c: #c73a3a;
+  --color-photo-d: #e8865f;
+}
+
+/* Saraswati Puja: basanti yellow with deep blue. Light. */
+[data-theme='saraswati'] {
+  --color-scheme: light;
+  --logo-lineart-filter: none;
+  --logo-lineart-blend: multiply;
+  --color-bg: #fff7d6;
+  --color-bg-top: #fffbe8;
+  --color-bg-bottom: #ffefb8;
+  --color-bg-glow: rgba(31, 95, 191, 0.09);
+  --color-bg-raised: #ffefb3;
+  --color-bg-raised-hover: #ffe999;
+  --color-ink: #14213d;
+  --color-ink-hover: #0b1428;
+  --color-on-ink: #ffe08a;
+  --color-fg: #1e2235;
+  --color-fg-muted: rgba(30, 34, 53, 0.75);
+  --color-fg-faint: rgba(30, 34, 53, 0.4);
+  --color-border: rgba(30, 34, 53, 0.3);
+  --color-border-faint: rgba(30, 34, 53, 0.15);
+  --color-hover-wash: rgba(30, 34, 53, 0.06);
+  --color-accent: #1f5fbf;
+  --color-accent-hover: #164a97;
+  --color-on-accent: #fff7d6;
+  --color-focus: #1f5fbf;
+  --color-photo-a: #f2c94c;
+  --color-photo-b: #e9b73a;
+  --color-photo-c: #d9a52a;
+  --color-photo-d: #f6d67a;
+}
+
+/* Holi: magenta and bright yellow. Dark. */
+[data-theme='holi'] {
+  --color-scheme: dark;
+  --logo-lineart-filter: invert(1) brightness(1.15);
+  --logo-lineart-blend: screen;
+  --color-bg: #8e1a6b;
+  --color-bg-top: #9c2079;
+  --color-bg-bottom: #6a1150;
+  --color-bg-glow: rgba(255, 214, 10, 0.14);
+  --color-bg-raised: #a3247d;
+  --color-bg-raised-hover: #b02b88;
+  --color-ink: #3d0a2f;
+  --color-ink-hover: #2a0620;
+  --color-on-ink: #ffe95c;
+  --color-fg: #fff3fa;
+  --color-fg-muted: rgba(255, 243, 250, 0.78);
+  --color-fg-faint: rgba(255, 243, 250, 0.45);
+  --color-border: rgba(255, 243, 250, 0.35);
+  --color-border-faint: rgba(255, 243, 250, 0.2);
+  --color-hover-wash: rgba(255, 255, 255, 0.1);
+  --color-accent: #ffd60a;
+  --color-accent-hover: #ffe45c;
+  --color-on-accent: #3d0a2f;
+  --color-focus: #ffe45c;
+  --color-photo-a: #e0369a;
+  --color-photo-b: #2bb3a0;
+  --color-photo-c: #f28c28;
+  --color-photo-d: #4f7bd9;
+}
+
+/* Mahalaya: pre-dawn indigo and shiuli orange. Dark. */
+[data-theme='mahalaya'] {
+  --color-scheme: dark;
+  --logo-lineart-filter: invert(1) brightness(1.15);
+  --logo-lineart-blend: screen;
+  --color-bg: #1c1b4a;
+  --color-bg-top: #26255f;
+  --color-bg-bottom: #0f0e2e;
+  --color-bg-glow: rgba(255, 154, 60, 0.14);
+  --color-bg-raised: #27265e;
+  --color-bg-raised-hover: #302f6e;
+  --color-ink: #0d0c2b;
+  --color-ink-hover: #07061c;
+  --color-on-ink: #ffb05c;
+  --color-fg: #f3efe6;
+  --color-fg-muted: rgba(243, 239, 230, 0.78);
+  --color-fg-faint: rgba(243, 239, 230, 0.45);
+  --color-border: rgba(243, 239, 230, 0.35);
+  --color-border-faint: rgba(243, 239, 230, 0.2);
+  --color-hover-wash: rgba(255, 255, 255, 0.1);
+  --color-accent: #ff9a3c;
+  --color-accent-hover: #ffb35f;
+  --color-on-accent: #1c1b4a;
+  --color-focus: #ffb35f;
+  --color-photo-a: #3a3985;
+  --color-photo-b: #524fa8;
+  --color-photo-c: #6b64c4;
+  --color-photo-d: #ff9a3c;
+}
