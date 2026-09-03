@@ -1,0 +1,176 @@
+.page {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: 64px;
+  align-items: start;
+  padding-top: 48px;
+  padding-bottom: 96px;
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.title {
+  font-size: clamp(40px, 5vw, 72px);
+}
+
+.intro {
+  max-width: 560px;
+  font-size: 20px;
+  color: var(--color-fg-muted);
+  text-wrap: pretty;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.input,
+.textarea {
+  width: 100%;
+  min-height: 52px;
+  padding: 12px 16px;
+  border: 1.5px solid var(--color-border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--color-bg-raised) 60%, transparent);
+  color: var(--color-fg);
+  font: inherit;
+  font-size: 17px;
+  transition: border-color var(--motion-fast) ease;
+}
+
+.textarea {
+  min-height: 160px;
+  resize: vertical;
+}
+
+.input:hover,
+.textarea:hover {
+  border-color: var(--color-fg);
+}
+
+.input[aria-invalid='true'],
+.textarea[aria-invalid='true'] {
+  border-color: var(--color-accent);
+}
+
+.error {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-accent);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  padding-top: 4px;
+}
+
+.hint {
+  font-size: 15px;
+  color: var(--color-fg-muted);
+}
+
+.sent {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 32px;
+  border: 2px solid var(--color-accent);
+  border-radius: var(--radius-panel);
+}
+
+.sentTitle {
+  font-size: 30px;
+}
+
+.sentText {
+  font-size: 18px;
+  line-height: 1.5;
+  color: var(--color-fg-muted);
+}
+
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 24px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-card);
+}
+
+.blockTitle {
+  font-size: 22px;
+}
+
+.address {
+  font-style: normal;
+  font-size: 17px;
+  line-height: 1.5;
+}
+
+.map {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  padding: 24px;
+  border-radius: var(--radius-tile);
+  background: var(--color-bg-raised);
+  color: var(--color-fg-muted);
+  font-size: 15px;
+  text-align: center;
+  text-wrap: pretty;
+}
+
+.social {
+  display: flex;
+  gap: 8px;
+}
+
+.social a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  color: var(--color-fg);
+}
+
+.social a:hover {
+  border-color: var(--color-fg);
+  color: var(--color-fg);
+}
+
+@media (max-width: 960px) {
+  .page {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 32px;
+  }
+}

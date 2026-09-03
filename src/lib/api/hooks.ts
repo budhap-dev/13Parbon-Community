@@ -1,4 +1,6 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
+import type { ContactInput } from '@/domain/contact'
+import type { MembershipApplicationInput } from '@/domain/membership'
 import { useApi } from './context'
 
 export function useNextEvent() {
@@ -50,6 +52,16 @@ export function useNewsletters() {
   return useQuery({ queryKey: ['news', 'newsletters'], queryFn: () => api.news.listNewsletters() })
 }
 
+export function useSendContact() {
+  const api = useApi()
+  return useMutation({ mutationFn: (input: ContactInput) => api.contact.send(input) })
+}
+
+export function useApplyForMembership() {
+  const api = useApi()
+  return useMutation({ mutationFn: (input: MembershipApplicationInput) => api.membership.apply(input) })
+}
+
 export function useFestivals() {
   const api = useApi()
   return useQuery({ queryKey: ['festivals'], queryFn: () => api.festivals.list() })
@@ -58,6 +70,16 @@ export function useFestivals() {
 export function useRecentMedia(limit = 6) {
   const api = useApi()
   return useQuery({ queryKey: ['gallery', 'recent', limit], queryFn: () => api.gallery.listRecentMedia(limit) })
+}
+
+export function useAlbums() {
+  const api = useApi()
+  return useQuery({ queryKey: ['gallery', 'albums'], queryFn: () => api.gallery.listAlbums() })
+}
+
+export function useAlbum(slug: string) {
+  const api = useApi()
+  return useQuery({ queryKey: ['gallery', 'album', slug], queryFn: () => api.gallery.getAlbum(slug) })
 }
 
 export function useOpenVolunteerRoles() {

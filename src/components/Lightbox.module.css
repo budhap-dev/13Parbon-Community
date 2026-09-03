@@ -1,0 +1,98 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) 64px;
+  align-items: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.88);
+  color: #fff3e3;
+}
+
+.close,
+.prev,
+.next {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border: 1.5px solid rgba(255, 243, 227, 0.4);
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.close:hover,
+.prev:hover,
+.next:hover {
+  border-color: #fff3e3;
+}
+
+.close {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+}
+
+.prev {
+  grid-column: 1;
+  justify-self: start;
+}
+
+.next {
+  grid-column: 3;
+  justify-self: end;
+}
+
+.figure {
+  grid-column: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  max-height: calc(100vh - 48px);
+  margin: 0;
+}
+
+.image {
+  max-width: 100%;
+  max-height: calc(100vh - 140px);
+  object-fit: contain;
+  border-radius: 12px;
+}
+
+.caption {
+  display: flex;
+  gap: 18px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.count {
+  opacity: 0.7;
+  font-weight: 400;
+}
+
+@media (max-width: 600px) {
+  .backdrop {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 16px;
+  }
+
+  .prev,
+  .next {
+    position: absolute;
+    bottom: 16px;
+  }
+
+  .prev {
+    left: 16px;
+  }
+
+  .next {
+    right: 16px;
+  }
+}

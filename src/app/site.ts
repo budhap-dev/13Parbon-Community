@@ -17,6 +17,10 @@ export const site = {
     'A Bengali cultural association in [Town]. Every year we gather for Poila Boishakh, Saraswati Puja, Holi and a cultural programme at Mahalaya, keeping the songs, the food and the stage going for the families who live here now, and for the kids who will carry them on.',
   missionStatement: '[Mission and vision statement, two or three sentences from the committee.]',
   membershipFee: '[fee]',
+  /** Where to find us. Bracketed until the committee confirms. */
+  venue: '[Venue]',
+  address: '[Street, Town, Postcode]',
+  email: '[hello@example.org]',
   /**
    * Who each home page section is for. Sections marked 'members' stay hidden until the
    * viewer has logged in (phase 2). For the public MVP, events and volunteering are members-only.
