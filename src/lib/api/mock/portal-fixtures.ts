@@ -178,8 +178,8 @@ export function buildPortalFixtures() {
   ]
 
   const signInAttempts: SignInAttempt[] = [
-    { id: 'sa-1', email: 'priya.dutta@gmail.com', name: 'Priya Dutta', lastTriedAt: '2026-09-03T16:12:00', attempts: 2 },
-    { id: 'sa-2', email: 'amit.bose@gmail.com', name: 'Amit Bose', lastTriedAt: '2026-09-02T10:30:00', attempts: 1 },
+    { id: 'sa-1', email: 'priya.dutta@gmail.com', name: 'Priya Dutta', lastTriedAt: '2026-09-03T16:12:00', attempts: 2, resolved: false },
+    { id: 'sa-2', email: 'amit.bose@gmail.com', name: 'Amit Bose', lastTriedAt: '2026-09-02T10:30:00', attempts: 1, resolved: false },
   ]
 
   const messages: (ContactMessage & { handledBy?: string })[] = [

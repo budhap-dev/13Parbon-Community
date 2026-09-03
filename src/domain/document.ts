@@ -24,4 +24,6 @@ export type SignInAttempt = {
   /** ISO 8601 timestamp */
   lastTriedAt: string
   attempts: number
+  /** Set once the committee has added them or decided not to. */
+  resolved: boolean
 }
