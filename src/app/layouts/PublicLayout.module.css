@@ -67,6 +67,7 @@
 .brand {
   display: inline-flex;
   align-items: center;
+  min-height: 44px;
   gap: 12px;
   color: var(--color-fg);
   font-family: var(--font-display);
@@ -236,6 +237,9 @@
 }
 
 .footerLinks a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   color: var(--color-fg);
 }
 
