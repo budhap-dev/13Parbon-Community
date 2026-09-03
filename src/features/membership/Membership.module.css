@@ -195,3 +195,111 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* Sign-in */
+.googleWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 380px;
+}
+
+.google {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 54px;
+  padding: 0 24px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--color-fg);
+  color: var(--color-bg);
+  font-weight: 600;
+  font-size: 17px;
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.hint {
+  font-size: 14px;
+  color: var(--color-fg-muted);
+}
+
+.preview {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 16px;
+  padding: 26px;
+  border: 1.5px dashed var(--color-border);
+  border-radius: var(--radius-card);
+}
+
+.previewTitle {
+  font-size: 22px;
+}
+
+.previewText {
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--color-fg-muted);
+  max-width: 60ch;
+}
+
+.accounts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.account {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  height: 100%;
+  padding: 16px 18px;
+  border: 1.5px solid var(--color-border);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--color-fg);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--motion-fast) ease;
+}
+
+.account:hover {
+  border-color: var(--color-accent);
+}
+
+.accountName {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  font-size: 17px;
+}
+
+.accountBlurb {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-fg-muted);
+}
+
+.rolePill {
+  padding: 3px 9px;
+  border-radius: 11px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: var(--color-hover-wash);
+  color: var(--color-fg-muted);
+}
+
+.rolePillAdmin {
+  composes: rolePill;
+  background: color-mix(in srgb, var(--color-accent) 22%, transparent);
+  color: var(--color-accent);
+}

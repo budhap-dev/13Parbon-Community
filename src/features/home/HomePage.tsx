@@ -1,6 +1,6 @@
 import { site } from '@/app/site'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
-import { useViewer, canSee } from '@/lib/viewer'
+import { canSee, useSession } from '@/lib/auth/session'
 import styles from './Home.module.css'
 import { Hero } from './sections/Hero'
 import { JoinCta } from './sections/JoinCta'
@@ -14,8 +14,8 @@ import { YearStrip } from './sections/YearStrip'
 
 export function HomePage() {
   useDocumentTitle()
-  const { role } = useViewer()
-  const show = (section: keyof typeof site.home) => canSee(site.home[section], role)
+  const { session } = useSession()
+  const show = (section: keyof typeof site.home) => canSee(site.home[section], session.role)
 
   return (
     <div className={styles.page}>
