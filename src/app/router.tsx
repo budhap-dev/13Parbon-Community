@@ -8,7 +8,11 @@ import { PrivacyPage } from '@/features/privacy'
 import { HomePage } from '@/features/home'
 import { ArticlePage, NewsPage } from '@/features/news'
 import { NotFoundPage } from '@/features/placeholder'
+import { AdminContentPage, AdminEventsPage, AdminMessagesPage, AdminOverviewPage, AdminPeoplePage } from '@/features/admin'
+import { DashboardPage, DirectoryPage, DocumentsPage, HouseholdPage } from '@/features/portal'
+import { PortalLayout } from './layouts/PortalLayout'
 import { PublicLayout } from './layouts/PublicLayout'
+import { RequireSession } from './layouts/RequireSession'
 
 export const routes: RouteObject[] = [
   {
@@ -27,6 +31,35 @@ export const routes: RouteObject[] = [
       { path: 'login', Component: LoginPage },
       { path: 'privacy', Component: PrivacyPage },
       { path: '*', Component: NotFoundPage },
+    ],
+  },
+  {
+    Component: RequireSession,
+    children: [
+      {
+        Component: PortalLayout,
+        children: [
+          { path: '/portal', Component: DashboardPage },
+          { path: '/portal/household', Component: HouseholdPage },
+          { path: '/portal/directory', Component: DirectoryPage },
+          { path: '/portal/documents', Component: DocumentsPage },
+        ],
+      },
+    ],
+  },
+  {
+    element: <RequireSession role="admin" />,
+    children: [
+      {
+        Component: PortalLayout,
+        children: [
+          { path: '/admin', Component: AdminOverviewPage },
+          { path: '/admin/people', Component: AdminPeoplePage },
+          { path: '/admin/events', Component: AdminEventsPage },
+          { path: '/admin/content', Component: AdminContentPage },
+          { path: '/admin/messages', Component: AdminMessagesPage },
+        ],
+      },
     ],
   },
 ]

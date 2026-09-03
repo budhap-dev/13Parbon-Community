@@ -12,6 +12,14 @@ export type IconName =
   | 'whatsapp'
   | 'palette'
   | 'check'
+  | 'home'
+  | 'book'
+  | 'file'
+  | 'grid'
+  | 'calendar'
+  | 'layout'
+  | 'message'
+  | 'external'
 
 const paths: Record<IconName, ReactElement> = {
   users: (
@@ -50,6 +58,52 @@ const paths: Record<IconName, ReactElement> = {
     </>
   ),
   check: <path d="M5 12l4 4L19 6" />,
+  home: (
+    <>
+      <path d="M3 10.5 12 3l9 7.5" />
+      <path d="M5 10v10h14V10" />
+    </>
+  ),
+  book: (
+    <>
+      <path d="M4 5h16v14H4z" />
+      <path d="M8 9h8M8 13h5" />
+    </>
+  ),
+  file: (
+    <>
+      <path d="M13 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9z" />
+      <path d="M13 3v6h6" />
+    </>
+  ),
+  grid: (
+    <>
+      <rect x="3" y="3" width="7" height="9" />
+      <rect x="14" y="3" width="7" height="5" />
+      <rect x="14" y="12" width="7" height="9" />
+      <rect x="3" y="16" width="7" height="5" />
+    </>
+  ),
+  calendar: (
+    <>
+      <rect x="3" y="5" width="18" height="16" rx="2" />
+      <path d="M8 3v4M16 3v4M3 11h18" />
+    </>
+  ),
+  layout: (
+    <>
+      <path d="M4 5h16v14H4z" />
+      <path d="M4 10h16M9 10v9" />
+    </>
+  ),
+  message: <path d="M4 5h16v12H8l-4 4z" />,
+  external: (
+    <>
+      <path d="M14 4h6v6" />
+      <path d="M20 4 10 14" />
+      <path d="M18 13v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h6" />
+    </>
+  ),
 }
 
 type Props = Omit<SVGProps<SVGSVGElement>, 'name'> & { name: IconName; size?: number }

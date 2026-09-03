@@ -1,0 +1,252 @@
+/*
+ * The portal sits on the ink token rather than the site's sindoor ground: calmer behind
+ * tables, and it tells the viewer they have moved from the noticeboard into the back office.
+ */
+.shell {
+  display: grid;
+  grid-template-columns: 250px minmax(0, 1fr);
+  min-height: 100vh;
+  background: var(--color-ink);
+  color: var(--color-fg);
+}
+
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+  padding: 22px 16px;
+  background: var(--color-ink-hover);
+  border-right: 1px solid var(--color-border-faint);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0 8px;
+  color: var(--color-fg);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 19px;
+  letter-spacing: -0.02em;
+}
+
+.brand:hover {
+  color: var(--color-fg);
+}
+
+.emblem {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 2px solid var(--color-accent);
+  object-fit: cover;
+  background: #fff;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.groupLabel {
+  padding: 0 12px 6px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-fg-faint);
+}
+
+.link,
+.linkOn {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 9px;
+  color: var(--color-fg);
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.link:hover {
+  background: var(--color-hover-wash);
+  color: var(--color-fg);
+}
+
+.linkOn {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+.linkOn:hover {
+  color: var(--color-on-accent);
+}
+
+.count {
+  margin-left: auto;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 7px;
+  border-radius: 11px;
+  background: var(--color-photo-d);
+  color: var(--color-fg);
+  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.linkOn .count {
+  background: var(--color-ink);
+  color: var(--color-accent);
+}
+
+.externalMark {
+  margin-left: auto;
+  color: var(--color-fg-faint);
+  flex-shrink: 0;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.who {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 14px 12px 4px;
+  border-top: 1px solid var(--color-border-faint);
+}
+
+.whoName {
+  font-weight: 600;
+}
+
+.whoDetail {
+  font-size: 13px;
+  color: var(--color-fg-muted);
+  overflow-wrap: anywhere;
+}
+
+.rolePill {
+  align-self: flex-start;
+  margin-top: 5px;
+  padding: 3px 9px;
+  border-radius: 11px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: var(--color-hover-wash);
+  color: var(--color-fg-muted);
+}
+
+.rolePillAdmin {
+  composes: rolePill;
+  background: color-mix(in srgb, var(--color-accent) 22%, transparent);
+  color: var(--color-accent);
+}
+
+.signOut {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 0;
+  background: transparent;
+  color: var(--color-fg-muted);
+  font-weight: 600;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.signOut:hover {
+  color: var(--color-fg);
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  outline: none;
+}
+
+.preview {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  padding: 12px 34px;
+  background: color-mix(in srgb, var(--color-accent) 18%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-accent) 40%, transparent);
+  font-size: 14px;
+}
+
+.previewStrong {
+  font-weight: 600;
+  color: var(--color-accent);
+}
+
+.content {
+  flex: 1 0 auto;
+  padding: 28px 34px 56px;
+}
+
+.skip {
+  position: absolute;
+  top: -100px;
+  left: 16px;
+  z-index: 10;
+  padding: 12px 18px;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  font-weight: 600;
+}
+
+.skip:focus {
+  top: 16px;
+}
+
+@media (max-width: 900px) {
+  .shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .side {
+    border-right: 0;
+    border-bottom: 1px solid var(--color-border-faint);
+  }
+
+  .group {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .groupLabel {
+    width: 100%;
+    padding-bottom: 2px;
+  }
+
+  .who {
+    margin-top: 0;
+  }
+
+  .content,
+  .preview {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+}

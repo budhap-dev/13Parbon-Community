@@ -32,6 +32,17 @@ export const site = {
     yearStrip: 'public',
     photos: 'public',
   } satisfies Record<string, 'public' | 'members' | 'admins'>,
+  /**
+   * Other tools the committee runs. Separate apps with their own sign-in, linked from the
+   * portal so nobody has to remember the address.
+   */
+  tools: [
+    {
+      name: 'Event planning',
+      description: 'Tasks, teams and deadlines for putting an event on.',
+      href: 'https://13parbon-event-management.vercel.app/',
+    },
+  ],
   social: [
     { name: 'Facebook', icon: 'facebook', href: '#' },
     { name: 'Instagram', icon: 'instagram', href: '#' },

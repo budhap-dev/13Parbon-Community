@@ -12,10 +12,15 @@ type Common = {
   children: ReactNode
 }
 
-type AsLink = Common & { to: string; onClick?: () => void }
-type AsButton = Common & { to?: undefined } & Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'className' | 'children'>
+type AsLink = Common & { to: string; href?: undefined; onClick?: () => void }
+/** For addresses the router should not handle, such as mailto and external sites. */
+type AsExternal = Common & { href: string; to?: undefined; onClick?: () => void }
+type AsButton = Common & { to?: undefined; href?: undefined } & Omit<
+    ButtonHTMLAttributes<HTMLButtonElement>,
+    'className' | 'children'
+  >
 
-export type ButtonProps = AsLink | AsButton
+export type ButtonProps = AsLink | AsExternal | AsButton
 
 function classes(variant: ButtonVariant, size: ButtonSize, className?: string) {
   return [styles.button, styles[variant], styles[size], className].filter(Boolean).join(' ')
@@ -32,7 +37,20 @@ export function Button(props: ButtonProps) {
       </Link>
     )
   }
-  const { to: _to, variant: _v, size: _s, className: _c, children: _ch, type = 'button', ...rest } = props
+  if (typeof props.href === 'string') {
+    const external = /^https?:\/\//.test(props.href)
+    return (
+      <a
+        href={props.href}
+        className={cls}
+        onClick={props.onClick}
+        {...(external ? { target: '_blank', rel: 'noreferrer' } : {})}
+      >
+        {children}
+      </a>
+    )
+  }
+  const { to: _to, href: _h, variant: _v, size: _s, className: _c, children: _ch, type = 'button', ...rest } = props
   return (
     <button type={type} className={cls} {...rest}>
       {children}
