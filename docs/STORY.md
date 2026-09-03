@@ -1,6 +1,8 @@
 # 13Parbon Community — Project Story
 
 > **Status:** draft. Written before the requirements. Everything below is a starting point to react to, not a decision. Sections marked *assumption* are guesses to be confirmed or replaced.
+>
+> The portal structure and delivery phases now live in [PLAN.md](PLAN.md). Where the two disagree, the plan wins.
 
 ## The name
 
@@ -71,7 +73,7 @@ Ordered by how central each is to the story. Requirements will confirm, reorder 
 
 | Milestone | Outcome |
 |---|---|
-| **M0 — Foundation** *(this repo, today)* | React + TypeScript + Jest scaffold, CI, protected `main`, this story. |
+| **M0 — Foundation** *(this repo, today)* | React + TypeScript + Vitest scaffold, CI, protected `main`, this story. |
 | **M1 — Calendar** | Public list of upcoming events. No login required to look. |
 | **M2 — RSVP** | Members can sign in and say "we're coming" for their household. Organisers see counts. |
 | **M3 — Announcements & volunteers** | Pinned notices and volunteer slots on each event. |

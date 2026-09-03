@@ -1,0 +1,79 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 2px solid transparent;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-body);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    transform var(--motion-fast) ease,
+    background-color var(--motion-fast) ease,
+    color var(--motion-fast) ease;
+}
+
+.button:hover {
+  transform: translateY(-1px);
+}
+
+.md {
+  min-height: 56px;
+  padding: 0 30px;
+  font-size: 19px;
+}
+
+.sm {
+  min-height: 46px;
+  padding: 0 22px;
+  font-size: 17px;
+}
+
+.gold {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+.gold:hover {
+  background: var(--color-accent-hover);
+  color: var(--color-on-accent);
+}
+
+.cream {
+  background: var(--color-fg);
+  color: var(--color-bg);
+}
+.cream:hover {
+  background: #fff;
+  color: var(--color-bg);
+}
+
+.line {
+  background: transparent;
+  border-color: var(--color-fg);
+  color: var(--color-fg);
+}
+.line:hover {
+  background: var(--color-hover-wash);
+  color: var(--color-fg);
+}
+
+.ink {
+  background: var(--color-ink);
+  color: var(--color-on-ink);
+}
+.ink:hover {
+  background: var(--color-ink-hover);
+  color: var(--color-on-ink);
+}
+
+.inkLine {
+  background: transparent;
+  border-color: var(--color-ink);
+  color: var(--color-ink);
+}
+.inkLine:hover {
+  background: rgba(0, 0, 0, 0.08);
+  color: var(--color-ink);
+}
