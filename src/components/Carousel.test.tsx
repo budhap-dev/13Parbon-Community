@@ -17,8 +17,8 @@ describe('Carousel', () => {
   it('exposes a labelled carousel region with slides and captions', () => {
     render(<Carousel label="Last year" items={items} />)
     expect(screen.getByRole('region', { name: 'Last year' })).toBeInTheDocument()
-    expect(screen.getByRole('img', { name: 'First' })).toBeInTheDocument()
     expect(screen.getByText('One')).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: 'Third', hidden: true })).toBeInTheDocument()
     expect(screen.getByText('Photo 1 of 3')).toBeInTheDocument()
   })
 

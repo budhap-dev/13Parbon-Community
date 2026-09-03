@@ -38,3 +38,11 @@ export const site = {
     { name: 'WhatsApp', icon: 'whatsapp', href: '#' },
   ],
 } as const
+
+/**
+ * Values above that the committee has not filled in yet are written in brackets.
+ * Pages use this to avoid rendering a placeholder as a working link.
+ */
+export function isPlaceholder(value: string): boolean {
+  return value.trim().startsWith('[')
+}

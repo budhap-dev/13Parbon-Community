@@ -18,12 +18,14 @@ They share components, data types and the API layer. They differ in routes, navi
 
 | Role | Can |
 |---|---|
-| `visitor` | Read everything public. Submit contact form. Apply for membership. Register for public events. |
-| `member:pending` | Log in, see own application status. Nothing else. |
-| `member` | Everything in the member portal. Edit own profile. Register, volunteer, post in forum. |
-| `member:lapsed` | Read-only member portal, prompted to renew. **Decision:** or block entirely. |
-| `editor` | Manage content, news, events, media. No membership or role changes. |
-| `admin` | Everything. Approve members, assign roles, view reports. |
+| `visitor` | Read everything public. Submit contact form. Register for public events. Cannot create an account. |
+| `member` | Everything in the member portal. Edit own household. Register for events, see the directory and documents. |
+| `admin` | Everything a member can, plus add households, set roles, run events, edit content, read messages. |
+
+**Decided 2026-09-03: two roles only.** `editor`, `member:pending` and `member:lapsed` are dropped. Lapsed
+membership is a status on the household, not a role. Sign-in is **Google only**, and only for households an admin
+has added: there is no application form and nobody creates an account for themselves. A Google address that
+matches no household is turned away and listed for the committee.
 
 Permissions live in one place (`src/lib/auth/permissions.ts`) as a `can(user, action, resource)` function so routes, buttons and API calls all ask the same question.
 
@@ -87,7 +89,7 @@ VolunteerRole   id, eventId?, title, description, slots, startsAt?, endsAt?, con
 VolunteerSignup id, roleId, memberId, status (signed_up|confirmed|completed|withdrawn)
 Page            id, slug, title, blocks[], updatedAt         (About, FAQ, mission)
 ContactMessage  id, name, email, subject, body, createdAt, handledBy?
-MembershipApplication  id, memberId, submittedAt, status, reviewedBy?, note?
+SignInAttempt   id, email, name, attemptedAt, resolved      (a Google account with no household)
 ```
 
 Types live in `src/domain/*.ts` and are the contract between UI and whatever backend we pick.
@@ -125,13 +127,13 @@ The frontend is built against the `lib/api` interface and a mock adapter, so pha
 
 | Option | Fit |
 |---|---|
-| **Supabase** (Postgres, auth, storage, row-level security) | Recommended. Fastest path for auth, files and relational data. Free tier is enough for a community. |
+| **Supabase** (Postgres, auth, storage, row-level security) | Recommended and provisionally agreed (2026-09-03), to be set up when phase 2 starts. Fastest path for auth, files and relational data. Free tier is enough for a community; note it pauses after a week idle. |
 | Firebase | Fine, but document model fights the relational shape above. |
 | Custom API (Node/.NET) | Most control, most work. Only if you already have one. |
 
-### Hosting — **decision**
+### Hosting — **decided: Vercel** (2026-09-03)
 
-Netlify or Vercel for the SPA (free, preview deploys per PR, SPA fallback routing). GitHub Pages works but needs a 404 redirect trick for client routes.
+Production builds from `main` at https://13parbon.vercel.app, with a preview URL on every PR. `vercel.json` rewrites every route to `index.html` for client-side routing. Netlify config is kept in the repo as a fallback.
 
 ## 6. Cross-cutting concerns
 
@@ -161,8 +163,8 @@ Each phase is shippable on its own and lands as a series of small PRs.
 | Phase | Scope | Exit criteria |
 |---|---|---|
 | **0 — Foundation** ✅ | Scaffold, CI, protected main, story | Done 2026-09-03 |
-| **1 — Public site** | Router, layouts, design tokens, Home, About, Events list & detail, News, Gallery, Contact. Mock data. Deployed. | Visitor can browse everything with mock content. Lighthouse ≥ 90. |
-| **2 — Identity & membership** | Backend chosen. Auth. Join flow. Admin approves. Member dashboard. Profile. Membership status. | A real person can apply, be approved, log in, see dashboard. |
+| **1 — Public site** ✅ | Router, layouts, design tokens, Home, About, Events list & detail, News, Gallery, Contact. Mock data. Deployed. | Done 2026-09-03. Live on Vercel; Lighthouse 100/100/100/100 desktop. |
+| **2 — Identity & membership** | Supabase project. Contact writes live (adapter and schema already in the repo). Google sign-in. Admin adds households and sets roles. Member dashboard, household, directory, documents. | A committee member adds a household; that household signs in with Google and sees their dashboard. |
 | **3 — Events end to end** | Admin creates events. Registration (member + guest). Countdown. Attendance tracking. Volunteer roles and sign-up. | Organiser runs a real event through the app. |
 | **4 — Content & media** | Admin CMS for pages, announcements, news, newsletters. Media upload, albums, moderation. | Committee publishes without a developer. |
 | **5 — Community** | Member directory with privacy controls, groups. Documents library. Forum with moderation. | Members find each other and talk without WhatsApp. |
@@ -183,9 +185,9 @@ Rough order of effort: 1 < 2 ≈ 4 < 3 < 5 < 6. Phase 1 starts as soon as this p
 
 ## 10. Decisions needed before phase 2
 
-1. Backend: Supabase, Firebase, or custom?
-2. Hosting: Netlify, Vercel, or other?
-3. Auth: email + password, magic link, Google, or invite-only?
+1. Backend: Supabase, provisionally agreed. Confirm when phase 2 starts.
+2. ~~Hosting~~ Vercel, done.
+3. ~~Auth~~ Google sign-in, invitation only. Decided 2026-09-03.
 4. One community or multi-tenant platform?
 5. Membership: free, paid, or tiers? If paid, payments in-app (Stripe) or offline?
 6. Styling: CSS Modules (default) or Tailwind?

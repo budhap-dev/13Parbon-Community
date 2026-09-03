@@ -3,7 +3,7 @@ import { AboutPage } from '@/features/about'
 import { ContactPage } from '@/features/contact'
 import { EventPage, EventsPage } from '@/features/events'
 import { AlbumPage, GalleryPage } from '@/features/gallery'
-import { JoinPage, LoginPage } from '@/features/membership'
+import { LoginPage } from '@/features/membership'
 import { PrivacyPage } from '@/features/privacy'
 import { HomePage } from '@/features/home'
 import { ArticlePage, NewsPage } from '@/features/news'
@@ -24,7 +24,6 @@ export const routes: RouteObject[] = [
       { path: 'news/:slug', Component: ArticlePage },
       { path: 'about', Component: AboutPage },
       { path: 'contact', Component: ContactPage },
-      { path: 'join', Component: JoinPage },
       { path: 'login', Component: LoginPage },
       { path: 'privacy', Component: PrivacyPage },
       { path: '*', Component: NotFoundPage },

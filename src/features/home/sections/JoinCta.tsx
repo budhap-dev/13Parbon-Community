@@ -1,8 +1,11 @@
-import { site } from '@/app/site'
 import { Button } from '@/components/Button'
 import { Container } from '@/components/Container'
 import styles from '../Home.module.css'
 
+/**
+ * Membership is by invitation while the community gets started, so this asks people to
+ * come to something rather than to fill in a form that does not exist.
+ */
 export function JoinCta() {
   return (
     <Container>
@@ -12,10 +15,11 @@ export function JoinCta() {
             Come for one evening.
           </h2>
           <p className={styles.joinText}>
-            Stay for the whole year. Membership is {site.membershipFee} a year per household.
+            Everyone is welcome at our programmes, member or not. Come along, say hello, and if you would like to
+            stay, talk to the committee.
           </p>
         </div>
-        <Button to="/join">Become a member</Button>
+        <Button to="/events">See what’s on</Button>
       </section>
     </Container>
   )

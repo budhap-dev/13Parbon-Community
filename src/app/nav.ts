@@ -12,5 +12,5 @@ export const footerNav: NavItem[] = [
   { label: 'Contact', to: '/contact' },
   { label: 'Privacy', to: '/privacy' },
   { label: 'Committee', to: '/about' },
-  { label: 'Member login', to: '/login' },
+  { label: 'Member sign-in', to: '/login' },
 ]

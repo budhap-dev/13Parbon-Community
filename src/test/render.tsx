@@ -14,6 +14,11 @@ export function createTestApi(): ApiClient {
   return createMockApi({ now: () => TEST_NOW })
 }
 
+/** A client whose submissions are treated as reaching the committee, for form tests. */
+export function createDeliveringTestApi(): ApiClient {
+  return { ...createTestApi(), delivers: true }
+}
+
 type DataProps = { children: ReactNode; api?: ApiClient; viewer?: Viewer }
 
 /** Query client, API and clock, without a router. Use with createMemoryRouter. */

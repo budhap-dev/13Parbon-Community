@@ -17,7 +17,7 @@ export function PhotoMosaic() {
           {photos.map((photo, i) => (
             <li key={photo.id} className={i === 0 ? styles.mosaicLead : styles.mosaicTile}>
               <figure className={styles.mosaicFigure}>
-                <img src={photo.url} alt={photo.caption ?? 'Community photo'} loading={i === 0 ? 'eager' : 'lazy'} className={styles.mosaicImage} />
+                <img src={photo.url} alt={photo.caption ? '' : 'Community photo'} loading={i === 0 ? 'eager' : 'lazy'} className={styles.mosaicImage} />
                 {photo.caption ? <figcaption className={styles.mosaicCaption}>{photo.caption}</figcaption> : null}
               </figure>
             </li>

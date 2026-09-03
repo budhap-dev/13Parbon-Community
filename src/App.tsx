@@ -1,10 +1,10 @@
 import { RouterProvider } from 'react-router'
 import { AppProviders } from '@/app/providers'
 import { createAppRouter } from '@/app/router'
-import { createMockApi } from '@/lib/api'
+import { createApi } from '@/lib/api'
 
-// Phase 1 ships against the mock adapter. Swap this for the real client at phase 2.
-const api = createMockApi()
+// Content from fixtures; submissions go to Supabase when it is configured. See src/lib/api/create.ts.
+const api = createApi()
 const router = createAppRouter()
 
 function App() {

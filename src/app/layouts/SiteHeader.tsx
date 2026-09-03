@@ -59,11 +59,8 @@ export function SiteHeader() {
           </ul>
           <div className={styles.actions}>
             <ThemeSwitcher />
-            <Link to="/login" className={styles.login}>
-              Member login
-            </Link>
-            <Button to="/join" size="sm">
-              Join us
+            <Button to="/login" size="sm">
+              Member sign-in
             </Button>
           </div>
         </nav>

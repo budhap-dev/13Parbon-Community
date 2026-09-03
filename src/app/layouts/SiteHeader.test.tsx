@@ -19,7 +19,7 @@ describe('SiteHeader', () => {
     const nav = screen.getByRole('navigation', { name: 'Main' })
     expect(nav).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Gallery' })).toHaveAttribute('aria-current', 'page')
-    expect(screen.getByRole('link', { name: 'Join us' })).toHaveAttribute('href', '/join')
+    expect(screen.getByRole('link', { name: 'Member sign-in' })).toHaveAttribute('href', '/login')
     expect(screen.getByRole('button', { name: /^Theme/ })).toBeInTheDocument()
     expect(screen.getByRole('banner')).not.toHaveAttribute('data-hidden')
   })

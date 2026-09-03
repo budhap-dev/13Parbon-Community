@@ -1,6 +1,5 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import type { ContactInput } from '@/domain/contact'
-import type { MembershipApplicationInput } from '@/domain/membership'
 import { useApi } from './context'
 
 export function useNextEvent() {
@@ -55,11 +54,6 @@ export function useNewsletters() {
 export function useSendContact() {
   const api = useApi()
   return useMutation({ mutationFn: (input: ContactInput) => api.contact.send(input) })
-}
-
-export function useApplyForMembership() {
-  const api = useApi()
-  return useMutation({ mutationFn: (input: MembershipApplicationInput) => api.membership.apply(input) })
 }
 
 export function useFestivals() {
