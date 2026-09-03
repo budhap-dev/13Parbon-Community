@@ -41,6 +41,22 @@ export function formatLongDate(iso: string, locale = 'en-GB'): string {
   )
 }
 
+/** "5:00 pm" */
+export function formatTime(iso: string, locale = 'en-GB'): string {
+  return new Intl.DateTimeFormat(locale, { hour: 'numeric', minute: '2-digit', hour12: true }).format(new Date(iso))
+}
+
+/** "October 2026", for grouping a calendar by month. */
+export function formatMonthYear(iso: string, locale = 'en-GB'): string {
+  return new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' }).format(new Date(iso))
+}
+
+/** "2026-10", a sortable key for the month an ISO timestamp falls in. */
+export function monthKey(iso: string): string {
+  const date = new Date(iso)
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+}
+
 export type Countdown = { value: string; label: string }
 
 /** Turns a day count into the two-line countdown shown on the next-festival card. */

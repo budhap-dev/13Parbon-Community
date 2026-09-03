@@ -1,0 +1,68 @@
+.card,
+.cardPast {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 230px;
+  padding: 28px;
+  border-radius: var(--radius-card);
+  background: var(--color-bg-raised);
+  transition: background-color var(--motion-fast) ease;
+}
+
+.card:hover,
+.cardPast:hover {
+  background: var(--color-bg-raised-hover);
+}
+
+.cardPast {
+  opacity: 0.8;
+}
+
+.stamp {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 40px;
+  line-height: 1;
+  color: var(--color-accent);
+}
+
+.title {
+  font-size: 28px;
+  line-height: 1.1;
+}
+
+/* The whole card is the link target. */
+.titleLink {
+  color: var(--color-fg);
+}
+
+.titleLink::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+.titleLink:hover {
+  color: var(--color-fg);
+}
+
+.meta {
+  font-size: 17px;
+  color: var(--color-fg-muted);
+}
+
+.action {
+  margin-top: auto;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--color-accent);
+}
+
+@media (max-width: 960px) {
+  .card,
+  .cardPast {
+    min-height: 0;
+  }
+}
