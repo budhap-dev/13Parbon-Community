@@ -1,8 +1,8 @@
 import { useLocation, useNavigate } from 'react-router'
-import { site } from '@/app/site'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { Button } from '@/components/Button'
 import { Container } from '@/components/Container'
+import { useSiteText } from '@/lib/api'
 import { previewAccounts, previewEnabled } from '@/lib/auth/previewAccounts'
 import { useSession } from '@/lib/auth/session'
 import styles from './Membership.module.css'
@@ -23,6 +23,7 @@ function GoogleMark() {
  * added. Until that exists, the preview accounts below let the portal be walked through.
  */
 export function LoginPage() {
+  const text = useSiteText()
   useDocumentTitle('Member sign-in')
   const { signIn } = useSession()
   const navigate = useNavigate()
@@ -49,7 +50,7 @@ export function LoginPage() {
 
       <p className={styles.intro}>
         Membership is by invitation while we get started, so there is no sign-up form. If you would like to join
-        {site.town.trim().startsWith('[') ? ' the community' : ` us in ${site.town}`}, send the committee a message
+        {text.town.trim().startsWith('[') ? ' the community' : ` us in ${text.town}`}, send the committee a message
         and someone will be in touch.
       </p>
       <div className={styles.cta}>

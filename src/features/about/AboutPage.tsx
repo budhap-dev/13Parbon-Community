@@ -3,9 +3,11 @@ import { site } from '@/app/site'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { Button } from '@/components/Button'
 import { Container } from '@/components/Container'
+import { useSiteText } from '@/lib/api'
 import styles from './About.module.css'
 
 export function AboutPage() {
+  const text = useSiteText()
   useDocumentTitle('About us')
 
   return (
@@ -15,8 +17,8 @@ export function AboutPage() {
           <h1 id="about-title" className={styles.title}>
             About us
           </h1>
-          <p className={styles.lead}>{site.tagline}</p>
-          <p className={styles.lead}>{site.mission}</p>
+          <p className={styles.lead}>{text.tagline}</p>
+          <p className={styles.lead}>{text.mission}</p>
           <div className={styles.cta}>
             <Button to="/events" variant="cream" size="sm">
               What’s on

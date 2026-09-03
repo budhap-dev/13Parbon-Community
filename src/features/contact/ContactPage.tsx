@@ -6,7 +6,7 @@ import { Container } from '@/components/Container'
 import { Icon } from '@/components/Icon'
 import { NotConnected } from '@/components/NotConnected'
 import { validateContact, type ContactErrors, type ContactInput } from '@/domain/contact'
-import { useApi, useSendContact } from '@/lib/api'
+import { useApi, useSendContact, useSiteText } from '@/lib/api'
 import styles from './Contact.module.css'
 
 const empty: ContactInput = { name: '', email: '', subject: '', message: '' }
@@ -17,6 +17,7 @@ export function ContactPage() {
   const [values, setValues] = useState<ContactInput>(empty)
   const [errors, setErrors] = useState<ContactErrors>({})
   const send = useSendContact()
+  const text = useSiteText()
   const { delivers } = useApi()
 
   const update = (field: keyof ContactInput) => (event: { target: { value: string } }) => {
@@ -74,7 +75,7 @@ export function ContactPage() {
         </p>
 
         {!delivers ? (
-          <NotConnected action="send a message" />
+          <NotConnected action="send a message" email={text.email} />
         ) : send.isSuccess ? (
           <section className={styles.sent} aria-live="polite">
             <h2 className={styles.sentTitle}>Thank you, {send.data.name.trim().split(' ')[0]}.</h2>
@@ -122,11 +123,11 @@ export function ContactPage() {
             Find us
           </h2>
           <address className={styles.address}>
-            {site.venue}
+            {text.venue}
             <br />
-            {site.address}
+            {text.address}
             <br />
-            {isPlaceholder(site.email) ? site.email : <a href={`mailto:${site.email}`}>{site.email}</a>}
+            {isPlaceholder(text.email) ? text.email : <a href={`mailto:${text.email}`}>{text.email}</a>}
           </address>
           <div className={styles.map}>A map appears here once the venue address is confirmed.</div>
         </section>
