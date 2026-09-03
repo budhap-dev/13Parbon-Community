@@ -19,7 +19,8 @@ describe('SiteHeader', () => {
     const nav = screen.getByRole('navigation', { name: 'Main' })
     expect(nav).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Gallery' })).toHaveAttribute('aria-current', 'page')
-    expect(screen.getByRole('link', { name: 'Member sign-in' })).toHaveAttribute('href', '/login')
+    // Parked for the MVP: the route still works, it is simply not advertised.
+    expect(screen.queryByRole('link', { name: 'Member sign-in' })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: /^Theme/ })).toBeInTheDocument()
     expect(screen.getByRole('banner')).not.toHaveAttribute('data-hidden')
   })
