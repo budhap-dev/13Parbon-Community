@@ -3,18 +3,15 @@ import userEvent from '@testing-library/user-event'
 import { Link, MemoryRouter } from 'react-router'
 import { ThemeProvider, useTheme } from '@/app/theme/ThemeContext'
 import type { ThemeName } from '@/app/theme/themes'
-import { TestDataProviders } from '@/test/render'
 import { Hero } from './Hero'
 
 function renderHero(theme: ThemeName) {
   return render(
-    <TestDataProviders>
-      <MemoryRouter>
-        <ThemeProvider initialTheme={theme}>
-          <Hero />
-        </ThemeProvider>
-      </MemoryRouter>
-    </TestDataProviders>,
+    <MemoryRouter>
+      <ThemeProvider initialTheme={theme}>
+        <Hero />
+      </ThemeProvider>
+    </MemoryRouter>,
   )
 }
 
@@ -53,14 +50,12 @@ describe('Hero', () => {
       )
     }
     render(
-      <TestDataProviders>
-        <MemoryRouter>
-          <ThemeProvider initialTheme="festival">
-            <Hero />
-            <Switch />
-          </ThemeProvider>
-        </MemoryRouter>
-      </TestDataProviders>,
+      <MemoryRouter>
+        <ThemeProvider initialTheme="festival">
+          <Hero />
+          <Switch />
+        </ThemeProvider>
+      </MemoryRouter>,
     )
     const before = screen.getByRole('img', { name: '13Parbon Community logo' })
     await userEvent.click(screen.getByRole('button', { name: 'holi' }))
@@ -70,14 +65,12 @@ describe('Hero', () => {
 
   it('reassembles the logo when the viewer comes back to home', async () => {
     render(
-      <TestDataProviders>
-        <MemoryRouter>
-          <ThemeProvider>
-            <Hero />
-            <Link to="/">home</Link>
-          </ThemeProvider>
-        </MemoryRouter>
-      </TestDataProviders>,
+      <MemoryRouter>
+        <ThemeProvider>
+          <Hero />
+          <Link to="/">home</Link>
+        </ThemeProvider>
+      </MemoryRouter>,
     )
     const before = screen.getByRole('img', { name: '13Parbon Community logo' })
     await userEvent.click(screen.getByRole('link', { name: 'home' }))

@@ -1,9 +1,4 @@
 import { isValidContact, type ContactInput, type ContactMessage } from '@/domain/contact'
-import {
-  isValidEventRegistration,
-  type EventRegistration,
-  type EventRegistrationInput,
-} from '@/domain/event-registration'
 import type { ApiClient } from './types'
 
 export type SupabaseConfig = { url: string; anonKey: string }
@@ -54,62 +49,14 @@ async function insert<T>(config: SupabaseConfig, table: string, row: object, doF
 
 type ContactRow = { id: string; name: string; email: string; subject: string; message: string; created_at: string }
 
-type EventRegistrationRow = {
-  id: string
-  event_slug: string
-  household_name: string
-  email: string
-  phone: string | null
-  adults: number
-  children: number
-  helping: string | null
-  notes: string | null
-  registered_at: string
-}
-
 /**
- * Wraps a base client so that the things a visitor writes, a contact message and an event
- * registration, go to Supabase, while everything else keeps coming from the base. Content
- * stays in fixtures until the admin portal exists.
+ * Wraps a base client so that contact messages go to Supabase while everything else
+ * keeps coming from the base. Content stays in fixtures until the admin portal exists.
  */
 export function withSupabaseWrites(base: ApiClient, config: SupabaseConfig, doFetch: PostJson = globalThis.fetch): ApiClient {
   return {
     ...base,
     delivers: true,
-    events: {
-      ...base.events,
-      async register(slug: string, input: EventRegistrationInput): Promise<EventRegistration> {
-        // Checked here as well as in the form, because this is the boundary the row crosses.
-        if (!isValidEventRegistration(input)) throw new Error('Please check the form and try again.')
-        const row = await insert<EventRegistrationRow>(
-          config,
-          'event_registrations',
-          {
-            event_slug: slug,
-            household_name: input.householdName.trim(),
-            email: input.email.trim(),
-            phone: input.phone.trim() || null,
-            adults: input.adults,
-            children: input.children,
-            helping: input.helping.trim() || null,
-            notes: input.notes.trim() || null,
-          },
-          doFetch,
-        )
-        return {
-          id: row.id,
-          eventSlug: row.event_slug,
-          householdName: row.household_name,
-          email: row.email,
-          phone: row.phone ?? '',
-          adults: row.adults,
-          children: row.children,
-          helping: row.helping ?? '',
-          notes: row.notes ?? '',
-          registeredAt: row.registered_at,
-        }
-      },
-    },
     contact: {
       ...base.contact,
       send: async (input: ContactInput): Promise<ContactMessage> => {

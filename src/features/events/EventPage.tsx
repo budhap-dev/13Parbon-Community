@@ -1,4 +1,5 @@
 import { Link, useParams } from 'react-router'
+import { site } from '@/app/site'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { Button } from '@/components/Button'
 import { Container } from '@/components/Container'
@@ -7,7 +8,6 @@ import { daysUntil, describeCountdown, formatLongDate, formatTime } from '@/doma
 import { NotFoundPage } from '@/features/placeholder'
 import { useEvent } from '@/lib/api'
 import { useNow } from '@/lib/clock'
-import { RegisterForm } from './RegisterForm'
 import styles from './Events.module.css'
 
 export function EventPage() {
@@ -56,8 +56,8 @@ export function EventPage() {
         ) : null}
         {!isPast ? (
           <div className={styles.actions}>
-            {event.registrationOpen ? (
-              <Button href="#register" variant="gold">
+            {event.registrationOpen && site.registrationFormUrl ? (
+              <Button href={site.registrationFormUrl} variant="gold">
                 Register the family
               </Button>
             ) : null}
@@ -66,17 +66,18 @@ export function EventPage() {
             </Button>
           </div>
         ) : null}
-        {!isPast && event.registrationOpen ? (
-          <div id="register">
-            <RegisterForm slug={event.slug} eventTitle={event.title} />
-          </div>
+        {!isPast && event.registrationOpen && !site.registrationFormUrl ? (
+          <p className={styles.note}>
+            Registration opens shortly. In the meantime, <Link to="/contact">tell the committee</Link> you are coming
+            and we will add you to the numbers.
+          </p>
         ) : null}
       </article>
 
       <aside className={styles.side}>
         {!isPast ? (
           <p className={styles.countdown}>
-            <span className="sr-only">{`${countdown.value} ${countdown.label}`}</span>
+          <span className="sr-only">{`${countdown.value} ${countdown.label}`}</span>
             <span className={styles.countValue} aria-hidden="true">
               {countdown.value}
             </span>

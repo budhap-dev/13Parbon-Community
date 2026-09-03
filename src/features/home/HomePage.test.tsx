@@ -31,10 +31,8 @@ describe('HomePage', () => {
     expect(within(card).getByText(/from Saturday 10 October/)).toBeInTheDocument()
     expect(within(card).getByText('31 households')).toBeInTheDocument()
     expect(within(card).getByText('37 days to go')).toBeInTheDocument()
-    expect(within(card).getByRole('link', { name: 'Register the family' })).toHaveAttribute(
-      'href',
-      '/events/mahalaya-cultural-programme-2026',
-    )
+    // No registration button until the committee's form has an address.
+    expect(within(card).queryByRole('link', { name: 'Register the family' })).not.toBeInTheDocument()
   })
 
   it('lists the three events after the featured one for members', async () => {
