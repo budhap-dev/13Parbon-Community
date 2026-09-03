@@ -6,12 +6,14 @@ import { Icon } from '@/components/Icon'
 import { publicNav } from '../nav'
 import { site } from '../site'
 import { ThemeSwitcher } from './ThemeSwitcher'
+import { useScrollHeader } from './useScrollHeader'
 import styles from './PublicLayout.module.css'
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false)
   const { pathname } = useLocation()
   const menuId = useId()
+  const { scrolled, hidden } = useScrollHeader(open)
 
   // Close the menu whenever the route changes, without an effect.
   const [lastPathname, setLastPathname] = useState(pathname)
@@ -21,7 +23,13 @@ export function SiteHeader() {
   }
 
   return (
-    <header className={styles.header}>
+    <header
+      className={[styles.header, scrolled ? styles.headerScrolled : '', hidden ? styles.headerHidden : '']
+        .filter(Boolean)
+        .join(' ')}
+      data-scrolled={scrolled || undefined}
+      data-hidden={hidden || undefined}
+    >
       <Container className={styles.bar}>
         <Link to="/" className={styles.brand} aria-label={`${site.name} home`}>
           <img src={site.emblem} alt="" width={40} height={40} className={styles.emblem} />
