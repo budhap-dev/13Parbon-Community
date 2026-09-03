@@ -58,6 +58,7 @@ export function withSupabaseWrites(base: ApiClient, config: SupabaseConfig, doFe
     ...base,
     delivers: true,
     contact: {
+      ...base.contact,
       send: async (input: ContactInput): Promise<ContactMessage> => {
         if (!isValidContact(input)) throw new Error('Please check the form and try again.')
         const row = await insert<ContactRow>(

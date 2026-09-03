@@ -56,6 +56,58 @@ export function useSendContact() {
   return useMutation({ mutationFn: (input: ContactInput) => api.contact.send(input) })
 }
 
+export function useHousehold(id: string | undefined) {
+  const api = useApi()
+  return useQuery({
+    queryKey: ['portal', 'household', id],
+    queryFn: () => api.portal.getHousehold(id ?? ''),
+    enabled: Boolean(id),
+  })
+}
+
+export function useHouseholds() {
+  const api = useApi()
+  return useQuery({ queryKey: ['portal', 'households'], queryFn: () => api.portal.listHouseholds() })
+}
+
+export function useDirectory() {
+  const api = useApi()
+  return useQuery({ queryKey: ['portal', 'directory'], queryFn: () => api.portal.listDirectory() })
+}
+
+export function useDocuments() {
+  const api = useApi()
+  return useQuery({ queryKey: ['portal', 'documents'], queryFn: () => api.portal.listDocuments() })
+}
+
+export function useHouseholdRegistrations(householdId: string | undefined) {
+  const api = useApi()
+  return useQuery({
+    queryKey: ['portal', 'registrations', 'household', householdId],
+    queryFn: () => api.portal.listRegistrationsForHousehold(householdId ?? ''),
+    enabled: Boolean(householdId),
+  })
+}
+
+export function useEventRegistrations(eventId: string | undefined) {
+  const api = useApi()
+  return useQuery({
+    queryKey: ['portal', 'registrations', 'event', eventId],
+    queryFn: () => api.portal.listRegistrationsForEvent(eventId ?? ''),
+    enabled: Boolean(eventId),
+  })
+}
+
+export function useSignInAttempts() {
+  const api = useApi()
+  return useQuery({ queryKey: ['portal', 'sign-in-attempts'], queryFn: () => api.portal.listSignInAttempts() })
+}
+
+export function useContactMessages() {
+  const api = useApi()
+  return useQuery({ queryKey: ['contact', 'messages'], queryFn: () => api.contact.listMessages() })
+}
+
 export function useFestivals() {
   const api = useApi()
   return useQuery({ queryKey: ['festivals'], queryFn: () => api.festivals.list() })
