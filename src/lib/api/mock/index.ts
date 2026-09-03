@@ -2,7 +2,6 @@ import { isUpcoming } from '@/domain/dates'
 import { isValidContact, type ContactMessage } from '@/domain/contact'
 import type { Event } from '@/domain/event'
 import type { AlbumWithMedia } from '@/domain/gallery'
-import { isValidApplication, type MembershipApplication } from '@/domain/membership'
 import type { ApiClient } from '../types'
 import { buildFixtures } from './fixtures'
 
@@ -34,7 +33,6 @@ export function createMockApi({ now = () => new Date(), latencyMs = 0 }: MockApi
       .sort((a, b) => b.startsAt.localeCompare(a.startsAt))
 
   const sentMessages: ContactMessage[] = []
-  const applications: MembershipApplication[] = []
 
   const withMedia = (album: (typeof fixtures.albums)[number]): AlbumWithMedia => {
     const media = fixtures.media.filter((m) => m.albumId === album.id && m.approved)
@@ -47,6 +45,7 @@ export function createMockApi({ now = () => new Date(), latencyMs = 0 }: MockApi
       .map(withMedia)
 
   return {
+    delivers: false,
     events: {
       listUpcoming: (limit = 10) => delay(upcomingEvents().slice(0, limit), latencyMs),
       listPast: (limit = 10) => delay(pastEvents().slice(0, limit), latencyMs),
@@ -81,19 +80,6 @@ export function createMockApi({ now = () => new Date(), latencyMs = 0 }: MockApi
         const message: ContactMessage = { ...input, id: `cm-${sentMessages.length + 1}`, createdAt: now().toISOString() }
         sentMessages.push(message)
         return delay(message, latencyMs)
-      },
-    },
-    membership: {
-      apply: (input) => {
-        if (!isValidApplication(input)) return Promise.reject(new Error('Please check the form and try again.'))
-        const application: MembershipApplication = {
-          ...input,
-          id: `ma-${applications.length + 1}`,
-          status: 'pending',
-          submittedAt: now().toISOString(),
-        }
-        applications.push(application)
-        return delay(application, latencyMs)
       },
     },
     volunteering: {

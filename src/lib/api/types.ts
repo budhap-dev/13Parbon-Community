@@ -2,7 +2,6 @@ import type { Event } from '@/domain/event'
 import type { Festival } from '@/domain/festival'
 import type { AlbumWithMedia, Media } from '@/domain/gallery'
 import type { ContactInput, ContactMessage } from '@/domain/contact'
-import type { MembershipApplication, MembershipApplicationInput } from '@/domain/membership'
 import type { Announcement, NewsPost, Newsletter } from '@/domain/news'
 import type { VolunteerRole } from '@/domain/volunteer'
 
@@ -11,6 +10,11 @@ import type { VolunteerRole } from '@/domain/volunteer'
  * Components never call fetch; they go through this client via hooks.
  */
 export interface ApiClient {
+  /**
+   * Whether what a visitor submits actually reaches the committee. False on the mock,
+   * so pages can offer email instead of pretending a message was delivered.
+   */
+  readonly delivers: boolean
   events: {
     /** Published, public events from today onwards, soonest first. */
     listUpcoming(limit?: number): Promise<Event[]>
@@ -42,10 +46,6 @@ export interface ApiClient {
   contact: {
     /** Sends a message to the committee. Rejects with an Error when the input is invalid. */
     send(input: ContactInput): Promise<ContactMessage>
-  }
-  membership: {
-    /** Submits a membership application for the committee to approve. Rejects when invalid. */
-    apply(input: MembershipApplicationInput): Promise<MembershipApplication>
   }
   volunteering: {
     /** Roles that still have free slots. */

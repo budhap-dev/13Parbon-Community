@@ -1,11 +1,12 @@
 import { useId, useState, type FormEvent } from 'react'
-import { site } from '@/app/site'
+import { isPlaceholder, site } from '@/app/site'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { Button } from '@/components/Button'
 import { Container } from '@/components/Container'
 import { Icon } from '@/components/Icon'
+import { NotConnected } from '@/components/NotConnected'
 import { validateContact, type ContactErrors, type ContactInput } from '@/domain/contact'
-import { useSendContact } from '@/lib/api'
+import { useApi, useSendContact } from '@/lib/api'
 import styles from './Contact.module.css'
 
 const empty: ContactInput = { name: '', email: '', subject: '', message: '' }
@@ -16,6 +17,7 @@ export function ContactPage() {
   const [values, setValues] = useState<ContactInput>(empty)
   const [errors, setErrors] = useState<ContactErrors>({})
   const send = useSendContact()
+  const { delivers } = useApi()
 
   const update = (field: keyof ContactInput) => (event: { target: { value: string } }) => {
     setValues((current) => ({ ...current, [field]: event.target.value }))
@@ -71,7 +73,9 @@ export function ContactPage() {
           every message.
         </p>
 
-        {send.isSuccess ? (
+        {!delivers ? (
+          <NotConnected action="send a message" />
+        ) : send.isSuccess ? (
           <section className={styles.sent} aria-live="polite">
             <h2 className={styles.sentTitle}>Thank you, {send.data.name.trim().split(' ')[0]}.</h2>
             <p className={styles.sentText}>
@@ -122,7 +126,7 @@ export function ContactPage() {
             <br />
             {site.address}
             <br />
-            <a href={`mailto:${site.email}`}>{site.email}</a>
+            {isPlaceholder(site.email) ? site.email : <a href={`mailto:${site.email}`}>{site.email}</a>}
           </address>
           <div className={styles.map}>A map appears here once the venue address is confirmed.</div>
         </section>

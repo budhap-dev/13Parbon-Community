@@ -60,13 +60,6 @@ describe('createMockApi', () => {
     await expect(api.contact.send({ name: '', email: '', subject: '', message: '' })).rejects.toThrow(/check the form/)
   })
 
-  it('accepts a membership application and rejects an invalid one', async () => {
-    const sent = await api.membership.apply({ householdName: 'The Sens', contactName: 'Rina Sen', email: 'rina@example.com', phone: '', adults: 2, children: 1, message: '' })
-    expect(sent.id).toBe('ma-1')
-    expect(sent.status).toBe('pending')
-    await expect(api.membership.apply({ householdName: '', contactName: '', email: '', phone: '', adults: 0, children: 0, message: '' })).rejects.toThrow(/check the form/)
-  })
-
   it('returns the soonest event as next', async () => {
     const next = await api.events.getNext()
     expect(next?.slug).toBe('mahalaya-cultural-programme-2026')
