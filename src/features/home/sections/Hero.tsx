@@ -1,3 +1,4 @@
+import { useLocation } from 'react-router'
 import { site } from '@/app/site'
 import { Backdrop } from '@/app/theme/backdrops'
 import { useTheme } from '@/app/theme/ThemeContext'
@@ -9,6 +10,7 @@ import styles from '../Home.module.css'
 
 export function Hero() {
   const { theme } = useTheme()
+  const { key: navigationKey } = useLocation()
   const heroImage = themes.find((t) => t.id === theme)?.heroImage
 
   return (
@@ -36,7 +38,8 @@ export function Hero() {
           </div>
         </div>
         <div className={styles.heroLogo}>
-          <LogoAssembly />
+          {/* Remounting restarts the CSS animation: on every arrival at home and on each theme change. */}
+          <LogoAssembly key={`${theme}:${navigationKey}`} />
         </div>
       </Container>
     </section>
