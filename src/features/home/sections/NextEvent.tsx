@@ -51,14 +51,15 @@ export function NextEvent() {
             </Button>
           </div>
         </div>
-        <div className={styles.countdown} aria-label={`${countdown.value} ${countdown.label}`}>
+        <p className={styles.countdown}>
+          <span className="sr-only">{`${countdown.value} ${countdown.label}`}</span>
           <span className={styles.countValue} aria-hidden="true">
             {countdown.value}
           </span>
           <span className={styles.countLabel} aria-hidden="true">
             {countdown.label}
           </span>
-        </div>
+        </p>
       </section>
     </Container>
   )

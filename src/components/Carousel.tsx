@@ -87,7 +87,7 @@ export function Carousel({ label, items, autoAdvanceMs = 0 }: Props) {
             aria-hidden={i !== index}
           >
             <figure className={styles.figure}>
-              <img className={styles.image} src={item.src} alt={item.alt} loading={i === 0 ? 'eager' : 'lazy'} />
+              <img className={styles.image} src={item.src} alt={item.caption ? '' : item.alt} loading={i === 0 ? 'eager' : 'lazy'} />
               {item.caption ? <figcaption className={styles.caption}>{item.caption}</figcaption> : null}
             </figure>
           </li>

@@ -18,7 +18,8 @@ describe('HomePage', () => {
   it('shows the public MVP: next event and photos, but no calendar for visitors', async () => {
     renderWithProviders(<HomePage />)
     const mosaic = await screen.findByRole('region', { name: 'Moments from our year' })
-    expect(within(mosaic).getAllByRole('img')).toHaveLength(5)
+    expect(mosaic.querySelectorAll('img')).toHaveLength(5)
+    expect(within(mosaic).getByText('Holi colours')).toBeInTheDocument()
     await screen.findByRole('region', { name: 'Photos from last year' })
     expect(await screen.findByText('Next event')).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Coming up' })).not.toBeInTheDocument()
@@ -30,7 +31,7 @@ describe('HomePage', () => {
     expect(within(card).getByText('Next event')).toBeInTheDocument()
     expect(within(card).getByText(/from Saturday 10 October/)).toBeInTheDocument()
     expect(within(card).getByText('31 households')).toBeInTheDocument()
-    expect(within(card).getByLabelText('37 days to go')).toBeInTheDocument()
+    expect(within(card).getByText('37 days to go')).toBeInTheDocument()
     expect(within(card).getByRole('link', { name: 'Register the family' })).toHaveAttribute(
       'href',
       '/events/mahalaya-cultural-programme-2026',
@@ -70,22 +71,22 @@ describe('HomePage', () => {
     renderWithProviders(<HomePage />)
     const carousel = await screen.findByRole('region', { name: 'Photos from last year' })
     expect(within(carousel).getAllByRole('listitem', { hidden: true }).filter((li) => li.getAttribute('aria-roledescription') === 'slide')).toHaveLength(6)
-    expect(within(carousel).getByRole('img', { name: 'Rabindrasangeet at the Poila Boishakh programme' })).toBeInTheDocument()
+    expect(within(carousel).getByText('Rabindrasangeet at the Poila Boishakh programme')).toBeInTheDocument()
     expect(screen.getAllByRole('link', { name: 'All albums' })[1]).toHaveAttribute('href', '/gallery')
   })
 
-  it('ends with the join call to action', () => {
+  it('ends by inviting people to an event rather than to a sign-up form', () => {
     renderWithProviders(<HomePage />)
-    expect(screen.getByRole('link', { name: 'Become a member' })).toHaveAttribute('href', '/join')
-    expect(screen.getByText(/Membership is \[fee\] a year per household/)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'See what’s on' })).toHaveAttribute('href', '/events')
+    expect(screen.getByText(/Everyone is welcome at our programmes/)).toBeInTheDocument()
   })
 
   it('hides data-driven sections when there is nothing to show', async () => {
     const empty: ApiClient = {
+      delivers: false,
       events: { listUpcoming: async () => [], listPast: async () => [], getNext: async () => null, getBySlug: async () => null },
       festivals: { list: async () => [] },
       gallery: { listRecentMedia: async () => [], listAlbums: async () => [], getAlbum: async () => null },
-      membership: { apply: async () => ({ id: 'x', householdName: '', contactName: '', email: '', phone: '', adults: 1, children: 0, message: '', status: 'pending', submittedAt: '' }) },
       contact: { send: async () => ({ id: 'x', name: '', email: '', subject: '', message: '', createdAt: '' }) },
       news: { listPosts: async () => [], getPost: async () => null, listAnnouncements: async () => [], listNewsletters: async () => [] },
       volunteering: { listOpenRoles: async () => [], listRolesForEvent: async () => [] },
