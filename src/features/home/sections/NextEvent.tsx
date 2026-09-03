@@ -1,4 +1,5 @@
 import { Button } from '@/components/Button'
+import { site } from '@/app/site'
 import { Container } from '@/components/Container'
 import { Icon } from '@/components/Icon'
 import { daysUntil, describeCountdown, formatLongDate } from '@/domain/dates'
@@ -41,8 +42,8 @@ export function NextEvent() {
             </p>
           ) : null}
           <div className={styles.eventActions}>
-            {event.registrationOpen ? (
-              <Button to={`/events/${event.slug}`} variant="ink" size="sm">
+            {event.registrationOpen && site.registrationFormUrl ? (
+              <Button href={site.registrationFormUrl} variant="ink" size="sm">
                 Register the family
               </Button>
             ) : null}

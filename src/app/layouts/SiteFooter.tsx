@@ -1,18 +1,16 @@
 import { Link } from 'react-router'
 import { Container } from '@/components/Container'
 import { Icon } from '@/components/Icon'
-import { useSiteText } from '@/lib/api'
 import { footerNav } from '../nav'
 import { site } from '../site'
 import styles from './PublicLayout.module.css'
 
 export function SiteFooter() {
-  const text = useSiteText()
   return (
     <footer className={styles.footer}>
       <Container className={styles.footerGrid}>
         <p className={styles.footerText}>
-          {site.name} · {text.town}
+          {site.name} · {site.town}
         </p>
         <ul className={styles.footerLinks}>
           {footerNav.map((item) => (
