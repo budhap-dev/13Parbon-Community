@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useState, type ReactNode } from 'react'
 import { ApiProvider, type ApiClient } from '@/lib/api'
 import { ClockProvider, type Clock } from '@/lib/clock'
+import { GoogleSignInProvider } from '@/lib/auth/GoogleSignIn'
 import { SessionProvider, type Session } from '@/lib/auth/session'
 import { ThemeProvider } from './theme/ThemeContext'
 import { defaultTheme, type ThemeName } from './theme/themes'
@@ -26,7 +27,9 @@ export function AppProviders({ api, theme = defaultTheme, now = () => new Date()
       <ApiProvider api={api}>
         <ClockProvider now={now}>
           <SessionProvider initial={session}>
-            <ThemeProvider initialTheme={theme}>{children}</ThemeProvider>
+            <GoogleSignInProvider>
+              <ThemeProvider initialTheme={theme}>{children}</ThemeProvider>
+            </GoogleSignInProvider>
           </SessionProvider>
         </ClockProvider>
       </ApiProvider>
