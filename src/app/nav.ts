@@ -1,8 +1,14 @@
-export type NavItem = { label: string; to: string }
+export type NavItem = {
+  label: string
+  to: string
+  /** Match this route exactly, rather than as a prefix. Needed for the home page. */
+  end?: boolean
+}
 
 export const publicNav: NavItem[] = [
+  { label: 'Home', to: '/', end: true },
   { label: 'Events', to: '/events' },
-  { label: 'Gallery', to: '/gallery' },
+  ...(site.showPhotos ? [{ label: 'Gallery', to: '/gallery' }] : []),
   { label: 'News', to: '/news' },
   { label: 'About', to: '/about' },
   { label: 'Contact', to: '/contact' },

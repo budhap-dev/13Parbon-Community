@@ -1,20 +1,31 @@
 import { useEffect, useState } from 'react'
 
 export type ScrollHeaderState = {
-  /** The page has scrolled past the top, so the bar can compact and pick up a backdrop. */
+  /** The page has scrolled past the top, so the bar can pick up a border. */
   scrolled: boolean
   /** The viewer is scrolling down, so the bar slides out of the way. */
   hidden: boolean
 }
 
-const COMPACT_AFTER = 24
-const HIDE_AFTER = 120
-const MIN_DELTA = 6
+/**
+ * Two thresholds rather than one, so the bar cannot flicker while the viewer hovers on the
+ * boundary. Anything that toggles a class on scroll needs this gap.
+ */
+const COMPACT_ON = 72
+const COMPACT_OFF = 24
+const HIDE_AFTER = 160
+const MIN_DELTA = 8
+/** Below this much scrollable page, hiding the bar is more startling than useful. */
+const MIN_SCROLLABLE = 1.6
 
 /**
- * Tracks scroll position and direction for a sticky header: compact once scrolled,
- * hidden while scrolling down, shown again as soon as the viewer scrolls up.
- * `pinned` forces the bar to stay visible, e.g. while the mobile menu is open.
+ * Tracks scroll position and direction for a sticky header: a border once scrolled, out of
+ * the way while scrolling down, back as soon as the viewer scrolls up.
+ * `pinned` forces the bar to stay put, for instance while the mobile menu is open.
+ *
+ * Nothing here may change the header's height. The header is in normal flow, so resizing it
+ * moves the page under the viewer, which moves the scroll position, which lands back here:
+ * a loop that reads as the bar jumping.
  */
 export function useScrollHeader(pinned = false): ScrollHeaderState {
   const [state, setState] = useState<ScrollHeaderState>({ scrolled: false, hidden: false })
@@ -27,16 +38,26 @@ export function useScrollHeader(pinned = false): ScrollHeaderState {
       ticking = false
       const y = window.scrollY
       const delta = y - lastY
-      const scrolled = y > COMPACT_AFTER
+      const worthHiding =
+        document.documentElement.scrollHeight > window.innerHeight * MIN_SCROLLABLE
+
       setState((current) => {
+        let scrolled = current.scrolled
+        if (y > COMPACT_ON) scrolled = true
+        else if (y < COMPACT_OFF) scrolled = false
+
         let hidden = current.hidden
-        if (y <= HIDE_AFTER) hidden = false
+        if (!worthHiding || y <= HIDE_AFTER) hidden = false
         else if (delta > MIN_DELTA) hidden = true
         else if (delta < -MIN_DELTA) hidden = false
+
         if (hidden === current.hidden && scrolled === current.scrolled) return current
         return { scrolled, hidden }
       })
-      lastY = y
+
+      // Only move the reference once the viewer has actually travelled, so momentum
+      // scrolling cannot creep past the threshold a pixel at a time.
+      if (Math.abs(delta) > MIN_DELTA) lastY = y
     }
 
     const onScroll = () => {

@@ -17,7 +17,7 @@ function renderAt(path: string) {
 describe('routes', () => {
   it('serves the home page at the root', async () => {
     renderAt('/')
-    expect(await screen.findByRole('region', { name: 'Moments from our year' })).toBeInTheDocument()
+    expect(await screen.findByRole('region', { name: 'Our year' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Skip to content' })).toHaveAttribute('href', '#main')
   })
 
@@ -39,7 +39,7 @@ describe('routes', () => {
 
   it('moves focus to the main content after navigating', async () => {
     renderAt('/')
-    await screen.findByRole('region', { name: 'Moments from our year' })
+    await screen.findByRole('region', { name: 'Our year' })
     await userEvent.click(screen.getByRole('link', { name: 'Events' }))
     expect(await screen.findByRole('heading', { level: 1, name: 'What’s on' })).toBeInTheDocument()
     expect(document.activeElement).toBe(screen.getByRole('main'))

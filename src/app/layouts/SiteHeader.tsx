@@ -51,7 +51,11 @@ export function SiteHeader() {
           <ul className={styles.links}>
             {publicNav.map((item) => (
               <li key={item.to}>
-                <NavLink to={item.to} className={({ isActive }) => (isActive ? styles.linkActive : styles.link)}>
+                <NavLink
+                  to={item.to}
+                  end={item.end}
+                  className={({ isActive }) => (isActive ? styles.linkActive : styles.link)}
+                >
                   {item.label}
                 </NavLink>
               </li>
