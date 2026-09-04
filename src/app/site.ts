@@ -79,12 +79,6 @@ export const site = {
   ],
   themeImageCredit: 'Photographs by Budhaditya Pandit',
   /**
-   * Where registering happens. A Google Form the committee runs, so there is no account to
-   * make and nothing for us to build. Null until the committee has one, and while it is
-   * null the site says registration opens shortly rather than offering a dead button.
-   */
-  registrationFormUrl: null as string | null,
-  /**
    * Where offers to help go. May be the same form as registration, or its own. Null sends
    * people to the contact page instead, which always works.
    */

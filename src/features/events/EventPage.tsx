@@ -1,5 +1,5 @@
 import { Link, useParams } from 'react-router'
-import { site } from '@/app/site'
+import { activeSocial, site } from '@/app/site'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { Button } from '@/components/Button'
 import { Container } from '@/components/Container'
@@ -17,6 +17,7 @@ function sameDay(a: string, b: string): boolean {
 }
 
 export function EventPage() {
+  const facebook = activeSocial().find((channel) => channel.name === 'Facebook')
   const { slug = '' } = useParams()
   const { data: event, isPending } = useEvent(slug)
   const now = useNow()
@@ -87,11 +88,6 @@ export function EventPage() {
         <p className={styles.summary}>{event.summary}</p>
         {!isPast ? (
           <div className={styles.actions}>
-            {event.registrationOpen && site.registrationFormUrl ? (
-              <Button href={site.registrationFormUrl} variant="gold">
-                Register the family
-              </Button>
-            ) : null}
             {event.volunteerCall ? (
               site.volunteerFormUrl ? (
                 <Button href={site.volunteerFormUrl} variant="line">
@@ -108,10 +104,14 @@ export function EventPage() {
             </Button>
           </div>
         ) : null}
-        {!isPast && event.registrationOpen && !site.registrationFormUrl ? (
+        {!isPast ? (
           <p className={styles.note}>
-            Registration opens shortly. In the meantime, <Link to="/contact">tell the committee</Link> you are coming
-            and we will add you to the numbers.
+            There is nothing to book. We put the details out on our WhatsApp group and{' '}
+            <a href={facebook?.href} target="_blank" rel="noreferrer">
+              Facebook page
+            </a>
+            , so keep an eye there. Or <Link to="/contact">tell the committee</Link> you are coming and we will
+            add you to the numbers.
           </p>
         ) : null}
       </article>

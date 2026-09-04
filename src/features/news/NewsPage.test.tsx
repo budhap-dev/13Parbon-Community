@@ -13,7 +13,7 @@ describe('NewsPage', () => {
       'Registrations are open for the Mahalaya cultural programme',
       'A Festival is Best Shared',
     ])
-    expect(within(notices).getByRole('link', { name: 'Register the family' })).toHaveAttribute(
+    expect(within(notices).getByRole('link', { name: 'What is happening that day' })).toHaveAttribute(
       'href',
       '/events/mahalaya-cultural-programme-2026',
     )

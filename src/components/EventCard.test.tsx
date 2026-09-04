@@ -25,18 +25,18 @@ function renderCard(event: Event, level?: 2 | 3) {
 }
 
 describe('EventCard', () => {
-  it('shows the date stamp, links the title and invites an RSVP when open', () => {
+  it('shows the date stamp and links the title through to the event', () => {
     renderCard(base)
     expect(screen.getByText('22 MAR')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Holi' })).toHaveAttribute('href', '/events/holi-2027')
     expect(screen.getByRole('heading', { level: 3 })).toBeInTheDocument()
-    expect(screen.getByText('RSVP for your family')).toBeInTheDocument()
+    // Nothing to book, so a card leads to the event rather than promising a form.
+    expect(screen.getByText('Details')).toBeInTheDocument()
   })
 
-  it('says Details when registration is closed and Look back for past events', () => {
+  it('honours the heading level, and says Look back for past events', () => {
     const { unmount } = renderCard({ ...base, registrationOpen: false }, 2)
     expect(screen.getByRole('heading', { level: 2 })).toBeInTheDocument()
-    expect(screen.getByText('Details')).toBeInTheDocument()
     unmount()
     renderCard({ ...base, status: 'past' })
     expect(screen.getByText('Look back')).toBeInTheDocument()

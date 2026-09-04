@@ -31,7 +31,7 @@ export function buildFixtures() {
         bengaliSubtitle: 'ঐতিহ্যের সাথে আধুনিকতা',
         english: 'Durga Puja: Then and Now — Tradition Meets Modernity',
       },
-      volunteerCall: 'We warmly welcome volunteers for our Cultural Programme on Saturday, 10 October. If you would like to be part of making the day special, please indicate this when registering.',
+      volunteerCall: 'We warmly welcome volunteers for our Cultural Programme on Saturday, 10 October. If you would like to be part of making the day special, please let us know.',
       status: 'published',
     },
     /*
@@ -205,12 +205,12 @@ export function buildFixtures() {
       audience: 'public',
       publishAt: '2026-08-28T09:00:00',
       expiresAt: '2026-10-10T17:00:00',
-      link: { label: 'Register the family', to: '/events/mahalaya-cultural-programme-2026' },
+      link: { label: 'What is happening that day', to: '/events/mahalaya-cultural-programme-2026' },
     },
     {
       id: 'an-volunteers',
       title: 'A Festival is Best Shared',
-      body: 'We warmly welcome volunteers for our Cultural Programme on Saturday, 10 October. If you would like to be part of making the day special, please indicate this when registering.',
+      body: 'We warmly welcome volunteers for our Cultural Programme on Saturday, 10 October. If you would like to be part of making the day special, please let us know.',
       pinned: false,
       audience: 'public',
       publishAt: '2026-09-01T09:00:00',

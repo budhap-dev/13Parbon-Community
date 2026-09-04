@@ -21,7 +21,7 @@ export function EventCard({ event, headingLevel = 3 }: { event: Event; headingLe
       <p className={styles.meta}>
         {event.venue} · {event.summary}
       </p>
-      <span className={styles.action}>{isPast ? 'Look back' : event.registrationOpen ? 'RSVP for your family' : 'Details'}</span>
+      <span className={styles.action}>{isPast ? 'Look back' : 'Details'}</span>
     </article>
   )
 }

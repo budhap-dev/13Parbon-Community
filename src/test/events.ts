@@ -27,7 +27,7 @@ export const testEvents: Event[] = [
       english: 'Durga Puja: Then and Now — Tradition Meets Modernity',
     },
     volunteerCall:
-      'We warmly welcome volunteers for our Cultural Programme on Saturday, 10 October. If you would like to be part of making the day special, please indicate this when registering.',
+      'We warmly welcome volunteers for our Cultural Programme on Saturday, 10 October. If you would like to be part of making the day special, please let us know.',
     status: 'published',
   },
   {
