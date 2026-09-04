@@ -4,11 +4,17 @@ import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { Button } from '@/components/Button'
 import { Container } from '@/components/Container'
 import { Icon } from '@/components/Icon'
+import { ThenNowCollage } from '@/components/ThenNowCollage'
 import { daysUntil, describeCountdown, formatLongDate, formatTime } from '@/domain/dates'
 import { NotFoundPage } from '@/features/placeholder'
 import { useEvent } from '@/lib/api'
 import { useNow } from '@/lib/clock'
 import styles from './Events.module.css'
+
+/** Whether an end time falls on the same day, so the date need not be repeated. */
+function sameDay(a: string, b: string): boolean {
+  return formatLongDate(a) === formatLongDate(b)
+}
 
 export function EventPage() {
   const { slug = '' } = useParams()
@@ -31,29 +37,54 @@ export function EventPage() {
 
   return (
     <Container className={styles.detail}>
-      <article className={styles.detailBody} aria-labelledby="event-title">
+      <header className={styles.head}>
         <Link to="/events" className={styles.crumb}>
           ← All events
         </Link>
         <h1 id="event-title" className={styles.detailTitle}>
           {event.title}
         </h1>
-        <div className={styles.when}>
-          <span className={styles.whenStrong}>
-            {formatLongDate(event.startsAt)}, {formatTime(event.startsAt)}
-            {event.endsAt ? ` to ${formatLongDate(event.endsAt) === formatLongDate(event.startsAt) ? '' : `${formatLongDate(event.endsAt)}, `}${formatTime(event.endsAt)}` : ''}
-          </span>
-          <span>{event.venue}</span>
-        </div>
-        <p className={styles.summary}>{event.summary}</p>
-        {event.householdsRegistered > 0 ? (
-          <p className={styles.households}>
-            <Icon name="users" size={20} />
+      </header>
+
+      {event.theme ? (
+          <section className={styles.theme} aria-labelledby="theme-label">
+            <p id="theme-label" className={styles.themeLabel}>
+              This year’s theme
+            </p>
+            <p lang="bn" className={styles.themeBengali}>
+              {event.theme.bengali}
+            </p>
+            {event.theme.bengaliSubtitle ? (
+              <p lang="bn" className={styles.themeBengaliSub}>
+                {event.theme.bengaliSubtitle}
+              </p>
+            ) : null}
+            {event.theme.english ? <p className={styles.themeEnglish}>{event.theme.english}</p> : null}
+            <ThenNowCollage
+              label="Calcutta then, Kolkata now"
+              images={site.themeImages}
+              credit={site.themeImageCredit}
+            />
+        </section>
+      ) : null}
+
+      <article className={styles.detailBody} aria-labelledby="event-title">
+        <ul className={styles.facts}>
+          <li className={styles.fact}>
+            <Icon name="clock" size={20} className={styles.factIcon} />
             <span>
-              <strong>{event.householdsRegistered} households</strong> {isPast ? 'came' : 'coming so far'}
+              <strong>{formatLongDate(event.startsAt)}</strong>
+              <br />
+              {formatTime(event.startsAt)}
+              {event.endsAt ? ` to ${sameDay(event.startsAt, event.endsAt) ? '' : `${formatLongDate(event.endsAt)}, `}${formatTime(event.endsAt)}` : ''}
             </span>
-          </p>
-        ) : null}
+          </li>
+          <li className={styles.fact}>
+            <Icon name="pin" size={20} className={styles.factIcon} />
+            <span>{event.venue}</span>
+          </li>
+        </ul>
+        <p className={styles.summary}>{event.summary}</p>
         {!isPast ? (
           <div className={styles.actions}>
             {event.registrationOpen && site.registrationFormUrl ? (

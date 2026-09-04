@@ -16,7 +16,13 @@ describe('EventPage', () => {
   it('shows the event, its countdown, registration and volunteer roles', async () => {
     renderEvent('mahalaya-cultural-programme-2026')
     expect(await screen.findByRole('heading', { level: 1, name: 'Cultural programme' })).toBeInTheDocument()
-    expect(screen.getByText(/Saturday 10 October, 5:00 pm to 9:30 pm/)).toBeInTheDocument()
+    const theme = screen.getByRole('region', { name: 'This year’s theme' })
+    expect(within(theme).getByText('দুর্গাপূজার সেকাল ও একাল')).toHaveAttribute('lang', 'bn')
+    expect(within(theme).getByText('ঐতিহ্যের সাথে আধুনিকতা')).toBeInTheDocument()
+    // In English too, since nobody has to be Bengali to come.
+    expect(within(theme).getByText('Durga Puja: Then and Now — Tradition Meets Modernity')).toBeInTheDocument()
+    expect(screen.getByText('Saturday 10 October')).toBeInTheDocument()
+    expect(screen.getByText(/1:30 pm to 9:30 pm/)).toBeInTheDocument()
     expect(screen.getByText('37 days to go')).toBeInTheDocument()
     // Registering happens on a form the committee runs; until its address is set, the page says so.
     expect(screen.queryByRole('link', { name: 'Register the family' })).not.toBeInTheDocument()
@@ -34,8 +40,6 @@ describe('EventPage', () => {
     expect(await screen.findByRole('heading', { level: 1 })).toHaveTextContent('Poila Boishakh cultural programme')
     expect(screen.queryByRole('link', { name: 'Register the family' })).not.toBeInTheDocument()
     expect(screen.queryByText(/days to go/)).not.toBeInTheDocument()
-    expect(screen.getByText('40 households')).toBeInTheDocument()
-    expect(screen.getByText('came')).toBeInTheDocument()
     expect(screen.queryByRole('region', { name: 'A Festival is Best Shared' })).not.toBeInTheDocument()
   })
 

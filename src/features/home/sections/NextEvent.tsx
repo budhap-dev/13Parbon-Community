@@ -2,7 +2,7 @@ import { Button } from '@/components/Button'
 import { site } from '@/app/site'
 import { Container } from '@/components/Container'
 import { Icon } from '@/components/Icon'
-import { daysUntil, describeCountdown, formatLongDate } from '@/domain/dates'
+import { daysUntil, describeCountdown, formatLongDate, formatTime } from '@/domain/dates'
 import { useNextEvent } from '@/lib/api'
 import { useNow } from '@/lib/clock'
 import styles from '../Home.module.css'
@@ -30,17 +30,25 @@ export function NextEvent() {
           <h2 id="next-event-title" className={styles.eventTitle}>
             {event.title}
           </h2>
-          <p className={styles.eventMeta}>
-            {event.venue} · from {formatLongDate(event.startsAt)} · {event.summary}
-          </p>
-          {event.householdsRegistered > 0 ? (
-            <p className={styles.households}>
-              <Icon name="users" size={20} />
-              <span>
-                <strong>{event.householdsRegistered} households</strong> coming so far
-              </span>
+          {event.theme ? (
+            <p lang="bn" className={styles.eventTheme}>
+              {event.theme.bengali}
+              {event.theme.bengaliSubtitle ? ` — ${event.theme.bengaliSubtitle}` : ''}
             </p>
           ) : null}
+          <ul className={styles.eventFacts}>
+            <li className={styles.eventFact}>
+              <Icon name="clock" size={19} className={styles.eventFactIcon} />
+              <span>
+                on {formatLongDate(event.startsAt)} at {formatTime(event.startsAt)}
+              </span>
+            </li>
+            <li className={styles.eventFact}>
+              <Icon name="pin" size={19} className={styles.eventFactIcon} />
+              <span>{event.venue}</span>
+            </li>
+          </ul>
+          <p className={styles.eventMeta}>{event.summary}</p>
           <div className={styles.eventActions}>
             {event.registrationOpen && site.registrationFormUrl ? (
               <Button href={site.registrationFormUrl} variant="ink" size="sm">

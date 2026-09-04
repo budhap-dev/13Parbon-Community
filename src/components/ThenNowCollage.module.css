@@ -1,0 +1,215 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/*
+ * One custom property drives the seam, the clip and the sweep, so the animation and the
+ * slider can never disagree. It has to be registered to be animatable at all.
+ */
+@property --seam {
+  syntax: '<percentage>';
+  inherits: true;
+  initial-value: 50%;
+}
+
+.frame,
+.frameHeld {
+  position: relative;
+  touch-action: pan-y;
+  overflow: hidden;
+  border-radius: var(--radius-tile);
+  background: var(--color-bg-raised);
+}
+
+.frame {
+  animation: sweep 18s ease-in-out infinite alternate;
+}
+
+@keyframes sweep {
+  from {
+    --seam: 16%;
+  }
+  to {
+    --seam: 84%;
+  }
+}
+
+.then,
+.now {
+  inset: 0;
+}
+
+/* সেকাল: the past, as an old photograph is. */
+.then {
+  filter: grayscale(1) contrast(1.06) brightness(0.94);
+}
+
+/* একাল: the present, in colour, leading. Dragging the seam right carries it forward. */
+.now {
+  position: absolute;
+  clip-path: inset(0 calc(100% - var(--seam)) 0 0);
+}
+
+/*
+ * Every photograph gets the same cell, at the ratio they were taken in, so none of them is
+ * reduced to a strip. Two across keeps them large enough to actually read.
+ */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.cell {
+  position: relative;
+  isolation: isolate;
+  margin: 0;
+  overflow: hidden;
+  aspect-ratio: 3 / 2;
+  background: var(--color-ink);
+}
+
+/* The whole picture is the button, so a tap anywhere on it opens it. */
+.open {
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: zoom-in;
+}
+
+.open:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: -3px;
+}
+
+.image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* A very slow drift, so a still photograph does not sit quite dead. */
+  animation: breathe 26s ease-in-out infinite alternate;
+}
+
+.cell:nth-child(even) /* The whole picture is the button, so a tap anywhere on it opens it. */
+.open {
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: zoom-in;
+}
+
+.open:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: -3px;
+}
+
+.image {
+  animation-duration: 32s;
+  animation-direction: alternate-reverse;
+}
+
+@keyframes breathe {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.06);
+  }
+}
+
+.cellCaption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 26px 12px 9px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.72), transparent);
+  color: #fff;
+  font-size: 13px;
+  line-height: 1.35;
+  text-wrap: pretty;
+}
+
+.seam {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--seam);
+  width: 2px;
+  margin-left: -1px;
+  background: var(--color-accent);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+}
+
+.handle {
+  position: absolute;
+  top: 50%;
+  left: var(--seam);
+  width: 42px;
+  height: 42px;
+  margin: -21px 0 0 -21px;
+  border: 2px solid var(--color-accent);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-ink) 74%, transparent);
+}
+
+.handle::before,
+.handle::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  margin-top: -5px;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+}
+
+.handle::before {
+  left: 9px;
+  border-right: 6px solid var(--color-accent);
+}
+
+.handle::after {
+  right: 9px;
+  border-left: 6px solid var(--color-accent);
+}
+
+.foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--color-fg-muted);
+}
+
+.hint {
+  font-size: 13px;
+  color: var(--color-fg-faint);
+}
+
+.credit {
+  font-size: 13px;
+  color: var(--color-fg-faint);
+}
+
+@media (max-width: 700px) {
+  .cellCaption {
+    font-size: 12px;
+    padding: 20px 9px 7px;
+  }
+}
