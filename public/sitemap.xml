@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Only pages that exist and are meant to be found. /gallery and /news are parked behind flags
+  in src/app/site.ts and /join was removed altogether, so none of the three belongs here until
+  they are back in the navigation.
+-->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://13parbon.vercel.app/</loc></url>
   <url><loc>https://13parbon.vercel.app/events</loc></url>
-  <url><loc>https://13parbon.vercel.app/gallery</loc></url>
-  <url><loc>https://13parbon.vercel.app/news</loc></url>
   <url><loc>https://13parbon.vercel.app/about</loc></url>
   <url><loc>https://13parbon.vercel.app/contact</loc></url>
-  <url><loc>https://13parbon.vercel.app/join</loc></url>
   <url><loc>https://13parbon.vercel.app/privacy</loc></url>
 </urlset>

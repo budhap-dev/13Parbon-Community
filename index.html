@@ -4,7 +4,33 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="13Parbon Community. Twelve months, thirteen festivals. See what is coming up, RSVP for your household, and lend a hand." />
+    <meta name="description" content="A Bengali cultural association in Leeds. Twelve months, thirteen festivals — see what is coming up and come along." />
+
+    <!--
+      What WhatsApp, Facebook and the rest show when somebody shares a link to the site. Their
+      crawlers do not run JavaScript, so these have to be here in the served HTML rather than
+      set by the app: whatever page is shared, this is the card that appears. The image is a
+      real file at an absolute address for the same reason — a relative path is not resolvable
+      by something fetching the page from outside.
+
+      Redraw the image with: node scripts/make-share-card.mjs
+    -->
+    <link rel="canonical" href="https://13parbon.vercel.app/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="13Parbon Community" />
+    <meta property="og:title" content="13Parbon Community" />
+    <meta property="og:description" content="A Bengali cultural association in Leeds. Twelve months, thirteen festivals — see what is coming up and come along." />
+    <meta property="og:url" content="https://13parbon.vercel.app/" />
+    <meta property="og:image" content="https://13parbon.vercel.app/brand/share-card.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="The 13Parbon Community logo beside the name and বারো মাসে তেরো পার্বণ" />
+    <meta property="og:locale" content="en_GB" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="13Parbon Community" />
+    <meta name="twitter:description" content="A Bengali cultural association in Leeds. Twelve months, thirteen festivals — see what is coming up and come along." />
+    <meta name="twitter:image" content="https://13parbon.vercel.app/brand/share-card.jpg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
