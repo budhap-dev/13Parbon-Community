@@ -39,6 +39,8 @@ describe('EventPage', () => {
     expect(within(help).getByText(/We warmly welcome volunteers/)).toBeInTheDocument()
     expect(within(help).getByText(/please let us know/)).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'Take a slot' })).not.toBeInTheDocument()
+    // Passing the event on is how people are actually invited to it.
+    expect(screen.getByRole('button', { name: /Share/ })).toBeInTheDocument()
     expect(document.title).toBe('Cultural programme · 13Parbon Community')
   })
 

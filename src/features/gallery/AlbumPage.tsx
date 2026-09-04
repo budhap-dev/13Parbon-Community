@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { Container } from '@/components/Container'
+import { LoadFailed } from '@/components/LoadFailed'
 import { Lightbox } from '@/components/Lightbox'
 import { NotFoundPage } from '@/features/placeholder'
 import { useAlbum } from '@/lib/api'
@@ -9,7 +10,7 @@ import styles from './Gallery.module.css'
 
 export function AlbumPage() {
   const { slug = '' } = useParams()
-  const { data: album, isPending } = useAlbum(slug)
+  const { data: album, isPending, isError, refetch } = useAlbum(slug)
   const [open, setOpen] = useState<number | null>(null)
   useDocumentTitle(album?.title)
 
@@ -17,6 +18,14 @@ export function AlbumPage() {
     return (
       <Container className={styles.page}>
         <p aria-busy="true">Loading…</p>
+      </Container>
+    )
+  }
+  // An album we could not fetch is not an album that does not exist.
+  if (isError) {
+    return (
+      <Container className={styles.page}>
+        <LoadFailed what="this album" onRetry={() => void refetch()} />
       </Container>
     )
   }

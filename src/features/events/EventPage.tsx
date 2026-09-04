@@ -4,6 +4,8 @@ import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { Button } from '@/components/Button'
 import { Container } from '@/components/Container'
 import { Icon } from '@/components/Icon'
+import { LoadFailed } from '@/components/LoadFailed'
+import { ShareButton } from '@/components/ShareButton'
 import { ThenNowCollage } from '@/components/ThenNowCollage'
 import { VenueMap } from '@/components/VenueMap'
 import { daysUntil, describeCountdown, formatLongDate, formatTime } from '@/domain/dates'
@@ -20,7 +22,7 @@ function sameDay(a: string, b: string): boolean {
 export function EventPage() {
   const facebook = activeSocial().find((channel) => channel.name === 'Facebook')
   const { slug = '' } = useParams()
-  const { data: event, isPending } = useEvent(slug)
+  const { data: event, isPending, isError, refetch } = useEvent(slug)
   const now = useNow()
   useDocumentTitle(event?.title)
 
@@ -28,6 +30,14 @@ export function EventPage() {
     return (
       <Container className={styles.detail}>
         <p aria-busy="true">Loading…</p>
+      </Container>
+    )
+  }
+  // Not the same as an event that does not exist: this one may well, we just could not reach it.
+  if (isError) {
+    return (
+      <Container className={styles.detail}>
+        <LoadFailed what="this event" onRetry={() => void refetch()} />
       </Container>
     )
   }
@@ -111,6 +121,7 @@ export function EventPage() {
             <Button to="/contact" variant="line">
               Ask a question
             </Button>
+            <ShareButton title={`${event.title} · ${site.name}`} text={event.summary} />
           </div>
         ) : null}
         {!isPast ? (

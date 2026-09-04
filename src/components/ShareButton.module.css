@@ -1,0 +1,25 @@
+.wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.icon {
+  margin-right: 8px;
+}
+
+.note {
+  font-size: 15px;
+  color: var(--color-fg-muted);
+  white-space: nowrap;
+}
+
+/* Present for a screen reader, invisible on the page. */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

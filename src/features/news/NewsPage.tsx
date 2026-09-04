@@ -1,6 +1,7 @@
 import { Link, useSearchParams } from 'react-router'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { Button } from '@/components/Button'
+import { LoadFailed } from '@/components/LoadFailed'
 import { Container } from '@/components/Container'
 import { Icon } from '@/components/Icon'
 import { formatLongDate } from '@/domain/dates'
@@ -16,7 +17,7 @@ export function NewsPage() {
   const [params] = useSearchParams()
   const tag = params.get('tag')
   const { data: announcements } = useAnnouncements()
-  const { data: posts, isPending } = useNewsPosts()
+  const { data: posts, isPending, isError, refetch } = useNewsPosts()
   const { data: newsletters } = useNewsletters()
 
   const tags = [...new Set((posts ?? []).flatMap((p) => p.tags))].sort()
@@ -74,6 +75,8 @@ export function NewsPage() {
             <p className={styles.empty} aria-busy="true">
               Loading…
             </p>
+          ) : isError ? (
+            <LoadFailed what="the latest posts" onRetry={() => void refetch()} />
           ) : shown.length === 0 ? (
             <p className={styles.empty}>Nothing here yet.</p>
           ) : (

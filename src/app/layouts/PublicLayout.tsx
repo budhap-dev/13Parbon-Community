@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { Outlet, ScrollRestoration, useLocation } from 'react-router'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { SiteFooter } from './SiteFooter'
 import { SiteHeader } from './SiteHeader'
 import styles from './PublicLayout.module.css'
@@ -27,7 +28,11 @@ export function PublicLayout() {
       </a>
       <SiteHeader />
       <main id="main" ref={mainRef} tabIndex={-1} className={styles.main}>
-        <Outlet />
+        {/* Keyed on the route: a page that threw should not keep the boundary tripped once
+            the viewer navigates somewhere else. */}
+        <ErrorBoundary key={pathname}>
+          <Outlet />
+        </ErrorBoundary>
       </main>
       <SiteFooter />
       <ScrollRestoration />

@@ -1,6 +1,7 @@
 import { Link, useSearchParams } from 'react-router'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { Container } from '@/components/Container'
+import { LoadFailed } from '@/components/LoadFailed'
 import { EventCard } from '@/components/EventCard'
 import { Icon } from '@/components/Icon'
 import { formatMonthYear, monthKey } from '@/domain/dates'
@@ -34,7 +35,7 @@ export function EventsPage() {
   const [params] = useSearchParams()
   const festivalId = params.get('festival')
   const { data: festivals } = useFestivals()
-  const { data: upcoming, isPending } = useUpcomingEvents(50)
+  const { data: upcoming, isPending, isError, refetch } = useUpcomingEvents(50)
   const { data: past } = usePastEvents(6)
 
   const matches = (event: Event) => !festivalId || event.festivalId === festivalId
@@ -80,6 +81,8 @@ export function EventsPage() {
         <p className={styles.empty} aria-busy="true">
           Loading the calendar…
         </p>
+      ) : isError ? (
+        <LoadFailed what="the calendar" onRetry={() => void refetch()} />
       ) : upcomingMonths.length === 0 ? (
         <p className={styles.empty}>
           {activeFestival ? `Nothing scheduled yet for ${activeFestival.name}. ` : 'Nothing scheduled yet. '}
