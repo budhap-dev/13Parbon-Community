@@ -1,4 +1,5 @@
 import { createBrowserRouter, type RouteObject } from 'react-router'
+import { RouteError } from '@/components/RouteError'
 import { AboutPage } from '@/features/about'
 import { ContactPage } from '@/features/contact'
 import { EventPage, EventsPage } from '@/features/events'
@@ -18,6 +19,7 @@ export const routes: RouteObject[] = [
   {
     path: '/',
     Component: PublicLayout,
+    ErrorBoundary: RouteError,
     children: [
       { index: true, Component: HomePage },
       { path: 'events', Component: EventsPage },

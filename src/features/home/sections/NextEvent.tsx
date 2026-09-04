@@ -1,4 +1,5 @@
 import { Button } from '@/components/Button'
+import { LoadFailed } from '@/components/LoadFailed'
 import { Container } from '@/components/Container'
 import { Icon } from '@/components/Icon'
 import { daysUntil, describeCountdown, formatLongDate, formatTime } from '@/domain/dates'
@@ -7,13 +8,22 @@ import { useNow } from '@/lib/clock'
 import styles from '../Home.module.css'
 
 export function NextEvent() {
-  const { data: event, isPending } = useNextEvent()
+  const { data: event, isPending, isError, refetch } = useNextEvent()
   const now = useNow()
 
   if (isPending) {
     return (
       <Container>
         <div className={styles.eventSkeleton} aria-busy="true" aria-label="Loading the next event" />
+      </Container>
+    )
+  }
+  // The home page can carry on without this section, but not silently: somebody arriving
+  // to find out what is on should be told we could not say, rather than shown nothing.
+  if (isError) {
+    return (
+      <Container>
+        <LoadFailed what="the next event" onRetry={() => void refetch()} />
       </Container>
     )
   }

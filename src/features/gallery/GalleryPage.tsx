@@ -1,13 +1,14 @@
 import { Link } from 'react-router'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { Container } from '@/components/Container'
+import { LoadFailed } from '@/components/LoadFailed'
 import { formatMonthYear } from '@/domain/dates'
 import { useAlbums } from '@/lib/api'
 import styles from './Gallery.module.css'
 
 export function GalleryPage() {
   useDocumentTitle('Gallery')
-  const { data: albums, isPending } = useAlbums()
+  const { data: albums, isPending, isError, refetch } = useAlbums()
 
   return (
     <Container className={styles.page}>
@@ -19,6 +20,8 @@ export function GalleryPage() {
         <p className={styles.empty} aria-busy="true">
           Loading…
         </p>
+      ) : isError ? (
+        <LoadFailed what="the albums" onRetry={() => void refetch()} />
       ) : !albums || albums.length === 0 ? (
         <p className={styles.empty}>No albums yet. The first one goes up after the next event.</p>
       ) : (

@@ -40,6 +40,34 @@ export function createEmptyApi(): ApiClient {
   }
 }
 
+/**
+ * A client where every read throws, for testing what a page does when the data does not
+ * arrive. Spread over it to let one thing through.
+ */
+export function createFailingApi(): ApiClient {
+  const down = async (): Promise<never> => {
+    throw new Error('the network is down')
+  }
+  return {
+    delivers: false,
+    events: { listUpcoming: down, listPast: down, getNext: down, getBySlug: down },
+    festivals: { list: down },
+    gallery: { listRecentMedia: down, listAlbums: down, getAlbum: down },
+    news: { listPosts: down, getPost: down, listAnnouncements: down, listNewsletters: down },
+    contact: { send: down, listMessages: down },
+    portal: {
+      getHousehold: down,
+      listHouseholds: down,
+      listDirectory: down,
+      listDocuments: down,
+      listRegistrationsForHousehold: down,
+      listRegistrationsForEvent: down,
+      listSignInAttempts: down,
+    },
+    volunteering: { listOpenRoles: down, listRolesForEvent: down },
+  }
+}
+
 /** A client whose submissions are treated as reaching the committee, for form tests. */
 export function createDeliveringTestApi(): ApiClient {
   return { ...createTestApi(), delivers: true }
