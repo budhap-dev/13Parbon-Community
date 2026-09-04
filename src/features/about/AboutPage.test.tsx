@@ -12,7 +12,12 @@ describe('AboutPage', () => {
     const values = screen.getByRole('region', { name: 'What we stand for' })
     expect(within(values).getAllByRole('heading', { level: 3 })).toHaveLength(4)
     const committee = screen.getByRole('region', { name: 'The committee' })
-    expect(within(committee).getByText('Cultural secretary')).toBeInTheDocument()
+    expect(within(committee).getByText('Cultural Secretary')).toBeInTheDocument()
+    // Every seat is filled by a named person: no placeholders reach the page.
+    expect(within(committee).getAllByRole('listitem')).toHaveLength(7)
+    expect(committee).not.toHaveTextContent('[Name]')
+    const members = screen.getByRole('region', { name: 'Our members' })
+    expect(within(members).getAllByRole('listitem')).toHaveLength(31)
     expect(document.title).toBe('About us · 13Parbon Community')
   })
 

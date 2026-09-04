@@ -61,13 +61,36 @@ export function AboutPage() {
       <section className={styles.section} aria-labelledby="committee-title">
         <h2 id="committee-title" className={styles.sectionTitle}>
           The committee
+          <span className={styles.count} aria-hidden="true">{about.committee.length}</span>
         </h2>
         <p className={styles.lead}>Elected each year at the annual general meeting. Reach any of them through the contact form.</p>
         <ul className={styles.committee}>
           {about.committee.map((member) => (
             <li key={member.role} className={styles.member}>
               <span className={styles.memberRole}>{member.role}</span>
-              <span className={styles.memberName}>{member.name}</span>
+              <span className={styles.memberLine}>
+                <Icon name="badge" size={26} className={styles.entryBadge} />
+                <span className={styles.memberName}>{member.name}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className={styles.section} aria-labelledby="members-title">
+        <h2 id="members-title" className={styles.sectionTitle}>
+          Our members
+          <span className={styles.count} aria-hidden="true">{about.members.length}</span>
+        </h2>
+        <p className={styles.lead}>
+          The people who make up the association. Membership runs by household, and the roll is
+          kept by the committee.
+        </p>
+        <ul className={styles.members}>
+          {about.members.map((name) => (
+            <li key={name} className={styles.memberEntry}>
+              <Icon name="badge" size={22} className={styles.entryBadge} />
+              <span className={styles.entryName}>{name}</span>
             </li>
           ))}
         </ul>
