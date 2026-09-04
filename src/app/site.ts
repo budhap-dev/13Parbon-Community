@@ -85,6 +85,11 @@ export const site = {
    */
   registrationFormUrl: null as string | null,
   /**
+   * Where offers to help go. May be the same form as registration, or its own. Null sends
+   * people to the contact page instead, which always works.
+   */
+  volunteerFormUrl: null as string | null,
+  /**
    * The member portal is built but parked for the MVP: the routes still work for anyone
    * who knows the address, they are simply not advertised. Set this to true to put the
    * sign-in back in the header and footer.

@@ -92,6 +92,17 @@ export function EventPage() {
                 Register the family
               </Button>
             ) : null}
+            {event.volunteerCall ? (
+              site.volunteerFormUrl ? (
+                <Button href={site.volunteerFormUrl} variant="line">
+                  Volunteer
+                </Button>
+              ) : (
+                <Button to="/contact" variant="line">
+                  Volunteer
+                </Button>
+              )
+            ) : null}
             <Button to="/contact" variant="line">
               Ask a question
             </Button>

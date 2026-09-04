@@ -4,6 +4,82 @@
   overflow: hidden;
 }
 
+/* The strip at the very top, pointing at the next gathering. */
+.strip {
+  display: block;
+  border-bottom: 1px solid var(--color-border-faint);
+  background: color-mix(in srgb, var(--color-bg-raised) 55%, transparent);
+  color: var(--color-fg);
+  transition: background-color var(--motion-fast) ease;
+}
+
+.strip:hover {
+  background: color-mix(in srgb, var(--color-bg-raised) 85%, transparent);
+  color: var(--color-fg);
+}
+
+.stripInner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 52px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  font-size: 16px;
+}
+
+.stripDate {
+  flex-shrink: 0;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.stripName {
+  font-weight: 600;
+}
+
+.stripWhen,
+.stripCount {
+  color: var(--color-fg-muted);
+}
+
+.stripCount {
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.stripArrow {
+  flex-shrink: 0;
+  color: var(--color-accent);
+}
+
+@media (max-width: 620px) {
+  .stripInner {
+    flex-wrap: wrap;
+    gap: 6px 10px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+
+  /* The time is on the event page; the date and how soon are what matter in a strip.
+     The arrow goes too, rather than wrapping onto a line of its own: the strip is a link. */
+  .stripWhen,
+  .stripArrow {
+    display: none;
+  }
+
+  .stripName {
+    flex: 1 1 auto;
+  }
+}
+
 /* Hero */
 .hero {
   position: relative;

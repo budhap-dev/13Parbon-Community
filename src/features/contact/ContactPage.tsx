@@ -1,12 +1,14 @@
 import { useId, useState, type FormEvent } from 'react'
+import { Link } from 'react-router'
 import { activeSocial, isPlaceholder, site } from '@/app/site'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { Button } from '@/components/Button'
 import { Container } from '@/components/Container'
 import { Icon } from '@/components/Icon'
 import { NotConnected } from '@/components/NotConnected'
+import { formatLongDate, formatTime } from '@/domain/dates'
 import { validateContact, type ContactErrors, type ContactInput } from '@/domain/contact'
-import { useApi, useSendContact } from '@/lib/api'
+import { useApi, useNextEvent, useSendContact } from '@/lib/api'
 import styles from './Contact.module.css'
 
 
@@ -32,6 +34,7 @@ export function ContactPage() {
   const [values, setValues] = useState<ContactInput>(empty)
   const [errors, setErrors] = useState<ContactErrors>({})
   const send = useSendContact()
+  const { data: nextEvent } = useNextEvent()
   const { delivers } = useApi()
 
   const update = (field: keyof ContactInput) => (event: { target: { value: string } }) => {
@@ -134,15 +137,31 @@ export function ContactPage() {
       <aside className={styles.side}>
         <section className={styles.block} aria-labelledby="find-title">
           <h2 id="find-title" className={styles.blockTitle}>
-            Find us
+            Where to find us
           </h2>
-          <address className={styles.address}>
-            {site.venue}
-            <br />
-            {site.address}
-            <br />
-            {isPlaceholder(site.email) ? site.email : <a href={`mailto:${site.email}`}>{site.email}</a>}
-          </address>
+          <p className={styles.findText}>
+            We have no office and no opening hours. The place to find us is whatever we are
+            putting on next.
+          </p>
+          {nextEvent ? (
+            <div className={styles.next}>
+              <p className={styles.nextName}>{nextEvent.title}</p>
+              <p className={styles.nextWhen}>
+                {formatLongDate(nextEvent.startsAt)} at {formatTime(nextEvent.startsAt)}
+              </p>
+              <address className={styles.address}>{nextEvent.venue}</address>
+              <Link to={`/events/${nextEvent.slug}`} className={styles.nextLink}>
+                What is happening that day
+              </Link>
+            </div>
+          ) : (
+            <address className={styles.address}>{site.venue}</address>
+          )}
+          <p className={styles.findText}>
+            In between, the fastest way to reach us is the form on this page
+            {isPlaceholder(site.email) ? '.' : ' or '}
+            {isPlaceholder(site.email) ? null : <a href={`mailto:${site.email}`}>{site.email}</a>}
+          </p>
           {site.coordinates ? (
             <>
               <iframe
