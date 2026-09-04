@@ -30,7 +30,7 @@ describe('AlbumPage', () => {
   it('shows the album photos and opens them in the lightbox', async () => {
     renderAlbum('poila-boishakh-2026')
     expect(await screen.findByRole('heading', { level: 1, name: 'Poila Boishakh 2026' })).toBeInTheDocument()
-    expect(screen.getByText('New year evening at [Venue], April 2026.')).toBeInTheDocument()
+    expect(screen.getByText('New year evening at St Andrew’s Community Hall, April 2026.')).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Open photo: The kids take the stage' }))
     expect(screen.getByRole('dialog', { name: 'Photo: The kids take the stage' })).toBeInTheDocument()
     await userEvent.keyboard('{ArrowLeft}')

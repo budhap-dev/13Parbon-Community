@@ -3,6 +3,7 @@ import { render, type RenderOptions } from '@testing-library/react'
 import type { ReactElement, ReactNode } from 'react'
 import { MemoryRouter } from 'react-router'
 import { ApiProvider, createMockApi, type ApiClient } from '@/lib/api'
+import { testEvents } from './events'
 import { ClockProvider } from '@/lib/clock'
 import { ThemeProvider } from '@/app/theme/ThemeContext'
 import { SessionProvider, type Session } from '@/lib/auth/session'
@@ -11,7 +12,7 @@ import { SessionProvider, type Session } from '@/lib/auth/session'
 export const TEST_NOW = new Date('2026-09-03T10:00:00')
 
 export function createTestApi(): ApiClient {
-  return createMockApi({ now: () => TEST_NOW })
+  return createMockApi({ now: () => TEST_NOW, events: testEvents })
 }
 
 /**
