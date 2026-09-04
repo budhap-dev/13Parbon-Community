@@ -157,6 +157,19 @@
   gap: 6px;
 }
 
+/*
+ * Sharing sits up here with the way back, not down in the actions. On a phone the actions are
+ * below the whole collage — the button was 2,232px down a 3,889px page, which is no use to
+ * somebody who has just opened the link and wants to pass it on.
+ */
+.headTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 44px;
+}
+
 .theme {
   grid-column: 1 / -1;
   display: flex;

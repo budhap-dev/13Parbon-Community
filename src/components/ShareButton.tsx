@@ -8,6 +8,7 @@ type Props = {
   title: string
   /** A line of context, shown by some apps under the title. */
   text?: string
+  size?: 'sm' | 'md'
 }
 
 type Result = 'idle' | 'copied' | 'failed'
@@ -18,7 +19,7 @@ type Result = 'idle' | 'copied' | 'failed'
  * away. Where there is no share sheet — most desktop browsers — it copies the link instead,
  * which is the same job done the way a desktop does it.
  */
-export function ShareButton({ title, text }: Props) {
+export function ShareButton({ title, text, size = 'md' }: Props) {
   const [result, setResult] = useState<Result>('idle')
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined)
 
@@ -52,7 +53,7 @@ export function ShareButton({ title, text }: Props) {
 
   return (
     <span className={styles.wrap}>
-      <Button onClick={share} variant="line">
+      <Button onClick={share} variant="line" size={size}>
         <Icon name="share" size={18} className={styles.icon} />
         Share
       </Button>
