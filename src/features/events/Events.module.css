@@ -210,7 +210,7 @@
     color: transparent;
     animation:
       theme-rise 700ms cubic-bezier(0.2, 0.7, 0.2, 1) 120ms both,
-      theme-sheen 7s ease-in-out 1.1s infinite;
+      theme-sheen 7s ease-in-out 1.1s 3 both;
   }
 }
 
@@ -348,7 +348,22 @@
 }
 
 .rolesTitle {
+  display: flex;
+  /* Sits with the first line, so a title that wraps does not strand it in the middle. */
+  align-items: flex-start;
+  gap: 10px;
   font-size: 22px;
+}
+
+.rolesIcon {
+  flex-shrink: 0;
+  margin-top: 3px;
+  color: var(--color-accent);
+}
+
+/* The invitation ends with the way to take it up. */
+.roles a {
+  margin-top: 14px;
 }
 
 .roleList {
@@ -390,23 +405,21 @@
     gap: 32px;
   }
 
-  /*
-   * Somebody on a phone wants the date, the place and the countdown before anything else.
-   * The theme is the richest part of the page, and the longest, so it follows them.
-   */
+  /* The same order as the desktop layout: the theme, which is what the day is about and the
+     best-looking part of the page, comes straight after the title, and the details follow. */
   .head {
     order: 1;
   }
 
-  .detailBody {
+  .theme {
     order: 2;
   }
 
-  .side {
+  .detailBody {
     order: 3;
   }
 
-  .theme {
+  .side {
     order: 4;
   }
 }

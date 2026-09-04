@@ -28,21 +28,17 @@ describe('ContactPage', () => {
     expect(screen.getByLabelText('Your name')).toHaveValue('')
   })
 
-  it('shows where to find us and the social channels', async () => {
+  it('shows the social channels', async () => {
     renderWithProviders(<ContactPage />, { route: '/contact', api: createDeliveringTestApi() })
-    // Wait for the event itself, not just the panel: the panel renders before it arrives.
-    await screen.findByText('Cultural programme')
-    const findUs = screen.getByRole('region', { name: 'Where to find us' })
-    // No office and no opening hours: the next gathering is the answer.
-    expect(findUs).toHaveTextContent('We have no office and no opening hours')
-    expect(findUs).toHaveTextContent('Saturday 10 October at 1:30 pm')
-    // The venue comes from the event, not from the site config: tests carry their own calendar.
-    expect(findUs).toHaveTextContent('The hall')
-    expect(within(findUs).getByRole('link', { name: 'What is happening that day' })).toHaveAttribute(
+    // Where we are depends on what we are putting on, so the venue and its map live on the
+    // event's own page. This one is only about getting hold of the committee.
+    expect(screen.queryByRole('region', { name: 'Where to find us' })).not.toBeInTheDocument()
+    expect(document.querySelector('iframe')).toBeNull()
+    const follow = await screen.findByRole('region', { name: 'Follow along' })
+    expect(within(follow).getByRole('link', { name: 'Facebook' })).toHaveAttribute(
       'href',
-      '/events/mahalaya-cultural-programme-2026',
+      'https://www.facebook.com/groups/1337437436797813/',
     )
-    expect(screen.getByRole('link', { name: 'Facebook' })).toHaveAttribute('href', 'https://www.facebook.com/groups/1337437436797813/')
   })
 
   it('offers another way through when submissions have nowhere to go', () => {
@@ -51,24 +47,10 @@ describe('ContactPage', () => {
     expect(screen.getByRole('heading', { name: /Not quite ready to send a message/ })).toBeInTheDocument()
   })
 
-  it('does not link an email address that has not been published yet', async () => {
+  it('does not show an email address that has not been published yet', () => {
     renderWithProviders(<ContactPage />, { route: '/contact' })
-    const findUs = await screen.findByRole('region', { name: 'Where to find us' })
     // An address nobody has published is not shown at all, never mind linked.
-    expect(findUs).not.toHaveTextContent('[hello@example.org]')
-    expect(findUs.querySelector('a[href^="mailto:"]')).toBeNull()
-    expect(findUs).toHaveTextContent('the fastest way to reach us is the form on this page')
-  })
-
-  it('shows the venue on a map, and offers directions', async () => {
-    renderWithProviders(<ContactPage />, { route: '/contact' })
-    const findUs = await screen.findByRole('region', { name: 'Where to find us' })
-    const map = findUs.querySelector('iframe')
-    expect(map).toHaveAttribute('title', 'Map showing St Andrew’s Community Hall, Morley, Leeds, LS27 0JU')
-    expect(map?.getAttribute('src')).toContain('openstreetmap.org')
-    expect(map?.getAttribute('src')).toContain('marker=53.7397,-1.6156')
-    const directions = within(findUs).getByRole('link', { name: /Get directions/ })
-    expect(directions).toHaveAttribute('target', '_blank')
-    expect(directions.getAttribute('href')).toContain('LS27%200JU')
+    expect(screen.queryByText(/hello@example.org/)).not.toBeInTheDocument()
+    expect(document.querySelector('a[href^="mailto:"]')).toBeNull()
   })
 })

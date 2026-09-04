@@ -1,4 +1,4 @@
-import { useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { Lightbox } from './Lightbox'
 import styles from './ThenNowCollage.module.css'
 
@@ -29,13 +29,32 @@ const DRAG_THRESHOLD = 6
  * Dragging and tapping share the same surface. A pointer that travels moves the seam; one
  * that does not opens that photograph full size. Anyone who cannot drag still gets the sweep,
  * and reaches every picture by tabbing to it.
+ *
+ * The sweep is an invitation, not a permanent state: it runs a couple of passes when the
+ * collage first comes into view and then rests. Left running for ever it turns into movement
+ * in the corner of the eye on every scroll past, which is what a long page does not need.
  */
 export function ThenNowCollage({ images, credit, label }: Props) {
   const frameRef = useRef<HTMLDivElement>(null)
   const startRef = useRef<{ x: number; moved: boolean } | null>(null)
   const [position, setPosition] = useState<number | null>(null)
   const [open, setOpen] = useState<number | null>(null)
+  const [seen, setSeen] = useState(false)
   const held = position !== null
+
+  // Offer the sweep once the collage is actually on screen, and only the once.
+  useEffect(() => {
+    const frame = frameRef.current
+    if (!frame || seen || typeof IntersectionObserver !== 'function') return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) setSeen(true)
+      },
+      { threshold: 0.35 },
+    )
+    observer.observe(frame)
+    return () => observer.disconnect()
+  }, [seen])
 
   if (images.length === 0) return null
 
@@ -109,7 +128,7 @@ export function ThenNowCollage({ images, credit, label }: Props) {
     <div className={styles.wrap}>
       <div
         ref={frameRef}
-        className={held ? styles.frameHeld : styles.frame}
+        className={[styles.frame, !held && seen ? styles.frameSweeping : ''].filter(Boolean).join(' ')}
         style={held ? { ['--seam' as string]: `${position}%` } : undefined}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}

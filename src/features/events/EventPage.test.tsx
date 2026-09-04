@@ -22,7 +22,7 @@ describe('EventPage', () => {
     // In English too, since nobody has to be Bengali to come.
     expect(within(theme).getByText('Durga Puja: Then and Now — Tradition Meets Modernity')).toBeInTheDocument()
     expect(screen.getByText('Saturday 10 October')).toBeInTheDocument()
-    expect(screen.getByText(/1:30 pm to 9:30 pm/)).toBeInTheDocument()
+    expect(screen.getByText(/1:30 pm to 5:30 pm/)).toBeInTheDocument()
     expect(screen.getByText('37 days to go')).toBeInTheDocument()
     // Nothing to book: the details go out on the channels the community already uses.
     expect(screen.getByText(/There is nothing to book/)).toBeInTheDocument()
@@ -31,6 +31,10 @@ describe('EventPage', () => {
       'https://www.facebook.com/groups/1337437436797813/',
     )
     expect(screen.getByRole('link', { name: 'tell the committee' })).toHaveAttribute('href', '/contact')
+    // Coming and performing are two different things to put your name down for.
+    const stage = screen.getByRole('region', { name: 'Would you like to perform?' })
+    expect(within(stage).getByText(/there is a place for you on the stage/)).toBeInTheDocument()
+    expect(within(stage).getByRole('link', { name: 'Register to perform' })).toHaveAttribute('href', '/contact')
     const help = screen.getByRole('region', { name: 'A Festival is Best Shared' })
     expect(within(help).getByText(/We warmly welcome volunteers/)).toBeInTheDocument()
     expect(within(help).getByText(/please let us know/)).toBeInTheDocument()
@@ -38,11 +42,25 @@ describe('EventPage', () => {
     expect(document.title).toBe('Cultural programme · 13Parbon Community')
   })
 
+  it('shows the venue on a map, and offers directions', async () => {
+    renderEvent('mahalaya-cultural-programme-2026')
+    const there = await screen.findByRole('region', { name: 'Getting there' })
+    // The venue belongs to the event: we do not always meet in the same hall.
+    const map = there.querySelector('iframe')
+    expect(map).toHaveAttribute('title', 'Map showing The hall, Leeds, LS27 0JU')
+    expect(map?.getAttribute('src')).toContain('openstreetmap.org')
+    expect(map?.getAttribute('src')).toContain('marker=53.7397,-1.6156')
+    const directions = within(there).getByRole('link', { name: /Get directions/ })
+    expect(directions).toHaveAttribute('target', '_blank')
+    expect(directions.getAttribute('href')).toContain('LS27%200JU')
+  })
+
   it('hides registration and the countdown for past events', async () => {
     renderEvent('poila-boishakh-cultural-programme-2026')
     expect(await screen.findByRole('heading', { level: 1 })).toHaveTextContent('Poila Boishakh cultural programme')
     expect(screen.queryByText(/days to go/)).not.toBeInTheDocument()
     expect(screen.queryByRole('region', { name: 'A Festival is Best Shared' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Would you like to perform?' })).not.toBeInTheDocument()
   })
 
   it('shows not found for an unknown or unlisted event', async () => {

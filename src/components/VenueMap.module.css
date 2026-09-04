@@ -1,0 +1,17 @@
+.map {
+  display: block;
+  width: 100%;
+  min-height: 220px;
+  border: 0;
+  border-radius: var(--radius-tile);
+  background: var(--color-bg-raised);
+}
+
+.directions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  font-size: 16px;
+  font-weight: 600;
+}

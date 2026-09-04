@@ -1,30 +1,13 @@
 import { useId, useState, type FormEvent } from 'react'
-import { Link } from 'react-router'
-import { activeSocial, isPlaceholder, site } from '@/app/site'
+import { activeSocial } from '@/app/site'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { Button } from '@/components/Button'
 import { Container } from '@/components/Container'
 import { Icon } from '@/components/Icon'
 import { NotConnected } from '@/components/NotConnected'
-import { formatLongDate, formatTime } from '@/domain/dates'
 import { validateContact, type ContactErrors, type ContactInput } from '@/domain/contact'
-import { useApi, useNextEvent, useSendContact } from '@/lib/api'
+import { useApi, useSendContact } from '@/lib/api'
 import styles from './Contact.module.css'
-
-
-/**
- * OpenStreetMap rather than a keyed service: no account to hold, and nothing that would
- * make the privacy notice untrue. The box is a small window around the pin.
- */
-function mapEmbedUrl({ lat, lon }: { lat: number; lon: number }): string {
-  const box = [lon - 0.005, lat - 0.0025, lon + 0.005, lat + 0.0025].map((n) => n.toFixed(5)).join(',')
-  return `https://www.openstreetmap.org/export/embed.html?bbox=${box}&layer=mapnik&marker=${lat},${lon}`
-}
-
-/** Hands the address to whichever maps app the visitor already uses. */
-function directionsUrl(query: string): string {
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`
-}
 
 const empty: ContactInput = { name: '', email: '', subject: '', message: '' }
 
@@ -34,7 +17,6 @@ export function ContactPage() {
   const [values, setValues] = useState<ContactInput>(empty)
   const [errors, setErrors] = useState<ContactErrors>({})
   const send = useSendContact()
-  const { data: nextEvent } = useNextEvent()
   const { delivers } = useApi()
 
   const update = (field: keyof ContactInput) => (event: { target: { value: string } }) => {
@@ -135,52 +117,6 @@ export function ContactPage() {
       </div>
 
       <aside className={styles.side}>
-        <section className={styles.block} aria-labelledby="find-title">
-          <h2 id="find-title" className={styles.blockTitle}>
-            <Icon name="pin" size={22} className={styles.panelIcon} />
-            Where to find us
-          </h2>
-          <p className={styles.findText}>
-            We have no office and no opening hours. The place to find us is whatever we are
-            putting on next.
-          </p>
-          {nextEvent ? (
-            <div className={styles.next}>
-              <p className={styles.nextName}>{nextEvent.title}</p>
-              <p className={styles.nextWhen}>
-                {formatLongDate(nextEvent.startsAt)} at {formatTime(nextEvent.startsAt)}
-              </p>
-              <address className={styles.address}>{nextEvent.venue}</address>
-              <Link to={`/events/${nextEvent.slug}`} className={styles.nextLink}>
-                What is happening that day
-              </Link>
-            </div>
-          ) : (
-            <address className={styles.address}>{site.venue}</address>
-          )}
-          <p className={styles.findText}>
-            In between, the fastest way to reach us is the form on this page
-            {isPlaceholder(site.email) ? '.' : ' or '}
-            {isPlaceholder(site.email) ? null : <a href={`mailto:${site.email}`}>{site.email}</a>}
-          </p>
-          {site.coordinates ? (
-            <>
-              <iframe
-                className={styles.map}
-                title={`Map showing ${site.venue}, ${site.address}`}
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                src={mapEmbedUrl(site.coordinates)}
-              />
-              <a className={styles.directions} href={directionsUrl(`${site.venue}, ${site.address}`)} target="_blank" rel="noreferrer">
-                Get directions
-                <Icon name="external" size={15} />
-              </a>
-            </>
-          ) : (
-            <p className={styles.mapNote}>A map appears here once the venue address is confirmed.</p>
-          )}
-        </section>
         <section className={styles.block} aria-labelledby="social-title">
           <h2 id="social-title" className={styles.blockTitle}>
             <Icon name="megaphone" size={22} className={styles.panelIcon} />

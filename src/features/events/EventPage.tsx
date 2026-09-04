@@ -5,6 +5,7 @@ import { Button } from '@/components/Button'
 import { Container } from '@/components/Container'
 import { Icon } from '@/components/Icon'
 import { ThenNowCollage } from '@/components/ThenNowCollage'
+import { VenueMap } from '@/components/VenueMap'
 import { daysUntil, describeCountdown, formatLongDate, formatTime } from '@/domain/dates'
 import { NotFoundPage } from '@/features/placeholder'
 import { useEvent } from '@/lib/api'
@@ -82,7 +83,15 @@ export function EventPage() {
           </li>
           <li className={styles.fact}>
             <Icon name="pin" size={20} className={styles.factIcon} />
-            <span>{event.venue}</span>
+            <span>
+              {event.venue}
+              {event.venueAddress ? (
+                <>
+                  <br />
+                  {event.venueAddress}
+                </>
+              ) : null}
+            </span>
           </li>
         </ul>
         <p className={styles.summary}>{event.summary}</p>
@@ -117,6 +126,16 @@ export function EventPage() {
       </article>
 
       <aside className={styles.side}>
+        {event.coordinates ? (
+          <section className={styles.roles} aria-labelledby="getting-there-title">
+            <h2 id="getting-there-title" className={styles.rolesTitle}>
+              <Icon name="pin" size={22} className={styles.rolesIcon} />
+              Getting there
+            </h2>
+            <VenueMap venue={event.venue} address={event.venueAddress} coordinates={event.coordinates} />
+          </section>
+        ) : null}
+
         {!isPast ? (
           <p className={styles.countdown}>
           <span className="sr-only">{`${countdown.value} ${countdown.label}`}</span>
@@ -129,9 +148,23 @@ export function EventPage() {
           </p>
         ) : null}
 
+        {!isPast && event.performerCall ? (
+          <section className={styles.roles} aria-labelledby="perform-title">
+            <h2 id="perform-title" className={styles.rolesTitle}>
+              <Icon name="mic" size={22} className={styles.rolesIcon} />
+              Would you like to perform?
+            </h2>
+            <p className={styles.roleMeta}>{event.performerCall}</p>
+            <Button to="/contact" variant="line">
+              Register to perform
+            </Button>
+          </section>
+        ) : null}
+
         {!isPast && event.volunteerCall ? (
           <section className={styles.roles} aria-labelledby="roles-title">
             <h2 id="roles-title" className={styles.rolesTitle}>
+              <Icon name="heart" size={22} className={styles.rolesIcon} />
               A Festival is Best Shared
             </h2>
             <p className={styles.roleMeta}>{event.volunteerCall}</p>
