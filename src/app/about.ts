@@ -1,3 +1,5 @@
+import { site } from './site'
+
 /**
  * Content for the About page. The committee edits this file; bracketed values are
  * placeholders that must be filled before launch. Nothing here is fabricated.
@@ -40,11 +42,11 @@ export const about = {
     },
     {
       q: 'How do I become a member?',
-      a: 'Membership is [fee] a year per household. While we are getting started there is no sign-up form: come to an event or send the committee a message, and we will add you.',
+      a: 'Membership runs per household. While we are getting started there is no sign-up form: come to an event or send the committee a message, and we will add you, and tell you what it costs.',
     },
     {
       q: 'Where do events happen?',
-      a: 'At [Venue], [Town]. Directions and parking notes are on each event page.',
+      a: `At ${site.venue}, ${site.address}. Directions and parking notes are on each event page.`,
     },
   ],
 } as const

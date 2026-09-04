@@ -25,6 +25,7 @@ export const privacy = {
       title: 'Cookies and tracking',
       body: [
         'The site sets no tracking cookies and runs no analytics. Your theme choice is stored in your own browser and never sent to us.',
+        'The map on our contact page is served by OpenStreetMap, which does not track visitors. Following the directions link hands the venue address to your own maps app.',
       ],
     },
     {

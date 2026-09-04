@@ -1,5 +1,5 @@
 import { useId, useState, type FormEvent } from 'react'
-import { isPlaceholder, site } from '@/app/site'
+import { activeSocial, isPlaceholder, site } from '@/app/site'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { Button } from '@/components/Button'
 import { Container } from '@/components/Container'
@@ -8,6 +8,21 @@ import { NotConnected } from '@/components/NotConnected'
 import { validateContact, type ContactErrors, type ContactInput } from '@/domain/contact'
 import { useApi, useSendContact } from '@/lib/api'
 import styles from './Contact.module.css'
+
+
+/**
+ * OpenStreetMap rather than a keyed service: no account to hold, and nothing that would
+ * make the privacy notice untrue. The box is a small window around the pin.
+ */
+function mapEmbedUrl({ lat, lon }: { lat: number; lon: number }): string {
+  const box = [lon - 0.005, lat - 0.0025, lon + 0.005, lat + 0.0025].map((n) => n.toFixed(5)).join(',')
+  return `https://www.openstreetmap.org/export/embed.html?bbox=${box}&layer=mapnik&marker=${lat},${lon}`
+}
+
+/** Hands the address to whichever maps app the visitor already uses. */
+function directionsUrl(query: string): string {
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`
+}
 
 const empty: ContactInput = { name: '', email: '', subject: '', message: '' }
 
@@ -128,16 +143,32 @@ export function ContactPage() {
             <br />
             {isPlaceholder(site.email) ? site.email : <a href={`mailto:${site.email}`}>{site.email}</a>}
           </address>
-          <div className={styles.map}>A map appears here once the venue address is confirmed.</div>
+          {site.coordinates ? (
+            <>
+              <iframe
+                className={styles.map}
+                title={`Map showing ${site.venue}, ${site.address}`}
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                src={mapEmbedUrl(site.coordinates)}
+              />
+              <a className={styles.directions} href={directionsUrl(`${site.venue}, ${site.address}`)} target="_blank" rel="noreferrer">
+                Get directions
+                <Icon name="external" size={15} />
+              </a>
+            </>
+          ) : (
+            <p className={styles.mapNote}>A map appears here once the venue address is confirmed.</p>
+          )}
         </section>
         <section className={styles.block} aria-labelledby="social-title">
           <h2 id="social-title" className={styles.blockTitle}>
             Follow along
           </h2>
           <ul className={styles.social}>
-            {site.social.map((channel) => (
+            {activeSocial().map((channel) => (
               <li key={channel.name}>
-                <a href={channel.href} aria-label={channel.name}>
+                <a href={channel.href} aria-label={channel.name} target="_blank" rel="noreferrer">
                   <Icon name={channel.icon} size={22} />
                 </a>
               </li>

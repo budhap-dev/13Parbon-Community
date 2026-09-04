@@ -11,6 +11,11 @@ describe('SiteFooter', () => {
     )
     expect(screen.getByText(/13Parbon Community/)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Privacy' })).toHaveAttribute('href', '/privacy')
-    expect(screen.getByRole('link', { name: 'Instagram' })).toBeInTheDocument()
+    const facebook = screen.getByRole('link', { name: 'Facebook' })
+    expect(facebook).toHaveAttribute('href', 'https://www.facebook.com/groups/1337437436797813/')
+    expect(facebook).toHaveAttribute('target', '_blank')
+    // Channels the community does not have, or has not given an address for, are left out.
+    expect(screen.queryByRole('link', { name: 'Instagram' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'WhatsApp' })).not.toBeInTheDocument()
   })
 })
