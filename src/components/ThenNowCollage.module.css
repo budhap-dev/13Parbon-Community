@@ -68,6 +68,14 @@
   }
 }
 
+/* One across on a phone: six small tiles showed nothing, and buried their own captions. */
+@media (max-width: 620px) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+}
+
 .cell {
   position: relative;
   isolation: isolate;
@@ -209,7 +217,6 @@
 
 @media (max-width: 700px) {
   .cellCaption {
-    font-size: 12px;
-    padding: 20px 9px 7px;
+    padding: 24px 12px 9px;
   }
 }

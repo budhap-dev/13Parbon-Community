@@ -527,11 +527,12 @@
     justify-self: center;
   }
 
+  /*
+   * Once the hero stacks, the motif and the logo occupy the same space and the alpona runs
+   * straight through the artwork. The logo is the stronger of the two, so the motif goes.
+   */
   .backdrop {
-    left: -100px;
-    bottom: 0;
-    width: 380px;
-    height: 380px;
+    display: none;
   }
 
   .event {
