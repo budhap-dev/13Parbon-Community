@@ -14,8 +14,7 @@
   initial-value: 50%;
 }
 
-.frame,
-.frameHeld {
+.frame {
   position: relative;
   touch-action: pan-y;
   overflow: hidden;
@@ -23,16 +22,32 @@
   background: var(--color-bg-raised);
 }
 
-.frame {
-  animation: sweep 18s ease-in-out infinite alternate;
+/*
+ * Two passes and then still, ending where it started so nothing jumps at the end. Anything
+ * that runs for ever here is movement the viewer cannot turn off while they read.
+ */
+.frameSweeping {
+  animation: sweep 14s ease-in-out 2 both;
 }
 
 @keyframes sweep {
-  from {
+  0% {
+    --seam: 50%;
+  }
+  30% {
+    --seam: 84%;
+  }
+  70% {
     --seam: 16%;
   }
-  to {
-    --seam: 84%;
+  100% {
+    --seam: 50%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .frameSweeping {
+    animation: none;
   }
 }
 
@@ -68,6 +83,14 @@
   }
 }
 
+/* One across on a phone: six small tiles showed nothing, and buried their own captions. */
+@media (max-width: 620px) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+}
+
 .cell {
   position: relative;
   isolation: isolate;
@@ -93,42 +116,14 @@
   outline-offset: -3px;
 }
 
+/*
+ * Held still. These drifted very slowly before, and twelve photographs each scaling on their
+ * own loop is movement the page never stops making, which is what reads as flicker on a phone.
+ */
 .image {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  /* A very slow drift, so a still photograph does not sit quite dead. */
-  animation: breathe 26s ease-in-out infinite alternate;
-}
-
-.cell:nth-child(even) /* The whole picture is the button, so a tap anywhere on it opens it. */
-.open {
-  display: block;
-  width: 100%;
-  height: 100%;
-  padding: 0;
-  border: 0;
-  background: none;
-  cursor: zoom-in;
-}
-
-.open:focus-visible {
-  outline: 3px solid var(--color-focus);
-  outline-offset: -3px;
-}
-
-.image {
-  animation-duration: 32s;
-  animation-direction: alternate-reverse;
-}
-
-@keyframes breathe {
-  from {
-    transform: scale(1);
-  }
-  to {
-    transform: scale(1.06);
-  }
 }
 
 .cellCaption {
@@ -209,7 +204,6 @@
 
 @media (max-width: 700px) {
   .cellCaption {
-    font-size: 12px;
-    padding: 20px 9px 7px;
+    padding: 24px 12px 9px;
   }
 }

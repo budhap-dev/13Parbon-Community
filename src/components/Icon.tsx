@@ -22,6 +22,11 @@ export type IconName =
   | 'external'
   | 'pin'
   | 'clock'
+  | 'mic'
+  | 'door'
+  | 'heart'
+  | 'sparkle'
+  | 'badge'
 
 const paths: Record<IconName, ReactElement> = {
   users: (
@@ -70,6 +75,35 @@ const paths: Record<IconName, ReactElement> = {
     <>
       <circle cx="12" cy="12" r="9" />
       <path d="M12 7v5.2l3.2 2" />
+    </>
+  ),
+  mic: (
+    <>
+      <rect x="9" y="3" width="6" height="11" rx="3" />
+      <path d="M5.5 11.5a6.5 6.5 0 0 0 13 0" />
+      <path d="M12 18v3M9 21h6" />
+    </>
+  ),
+  door: (
+    <>
+      <path d="M4 21h16" />
+      <path d="M14 21V4L6 6v15" />
+      <path d="M18 21V8l-4-2" />
+      <circle cx="11" cy="13" r="1" fill="currentColor" />
+    </>
+  ),
+  heart: <path d="M12 20s-7-4.4-7-9a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 4.6-7 9-7 9z" />,
+  /* A rosette: the medal and its two ribbon tails. */
+  badge: (
+    <>
+      <circle cx="12" cy="8.5" r="5.5" />
+      <path d="M8.4 13.1 6.4 21l5.6-2.7 5.6 2.7-2-7.9" />
+    </>
+  ),
+  sparkle: (
+    <>
+      <path d="M12 3c.7 4.2 2.1 5.6 6.3 6.3-4.2.7-5.6 2.1-6.3 6.3-.7-4.2-2.1-5.6-6.3-6.3C9.9 8.6 11.3 7.2 12 3z" />
+      <path d="M18.5 15.5c.35 2 1 2.65 3 3-2 .35-2.65 1-3 3-.35-2-1-2.65-3-3 2-.35 2.65-1 3-3z" />
     </>
   ),
   home: (

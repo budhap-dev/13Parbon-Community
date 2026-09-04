@@ -124,7 +124,49 @@
 }
 
 .blockTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   font-size: 22px;
+}
+
+/* The next gathering, which is the only place there is to find us in person. */
+.next {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 18px;
+  border-radius: var(--radius-tile);
+  background: color-mix(in srgb, var(--color-bg-raised) 55%, transparent);
+}
+
+.nextName {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 20px;
+  line-height: 1.15;
+}
+
+.nextWhen {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-accent);
+}
+
+.nextLink {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  min-height: 44px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.findText {
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--color-fg-muted);
+  text-wrap: pretty;
 }
 
 .address {

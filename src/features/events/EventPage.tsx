@@ -1,10 +1,11 @@
 import { Link, useParams } from 'react-router'
-import { site } from '@/app/site'
+import { activeSocial, site } from '@/app/site'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { Button } from '@/components/Button'
 import { Container } from '@/components/Container'
 import { Icon } from '@/components/Icon'
 import { ThenNowCollage } from '@/components/ThenNowCollage'
+import { VenueMap } from '@/components/VenueMap'
 import { daysUntil, describeCountdown, formatLongDate, formatTime } from '@/domain/dates'
 import { NotFoundPage } from '@/features/placeholder'
 import { useEvent } from '@/lib/api'
@@ -17,6 +18,7 @@ function sameDay(a: string, b: string): boolean {
 }
 
 export function EventPage() {
+  const facebook = activeSocial().find((channel) => channel.name === 'Facebook')
   const { slug = '' } = useParams()
   const { data: event, isPending } = useEvent(slug)
   const now = useNow()
@@ -81,31 +83,59 @@ export function EventPage() {
           </li>
           <li className={styles.fact}>
             <Icon name="pin" size={20} className={styles.factIcon} />
-            <span>{event.venue}</span>
+            <span>
+              {event.venue}
+              {event.venueAddress ? (
+                <>
+                  <br />
+                  {event.venueAddress}
+                </>
+              ) : null}
+            </span>
           </li>
         </ul>
         <p className={styles.summary}>{event.summary}</p>
         {!isPast ? (
           <div className={styles.actions}>
-            {event.registrationOpen && site.registrationFormUrl ? (
-              <Button href={site.registrationFormUrl} variant="gold">
-                Register the family
-              </Button>
+            {event.volunteerCall ? (
+              site.volunteerFormUrl ? (
+                <Button href={site.volunteerFormUrl} variant="line">
+                  Volunteer
+                </Button>
+              ) : (
+                <Button to="/contact" variant="line">
+                  Volunteer
+                </Button>
+              )
             ) : null}
             <Button to="/contact" variant="line">
               Ask a question
             </Button>
           </div>
         ) : null}
-        {!isPast && event.registrationOpen && !site.registrationFormUrl ? (
+        {!isPast ? (
           <p className={styles.note}>
-            Registration opens shortly. In the meantime, <Link to="/contact">tell the committee</Link> you are coming
-            and we will add you to the numbers.
+            There is nothing to book. We put the details out on our WhatsApp group and{' '}
+            <a href={facebook?.href} target="_blank" rel="noreferrer">
+              Facebook page
+            </a>
+            , so keep an eye there. Or <Link to="/contact">tell the committee</Link> you are coming and we will
+            add you to the numbers.
           </p>
         ) : null}
       </article>
 
       <aside className={styles.side}>
+        {event.coordinates ? (
+          <section className={styles.roles} aria-labelledby="getting-there-title">
+            <h2 id="getting-there-title" className={styles.rolesTitle}>
+              <Icon name="pin" size={22} className={styles.rolesIcon} />
+              Getting there
+            </h2>
+            <VenueMap venue={event.venue} address={event.venueAddress} coordinates={event.coordinates} />
+          </section>
+        ) : null}
+
         {!isPast ? (
           <p className={styles.countdown}>
           <span className="sr-only">{`${countdown.value} ${countdown.label}`}</span>
@@ -118,9 +148,23 @@ export function EventPage() {
           </p>
         ) : null}
 
+        {!isPast && event.performerCall ? (
+          <section className={styles.roles} aria-labelledby="perform-title">
+            <h2 id="perform-title" className={styles.rolesTitle}>
+              <Icon name="mic" size={22} className={styles.rolesIcon} />
+              Would you like to perform?
+            </h2>
+            <p className={styles.roleMeta}>{event.performerCall}</p>
+            <Button to="/contact" variant="line">
+              Register to perform
+            </Button>
+          </section>
+        ) : null}
+
         {!isPast && event.volunteerCall ? (
           <section className={styles.roles} aria-labelledby="roles-title">
             <h2 id="roles-title" className={styles.rolesTitle}>
+              <Icon name="heart" size={22} className={styles.rolesIcon} />
               A Festival is Best Shared
             </h2>
             <p className={styles.roleMeta}>{event.volunteerCall}</p>

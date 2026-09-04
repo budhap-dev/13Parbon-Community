@@ -79,6 +79,10 @@
   background: var(--color-bg-raised);
 }
 
+.valueIcon {
+  color: var(--color-accent);
+}
+
 .valueTitle {
   font-size: 22px;
 }
@@ -91,30 +95,190 @@
 
 .committee {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  /* Twice the width they were: three to a row, so the longer roles keep to one line. */
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
   gap: 16px;
 }
 
-.member {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 18px 20px;
-  border: 1.5px solid var(--color-border);
-  border-radius: var(--radius-tile);
+/*
+ * Tiles rather than ruled rows: thirty-one bare lines read like a spreadsheet. Each name sits
+ * on its own ground with the rosette held in a tinted disc, and lifts a little under the
+ * pointer, so the roll looks like a set of people rather than a column of entries.
+ */
+.members {
+  display: grid;
+  /* Wide enough for a title, a rosette and the longest name on one line. */
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 10px;
 }
 
-.memberRole {
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+.memberEntry {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px 10px 10px;
+  border: 1px solid var(--color-border-faint);
+  border-radius: var(--radius-pill);
+  background: var(--color-bg-raised);
+  transition:
+    border-color var(--motion-fast) ease,
+    transform var(--motion-fast) ease;
+}
+
+.memberEntry:hover {
+  border-color: color-mix(in srgb, var(--color-accent) 55%, transparent);
+  transform: translateY(-2px);
+}
+
+.entryName {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+/* The rosette on its own disc, so every tile opens with the same mark. */
+.entryBadge {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  box-sizing: content-box;
+  padding: 7px;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--color-accent) 14%, transparent);
   color: var(--color-accent);
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .memberEntry:hover {
+    transform: none;
+  }
+}
+
+/* The seat as a badge, then the person under it: role first, which is how anyone scanning
+   for who to ask reads a committee. */
+.member {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  overflow: hidden;
+  padding: 20px 22px 22px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-tile);
+  background: var(--color-bg-raised);
+  transition:
+    border-color var(--motion-fast) ease,
+    transform var(--motion-fast) ease;
+}
+
+/* A line of accent along the top edge, the width of the card. */
+.member::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 3px;
+  background: var(--color-accent);
+  opacity: 0.7;
+}
+
+.member:hover {
+  border-color: color-mix(in srgb, var(--color-accent) 55%, transparent);
+  transform: translateY(-2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .member:hover {
+    transform: none;
+  }
+}
+
+.memberRole {
+  padding: 4px 11px;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-wrap: balance;
+}
+
+/* The rosette and the name share a line, the icon holding the top line when the name wraps. */
+.memberLine {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
 .memberName {
-  font-size: 18px;
+  font-family: var(--font-display);
+  font-size: 21px;
   font-weight: 600;
+  line-height: 1.2;
+  text-wrap: balance;
+}
+
+/*
+ * Phone. These rules have to sit after the ones they override: a media query adds no
+ * specificity, so a later plain rule would win over an earlier one inside a query.
+ */
+@media (max-width: 620px) {
+  /* One card to a row: at half a 390px screen the longer roles wrap to four lines. */
+  .committee {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .member {
+    gap: 9px;
+    padding: 15px 18px 17px;
+  }
+
+  .memberName {
+    font-size: 19px;
+  }
+
+  /*
+   * One column for the roll. Two fitted while the names were bare, but with a title in front
+   * of each, eighteen of the thirty-one wrapped to a second line: a longer list beats a
+   * ragged one.
+   */
+  .members {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .memberEntry {
+    gap: 10px;
+    padding: 7px 14px 7px 7px;
+  }
+
+  .entryBadge {
+    padding: 6px;
+  }
+
+  .entryName {
+    font-size: 15px;
+  }
+}
+
+/* The size of the group, beside its name: an answer to a question people ask first. */
+.count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 30px;
+  margin-left: 14px;
+  padding: 3px 9px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  color: var(--color-fg-muted);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  vertical-align: middle;
 }
 
 .faq {

@@ -31,6 +31,10 @@ describe('HomePage', () => {
     expect(within(card).getByText(/দুর্গাপূজার সেকাল ও একাল/)).toHaveAttribute('lang', 'bn')
     expect(within(card).getByText(/on Saturday 10 October at 1:30 pm/)).toBeInTheDocument()
     expect(within(card).getByText('37 days to go')).toBeInTheDocument()
+    expect(within(card).getByRole('link', { name: 'Event details' })).toHaveAttribute(
+      'href',
+      '/events/mahalaya-cultural-programme-2026',
+    )
     // No registration button until the committee's form has an address.
     expect(within(card).queryByRole('link', { name: 'Register the family' })).not.toBeInTheDocument()
   })
@@ -42,8 +46,9 @@ describe('HomePage', () => {
       .getAllByRole('heading', { level: 3 })
       .map((h) => h.textContent)
     expect(titles).toEqual(['Saraswati Puja', 'Holi', 'Poila Boishakh cultural programme'])
-    expect(within(section).getAllByText('RSVP for your family')).toHaveLength(1)
+
     expect(within(section).getByRole('link', { name: 'Holi' })).toHaveAttribute('href', '/events/holi-2027')
+    expect(within(section).getAllByText('Details')).toHaveLength(3)
   })
 
   it('describes each occasion, and marks the one coming next', async () => {
@@ -66,7 +71,7 @@ describe('HomePage', () => {
     renderWithProviders(<HomePage />)
     const strip = await screen.findByRole('complementary', { name: 'A Festival is Best Shared' })
     expect(strip).toHaveTextContent('We warmly welcome volunteers for our Cultural Programme on Saturday, 10 October.')
-    expect(strip).toHaveTextContent('please indicate this when registering')
+    expect(strip).toHaveTextContent('please let us know')
     expect(within(strip).getByRole('link', { name: 'Register and say so' })).toHaveAttribute(
       'href',
       '/events/mahalaya-cultural-programme-2026',

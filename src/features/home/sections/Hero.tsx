@@ -5,6 +5,7 @@ import { useTheme } from '@/app/theme/ThemeContext'
 import { themes } from '@/app/theme/themes'
 import { Button } from '@/components/Button'
 import { Container } from '@/components/Container'
+import { Icon } from '@/components/Icon'
 import { LogoAssembly } from '../LogoAssembly'
 import styles from '../Home.module.css'
 
@@ -27,7 +28,10 @@ export function Hero() {
             </span>{' '}
             <span className={styles.heroTitleName}>{site.groupName}</span>
           </h1>
-          <p className={styles.lead}>{site.tagline}</p>
+          <p className={styles.lead}>
+            {site.tagline}
+            <Icon name="sparkle" size={22} className={styles.leadSparkle} />
+          </p>
           <div className={styles.heroActions}>
             <Button to="/events" variant="cream">
               What’s on

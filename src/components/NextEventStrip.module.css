@@ -1,0 +1,262 @@
+/*
+ * The next gathering, pinned under the wordmark. It lives inside the sticky header rather
+ * than beside it, so the two move as one: no offset to keep in step, and nothing to show
+ * through the gap when the bar slides away.
+ */
+.strip {
+  display: block;
+  border-top: 1px solid var(--color-border-faint);
+  /* Unrolls once on arrival, so it is noticed without shouting. */
+  animation: unroll 620ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  color: var(--color-fg);
+  transition: background-color var(--motion-fast) ease;
+}
+
+
+.inner {
+  padding-top: 10px;
+  padding-bottom: 12px;
+}
+
+/*
+ * Drawn as a control rather than a band of text: an outline, a raised ground and an arrow,
+ * so it reads as something to press rather than a line of information.
+ */
+.card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 52px;
+  overflow: hidden;
+  padding: 8px 14px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-tile);
+  background: color-mix(in srgb, var(--color-bg-raised) 85%, transparent);
+  font-size: 16px;
+  transition:
+    border-color var(--motion-fast) ease,
+    background-color var(--motion-fast) ease,
+    transform var(--motion-fast) ease;
+}
+
+/*
+ * A torch passing over the card, left to right and round again. It is a transform on one
+ * pseudo-element, so it runs on the compositor and costs nothing while the page scrolls.
+ */
+.card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 38%,
+    color-mix(in srgb, var(--color-accent) 26%, transparent) 50%,
+    transparent 62%
+  );
+  pointer-events: none;
+  animation: torch 4.5s linear infinite;
+}
+
+/* The card's own contents sit above the beam. */
+.card > * {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes torch {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card::after {
+    animation: none;
+    opacity: 0;
+  }
+}
+
+.strip:hover .card {
+  border-color: var(--color-accent);
+  background: var(--color-bg-raised);
+}
+
+.strip:active .card {
+  transform: translateY(1px);
+}
+
+.strip:focus-visible {
+  outline: none;
+}
+
+.strip:focus-visible .card {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+.date {
+  flex-shrink: 0;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.name {
+  font-weight: 600;
+}
+
+.count {
+  color: var(--color-fg-muted);
+}
+
+/*
+ * The theme, running through the room left between the name and the countdown. Two copies of
+ * the line sit end to end and the pair slides exactly half its width, so the second copy
+ * arrives where the first began and the loop has no seam. The padding that separates them is
+ * inside each copy rather than a gap between, or the halves would not match.
+ */
+.theme {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  -webkit-mask: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+  mask: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+}
+
+.themeTrack {
+  display: inline-flex;
+  white-space: nowrap;
+  animation: marquee 26s linear infinite;
+}
+
+.themeText {
+  padding-right: 64px;
+  color: var(--color-fg-muted);
+  font-family: var(--font-script);
+  font-size: 16px;
+}
+
+/* Stops while it is being read or pressed. */
+.strip:hover .themeTrack,
+.strip:focus-visible .themeTrack {
+  animation-play-state: paused;
+}
+
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .themeTrack {
+    animation: none;
+  }
+}
+
+.count {
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.arrow {
+  flex-shrink: 0;
+  color: var(--color-accent);
+}
+
+/*
+ * Two rows on a phone, laid out as a grid rather than left to wrap: the badge, the name and
+ * the arrow across the top, how long to wait underneath. Grid areas mean the second row is a
+ * row by construction, instead of depending on what happens to fit on the first.
+ */
+@media (max-width: 620px) {
+  .card {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      'date name arrow'
+      'theme theme theme';
+    gap: 4px 8px;
+    padding: 10px 12px;
+  }
+
+  .date {
+    grid-area: date;
+  }
+
+  /*
+   * The theme and the countdown share the second row by sitting in the same area, rather than
+   * each taking a column. A column shared with the countdown would be as wide as the
+   * countdown, and on the row above that column holds only the arrow: the name would lose
+   * 70px it needs. The margin keeps the running text clear of the countdown.
+   */
+  .theme {
+    grid-area: theme;
+    margin-right: 96px;
+  }
+
+  .themeText {
+    padding-right: 44px;
+    font-size: 14px;
+  }
+
+  .name {
+    grid-area: name;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Held against the right edge, so the name has the whole line up to it. */
+  .arrow {
+    grid-area: arrow;
+    justify-self: end;
+    margin-left: 0;
+  }
+
+  /* Sharing the theme's row, held to the right edge. */
+  .count {
+    grid-area: theme;
+    justify-self: end;
+    align-self: center;
+    margin-left: 0;
+    font-size: 15px;
+    white-space: nowrap;
+  }
+}
+
+/*
+ * On the narrowest phones the badge and the event's name together overrun the line, and the
+ * name is the part that gets cut. Both step down a size rather than letting that happen.
+ */
+@media (max-width: 380px) {
+  .date {
+    padding: 3px 8px;
+    font-size: 12.5px;
+  }
+
+  .name {
+    font-size: 15px;
+  }
+}
+
+/* Narrower still, and the name takes a second line rather than losing its ending. */
+@media (max-width: 340px) {
+  .name {
+    overflow: visible;
+    white-space: normal;
+  }
+}
+

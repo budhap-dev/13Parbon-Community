@@ -1,3 +1,8 @@
+/*
+ * Drawn as a control, not a panel of text. The whole card is the link target, so it has to
+ * look like something to press: an outline that warms under the pointer, a lift, and a press
+ * that goes down again.
+ */
 .card,
 .cardPast {
   position: relative;
@@ -6,14 +11,49 @@
   gap: 12px;
   min-height: 230px;
   padding: 28px;
+  border: 1.5px solid var(--color-border);
   border-radius: var(--radius-card);
   background: var(--color-bg-raised);
-  transition: background-color var(--motion-fast) ease;
+  cursor: pointer;
+  transition:
+    border-color var(--motion-fast) ease,
+    background-color var(--motion-fast) ease,
+    transform var(--motion-fast) ease;
 }
 
 .card:hover,
 .cardPast:hover {
+  border-color: var(--color-accent);
   background: var(--color-bg-raised-hover);
+  transform: translateY(-3px);
+}
+
+.card:active,
+.cardPast:active {
+  transform: translateY(0);
+}
+
+/* The outline belongs to the card, since the card is what gets followed. */
+.card:focus-within,
+.cardPast:focus-within {
+  border-color: var(--color-accent);
+}
+
+.titleLink:focus-visible {
+  outline: none;
+}
+
+.card:has(.titleLink:focus-visible),
+.cardPast:has(.titleLink:focus-visible) {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card:hover,
+  .cardPast:hover {
+    transform: none;
+  }
 }
 
 .cardPast {
@@ -53,11 +93,31 @@
   color: var(--color-fg-muted);
 }
 
+/* Reads as the thing to press, and leans into the card's direction of travel on hover. */
 .action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   margin-top: auto;
   font-size: 17px;
   font-weight: 600;
   color: var(--color-accent);
+}
+
+.actionArrow {
+  transition: transform var(--motion-fast) ease;
+}
+
+.card:hover .actionArrow,
+.cardPast:hover .actionArrow {
+  transform: translateX(4px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card:hover .actionArrow,
+  .cardPast:hover .actionArrow {
+    transform: none;
+  }
 }
 
 @media (max-width: 960px) {

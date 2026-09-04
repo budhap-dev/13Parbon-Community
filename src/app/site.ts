@@ -12,9 +12,11 @@ export const site = {
   /** The saying's first half, then the group's name on its own line. */
   bengaliTitleLead: 'বারো মাসে',
   groupName: '13 Parbon',
-  tagline: 'Twelve months, thirteen festivals. The heart always finds another reason to celebrate.',
+  tagline: 'Twelve months, thirteen festivals. The heart always finds another reason to celebrate!',
   mission:
     'A Bengali cultural association in Leeds. Every year we gather for celebrating Bengal, keeping the songs, the food and the stage going for the families who live here now, and for the kids who will carry them on.',
+  /* Pending: the committee is still to write this. While it is bracketed the home page
+     leaves it out rather than showing the placeholder. */
   missionStatement: '[Mission and vision statement, two or three sentences from the committee.]',
   /** Where to find us. Bracketed until the committee confirms. */
   venue: 'St Andrew’s Community Hall, Morley',
@@ -79,17 +81,29 @@ export const site = {
   ],
   themeImageCredit: 'Photographs by Budhaditya Pandit',
   /**
-   * Where registering happens. A Google Form the committee runs, so there is no account to
-   * make and nothing for us to build. Null until the committee has one, and while it is
-   * null the site says registration opens shortly rather than offering a dead button.
+   * Where offers to help go. May be the same form as registration, or its own. Null sends
+   * people to the contact page instead, which always works.
    */
-  registrationFormUrl: null as string | null,
+  volunteerFormUrl: null as string | null,
   /**
    * The member portal is built but parked for the MVP: the routes still work for anyone
    * who knows the address, they are simply not advertised. Set this to true to put the
    * sign-in back in the header and footer.
    */
   showMemberSignIn: false,
+  /**
+   * News and newsletters are parked until there is real news to carry: what sits there now
+   * is sample copy, and a page of placeholders reads worse than no page at all. This takes
+   * it out of the navigation; the pages still work for anyone who knows the address. Set it
+   * to true once the committee has the first few pieces written.
+   */
+  showNews: false,
+  /**
+   * The next-event banner pinned under the wordmark on the home page. Parked for now at the
+   * committee's request; the component and its styles are untouched, so setting this to true
+   * brings it back exactly as it was.
+   */
+  showNextEventStrip: false,
   /**
    * Who each home page section is for. Sections marked 'members' stay hidden until the
    * viewer has logged in (phase 2). For the public MVP, events and volunteering are members-only.
@@ -118,7 +132,13 @@ export const site = {
    * appears in the footer, on the contact page and wherever else we offer a way through.
    */
   social: [
-    { name: 'Facebook', icon: 'facebook', href: 'https://www.facebook.com/groups/1337437436797813/' },
+    {
+      name: 'Facebook',
+      icon: 'facebook',
+      href: 'https://www.facebook.com/groups/1337437436797813/',
+      mention: 'Facebook',
+    },
+    { name: 'WhatsApp', icon: 'whatsapp', href: null, mention: 'our WhatsApp group' },
   ],
 } as const
 

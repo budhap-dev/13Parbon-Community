@@ -1,4 +1,5 @@
 import { Link } from 'react-router'
+import { Icon } from './Icon'
 import type { Event } from '@/domain/event'
 import { formatDayMonth } from '@/domain/dates'
 import styles from './EventCard.module.css'
@@ -21,7 +22,10 @@ export function EventCard({ event, headingLevel = 3 }: { event: Event; headingLe
       <p className={styles.meta}>
         {event.venue} · {event.summary}
       </p>
-      <span className={styles.action}>{isPast ? 'Look back' : event.registrationOpen ? 'RSVP for your family' : 'Details'}</span>
+      <span className={styles.action}>
+        {isPast ? 'Look back' : 'Details'}
+        <Icon name="chevronRight" size={17} className={styles.actionArrow} />
+      </span>
     </article>
   )
 }

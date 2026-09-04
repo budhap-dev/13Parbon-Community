@@ -2,6 +2,7 @@ import { Link, useSearchParams } from 'react-router'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { Container } from '@/components/Container'
 import { EventCard } from '@/components/EventCard'
+import { Icon } from '@/components/Icon'
 import { formatMonthYear, monthKey } from '@/domain/dates'
 import type { Event } from '@/domain/event'
 import { useFestivals, usePastEvents, useUpcomingEvents } from '@/lib/api'
@@ -104,6 +105,7 @@ export function EventsPage() {
       {!festivalId && awaitingDates.length > 0 ? (
         <aside className={styles.more} aria-labelledby="more-title">
           <h2 id="more-title" className={styles.moreTitle}>
+            <Icon name="calendar" size={24} className={styles.moreIcon} />
             More of the year to come
           </h2>
           <p className={styles.moreText}>
