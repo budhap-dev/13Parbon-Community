@@ -22,6 +22,9 @@ export type IconName =
   | 'external'
   | 'pin'
   | 'clock'
+  | 'mic'
+  | 'door'
+  | 'heart'
 
 const paths: Record<IconName, ReactElement> = {
   users: (
@@ -72,6 +75,22 @@ const paths: Record<IconName, ReactElement> = {
       <path d="M12 7v5.2l3.2 2" />
     </>
   ),
+  mic: (
+    <>
+      <rect x="9" y="3" width="6" height="11" rx="3" />
+      <path d="M5.5 11.5a6.5 6.5 0 0 0 13 0" />
+      <path d="M12 18v3M9 21h6" />
+    </>
+  ),
+  door: (
+    <>
+      <path d="M4 21h16" />
+      <path d="M14 21V4L6 6v15" />
+      <path d="M18 21V8l-4-2" />
+      <circle cx="11" cy="13" r="1" fill="currentColor" />
+    </>
+  ),
+  heart: <path d="M12 20s-7-4.4-7-9a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 4.6-7 9-7 9z" />,
   home: (
     <>
       <path d="M3 10.5 12 3l9 7.5" />

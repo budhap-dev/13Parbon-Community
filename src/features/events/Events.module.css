@@ -97,7 +97,15 @@
 }
 
 .moreTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   font-size: 26px;
+}
+
+.moreIcon {
+  flex-shrink: 0;
+  color: var(--color-accent);
 }
 
 .moreText {

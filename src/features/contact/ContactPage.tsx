@@ -137,6 +137,7 @@ export function ContactPage() {
       <aside className={styles.side}>
         <section className={styles.block} aria-labelledby="find-title">
           <h2 id="find-title" className={styles.blockTitle}>
+            <Icon name="pin" size={22} className={styles.panelIcon} />
             Where to find us
           </h2>
           <p className={styles.findText}>
@@ -182,6 +183,7 @@ export function ContactPage() {
         </section>
         <section className={styles.block} aria-labelledby="social-title">
           <h2 id="social-title" className={styles.blockTitle}>
+            <Icon name="megaphone" size={22} className={styles.panelIcon} />
             Follow along
           </h2>
           <ul className={styles.social}>

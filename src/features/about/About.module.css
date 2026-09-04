@@ -79,6 +79,10 @@
   background: var(--color-bg-raised);
 }
 
+.valueIcon {
+  color: var(--color-accent);
+}
+
 .valueTitle {
   font-size: 22px;
 }

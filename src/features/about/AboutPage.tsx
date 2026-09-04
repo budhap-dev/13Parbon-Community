@@ -3,6 +3,7 @@ import { site } from '@/app/site'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { Button } from '@/components/Button'
 import { Container } from '@/components/Container'
+import { Icon, type IconName } from '@/components/Icon'
 import styles from './About.module.css'
 
 export function AboutPage() {
@@ -49,6 +50,7 @@ export function AboutPage() {
         <ul className={styles.values}>
           {about.values.map((value) => (
             <li key={value.title} className={styles.value}>
+              <Icon name={value.icon as IconName} size={26} className={styles.valueIcon} />
               <h3 className={styles.valueTitle}>{value.title}</h3>
               <p className={styles.valueText}>{value.text}</p>
             </li>

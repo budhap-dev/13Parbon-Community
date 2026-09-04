@@ -11,10 +11,10 @@ export const about = {
     '[Two or three sentences from the committee on where the association is today: how many households, what has changed, what is next.]',
   ],
   values: [
-    { title: 'Everyone on stage', text: 'Children, first-timers and grandparents all get a turn. The programme is made by members, not booked in.' },
-    { title: 'A family is a unit', text: 'One registration per household. Bring the kids, bring the neighbours, bring a dish.' },
-    { title: 'Open door', text: 'You do not have to be Bengali, or a member, to come to an event. Come once and see.' },
-    { title: 'Run by volunteers', text: 'The committee is elected each year at the annual general meeting, and every event is put on by people who put their hands up.' },
+    { icon: 'mic', title: 'Everyone on stage', text: 'Children, first-timers and grandparents all get a turn. The programme is made by members, everyone is invited.' },
+    { icon: 'users', title: 'A family is a unit', text: 'One registration per household. The more, the merrier, bring the kids and your neighbours along!' },
+    { icon: 'door', title: 'Open door', text: 'You do not have to be Bengali, or a member, to come to an event. Come once and see.' },
+    { icon: 'heart', title: 'Run by volunteers', text: 'The committee is elected each year at the annual general meeting, and every event is put on by people who put their hands up.' },
   ],
   committee: [
     { role: 'President', name: '[Name]' },
