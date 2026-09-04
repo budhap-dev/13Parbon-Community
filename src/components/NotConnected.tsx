@@ -1,4 +1,4 @@
-import { activeSocial, isPlaceholder, site } from '@/app/site'
+import { isPlaceholder, site } from '@/app/site'
 import { Icon } from './Icon'
 import styles from './NotConnected.module.css'
 
@@ -28,12 +28,17 @@ export function NotConnected({ action }: Props) {
           {emailKnown ? (
             <a href={`mailto:${site.email}`}>{site.email}</a>
           ) : (
-            activeSocial().map((channel, i) => (
+            /* Every channel is named; only the ones with an address are linked. */
+            site.social.map((channel, i) => (
               <span key={channel.name}>
-                {i > 0 ? ' or ' : ''}
-                <a href={channel.href} target="_blank" rel="noreferrer">
-                  {channel.name}
-                </a>
+                {i > 0 ? ' and ' : ''}
+                {channel.href ? (
+                  <a href={channel.href} target="_blank" rel="noreferrer">
+                    {channel.mention}
+                  </a>
+                ) : (
+                  channel.mention
+                )}
               </span>
             ))
           )}

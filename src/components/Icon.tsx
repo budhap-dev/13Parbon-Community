@@ -25,6 +25,8 @@ export type IconName =
   | 'mic'
   | 'door'
   | 'heart'
+  | 'sparkle'
+  | 'badge'
 
 const paths: Record<IconName, ReactElement> = {
   users: (
@@ -91,6 +93,19 @@ const paths: Record<IconName, ReactElement> = {
     </>
   ),
   heart: <path d="M12 20s-7-4.4-7-9a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 4.6-7 9-7 9z" />,
+  /* A rosette: the medal and its two ribbon tails. */
+  badge: (
+    <>
+      <circle cx="12" cy="8.5" r="5.5" />
+      <path d="M8.4 13.1 6.4 21l5.6-2.7 5.6 2.7-2-7.9" />
+    </>
+  ),
+  sparkle: (
+    <>
+      <path d="M12 3c.7 4.2 2.1 5.6 6.3 6.3-4.2.7-5.6 2.1-6.3 6.3-.7-4.2-2.1-5.6-6.3-6.3C9.9 8.6 11.3 7.2 12 3z" />
+      <path d="M18.5 15.5c.35 2 1 2.65 3 3-2 .35-2.65 1-3 3-.35-2-1-2.65-3-3 2-.35 2.65-1 3-3z" />
+    </>
+  ),
   home: (
     <>
       <path d="M3 10.5 12 3l9 7.5" />

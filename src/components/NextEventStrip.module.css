@@ -23,10 +23,12 @@
  * so it reads as something to press rather than a line of information.
  */
 .card {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 14px;
   min-height: 52px;
+  overflow: hidden;
   padding: 8px 14px;
   border: 1.5px solid var(--color-border);
   border-radius: var(--radius-tile);
@@ -36,6 +38,47 @@
     border-color var(--motion-fast) ease,
     background-color var(--motion-fast) ease,
     transform var(--motion-fast) ease;
+}
+
+/*
+ * A torch passing over the card, left to right and round again. It is a transform on one
+ * pseudo-element, so it runs on the compositor and costs nothing while the page scrolls.
+ */
+.card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 38%,
+    color-mix(in srgb, var(--color-accent) 26%, transparent) 50%,
+    transparent 62%
+  );
+  pointer-events: none;
+  animation: torch 4.5s linear infinite;
+}
+
+/* The card's own contents sit above the beam. */
+.card > * {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes torch {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card::after {
+    animation: none;
+    opacity: 0;
+  }
 }
 
 .strip:hover .card {
@@ -73,9 +116,53 @@
   font-weight: 600;
 }
 
-.when,
 .count {
   color: var(--color-fg-muted);
+}
+
+/*
+ * The theme, running through the room left between the name and the countdown. Two copies of
+ * the line sit end to end and the pair slides exactly half its width, so the second copy
+ * arrives where the first began and the loop has no seam. The padding that separates them is
+ * inside each copy rather than a gap between, or the halves would not match.
+ */
+.theme {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  -webkit-mask: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+  mask: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+}
+
+.themeTrack {
+  display: inline-flex;
+  white-space: nowrap;
+  animation: marquee 26s linear infinite;
+}
+
+.themeText {
+  padding-right: 64px;
+  color: var(--color-fg-muted);
+  font-family: var(--font-script);
+  font-size: 16px;
+}
+
+/* Stops while it is being read or pressed. */
+.strip:hover .themeTrack,
+.strip:focus-visible .themeTrack {
+  animation-play-state: paused;
+}
+
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .themeTrack {
+    animation: none;
+  }
 }
 
 .count {
@@ -89,64 +176,87 @@
 }
 
 /*
- * Too much for one line on a phone, so it takes two on purpose: the date, the name and the
- * arrow across the top, how long to wait underneath. Left to wrap on its own the arrow ended
- * up stranded on a line of its own.
+ * Two rows on a phone, laid out as a grid rather than left to wrap: the badge, the name and
+ * the arrow across the top, how long to wait underneath. Grid areas mean the second row is a
+ * row by construction, instead of depending on what happens to fit on the first.
  */
 @media (max-width: 620px) {
   .card {
-    flex-wrap: wrap;
-    gap: 4px 10px;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      'date name arrow'
+      'theme theme theme';
+    gap: 4px 8px;
     padding: 10px 12px;
   }
 
-  /* The time is on the event page; the date and how soon are what matter in a strip. */
-  .when {
-    display: none;
+  .date {
+    grid-area: date;
+  }
+
+  /*
+   * The theme and the countdown share the second row by sitting in the same area, rather than
+   * each taking a column. A column shared with the countdown would be as wide as the
+   * countdown, and on the row above that column holds only the arrow: the name would lose
+   * 70px it needs. The margin keeps the running text clear of the countdown.
+   */
+  .theme {
+    grid-area: theme;
+    margin-right: 96px;
+  }
+
+  .themeText {
+    padding-right: 44px;
+    font-size: 14px;
   }
 
   .name {
-    flex: 1 1 auto;
+    grid-area: name;
     min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
+  /* Held against the right edge, so the name has the whole line up to it. */
   .arrow {
-    order: 2;
-    margin-left: auto;
+    grid-area: arrow;
+    justify-self: end;
+    margin-left: 0;
   }
 
+  /* Sharing the theme's row, held to the right edge. */
   .count {
-    order: 3;
-    flex-basis: 100%;
+    grid-area: theme;
+    justify-self: end;
+    align-self: center;
     margin-left: 0;
+    font-size: 15px;
+    white-space: nowrap;
+  }
+}
+
+/*
+ * On the narrowest phones the badge and the event's name together overrun the line, and the
+ * name is the part that gets cut. Both step down a size rather than letting that happen.
+ */
+@media (max-width: 380px) {
+  .date {
+    padding: 3px 8px;
+    font-size: 12.5px;
+  }
+
+  .name {
     font-size: 15px;
   }
 }
 
-
-@keyframes unroll {
-  from {
-    opacity: 0;
-    transform: translateY(-100%);
-  }
-  to {
-    opacity: 1;
-    transform: none;
+/* Narrower still, and the name takes a second line rather than losing its ending. */
+@media (max-width: 340px) {
+  .name {
+    overflow: visible;
+    white-space: normal;
   }
 }
 
-/* And a slow bloom on the date, every few seconds, so a returning visitor's eye finds it. */
-.date {
-  animation: bloom 5.5s ease-in-out 1.2s infinite;
-}
-
-@keyframes bloom {
-  0%,
-  72%,
-  100% {
-    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-accent) 60%, transparent);
-  }
-  84% {
-    box-shadow: 0 0 0 7px color-mix(in srgb, var(--color-accent) 0%, transparent);
-  }
-}

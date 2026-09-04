@@ -9,7 +9,7 @@ describe('SiteHeader', () => {
   it('links the brand home and lists the public navigation', () => {
     render(
       <TestDataProviders>
-        <MemoryRouter initialEntries={['/news']}>
+        <MemoryRouter initialEntries={['/events']}>
           <ThemeProvider>
             <SiteHeader />
           </ThemeProvider>
@@ -21,7 +21,9 @@ describe('SiteHeader', () => {
     expect(brand.querySelector('img')).toHaveAttribute('src', '/brand/13parbon-emblem.jpg')
     const nav = screen.getByRole('navigation', { name: 'Main' })
     expect(nav).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'News' })).toHaveAttribute('aria-current', 'page')
+    expect(screen.getByRole('link', { name: 'Events' })).toHaveAttribute('aria-current', 'page')
+    // Parked until there is real news to carry: the route still works, it is not advertised.
+    expect(screen.queryByRole('link', { name: 'News' })).not.toBeInTheDocument()
     // Parked until everyone in the photographs has been asked.
     expect(screen.queryByRole('link', { name: 'Gallery' })).not.toBeInTheDocument()
     // Parked for the MVP: the route still works, it is simply not advertised.

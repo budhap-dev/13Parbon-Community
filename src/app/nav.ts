@@ -9,7 +9,7 @@ export const publicNav: NavItem[] = [
   { label: 'Home', to: '/', end: true },
   { label: 'Events', to: '/events' },
   ...(site.showPhotos ? [{ label: 'Gallery', to: '/gallery' }] : []),
-  { label: 'News', to: '/news' },
+  ...(site.showNews ? [{ label: 'News', to: '/news' }] : []),
   { label: 'About', to: '/about' },
   { label: 'Contact', to: '/contact' },
 ]

@@ -48,7 +48,7 @@
   position: absolute;
   inset: 0;
   z-index: -1;
-  background: color-mix(in srgb, var(--color-bg) 84%, transparent);
+  background: color-mix(in srgb, var(--color-bg) 94%, transparent);
   -webkit-backdrop-filter: blur(14px);
   backdrop-filter: blur(14px);
 }
@@ -58,7 +58,24 @@
 }
 
 .headerScrolled::before {
-  background: color-mix(in srgb, var(--color-bg) 92%, transparent);
+  background: color-mix(in srgb, var(--color-bg) 98%, transparent);
+}
+
+/*
+ * On a phone the bar is solid and the blur goes, in both states. The blur has to be
+ * recomputed on every scroll frame, and where the device cannot keep up it lags behind the
+ * content it sits over, which shows as a ghost of the text passing underneath.
+ *
+ * This has to sit after .headerScrolled::before: otherwise scrolling puts the translucent
+ * background back and the page reads through the bar again.
+ */
+@media (max-width: 900px) {
+  .header::before,
+  .headerScrolled::before {
+    background: var(--color-bg);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
 }
 
 .headerHidden {

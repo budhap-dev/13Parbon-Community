@@ -12,9 +12,11 @@ export const site = {
   /** The saying's first half, then the group's name on its own line. */
   bengaliTitleLead: 'বারো মাসে',
   groupName: '13 Parbon',
-  tagline: 'Twelve months, thirteen festivals. The heart always finds another reason to celebrate.',
+  tagline: 'Twelve months, thirteen festivals. The heart always finds another reason to celebrate!',
   mission:
     'A Bengali cultural association in Leeds. Every year we gather for celebrating Bengal, keeping the songs, the food and the stage going for the families who live here now, and for the kids who will carry them on.',
+  /* Pending: the committee is still to write this. While it is bracketed the home page
+     leaves it out rather than showing the placeholder. */
   missionStatement: '[Mission and vision statement, two or three sentences from the committee.]',
   /** Where to find us. Bracketed until the committee confirms. */
   venue: 'St Andrew’s Community Hall, Morley',
@@ -90,6 +92,13 @@ export const site = {
    */
   showMemberSignIn: false,
   /**
+   * News and newsletters are parked until there is real news to carry: what sits there now
+   * is sample copy, and a page of placeholders reads worse than no page at all. This takes
+   * it out of the navigation; the pages still work for anyone who knows the address. Set it
+   * to true once the committee has the first few pieces written.
+   */
+  showNews: false,
+  /**
    * Who each home page section is for. Sections marked 'members' stay hidden until the
    * viewer has logged in (phase 2). For the public MVP, events and volunteering are members-only.
    */
@@ -117,7 +126,13 @@ export const site = {
    * appears in the footer, on the contact page and wherever else we offer a way through.
    */
   social: [
-    { name: 'Facebook', icon: 'facebook', href: 'https://www.facebook.com/groups/1337437436797813/' },
+    {
+      name: 'Facebook',
+      icon: 'facebook',
+      href: 'https://www.facebook.com/groups/1337437436797813/',
+      mention: 'Facebook',
+    },
+    { name: 'WhatsApp', icon: 'whatsapp', href: null, mention: 'our WhatsApp group' },
   ],
 } as const
 

@@ -18,16 +18,33 @@ export function NextEventStrip() {
 
   const stamp = formatDayMonth(event.startsAt)
   const countdown = describeCountdown(daysUntil(event.startsAt, now))
+  // The theme, run across whatever room the strip has left between the name and the countdown.
+  const themeLine = event.theme
+    ? [event.theme.bengali, event.theme.bengaliSubtitle].filter(Boolean).join(' — ')
+    : ''
 
   return (
     <Link to={`/events/${event.slug}`} className={styles.strip}>
       <Container className={styles.inner}>
         <span className={styles.card}>
+          {/* The day and the hour are one fact, so they wear one badge. */}
           <span className={styles.date}>
-          {stamp.day} {stamp.month}
-        </span>
+            {stamp.day} {stamp.month}, {formatTime(event.startsAt)}
+          </span>
           <span className={styles.name}>{event.title}</span>
-          <span className={styles.when}>{formatTime(event.startsAt)}</span>
+          {themeLine ? (
+            <span className={styles.theme}>
+              <span className={styles.themeTrack}>
+                <span lang="bn" className={styles.themeText}>
+                  {themeLine}
+                </span>
+                {/* A second copy so the loop closes on itself; only the first is announced. */}
+                <span lang="bn" aria-hidden="true" className={styles.themeText}>
+                  {themeLine}
+                </span>
+              </span>
+            </span>
+          ) : null}
           <span className={styles.count}>
             {countdown.value === 'Today' || countdown.value === 'Now'
             ? countdown.value

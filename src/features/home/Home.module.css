@@ -84,6 +84,37 @@
   animation: rise var(--motion-reveal) cubic-bezier(0.2, 0.7, 0.2, 1) 120ms both;
 }
 
+/*
+ * Sits on the line with the tagline and twinkles three times as the hero settles, then holds
+ * still. A celebration is a moment, not a thing that keeps flashing while you read.
+ */
+.leadSparkle {
+  display: inline-block;
+  vertical-align: -0.15em;
+  margin-left: 8px;
+  color: var(--color-accent);
+  transform-origin: center;
+  animation: twinkle 1.4s ease-in-out 700ms 3 both;
+}
+
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0.75;
+    transform: scale(1) rotate(0deg);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1.22) rotate(14deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .leadSparkle {
+    animation: none;
+  }
+}
+
 .heroActions {
   display: flex;
   gap: 14px;
@@ -528,11 +559,17 @@
   }
 
   /*
-   * Once the hero stacks, the motif and the logo occupy the same space and the alpona runs
-   * straight through the artwork. The logo is the stronger of the two, so the motif goes.
+   * Once the hero stacks, the motif can no longer sit under the headline: that is where the
+   * logo lands. It moves to the space the short title leaves at the top right instead, and
+   * shrinks to suit. At 0.14 opacity it reads as texture, not as something behind the words.
    */
   .backdrop {
-    display: none;
+    top: -24px;
+    right: -72px;
+    bottom: auto;
+    left: auto;
+    width: 340px;
+    height: 340px;
   }
 
   .event {
@@ -574,6 +611,12 @@
 }
 
 @media (max-width: 600px) {
+  .backdrop {
+    width: 260px;
+    height: 260px;
+    right: -56px;
+  }
+
   .heroActions {
     flex-direction: column;
     align-self: stretch;
