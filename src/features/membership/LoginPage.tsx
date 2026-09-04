@@ -3,6 +3,7 @@ import { site } from '@/app/site'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { Button } from '@/components/Button'
 import { Container } from '@/components/Container'
+import { useGoogleSignIn } from '@/lib/auth/GoogleSignIn'
 import { previewAccounts, previewEnabled } from '@/lib/auth/previewAccounts'
 import { useSession } from '@/lib/auth/session'
 import styles from './Membership.module.css'
@@ -19,8 +20,9 @@ function GoogleMark() {
 }
 
 /**
- * Real sign-in will be Google through Supabase, and only for households the committee has
- * added. Until that exists, the preview accounts below let the portal be walked through.
+ * Google through Supabase, and only for addresses that have been invited. Where this build
+ * has no Supabase project, or nobody on the allowlist, the button says so rather than
+ * pretending: the preview accounts below still let the portal be walked through.
  */
 export function LoginPage() {
   useDocumentTitle('Member sign-in')
@@ -28,6 +30,7 @@ export function LoginPage() {
   const navigate = useNavigate()
   const { search } = useLocation()
   const showPreview = previewEnabled(import.meta.env.MODE === 'development', search)
+  const { state, signIn: withGoogle } = useGoogleSignIn()
 
   return (
     <Container className={styles.single}>
@@ -40,11 +43,29 @@ export function LoginPage() {
       </p>
 
       <div className={styles.googleWrap}>
-        <button type="button" className={styles.google} disabled>
+        <button
+          type="button"
+          className={styles.google}
+          onClick={withGoogle}
+          disabled={state.status === 'off' || state.status === 'working'}
+        >
           <GoogleMark />
-          Continue with Google
+          {state.status === 'working' ? 'Taking you to Google…' : 'Continue with Google'}
         </button>
-        <p className={styles.hint}>Not switched on yet. The committee is still setting it up.</p>
+        {state.status === 'off' ? (
+          <p className={styles.hint}>Not switched on yet. The committee is still setting it up.</p>
+        ) : null}
+        {state.status === 'refused' ? (
+          <p role="alert" className={styles.hint}>
+            {state.email} is not on the list yet. Membership is by invitation while we get started — send the
+            committee a message and someone will add you.
+          </p>
+        ) : null}
+        {state.status === 'failed' ? (
+          <p role="alert" className={styles.hint}>
+            Google sign-in did not go through: {state.message}. Try again in a moment.
+          </p>
+        ) : null}
       </div>
 
       <p className={styles.intro}>

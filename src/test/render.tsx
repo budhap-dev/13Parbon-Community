@@ -6,6 +6,7 @@ import { ApiProvider, createMockApi, type ApiClient } from '@/lib/api'
 import { testEvents } from './events'
 import { ClockProvider } from '@/lib/clock'
 import { ThemeProvider } from '@/app/theme/ThemeContext'
+import { GoogleSignInProvider } from '@/lib/auth/GoogleSignIn'
 import { SessionProvider, type Session } from '@/lib/auth/session'
 
 /** Fixed clock for tests so relative fixture dates and countdowns are stable. */
@@ -73,17 +74,30 @@ export function createDeliveringTestApi(): ApiClient {
   return { ...createTestApi(), delivers: true }
 }
 
-type DataProps = { children: ReactNode; api?: ApiClient; session?: Session }
+type DataProps = {
+  children: ReactNode
+  api?: ApiClient
+  session?: Session
+  /** Sign-in settings. Empty by default, so no test reaches for a real Supabase project. */
+  env?: Record<string, string | undefined>
+}
 
 /** Query client, API and clock, without a router. Use with createMemoryRouter. */
-export function TestDataProviders({ children, api = createTestApi(), session = { role: 'visitor' } }: DataProps) {
+export function TestDataProviders({
+  children,
+  api = createTestApi(),
+  session = { role: 'visitor' },
+  env = {},
+}: DataProps) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return (
     <QueryClientProvider client={client}>
       <ApiProvider api={api}>
         <ClockProvider now={() => TEST_NOW}>
           <SessionProvider initial={session}>
-            <ThemeProvider>{children}</ThemeProvider>
+            <GoogleSignInProvider env={env}>
+              <ThemeProvider>{children}</ThemeProvider>
+            </GoogleSignInProvider>
           </SessionProvider>
         </ClockProvider>
       </ApiProvider>
@@ -94,20 +108,25 @@ export function TestDataProviders({ children, api = createTestApi(), session = {
 type Props = DataProps & { route?: string }
 
 /** Everything a component needs, including an in-memory router. */
-export function TestProviders({ children, api, session, route = '/' }: Props) {
+export function TestProviders({ children, api, session, env, route = '/' }: Props) {
   return (
-    <TestDataProviders api={api} session={session}>
+    <TestDataProviders api={api} session={session} env={env}>
       <MemoryRouter initialEntries={[route]}>{children}</MemoryRouter>
     </TestDataProviders>
   )
 }
 
-type Options = Omit<RenderOptions, 'wrapper'> & { route?: string; api?: ApiClient; session?: Session }
+type Options = Omit<RenderOptions, 'wrapper'> & {
+  route?: string
+  api?: ApiClient
+  session?: Session
+  env?: Record<string, string | undefined>
+}
 
-export function renderWithProviders(ui: ReactElement, { route, api, session, ...options }: Options = {}) {
+export function renderWithProviders(ui: ReactElement, { route, api, session, env, ...options }: Options = {}) {
   return render(ui, {
     wrapper: ({ children }) => (
-      <TestProviders api={api} session={session} route={route}>
+      <TestProviders api={api} session={session} env={env} route={route}>
         {children}
       </TestProviders>
     ),

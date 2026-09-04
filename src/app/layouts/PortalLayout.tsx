@@ -2,7 +2,8 @@ import { useEffect, useRef } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router'
 import { site } from '@/app/site'
 import { Icon, type IconName } from '@/components/Icon'
-import { useSession, useSignedIn } from '@/lib/auth/session'
+import { useGoogleSignIn } from '@/lib/auth/GoogleSignIn'
+import { useSignedIn } from '@/lib/auth/session'
 import { useSignInAttempts } from '@/lib/api'
 import styles from './PortalLayout.module.css'
 
@@ -17,7 +18,7 @@ const memberNav: Item[] = [
 
 export function PortalLayout() {
   const who = useSignedIn()
-  const { signOut } = useSession()
+  const { signOut } = useGoogleSignIn()
   const { pathname } = useLocation()
   const mainRef = useRef<HTMLElement>(null)
   const first = useRef(true)
