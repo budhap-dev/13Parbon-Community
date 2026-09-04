@@ -1,4 +1,4 @@
-import { useId, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { Link, NavLink, useLocation } from 'react-router'
 import { Button } from '@/components/Button'
 import { Container } from '@/components/Container'
@@ -15,6 +15,30 @@ export function SiteHeader() {
   const { pathname } = useLocation()
   const menuId = useId()
   const { scrolled, hidden } = useScrollHeader(open)
+  const toggleRef = useRef<HTMLButtonElement>(null)
+  const panelRef = useRef<HTMLElement>(null)
+  const isHome = pathname === '/'
+
+  /*
+   * While the drawer is open it owns the screen: Escape closes it, the page behind does not
+   * scroll, and focus starts inside it rather than back at the top of the document.
+   */
+  useEffect(() => {
+    if (!open) return
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return
+      setOpen(false)
+      toggleRef.current?.focus({ preventScroll: true })
+    }
+    document.addEventListener('keydown', onKeyDown)
+    const { overflow } = document.body.style
+    document.body.style.overflow = 'hidden'
+    panelRef.current?.querySelector<HTMLElement>('a, button')?.focus({ preventScroll: true })
+    return () => {
+      document.removeEventListener('keydown', onKeyDown)
+      document.body.style.overflow = overflow
+    }
+  }, [open])
 
   // Close the menu whenever the route changes, without an effect.
   const [lastPathname, setLastPathname] = useState(pathname)
@@ -37,18 +61,43 @@ export function SiteHeader() {
           <span>{site.wordmark}</span>
         </Link>
 
+        {!isHome ? (
+          <Link to="/" className={styles.homeButton} aria-label="Back to the home page">
+            <Icon name="home" size={22} />
+          </Link>
+        ) : null}
+
         <button
+          ref={toggleRef}
           type="button"
           className={styles.menuButton}
           aria-expanded={open}
           aria-controls={menuId}
           onClick={() => setOpen((value) => !value)}
         >
-          <Icon name={open ? 'close' : 'menu'} />
-          <span className={styles.srOnly}>{open ? 'Close menu' : 'Open menu'}</span>
+          <Icon name="menu" />
+          <span className={styles.srOnly}>Open menu</span>
         </button>
 
-        <nav id={menuId} className={open ? styles.navOpen : styles.nav} aria-label="Main">
+        {open ? (
+          <div className={styles.scrim} aria-hidden="true" onClick={() => setOpen(false)} />
+        ) : null}
+
+        <nav
+          id={menuId}
+          ref={panelRef}
+          className={open ? styles.navOpen : styles.nav}
+          aria-label="Main"
+          aria-hidden={undefined}
+        >
+          <div className={styles.drawerHead}>
+            <span className={styles.drawerTitle}>Menu</span>
+            <button type="button" className={styles.drawerClose} onClick={() => setOpen(false)}>
+              <Icon name="close" size={22} />
+              <span className={styles.srOnly}>Close menu</span>
+            </button>
+          </div>
+
           <ul className={styles.links}>
             {publicNav.map((item) => (
               <li key={item.to}>

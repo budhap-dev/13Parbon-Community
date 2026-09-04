@@ -32,17 +32,32 @@
   position: sticky;
   top: 0;
   z-index: 30;
-  background: color-mix(in srgb, var(--color-bg) 84%, transparent);
-  -webkit-backdrop-filter: blur(14px);
-  backdrop-filter: blur(14px);
   border-bottom: 1px solid transparent;
   transition:
     transform 280ms cubic-bezier(0.2, 0.7, 0.2, 1),
     border-color var(--motion-fast) ease;
 }
 
+/*
+ * The blur lives on a layer behind the bar rather than on the header itself. An element with
+ * a backdrop-filter becomes the containing block for anything fixed inside it, which pinned
+ * the slide-out menu to the height of the header instead of the screen.
+ */
+.header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: color-mix(in srgb, var(--color-bg) 84%, transparent);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
 .headerScrolled {
   border-bottom-color: var(--color-border-faint);
+}
+
+.headerScrolled::before {
   background: color-mix(in srgb, var(--color-bg) 92%, transparent);
 }
 
@@ -82,6 +97,13 @@
   border: 2px solid var(--color-accent);
   object-fit: cover;
   background: #fff;
+}
+
+/* Drawer chrome: only ever seen once the menu becomes a panel. */
+.homeButton,
+.scrim,
+.drawerHead {
+  display: none;
 }
 
 .menuButton {
@@ -162,22 +184,114 @@
     display: inline-flex;
   }
 
+  /* One tap back to the top level, on every page but the one you are already on. */
+  .homeButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    margin-left: auto;
+    margin-right: 4px;
+    border: 1.5px solid var(--color-border);
+    border-radius: var(--radius-pill);
+    color: var(--color-fg);
+  }
+
+  .homeButton:hover {
+    border-color: var(--color-fg);
+    color: var(--color-fg);
+  }
+
+  /*
+   * The menu becomes a panel that slides in from the right. It stays in the document when
+   * closed so the movement can be animated, and is taken out of reach with visibility so
+   * nothing inside it can be tabbed to while it is off screen.
+   */
+  .nav,
+  .navOpen {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    width: min(330px, 84vw);
+    padding: 0 20px 28px;
+    background: var(--color-bg);
+    border-left: 1px solid var(--color-border-faint);
+    box-shadow: -24px 0 60px rgba(0, 0, 0, 0.4);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    transition:
+      transform 280ms cubic-bezier(0.2, 0.7, 0.2, 1),
+      visibility 0s linear 280ms;
+  }
+
   .nav {
-    display: none;
+    visibility: hidden;
+    transform: translateX(100%);
   }
 
   .navOpen {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    z-index: 5;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 8px;
-    padding: 8px var(--page-pad) 24px;
-    background: var(--color-bg);
+    visibility: visible;
+    transform: none;
+    transition:
+      transform 280ms cubic-bezier(0.2, 0.7, 0.2, 1),
+      visibility 0s;
+  }
+
+  .scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 45;
+    background: rgba(0, 0, 0, 0.5);
+    cursor: pointer;
+    animation: scrim-in 220ms ease both;
+  }
+
+  @keyframes scrim-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .drawerHead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 64px;
+    margin: 0 -20px 8px;
+    padding: 0 12px 0 20px;
     border-bottom: 1px solid var(--color-border-faint);
+  }
+
+  .drawerTitle {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 18px;
+    letter-spacing: -0.01em;
+  }
+
+  .drawerClose {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--color-fg);
+    cursor: pointer;
   }
 
   .links {
@@ -188,15 +302,32 @@
 
   .link,
   .linkActive {
-    min-height: 52px;
-    font-size: 20px;
+    /* Full width, so the rule between items runs the width of the drawer, not of the word. */
+    display: flex;
+    min-height: 56px;
+    padding: 0 4px;
+    border-bottom: 1px solid var(--color-border-faint);
+    border-left: 3px solid transparent;
+    font-size: 19px;
+  }
+
+  .link:hover {
+    border-bottom-color: var(--color-border-faint);
+  }
+
+  /* Current page marked down the side, since a bottom rule now separates every item. */
+  .linkActive {
+    padding-left: 12px;
+    border-left-color: var(--color-accent);
+    border-bottom-color: var(--color-border-faint);
+    color: var(--color-accent);
   }
 
   .actions {
     flex-direction: column;
     align-items: stretch;
     gap: 12px;
-    padding-top: 12px;
+    padding-top: 20px;
   }
 
   .login {

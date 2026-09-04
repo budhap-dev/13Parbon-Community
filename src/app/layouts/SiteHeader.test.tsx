@@ -44,8 +44,15 @@ describe('SiteHeader', () => {
     const toggle = screen.getByRole('button', { name: 'Open menu' })
     expect(toggle).toHaveAttribute('aria-expanded', 'false')
     await userEvent.click(toggle)
-    expect(screen.getByRole('button', { name: 'Close menu' })).toHaveAttribute('aria-expanded', 'true')
+    expect(toggle).toHaveAttribute('aria-expanded', 'true')
     expect(screen.getByRole('navigation', { name: 'Main' }).className).toContain('navOpen')
+
+    // The drawer carries its own way out, and Escape closes it from anywhere.
+    await userEvent.click(screen.getByRole('button', { name: 'Close menu' }))
+    expect(toggle).toHaveAttribute('aria-expanded', 'false')
+    await userEvent.click(toggle)
+    await userEvent.keyboard('{Escape}')
+    expect(toggle).toHaveAttribute('aria-expanded', 'false')
   })
 
   it('pins the next event under the wordmark, on the home page only', async () => {
@@ -76,5 +83,30 @@ describe('SiteHeader', () => {
     )
     await screen.findByRole('navigation', { name: 'Main' })
     expect(screen.queryByRole('link', { name: /Cultural programme/ })).not.toBeInTheDocument()
+  })
+
+  it('offers one tap home from every page but the home page', async () => {
+    const { unmount } = render(
+      <TestDataProviders>
+        <MemoryRouter initialEntries={['/about']}>
+          <ThemeProvider>
+            <SiteHeader />
+          </ThemeProvider>
+        </MemoryRouter>
+      </TestDataProviders>,
+    )
+    expect(screen.getByRole('link', { name: 'Back to the home page' })).toHaveAttribute('href', '/')
+    unmount()
+
+    render(
+      <TestDataProviders>
+        <MemoryRouter>
+          <ThemeProvider>
+            <SiteHeader />
+          </ThemeProvider>
+        </MemoryRouter>
+      </TestDataProviders>,
+    )
+    expect(screen.queryByRole('link', { name: 'Back to the home page' })).not.toBeInTheDocument()
   })
 })
