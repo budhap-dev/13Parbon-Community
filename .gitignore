@@ -29,3 +29,9 @@ coverage
 # Local environment
 .env.local
 .env*.local
+
+# Draft Supabase policies, not ready to ship. The helper functions reference tables before
+# they exist, current_setting(...)::jsonb can throw, and the auth.users triggers could block
+# sign-in. Kept locally until they are fixed and verified against a real project.
+supabase/portal.sql
+supabase/verify.sql
