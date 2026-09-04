@@ -55,15 +55,10 @@ export function NextEvent() {
                 Register the family
               </Button>
             ) : null}
-            {site.volunteerFormUrl ? (
-              <Button href={site.volunteerFormUrl} variant="inkLine" size="sm">
-                Volunteer
-              </Button>
-            ) : (
-              <Button to={`/events/${event.slug}`} variant="inkLine" size="sm">
-                Volunteer
-              </Button>
-            )}
+            {/* Volunteering is explained on the event page, alongside everything else. */}
+            <Button to={`/events/${event.slug}`} variant="inkLine" size="sm">
+              Event details
+            </Button>
           </div>
         </div>
         <p className={styles.countdown}>
