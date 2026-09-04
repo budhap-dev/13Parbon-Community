@@ -22,11 +22,11 @@ export function HomePage() {
       <Hero />
       {show('nextEvent') ? <NextEvent /> : null}
       <WhoWeAre />
-      {show('photos') ? <PhotoMosaic /> : null}
+      {site.showPhotos && show('photos') ? <PhotoMosaic /> : null}
       {show('yearStrip') ? <YearStrip /> : null}
       {show('upcoming') ? <UpcomingEvents /> : null}
       {show('volunteer') ? <VolunteerStrip /> : null}
-      {show('photos') ? <PhotoCarousel /> : null}
+      {site.showPhotos && show('photos') ? <PhotoCarousel /> : null}
       <JoinCta />
     </div>
   )
