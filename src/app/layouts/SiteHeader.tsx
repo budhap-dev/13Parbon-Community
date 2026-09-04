@@ -3,6 +3,7 @@ import { Link, NavLink, useLocation } from 'react-router'
 import { Button } from '@/components/Button'
 import { Container } from '@/components/Container'
 import { Icon } from '@/components/Icon'
+import { NextEventStrip } from '@/components/NextEventStrip'
 import { publicNav } from '../nav'
 import { site } from '../site'
 import { ThemeSwitcher } from './ThemeSwitcher'
@@ -71,6 +72,7 @@ export function SiteHeader() {
           </div>
         </nav>
       </Container>
+      {pathname === '/' ? <NextEventStrip /> : null}
     </header>
   )
 }

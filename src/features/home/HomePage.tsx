@@ -3,7 +3,6 @@ import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { canSee, useSession } from '@/lib/auth/session'
 import styles from './Home.module.css'
 import { Hero } from './sections/Hero'
-import { NextEventStrip } from './sections/NextEventStrip'
 import { JoinCta } from './sections/JoinCta'
 import { NextEvent } from './sections/NextEvent'
 import { PhotoCarousel } from './sections/PhotoCarousel'
@@ -20,7 +19,6 @@ export function HomePage() {
 
   return (
     <div className={styles.page}>
-      <NextEventStrip />
       <Hero />
       {show('nextEvent') ? <NextEvent /> : null}
       <WhoWeAre />

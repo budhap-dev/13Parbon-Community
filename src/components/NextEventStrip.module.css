@@ -1,0 +1,109 @@
+/*
+ * The next gathering, pinned under the wordmark. It lives inside the sticky header rather
+ * than beside it, so the two move as one: no offset to keep in step, and nothing to show
+ * through the gap when the bar slides away.
+ */
+.strip {
+  display: block;
+  border-top: 1px solid var(--color-border-faint);
+  background: color-mix(in srgb, var(--color-bg-raised) 55%, transparent);
+  /* Unrolls once on arrival, so it is noticed without shouting. */
+  animation: unroll 620ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  color: var(--color-fg);
+  transition: background-color var(--motion-fast) ease;
+}
+
+.strip:hover {
+  background: color-mix(in srgb, var(--color-bg-raised) 85%, transparent);
+  color: var(--color-fg);
+}
+
+.inner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 52px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  font-size: 16px;
+}
+
+.date {
+  flex-shrink: 0;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.name {
+  font-weight: 600;
+}
+
+.when,
+.count {
+  color: var(--color-fg-muted);
+}
+
+.count {
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.arrow {
+  flex-shrink: 0;
+  color: var(--color-accent);
+}
+
+@media (max-width: 620px) {
+  .inner {
+    flex-wrap: wrap;
+    gap: 6px 10px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+
+  /* The time is on the event page; the date and how soon are what matter in a strip.
+     The arrow goes too, rather than wrapping onto a line of its own: the strip is a link. */
+  .when,
+  .arrow {
+    display: none;
+  }
+
+  .name {
+    flex: 1 1 auto;
+  }
+}
+
+
+@keyframes unroll {
+  from {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* And a slow bloom on the date, every few seconds, so a returning visitor's eye finds it. */
+.date {
+  animation: bloom 5.5s ease-in-out 1.2s infinite;
+}
+
+@keyframes bloom {
+  0%,
+  72%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-accent) 60%, transparent);
+  }
+  84% {
+    box-shadow: 0 0 0 7px color-mix(in srgb, var(--color-accent) 0%, transparent);
+  }
+}
