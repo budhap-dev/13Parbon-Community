@@ -6,7 +6,7 @@ import { site } from './site'
  */
 export const about = {
   story: [
-    'A Bengali cultural association in [Town], started in [year] by [a handful of families] who wanted their children to grow up with the festivals, songs and food they grew up with.',
+    `A Bengali cultural association in ${site.town}, started in 2022 by a handful of families who wanted their children to grow up with the festivals, songs and food they grew up with.`,
     'Every year we gather four times: a cultural programme at Bengali New Year, Saraswati Puja, Holi, and a cultural programme at Mahalaya to open the Puja season. In between there is always something to cook too much for.',
     '[Two or three sentences from the committee on where the association is today: how many households, what has changed, what is next.]',
   ],
