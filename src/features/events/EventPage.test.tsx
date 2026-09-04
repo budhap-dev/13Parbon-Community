@@ -57,6 +57,34 @@ describe('EventPage', () => {
     expect(directions.getAttribute('href')).toContain('LS27%200JU')
   })
 
+  it('offers the planner to the committee and to nobody else', async () => {
+    renderEvent('mahalaya-cultural-programme-2026')
+    await screen.findByRole('heading', { level: 1 })
+    // Putting an event on is committee work; a visitor is not shown the tool for it.
+    expect(screen.queryByRole('region', { name: 'Managing this event' })).not.toBeInTheDocument()
+
+    renderWithProviders(
+      <Routes>
+        <Route path="/events/:slug" element={<EventPage />} />
+      </Routes>,
+      {
+        route: '/events/mahalaya-cultural-programme-2026',
+        session: {
+          role: 'member',
+          name: 'Rina Sen',
+          email: 'rina@example.com',
+          householdId: 'hh-1',
+          householdName: 'The Sens',
+        },
+      },
+    )
+    const panel = await screen.findByRole('region', { name: 'Managing this event' })
+    expect(within(panel).getByRole('link', { name: /Open event planning/ })).toHaveAttribute(
+      'href',
+      'https://13parbon-event-management.vercel.app/',
+    )
+  })
+
   it('hides registration and the countdown for past events', async () => {
     renderEvent('poila-boishakh-cultural-programme-2026')
     expect(await screen.findByRole('heading', { level: 1 })).toHaveTextContent('Poila Boishakh cultural programme')

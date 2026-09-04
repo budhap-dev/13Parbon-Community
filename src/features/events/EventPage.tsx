@@ -12,6 +12,7 @@ import { daysUntil, describeCountdown, formatLongDate, formatTime } from '@/doma
 import { NotFoundPage } from '@/features/placeholder'
 import { useEvent } from '@/lib/api'
 import { useNow } from '@/lib/clock'
+import { useCanSee } from '@/lib/auth/session'
 import styles from './Events.module.css'
 
 /** Whether an end time falls on the same day, so the date need not be repeated. */
@@ -24,6 +25,8 @@ export function EventPage() {
   const { slug = '' } = useParams()
   const { data: event, isPending, isError, refetch } = useEvent(slug)
   const now = useNow()
+  // Putting an event on is committee work, so the planner is not offered to the public.
+  const canManage = useCanSee('members')
   useDocumentTitle(event?.title)
 
   if (isPending) {
@@ -159,6 +162,26 @@ export function EventPage() {
               {countdown.label}
             </span>
           </p>
+        ) : null}
+
+        {canManage && !isPast ? (
+          <section className={styles.roles} aria-labelledby="manage-title">
+            <h2 id="manage-title" className={styles.rolesTitle}>
+              <Icon name="layout" size={22} className={styles.rolesIcon} />
+              Managing this event
+            </h2>
+            {site.tools.map((tool) => (
+              <p key={tool.href} className={styles.roleMeta}>
+                {tool.description}
+              </p>
+            ))}
+            {site.tools.map((tool) => (
+              <Button key={tool.href} href={tool.href} variant="line">
+                Open {tool.name.toLowerCase()}
+                <Icon name="external" size={15} />
+              </Button>
+            ))}
+          </section>
         ) : null}
 
         {!isPast && event.performerCall ? (
