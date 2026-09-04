@@ -11,6 +11,11 @@ export type MockApiOptions = {
   now?: () => Date
   /** Simulated network delay in milliseconds. */
   latencyMs?: number
+  /**
+   * Events to serve instead of the ones the site ships. Tests use this so the suite does
+   * not break every time the committee adds something to the calendar or takes it away.
+   */
+  events?: Event[]
 }
 
 function delay<T>(value: T, ms: number): Promise<T> {
@@ -18,19 +23,20 @@ function delay<T>(value: T, ms: number): Promise<T> {
   return new Promise((resolve) => setTimeout(() => resolve(value), ms))
 }
 
-export function createMockApi({ now = () => new Date(), latencyMs = 0 }: MockApiOptions = {}): ApiClient {
+export function createMockApi({ now = () => new Date(), latencyMs = 0, events }: MockApiOptions = {}): ApiClient {
   const fixtures = buildFixtures()
+  const allEvents = events ?? fixtures.events
   const portal = buildPortalFixtures()
 
   const visible = (event: Event) => event.isPublic && event.status !== 'draft' && event.status !== 'cancelled'
 
   const upcomingEvents = () =>
-    fixtures.events
+    allEvents
       .filter((event) => visible(event) && event.status === 'published' && isUpcoming(event.startsAt, now()))
       .sort((a, b) => a.startsAt.localeCompare(b.startsAt))
 
   const pastEvents = () =>
-    fixtures.events
+    allEvents
       .filter((event) => visible(event) && !isUpcoming(event.startsAt, now()))
       .sort((a, b) => b.startsAt.localeCompare(a.startsAt))
 
@@ -52,7 +58,7 @@ export function createMockApi({ now = () => new Date(), latencyMs = 0 }: MockApi
       listUpcoming: (limit = 10) => delay(upcomingEvents().slice(0, limit), latencyMs),
       listPast: (limit = 10) => delay(pastEvents().slice(0, limit), latencyMs),
       getNext: () => delay(upcomingEvents()[0] ?? null, latencyMs),
-      getBySlug: (slug) => delay(fixtures.events.find((e) => e.slug === slug && visible(e)) ?? null, latencyMs),
+      getBySlug: (slug) => delay(allEvents.find((e) => e.slug === slug && visible(e)) ?? null, latencyMs),
     },
     festivals: {
       list: () => delay([...fixtures.festivals], latencyMs),

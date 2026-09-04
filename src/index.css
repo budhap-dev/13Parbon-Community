@@ -8,6 +8,8 @@
 
 html {
   min-height: 100%;
+  /* Leave room for the sticky header when jumping to an anchor, the skip link included. */
+  scroll-padding-top: 96px;
   color-scheme: var(--color-scheme, dark);
 }
 

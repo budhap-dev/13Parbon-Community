@@ -5,7 +5,7 @@ describe('App', () => {
   it('renders the home page inside the public layout', async () => {
     render(<App />)
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('বারো মাসে 13 Parbon')
-    expect(await screen.findByRole('region', { name: 'Moments from our year' })).toBeInTheDocument()
+    expect(await screen.findByRole('region', { name: 'Our year' })).toBeInTheDocument()
     expect(screen.getByRole('navigation', { name: 'Main' })).toBeInTheDocument()
     expect(screen.getByRole('contentinfo')).toBeInTheDocument()
   })

@@ -25,14 +25,14 @@ export function ThemeSwitcher() {
   const choose = (name: ThemeName) => {
     setTheme(name)
     setOpen(false)
-    buttonRef.current?.focus()
+    buttonRef.current?.focus({ preventScroll: true })
   }
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.key === 'Escape' && open) {
       event.preventDefault()
       setOpen(false)
-      buttonRef.current?.focus()
+      buttonRef.current?.focus({ preventScroll: true })
     }
   }
 

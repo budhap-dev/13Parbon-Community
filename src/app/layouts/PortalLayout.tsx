@@ -28,7 +28,9 @@ export function PortalLayout() {
       first.current = false
       return
     }
-    mainRef.current?.focus()
+    // preventScroll matters: focusing an element scrolls it into view, which would push
+    // the top of the page up behind the sticky header on every navigation.
+    mainRef.current?.focus({ preventScroll: true })
   }, [pathname])
 
   if (!who) return null

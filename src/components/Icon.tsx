@@ -20,6 +20,8 @@ export type IconName =
   | 'layout'
   | 'message'
   | 'external'
+  | 'pin'
+  | 'clock'
 
 const paths: Record<IconName, ReactElement> = {
   users: (
@@ -58,6 +60,18 @@ const paths: Record<IconName, ReactElement> = {
     </>
   ),
   check: <path d="M5 12l4 4L19 6" />,
+  pin: (
+    <>
+      <path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11z" />
+      <circle cx="12" cy="10" r="2.6" />
+    </>
+  ),
+  clock: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5.2l3.2 2" />
+    </>
+  ),
   home: (
     <>
       <path d="M3 10.5 12 3l9 7.5" />

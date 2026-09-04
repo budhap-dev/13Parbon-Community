@@ -7,7 +7,7 @@ import { SiteHeader } from './SiteHeader'
 describe('SiteHeader', () => {
   it('links the brand home and lists the public navigation', () => {
     render(
-      <MemoryRouter initialEntries={['/gallery']}>
+      <MemoryRouter initialEntries={['/news']}>
         <ThemeProvider>
           <SiteHeader />
         </ThemeProvider>
@@ -18,7 +18,9 @@ describe('SiteHeader', () => {
     expect(brand.querySelector('img')).toHaveAttribute('src', '/brand/13parbon-emblem.jpg')
     const nav = screen.getByRole('navigation', { name: 'Main' })
     expect(nav).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Gallery' })).toHaveAttribute('aria-current', 'page')
+    expect(screen.getByRole('link', { name: 'News' })).toHaveAttribute('aria-current', 'page')
+    // Parked until everyone in the photographs has been asked.
+    expect(screen.queryByRole('link', { name: 'Gallery' })).not.toBeInTheDocument()
     // Parked for the MVP: the route still works, it is simply not advertised.
     expect(screen.queryByRole('link', { name: 'Member sign-in' })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: /^Theme/ })).toBeInTheDocument()

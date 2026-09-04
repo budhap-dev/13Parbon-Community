@@ -21,12 +21,12 @@ export function Lightbox({ items, index, onChange, onClose }: Props) {
   useEffect(() => {
     if (!open) return
     const previous = document.activeElement as HTMLElement | null
-    closeRef.current?.focus()
+    closeRef.current?.focus({ preventScroll: true })
     const { overflow } = document.body.style
     document.body.style.overflow = 'hidden'
     return () => {
       document.body.style.overflow = overflow
-      previous?.focus()
+      previous?.focus({ preventScroll: true })
     }
   }, [open])
 

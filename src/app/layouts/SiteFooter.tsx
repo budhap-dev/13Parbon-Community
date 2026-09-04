@@ -2,7 +2,7 @@ import { Link } from 'react-router'
 import { Container } from '@/components/Container'
 import { Icon } from '@/components/Icon'
 import { footerNav } from '../nav'
-import { site } from '../site'
+import { activeSocial, site } from '../site'
 import styles from './PublicLayout.module.css'
 
 export function SiteFooter() {
@@ -20,9 +20,9 @@ export function SiteFooter() {
           ))}
         </ul>
         <ul className={styles.social}>
-          {site.social.map((channel) => (
+          {activeSocial().map((channel) => (
             <li key={channel.name}>
-              <a href={channel.href} aria-label={channel.name}>
+              <a href={channel.href} aria-label={channel.name} target="_blank" rel="noreferrer">
                 <Icon name={channel.icon} size={22} />
               </a>
             </li>

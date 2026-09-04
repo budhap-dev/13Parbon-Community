@@ -25,7 +25,9 @@
   top: 16px;
 }
 
-/* Header: sticky, compacts once scrolled, slides away on scroll down and back on scroll up. */
+/* Header: sticky, slides away on scroll down and back on scroll up.
+   Its height never changes. The header is in normal flow, so resizing it would move the
+   page under the viewer and read as the bar jumping. Only paint may change on scroll. */
 .header {
   position: sticky;
   top: 0;
@@ -41,6 +43,7 @@
 
 .headerScrolled {
   border-bottom-color: var(--color-border-faint);
+  background: color-mix(in srgb, var(--color-bg) 92%, transparent);
 }
 
 .headerHidden {
@@ -52,16 +55,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  padding-top: 24px;
-  padding-bottom: 24px;
-  transition:
-    padding-top 220ms ease,
-    padding-bottom 220ms ease;
-}
-
-.headerScrolled .bar {
-  padding-top: 12px;
-  padding-bottom: 12px;
+  padding-top: 20px;
+  padding-bottom: 20px;
 }
 
 .brand {

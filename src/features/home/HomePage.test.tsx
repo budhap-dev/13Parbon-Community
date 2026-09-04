@@ -14,13 +14,13 @@ describe('HomePage', () => {
     expect(document.title).toBe('13Parbon Community')
   })
 
-  it('shows the public MVP: next event and photos, but no calendar for visitors', async () => {
+  it('shows the public MVP: the next event and the year, but no photographs', async () => {
     renderWithProviders(<HomePage />)
-    const mosaic = await screen.findByRole('region', { name: 'Moments from our year' })
-    expect(mosaic.querySelectorAll('img')).toHaveLength(5)
-    expect(within(mosaic).getByText('Holi colours')).toBeInTheDocument()
-    await screen.findByRole('region', { name: 'Photos from last year' })
     expect(await screen.findByText('Next event')).toBeInTheDocument()
+    expect(await screen.findByRole('region', { name: 'Our year' })).toBeInTheDocument()
+    // Photographs of members are parked until everyone in them has been asked.
+    expect(screen.queryByRole('region', { name: 'Moments from our year' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Photos from last year' })).not.toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Coming up' })).not.toBeInTheDocument()
   })
 
@@ -28,8 +28,8 @@ describe('HomePage', () => {
     renderWithProviders(<HomePage />)
     const card = (await screen.findByRole('heading', { level: 2, name: 'Cultural programme' })).closest('section')!
     expect(within(card).getByText('Next event')).toBeInTheDocument()
-    expect(within(card).getByText(/from Saturday 10 October/)).toBeInTheDocument()
-    expect(within(card).getByText('31 households')).toBeInTheDocument()
+    expect(within(card).getByText(/দুর্গাপূজার সেকাল ও একাল/)).toHaveAttribute('lang', 'bn')
+    expect(within(card).getByText(/on Saturday 10 October at 1:30 pm/)).toBeInTheDocument()
     expect(within(card).getByText('37 days to go')).toBeInTheDocument()
     // No registration button until the committee's form has an address.
     expect(within(card).queryByRole('link', { name: 'Register the family' })).not.toBeInTheDocument()
@@ -46,11 +46,20 @@ describe('HomePage', () => {
     expect(within(section).getByRole('link', { name: 'Holi' })).toHaveAttribute('href', '/events/holi-2027')
   })
 
-  it('highlights the next occasion in the year strip', async () => {
+  it('describes each occasion, and marks the one coming next', async () => {
     renderWithProviders(<HomePage />)
-    const chip = await screen.findByRole('link', { name: 'Mahalaya programme, next up' })
-    expect(chip.className).toContain('chipActive')
-    expect(screen.getByRole('link', { name: 'Poila Boishakh' }).className).not.toContain('chipActive')
+    const year = await screen.findByRole('region', { name: 'Our year' })
+    expect(within(year).getAllByRole('heading', { level: 3 }).map((h) => h.textContent)).toEqual([
+      'Poila Boishakh',
+      'Mahalaya programme',
+      'Saraswati Puja',
+      'Holi',
+    ])
+    // Enough for somebody who has never been to know what it is.
+    expect(within(year).getByText(/children’s hatekhori/)).toBeInTheDocument()
+    expect(within(year).getByText('সরস্বতী পূজা')).toBeInTheDocument()
+    expect(within(year).getByText('Next up')).toBeInTheDocument()
+    expect(within(year).getByText('March')).toBeInTheDocument()
   })
 
   it('announces that volunteers are welcome at the next event, for everyone', async () => {
@@ -64,13 +73,6 @@ describe('HomePage', () => {
     )
   })
 
-  it('shows last year in a photo carousel', async () => {
-    renderWithProviders(<HomePage />)
-    const carousel = await screen.findByRole('region', { name: 'Photos from last year' })
-    expect(within(carousel).getAllByRole('listitem', { hidden: true }).filter((li) => li.getAttribute('aria-roledescription') === 'slide')).toHaveLength(6)
-    expect(within(carousel).getByText('Rabindrasangeet at the Poila Boishakh programme')).toBeInTheDocument()
-    expect(screen.getAllByRole('link', { name: 'All albums' })[1]).toHaveAttribute('href', '/gallery')
-  })
 
   it('ends by inviting people to an event rather than to a sign-up form', () => {
     renderWithProviders(<HomePage />)
@@ -86,7 +88,6 @@ describe('HomePage', () => {
     expect(screen.queryByRole('heading', { name: 'Coming up' })).not.toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Our year' })).not.toBeInTheDocument()
     expect(screen.queryByRole('complementary')).not.toBeInTheDocument()
-    expect(screen.queryByRole('region', { name: 'Photos from last year' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('region', { name: 'Moments from our year' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Our year' })).not.toBeInTheDocument()
   })
 })

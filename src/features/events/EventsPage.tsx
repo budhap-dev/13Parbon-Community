@@ -18,6 +18,16 @@ function groupByMonth(events: Event[]): { key: string; label: string; events: Ev
   return [...groups.values()]
 }
 
+
+/** "A, B and C", so a sentence about the year reads like a sentence. */
+function namesOf(items: { name: string }[]): string {
+  const names = items.map((item) => item.name)
+  if (names.length <= 1) return names.join('')
+  return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`
+}
+
+const listNames = namesOf
+
 export function EventsPage() {
   useDocumentTitle('Events')
   const [params] = useSearchParams()
@@ -30,6 +40,11 @@ export function EventsPage() {
   const upcomingMonths = groupByMonth((upcoming ?? []).filter(matches))
   const pastEvents = (past ?? []).filter(matches)
   const activeFestival = festivals?.find((f) => f.id === festivalId)
+
+  // Occasions the community keeps every year that have no date on the calendar yet. Naming
+  // them is warmer than a general promise, and the note disappears once they are all up.
+  const scheduled = new Set((upcoming ?? []).map((event) => event.festivalId))
+  const awaitingDates = (festivals ?? []).filter((f) => !scheduled.has(f.id))
 
   return (
     <Container className={styles.page}>
@@ -85,6 +100,24 @@ export function EventsPage() {
           </section>
         ))
       )}
+
+      {!festivalId && awaitingDates.length > 0 ? (
+        <aside className={styles.more} aria-labelledby="more-title">
+          <h2 id="more-title" className={styles.moreTitle}>
+            More of the year to come
+          </h2>
+          <p className={styles.moreText}>
+            We hold {listNames(festivals ?? [])} every year. {namesOf(awaitingDates)}{' '}
+            {awaitingDates.length === 1 ? 'is' : 'are'} still being arranged, and{' '}
+            {awaitingDates.length === 1 ? 'it' : 'they'} will appear here as soon as the{' '}
+            {awaitingDates.length === 1 ? 'date is' : 'dates are'} settled.
+          </p>
+          <p className={styles.moreText}>
+            Would you like to hear when they are? <Link to="/contact">Send the committee a message</Link> and we
+            will let you know.
+          </p>
+        </aside>
+      ) : null}
 
       {pastEvents.length > 0 ? (
         <section className={styles.month} aria-labelledby="past-title">

@@ -1,9 +1,10 @@
+import { testEvents } from '@/test/events'
 import { createMockApi } from './index'
 
 const now = () => new Date('2026-09-03T10:00:00')
 
 describe('createMockApi', () => {
-  const api = createMockApi({ now })
+  const api = createMockApi({ now, events: testEvents })
 
   it('lists only public, published, upcoming events in date order', async () => {
     const events = await api.events.listUpcoming()
@@ -92,7 +93,7 @@ describe('createMockApi', () => {
 
   it('can simulate latency', async () => {
     vi.useFakeTimers()
-    const slow = createMockApi({ now, latencyMs: 50 })
+    const slow = createMockApi({ now, latencyMs: 50, events: testEvents })
     const pending = slow.festivals.list()
     vi.advanceTimersByTime(50)
     await expect(pending).resolves.toHaveLength(4)
