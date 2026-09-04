@@ -119,6 +119,10 @@ export function SiteHeader() {
               </Button>
             ) : null}
           </div>
+
+          <p className={styles.drawerFoot}>
+            {site.name} · v{__APP_VERSION__}
+          </p>
         </nav>
       </Container>
       {pathname === '/' ? <NextEventStrip /> : null}

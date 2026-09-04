@@ -22,17 +22,19 @@ export function NextEventStrip() {
   return (
     <Link to={`/events/${event.slug}`} className={styles.strip}>
       <Container className={styles.inner}>
-        <span className={styles.date}>
+        <span className={styles.card}>
+          <span className={styles.date}>
           {stamp.day} {stamp.month}
         </span>
-        <span className={styles.name}>{event.title}</span>
-        <span className={styles.when}>{formatTime(event.startsAt)}</span>
-        <span className={styles.count}>
-          {countdown.value === 'Today' || countdown.value === 'Now'
+          <span className={styles.name}>{event.title}</span>
+          <span className={styles.when}>{formatTime(event.startsAt)}</span>
+          <span className={styles.count}>
+            {countdown.value === 'Today' || countdown.value === 'Now'
             ? countdown.value
             : `${countdown.value} ${countdown.label}`}
+          </span>
+          <Icon name="chevronRight" size={18} className={styles.arrow} />
         </span>
-        <Icon name="chevronRight" size={18} className={styles.arrow} />
       </Container>
     </Link>
   )

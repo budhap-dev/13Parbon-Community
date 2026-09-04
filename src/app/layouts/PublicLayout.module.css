@@ -102,7 +102,8 @@
 /* Drawer chrome: only ever seen once the menu becomes a panel. */
 .homeButton,
 .scrim,
-.drawerHead {
+.drawerHead,
+.drawerFoot {
   display: none;
 }
 
@@ -220,10 +221,12 @@
     align-items: stretch;
     gap: 0;
     width: min(330px, 84vw);
-    padding: 0 20px 28px;
+    padding: 0 20px 24px;
     background: var(--color-bg);
-    border-left: 1px solid var(--color-border-faint);
-    box-shadow: -24px 0 60px rgba(0, 0, 0, 0.4);
+    /* The edge that faces the page: rounded, and picked out in the accent. */
+    border-left: 3px solid var(--color-accent);
+    border-radius: 20px 0 0 20px;
+    box-shadow: -24px 0 60px rgba(0, 0, 0, 0.45);
     overflow-y: auto;
     overscroll-behavior: contain;
     transition:
@@ -270,7 +273,7 @@
     gap: 12px;
     min-height: 64px;
     margin: 0 -20px 8px;
-    padding: 0 12px 0 20px;
+    padding: 0 12px 0 23px;
     border-bottom: 1px solid var(--color-border-faint);
   }
 
@@ -328,6 +331,15 @@
     align-items: stretch;
     gap: 12px;
     padding-top: 20px;
+  }
+
+  .drawerFoot {
+    display: block;
+    margin-top: auto;
+    padding-top: 24px;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    color: var(--color-fg-faint);
   }
 
   .login {

@@ -109,4 +109,19 @@ describe('SiteHeader', () => {
     )
     expect(screen.queryByRole('link', { name: 'Back to the home page' })).not.toBeInTheDocument()
   })
+
+  it('stamps the version at the foot of the drawer', async () => {
+    render(
+      <TestDataProviders>
+        <MemoryRouter>
+          <ThemeProvider>
+            <SiteHeader />
+          </ThemeProvider>
+        </MemoryRouter>
+      </TestDataProviders>,
+    )
+    await userEvent.click(screen.getByRole('button', { name: 'Open menu' }))
+    // Comes from package.json at build time, so it can never drift from the release.
+    expect(screen.getByText(new RegExp(`v${__APP_VERSION__.replace(/\./g, '\\.')}$`))).toBeInTheDocument()
+  })
 })

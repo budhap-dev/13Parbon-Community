@@ -6,26 +6,54 @@
 .strip {
   display: block;
   border-top: 1px solid var(--color-border-faint);
-  background: color-mix(in srgb, var(--color-bg-raised) 55%, transparent);
   /* Unrolls once on arrival, so it is noticed without shouting. */
   animation: unroll 620ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
   color: var(--color-fg);
   transition: background-color var(--motion-fast) ease;
 }
 
-.strip:hover {
-  background: color-mix(in srgb, var(--color-bg-raised) 85%, transparent);
-  color: var(--color-fg);
-}
 
 .inner {
+  padding-top: 10px;
+  padding-bottom: 12px;
+}
+
+/*
+ * Drawn as a control rather than a band of text: an outline, a raised ground and an arrow,
+ * so it reads as something to press rather than a line of information.
+ */
+.card {
   display: flex;
   align-items: center;
   gap: 14px;
   min-height: 52px;
-  padding-top: 8px;
-  padding-bottom: 8px;
+  padding: 8px 14px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-tile);
+  background: color-mix(in srgb, var(--color-bg-raised) 85%, transparent);
   font-size: 16px;
+  transition:
+    border-color var(--motion-fast) ease,
+    background-color var(--motion-fast) ease,
+    transform var(--motion-fast) ease;
+}
+
+.strip:hover .card {
+  border-color: var(--color-accent);
+  background: var(--color-bg-raised);
+}
+
+.strip:active .card {
+  transform: translateY(1px);
+}
+
+.strip:focus-visible {
+  outline: none;
+}
+
+.strip:focus-visible .card {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
 }
 
 .date {
@@ -60,23 +88,38 @@
   color: var(--color-accent);
 }
 
+/*
+ * Too much for one line on a phone, so it takes two on purpose: the date, the name and the
+ * arrow across the top, how long to wait underneath. Left to wrap on its own the arrow ended
+ * up stranded on a line of its own.
+ */
 @media (max-width: 620px) {
-  .inner {
+  .card {
     flex-wrap: wrap;
-    gap: 6px 10px;
-    padding-top: 10px;
-    padding-bottom: 10px;
+    gap: 4px 10px;
+    padding: 10px 12px;
   }
 
-  /* The time is on the event page; the date and how soon are what matter in a strip.
-     The arrow goes too, rather than wrapping onto a line of its own: the strip is a link. */
-  .when,
-  .arrow {
+  /* The time is on the event page; the date and how soon are what matter in a strip. */
+  .when {
     display: none;
   }
 
   .name {
     flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .arrow {
+    order: 2;
+    margin-left: auto;
+  }
+
+  .count {
+    order: 3;
+    flex-basis: 100%;
+    margin-left: 0;
+    font-size: 15px;
   }
 }
 
