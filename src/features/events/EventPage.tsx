@@ -50,9 +50,12 @@ export function EventPage() {
   return (
     <Container className={styles.detail}>
       <header className={styles.head}>
-        <Link to="/events" className={styles.crumb}>
-          ← All events
-        </Link>
+        <div className={styles.headTop}>
+          <Link to="/events" className={styles.crumb}>
+            ← All events
+          </Link>
+          <ShareButton title={`${event.title} · ${site.name}`} text={event.summary} size="sm" />
+        </div>
         <h1 id="event-title" className={styles.detailTitle}>
           {event.title}
         </h1>
@@ -121,7 +124,6 @@ export function EventPage() {
             <Button to="/contact" variant="line">
               Ask a question
             </Button>
-            <ShareButton title={`${event.title} · ${site.name}`} text={event.summary} />
           </div>
         ) : null}
         {!isPast ? (
