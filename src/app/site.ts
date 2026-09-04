@@ -99,6 +99,12 @@ export const site = {
    */
   showNews: false,
   /**
+   * The next-event banner pinned under the wordmark on the home page. Parked for now at the
+   * committee's request; the component and its styles are untouched, so setting this to true
+   * brings it back exactly as it was.
+   */
+  showNextEventStrip: false,
+  /**
    * Who each home page section is for. Sections marked 'members' stay hidden until the
    * viewer has logged in (phase 2). For the public MVP, events and volunteering are members-only.
    */

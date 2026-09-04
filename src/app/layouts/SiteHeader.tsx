@@ -125,7 +125,7 @@ export function SiteHeader() {
           </p>
         </nav>
       </Container>
-      {pathname === '/' ? <NextEventStrip /> : null}
+      {site.showNextEventStrip && isHome ? <NextEventStrip /> : null}
     </header>
   )
 }

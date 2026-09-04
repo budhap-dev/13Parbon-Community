@@ -57,7 +57,7 @@ describe('SiteHeader', () => {
     expect(toggle).toHaveAttribute('aria-expanded', 'false')
   })
 
-  it('pins the next event under the wordmark, on the home page only', async () => {
+  it('keeps the next-event strip parked, even on the home page', async () => {
     render(
       <TestDataProviders>
         <MemoryRouter>
@@ -67,10 +67,10 @@ describe('SiteHeader', () => {
         </MemoryRouter>
       </TestDataProviders>,
     )
-    const strip = await screen.findByRole('link', { name: /Cultural programme/ })
-    expect(strip).toHaveAttribute('href', '/events/mahalaya-cultural-programme-2026')
-    // Inside the header, so the two move together when the bar slides away.
-    expect(screen.getByRole('banner')).toContainElement(strip)
+    await screen.findByRole('navigation', { name: 'Main' })
+    // Parked at the committee's request. The home-page condition is still there underneath,
+    // so one flag brings it back.
+    expect(screen.queryByRole('link', { name: /Cultural programme/ })).not.toBeInTheDocument()
   })
 
   it('leaves the strip off every other page', async () => {
