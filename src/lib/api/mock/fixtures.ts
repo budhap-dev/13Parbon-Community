@@ -67,12 +67,12 @@ export function buildFixtures() {
     },
     {
       id: 'ev-poila-2027',
-      slug: 'poila-boishakh-cultural-programme-2027',
-      title: 'Poila Boishakh cultural programme',
+      slug: 'boishakhi-programme-2027',
+      title: 'Boishakhi programme',
       summary: 'Bengali New Year evening of music, dance and drama.',
       startsAt: '2027-04-15T17:00:00',
       venue: 'St Andrew’s Community Hall',
-      festivalId: 'poila-boishakh',
+      festivalId: 'boishakhi',
       isPublic: true,
       registrationOpen: false,
       householdsRegistered: 0,
@@ -80,12 +80,12 @@ export function buildFixtures() {
     },
     {
       id: 'ev-poila-2026',
-      slug: 'poila-boishakh-cultural-programme-2026',
-      title: 'Poila Boishakh cultural programme',
+      slug: 'boishakhi-programme-2026',
+      title: 'Boishakhi programme',
       summary: 'Already happened.',
       startsAt: '2026-04-15T17:00:00',
       venue: 'St Andrew’s Community Hall',
-      festivalId: 'poila-boishakh',
+      festivalId: 'boishakhi',
       isPublic: true,
       registrationOpen: false,
       householdsRegistered: 40,
@@ -118,14 +118,19 @@ export function buildFixtures() {
   */
     ]
 
-  /** The community's year, in Bengali-calendar order from Poila Boishakh. */
+  /** The community's year, in Bengali-calendar order from the month of Boishakh. */
   const festivals: Festival[] = [
     {
-      id: 'poila-boishakh',
-      name: 'Poila Boishakh',
-      bengaliName: 'পয়লা বৈশাখ',
-      season: 'April',
-      description: 'Bengali New Year. An evening of music, dance and drama, and a meal to start the year together.',
+      id: 'boishakhi',
+      name: 'Boishakhi',
+      bengaliName: 'বৈশাখী',
+      season: 'April or May',
+      /*
+       * Not Poila Boishakh itself: the community does not hold a programme on the day. This is
+       * whatever we put on during the month of Boishakh, which is often Rabindra Jayanti.
+       */
+      description:
+        'Our gathering in the month of Boishakh, often around Rabindra Jayanti. Songs, recitation and a meal to open the Bengali year together.',
     },
     {
       id: 'mahalaya',
@@ -151,10 +156,10 @@ export function buildFixtures() {
   ]
 
   const albums: Album[] = [
-    { id: 'al-poila-2026', slug: 'poila-boishakh-2026', title: 'Poila Boishakh 2026', description: 'New year evening at St Andrew’s Community Hall, April 2026.', publishedAt: '2026-04-20T12:00:00', visibility: 'public' },
+    { id: 'al-boishakhi-2026', slug: 'boishakhi-2026', title: 'Boishakhi 2026', description: 'Our Boishakh evening at St Andrew’s Community Hall, April 2026.', publishedAt: '2026-04-20T12:00:00', visibility: 'public' },
     { id: 'al-holi-2026', slug: 'holi-2026', title: 'Holi 2026', description: 'Colours in the park, March 2026.', publishedAt: '2026-03-10T12:00:00', visibility: 'public' },
     { id: 'al-saraswati-2026', slug: 'saraswati-puja-2026', title: 'Saraswati Puja 2026', description: 'Morning pujo and hatekhori, February 2026.', publishedAt: '2026-02-05T12:00:00', visibility: 'public' },
-    { id: 'al-mahalaya-2025', slug: 'mahalaya-2025', title: 'Mahalaya 2025', description: 'Last year’s cultural programme.', publishedAt: '2025-09-25T12:00:00', visibility: 'public' },
+    { id: 'al-mahalaya-2025', slug: 'mahalaya-2025', title: 'Mahalaya 2025', description: 'A tribute to the divine feminine.', publishedAt: '2025-09-25T12:00:00', visibility: 'public' },
     { id: 'al-private', slug: 'committee-dinner', title: 'Committee dinner', publishedAt: '2026-06-01T12:00:00', visibility: 'members' },
   ]
 
@@ -169,8 +174,8 @@ export function buildFixtures() {
   })
 
   const media: Media[] = [
-    photo('m-1', 'al-poila-2026', 'poila-boishakh', 'Rabindrasangeet at the Poila Boishakh programme'),
-    photo('m-2', 'al-poila-2026', 'kids-on-stage', 'The kids take the stage'),
+    photo('m-1', 'al-boishakhi-2026', 'poila-boishakh', 'Rabindrasangeet at the Boishakhi programme'),
+    photo('m-2', 'al-boishakhi-2026', 'kids-on-stage', 'The kids take the stage'),
     photo('m-3', 'al-holi-2026', 'holi', 'Holi colours'),
     photo('m-4', 'al-saraswati-2026', 'saraswati-puja', 'Saraswati Puja morning'),
     photo('m-5', 'al-saraswati-2026', 'bhog', 'Lunch after the pujo'),
@@ -230,7 +235,7 @@ export function buildFixtures() {
     },
     {
       id: 'an-expired',
-      title: 'Poila Boishakh programme: doors open at five',
+      title: 'Boishakhi programme: doors open at five',
       body: 'Already over.',
       pinned: true,
       audience: 'public',

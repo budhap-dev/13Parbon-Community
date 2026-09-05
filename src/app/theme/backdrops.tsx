@@ -97,23 +97,87 @@ function Veena({ className }: Props) {
   )
 }
 
-/** Splashes of colour poured in from above. Holi. Uses its own colours on purpose. */
+/**
+ * Colour thrown. Holi, and the one motif that uses its own palette rather than the theme's:
+ * the point of the day is colour that is not the colour you started as. Every one is picked to
+ * carry against the magenta ground.
+ *
+ * Bursts, not blobs. The old motif faded five shapes in from above and left them sitting
+ * there, which read as decoration that had always been on the page. A splash arrives: it
+ * opens fast from a point, throws flecks outward, and is gone before the next one lands.
+ */
+const BURSTS = [
+  { x: 108, y: 104, r: 104, fill: '#ffd60a', seed: 3 },
+  { x: 296, y: 152, r: 118, fill: '#a8e63a', seed: 7 },
+  { x: 76, y: 286, r: 96, fill: '#5fd0ff', seed: 5 },
+  { x: 312, y: 316, r: 108, fill: '#f28c28', seed: 11 },
+  { x: 196, y: 214, r: 88, fill: '#2bb3a0', seed: 2 },
+  { x: 214, y: 62, r: 74, fill: '#7b2fd6', seed: 13 },
+  { x: 40, y: 176, r: 82, fill: '#f28c28', seed: 17 },
+  { x: 360, y: 232, r: 86, fill: '#ffd60a', seed: 19 },
+] as const
+
+/**
+ * An uneven splatter rather than a circle: radii wobble around the ring, so each burst has
+ * the lopsided edge that thrown colour makes. Deterministic, so the shapes never shift
+ * between renders.
+ */
+function splatter(r: number, seed: number): string {
+  const points = 11
+  const at = (i: number) => {
+    const wobble = ((Math.sin(seed * 12.9898 + i * 78.233) + 1) / 2) * 0.55 + 0.72
+    const angle = (i / points) * Math.PI * 2
+    const radius = r * wobble
+    return [Math.cos(angle) * radius, Math.sin(angle) * radius] as const
+  }
+  return (
+    at(0).reduce((d, n) => `${d}${n.toFixed(1)} `, 'M') +
+    Array.from({ length: points }, (_, i) => {
+      const [cx, cy] = at(i + 0.5)
+      const [x, y] = at(i + 1)
+      return `Q${(cx * 1.12).toFixed(1)} ${(cy * 1.12).toFixed(1)} ${x.toFixed(1)} ${y.toFixed(1)}`
+    }).join(' ') +
+    'Z'
+  )
+}
+
 function Splash({ className }: Props) {
   return (
-    <svg viewBox="0 0 400 400" className={className} data-backdrop="splash" aria-hidden="true" focusable="false">
-      <g className={motion.faint} data-animate="splashes">
-        <path className={motion.splash} fill="#ffd60a" d="M118 96 c40 -50 110 -30 120 20 c8 40 -30 60 -60 70 c-40 12 -90 -4 -96 -40 c-4 -22 14 -36 36 -50 Z" />
-        <path className={motion.splash} fill="#e0369a" d="M228 190 c50 -40 120 -10 120 50 c0 44 -40 70 -84 68 c-46 -2 -80 -34 -70 -74 c6 -22 18 -34 34 -44 Z" />
-        <path className={motion.splash} fill="#2bb3a0" d="M70 230 c10 -50 80 -60 110 -20 c24 32 8 80 -30 96 c-40 16 -84 -6 -86 -44 c0 -12 2 -22 6 -32 Z" />
-        <path className={motion.splash} fill="#4f7bd9" d="M250 60 c30 -30 80 -14 84 24 c4 34 -24 58 -56 56 c-32 -2 -58 -26 -50 -54 c4 -12 12 -20 22 -26 Z" />
-        <path className={motion.splash} fill="#f28c28" d="M150 300 c36 -20 84 0 90 40 c6 40 -34 66 -74 56 c-40 -10 -60 -44 -46 -74 c6 -12 18 -18 30 -22 Z" />
-      </g>
-      <g className={motion.faint} data-animate="drips">
-        <circle className={motion.drip} fill="#ffd60a" cx="150" cy="190" r="7" />
-        <circle className={motion.drip} fill="#e0369a" cx="300" cy="312" r="8" />
-        <circle className={motion.drip} fill="#2bb3a0" cx="110" cy="312" r="6" />
-        <circle className={motion.drip} fill="#4f7bd9" cx="290" cy="146" r="6" />
-        <circle className={motion.drip} fill="#f28c28" cx="190" cy="400" r="7" />
+    <svg
+      viewBox="0 0 400 400"
+      preserveAspectRatio="none"
+      className={className}
+      data-backdrop="splash"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <g className={motion.vivid} data-animate="splashes">
+        {BURSTS.map((burst, index) => (
+          <g
+            key={burst.fill + burst.x}
+            className={motion.burst}
+            style={{ ['--burst' as string]: String(index) }}
+            transform={`translate(${burst.x} ${burst.y})`}
+          >
+            <path className={motion.splat} fill={burst.fill} d={splatter(burst.r, burst.seed)} />
+            {/* Flecks flung clear of the splat, each on its own line out. */}
+            {Array.from({ length: 5 }, (_, i) => {
+              const angle = (i / 5) * Math.PI * 2 + burst.seed
+              return (
+                <circle
+                  key={i}
+                  className={motion.fleck}
+                  fill={burst.fill}
+                  r={3.4 - (i % 2)}
+                  style={{
+                    ['--dx' as string]: `${(Math.cos(angle) * burst.r * 1.5).toFixed(1)}px`,
+                    ['--dy' as string]: `${(Math.sin(angle) * burst.r * 1.5).toFixed(1)}px`,
+                  }}
+                />
+              )
+            })}
+          </g>
+        ))}
       </g>
     </svg>
   )

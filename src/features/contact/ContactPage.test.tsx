@@ -28,29 +28,38 @@ describe('ContactPage', () => {
     expect(screen.getByLabelText('Your name')).toHaveValue('')
   })
 
-  it('shows the social channels', async () => {
+  it('leads with every way through, and says what each one is for', () => {
     renderWithProviders(<ContactPage />, { route: '/contact', api: createDeliveringTestApi() })
-    // Where we are depends on what we are putting on, so the venue and its map live on the
-    // event's own page. This one is only about getting hold of the committee.
-    expect(screen.queryByRole('region', { name: 'Where to find us' })).not.toBeInTheDocument()
-    expect(document.querySelector('iframe')).toBeNull()
-    const follow = await screen.findByRole('region', { name: 'Follow along' })
-    expect(within(follow).getByRole('link', { name: 'Facebook' })).toHaveAttribute(
+    const ways = screen.getByRole('region', { name: 'Ways to reach us' })
+    // Email, Facebook, Instagram and the WhatsApp group.
+    expect(within(ways).getAllByRole('listitem')).toHaveLength(4)
+    expect(within(ways).getByRole('link', { name: '13parbon.Leeds@gmail.com' })).toHaveAttribute(
+      'href',
+      'mailto:13parbon.Leeds@gmail.com',
+    )
+    expect(within(ways).getByRole('link', { name: /Open Facebook/ })).toHaveAttribute(
       'href',
       'https://www.facebook.com/groups/1337437436797813/',
     )
+    // The group has no invite address, so it is named rather than offered as a dead link.
+    expect(within(ways).getByText('No link to give out yet')).toBeInTheDocument()
+    expect(within(ways).getByText(/Ask any member to add you/)).toBeInTheDocument()
+    // Where we meet depends on what we are putting on, so that lives on the event page.
+    expect(document.querySelector('iframe')).toBeNull()
   })
 
   it('offers another way through when submissions have nowhere to go', () => {
     renderWithProviders(<ContactPage />, { route: '/contact' })
     expect(screen.queryByRole('button', { name: 'Send message' })).not.toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: /Not quite ready to send a message/ })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Talk to us' })).toBeInTheDocument()
   })
 
-  it('does not show an email address that has not been published yet', () => {
+  it('offers the committee address when the form cannot send', () => {
     renderWithProviders(<ContactPage />, { route: '/contact' })
-    // An address nobody has published is not shown at all, never mind linked.
-    expect(screen.queryByText(/hello@example.org/)).not.toBeInTheDocument()
-    expect(document.querySelector('a[href^="mailto:"]')).toBeNull()
+    // The form is the first choice; while it does not deliver, the address is the way through.
+    expect(screen.getByRole('link', { name: '13parbon.Leeds@gmail.com' })).toHaveAttribute(
+      'href',
+      'mailto:13parbon.Leeds@gmail.com',
+    )
   })
 })

@@ -3,6 +3,8 @@ import { Link, NavLink, useLocation } from 'react-router'
 import { Button } from '@/components/Button'
 import { Container } from '@/components/Container'
 import { Icon } from '@/components/Icon'
+import { Backdrop } from '../theme/backdrops'
+import { useTheme } from '../theme/ThemeContext'
 import { NextEventStrip } from '@/components/NextEventStrip'
 import { publicNav } from '../nav'
 import { site } from '../site'
@@ -18,6 +20,7 @@ export function SiteHeader() {
   const toggleRef = useRef<HTMLButtonElement>(null)
   const panelRef = useRef<HTMLElement>(null)
   const isHome = pathname === '/'
+  const { theme } = useTheme()
 
   /*
    * While the drawer is open it owns the screen: Escape closes it, the page behind does not
@@ -119,6 +122,10 @@ export function SiteHeader() {
               </Button>
             ) : null}
           </div>
+
+          {/* The theme's own motif, so the drawer looks like the page it came from and
+              picking a theme shows you what you are picking. */}
+          <Backdrop theme={theme} className={styles.drawerArt} />
 
           <p className={styles.drawerFoot}>
             {site.name} · v{__APP_VERSION__}

@@ -18,7 +18,7 @@ export type ThemeMeta = {
 /** The community's year as colour schemes. Token values live in tokens.css. */
 export const themes: ThemeMeta[] = [
   { id: 'festival', name: 'Festival', description: 'Sindoor red and marigold', swatch: ['#7a1a12', '#f7b733'] },
-  { id: 'poila-boishakh', name: 'Poila Boishakh', description: 'Cream and red, like a lal-paar sari', swatch: ['#fff6ea', '#c8102e'] },
+  { id: 'poila-boishakh', name: 'Boishakhi', description: 'Cream and red, like a lal-paar sari', swatch: ['#fff6ea', '#c8102e'] },
   { id: 'saraswati', name: 'Saraswati Puja', description: 'Basanti yellow with deep blue', swatch: ['#fff7d6', '#1f5fbf'] },
   { id: 'holi', name: 'Holi', description: 'Magenta and bright yellow', swatch: ['#8e1a6b', '#ffd60a'] },
   { id: 'mahalaya', name: 'Mahalaya', description: 'Pre-dawn indigo and shiuli orange', swatch: ['#1c1b4a', '#ff9a3c'] },

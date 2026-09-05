@@ -3,7 +3,6 @@ import { site } from '@/app/site'
 import { Backdrop } from '@/app/theme/backdrops'
 import { useTheme } from '@/app/theme/ThemeContext'
 import { themes } from '@/app/theme/themes'
-import { Button } from '@/components/Button'
 import { Container } from '@/components/Container'
 import { Icon } from '@/components/Icon'
 import { LogoAssembly } from '../LogoAssembly'
@@ -32,14 +31,6 @@ export function Hero() {
             {site.tagline}
             <Icon name="sparkle" size={22} className={styles.leadSparkle} />
           </p>
-          <div className={styles.heroActions}>
-            <Button to="/events" variant="cream">
-              What’s on
-            </Button>
-            <Button to="/about" variant="line">
-              Our story
-            </Button>
-          </div>
         </div>
         <div className={styles.heroLogo}>
           {/* Remounting restarts the CSS animation: on every arrival at home and on each theme change. */}

@@ -120,7 +120,8 @@
 .homeButton,
 .scrim,
 .drawerHead,
-.drawerFoot {
+.drawerFoot,
+.drawerArt {
   display: none;
 }
 
@@ -350,10 +351,27 @@
     padding-top: 20px;
   }
 
+  /*
+   * The motif from whichever theme is on, filling the space under the theme picker. It takes
+   * the room left over rather than a fixed height, so it grows on a tall phone and gets out
+   * of the way on a short one.
+   */
+  .drawerArt {
+    display: block;
+    flex: 1 1 auto;
+    width: 100%;
+    min-height: 96px;
+    max-height: 220px;
+    margin-top: 16px;
+    overflow: visible;
+    pointer-events: none;
+  }
+
   .drawerFoot {
     display: block;
-    margin-top: auto;
-    padding-top: 24px;
+    margin-top: 8px;
+    padding-top: 16px;
+    border-top: 1px solid var(--color-border-faint);
     font-size: 12px;
     letter-spacing: 0.04em;
     color: var(--color-fg-faint);

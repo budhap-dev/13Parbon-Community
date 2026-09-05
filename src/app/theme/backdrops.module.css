@@ -7,6 +7,103 @@
   opacity: 0.14;
 }
 
+/*
+ * Holi runs brighter than the rest. The shared 0.14 is right for a line drawing behind text;
+ * it made the one motif that is entirely about colour disappear into the magenta. Screen
+ * blending lifts each splash off the ground it sits on without washing out the headline over
+ * it — checked against the hero text rather than guessed at.
+ */
+.vivid {
+  /*
+   * Bright enough to be the point of the theme, held below where it would start eating the
+   * headline. Measured against the words rather than judged by eye: the worst pixel behind
+   * the title stays above the 3.0 WCAG asks for at that size.
+   */
+  opacity: 0.46;
+  mix-blend-mode: screen;
+}
+
+/*
+ * A burst opens fast and clears slowly, and the six take turns: about one every one and a
+ * half seconds, so there is always colour arriving somewhere without the whole set pulsing
+ * together.
+ */
+.burst {
+  transform-box: fill-box;
+  transform-origin: center;
+  opacity: 0;
+  /*
+   * Eight bursts on a 7s cycle, 0.8s apart, so four or five overlap at any moment. Spaced
+   * further out they arrived one at a time and the motif read as empty between them.
+   */
+  animation: burst 7s cubic-bezier(0.16, 0.84, 0.44, 1) infinite;
+  animation-delay: calc(var(--burst, 0) * 0.8s);
+}
+
+.splat {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: inherit;
+  animation-name: splat-turn;
+}
+
+/* Thrown clear of the splat, along the line each one sits on. */
+.fleck {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: inherit;
+  animation-name: fleck-out;
+}
+
+@keyframes burst {
+  0% {
+    opacity: 0;
+    transform: scale(0.15);
+  }
+  4% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+  9% {
+    transform: scale(1);
+  }
+  55% {
+    opacity: 0.92;
+  }
+  82% {
+    opacity: 0;
+    transform: scale(1.1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.1);
+  }
+}
+
+/* A little turn as it lands, so the six do not look like the same shape six times. */
+@keyframes splat-turn {
+  0% {
+    transform: rotate(-14deg);
+  }
+  9%,
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes fleck-out {
+  0% {
+    transform: translate(0, 0) scale(0.4);
+  }
+  4% {
+    transform: translate(0, 0) scale(1);
+  }
+  40%,
+  100% {
+    transform: translate(var(--dx, 0), var(--dy, 0)) scale(0.5);
+  }
+}
+
 /* Festival: the alpona rolls a little way and back, turning the way a wheel would. */
 .wheelTrack {
   animation: wheel-track 18s ease-in-out infinite alternate;
@@ -154,86 +251,29 @@
 }
 
 /* Holi: colour is poured in from above, spreads, then drains away for the next pour. */
-.splash {
-  transform-box: fill-box;
-  transform-origin: top center;
-  opacity: 0;
-  animation: pour 10s ease-in-out infinite;
-}
 
-.splash:nth-child(2) {
-  animation-delay: 1.6s;
-}
 .splash:nth-child(3) {
   animation-delay: 3.2s;
-}
-.splash:nth-child(4) {
-  animation-delay: 4.8s;
 }
 .splash:nth-child(5) {
   animation-delay: 6.4s;
 }
 
-@keyframes pour {
-  0% {
-    opacity: 0;
-    transform: translateY(-80px) scale(0.15, 0.4);
-  }
-  14% {
-    opacity: 0.9;
-    transform: translateY(0) scale(1.05, 1.05);
-  }
-  20% {
-    transform: translateY(0) scale(1, 1);
-  }
-  78% {
-    opacity: 0.9;
-    transform: translateY(0) scale(1, 1);
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(30px) scale(1.02, 1.1);
-  }
-}
+/*
+ * The powder a throw leaves in the air: out from where the colour landed, and gone. Each
+ * speck takes its turn from --speck so they scatter rather than pulse together.
+ */
 
-.drip {
-  transform-box: fill-box;
-  transform-origin: center;
-  opacity: 0;
-  animation: drip 10s ease-in infinite;
-}
 
-.drip:nth-child(2) {
-  animation-delay: 1.6s;
-}
+
+
 .drip:nth-child(3) {
   animation-delay: 3.2s;
-}
-.drip:nth-child(4) {
-  animation-delay: 4.8s;
 }
 .drip:nth-child(5) {
   animation-delay: 6.4s;
 }
 
-@keyframes drip {
-  0%,
-  22% {
-    opacity: 0;
-    transform: translateY(0);
-  }
-  30% {
-    opacity: 0.9;
-  }
-  60% {
-    opacity: 0;
-    transform: translateY(90px);
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(90px);
-  }
-}
 
 /* Mahalaya: kash sways in the breeze while a train passes along the bottom. */
 .stem {
