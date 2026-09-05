@@ -3,15 +3,23 @@ import { createEmptyApi, renderWithProviders } from '@/test/render'
 import { HomePage } from './HomePage'
 
 describe('HomePage', () => {
-  it('opens with the Bengali headline and the two hero actions', () => {
+  it('opens with the Bengali headline and the logo, and nothing to press', () => {
     renderWithProviders(<HomePage />)
     const title = screen.getByRole('heading', { level: 1 })
     expect(title).toHaveTextContent('বারো মাসে 13 Parbon')
     expect(title.querySelector('[lang="bn"]')).toHaveTextContent('বারো মাসে')
-    expect(screen.getByRole('link', { name: 'What’s on' })).toHaveAttribute('href', '/events')
-    expect(screen.getByRole('link', { name: 'Our story' })).toHaveAttribute('href', '/about')
     expect(screen.getByRole('img', { name: '13Parbon Community logo' })).toBeInTheDocument()
+    // The buttons moved to the foot of the page: the first screen is for what this is.
+    const hero = title.closest('section')!
+    expect(within(hero).queryByRole('link')).not.toBeInTheDocument()
     expect(document.title).toBe('13Parbon Community')
+  })
+
+  it('closes with both ways on', () => {
+    renderWithProviders(<HomePage />)
+    const closing = screen.getByRole('region', { name: 'Come for one evening.' })
+    expect(within(closing).getByRole('link', { name: 'See what’s on' })).toHaveAttribute('href', '/events')
+    expect(within(closing).getByRole('link', { name: 'Our story' })).toHaveAttribute('href', '/about')
   })
 
   it('shows the public MVP: the next event and the year, but no photographs', async () => {
@@ -45,7 +53,7 @@ describe('HomePage', () => {
     const titles = within(section)
       .getAllByRole('heading', { level: 3 })
       .map((h) => h.textContent)
-    expect(titles).toEqual(['Saraswati Puja', 'Holi', 'Poila Boishakh cultural programme'])
+    expect(titles).toEqual(['Saraswati Puja', 'Holi', 'Boishakhi programme'])
 
     expect(within(section).getByRole('link', { name: 'Holi' })).toHaveAttribute('href', '/events/holi-2027')
     expect(within(section).getAllByText('Details')).toHaveLength(3)
@@ -55,7 +63,7 @@ describe('HomePage', () => {
     renderWithProviders(<HomePage />)
     const year = await screen.findByRole('region', { name: 'Our year' })
     expect(within(year).getAllByRole('heading', { level: 3 }).map((h) => h.textContent)).toEqual([
-      'Poila Boishakh',
+      'Boishakhi',
       'Mahalaya programme',
       'Saraswati Puja',
       'Holi',

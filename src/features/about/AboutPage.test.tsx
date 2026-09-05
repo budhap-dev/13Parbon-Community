@@ -8,10 +8,15 @@ describe('AboutPage', () => {
     renderWithProviders(<AboutPage />, { route: '/about' })
     expect(screen.getByRole('heading', { level: 1, name: 'About us' })).toBeInTheDocument()
     expect(screen.getByRole('img', { name: /13Parbon Community logo/ })).toHaveAttribute('src', '/brand/13parbon-logo.jpeg')
-    expect(screen.getByRole('region', { name: 'Our story' })).toHaveTextContent(/A Bengali cultural association/)
+    const story = screen.getByRole('region', { name: 'Our story' })
+    expect(story).toHaveTextContent(/13Parbon began in Leeds in 2022/)
+    // The piece has lists and a heading in it; flattening those to paragraphs would lose it.
+    expect(within(story).getByRole('heading', { level: 3, name: /A Few Things That Make Us/ })).toBeInTheDocument()
+    expect(within(story).getAllByRole('list')).toHaveLength(2)
+    expect(within(story).getAllByRole('listitem')).toHaveLength(12)
     const values = screen.getByRole('region', { name: 'What we stand for' })
     expect(within(values).getAllByRole('heading', { level: 3 })).toHaveLength(4)
-    const committee = screen.getByRole('region', { name: 'The committee' })
+    const committee = screen.getByRole('region', { name: 'Current committee' })
     expect(within(committee).getByText('Cultural Secretary')).toBeInTheDocument()
     // Every seat is filled by a named person: no placeholders reach the page.
     expect(within(committee).getAllByRole('listitem')).toHaveLength(7)

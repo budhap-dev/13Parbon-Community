@@ -54,13 +54,94 @@
   font-size: clamp(30px, 3vw, 44px);
 }
 
+/*
+ * Paragraphs keep a readable measure — around 70 characters, which is why max-width stays on
+ * the text and not on the section. The lists break out of it and take the full width, since a
+ * short bullet in a narrow column wastes both the line and the page.
+ */
 .prose {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  max-width: 720px;
+  gap: 18px;
   font-size: 19px;
   line-height: 1.6;
+  text-wrap: pretty;
+}
+
+.prose > p {
+  max-width: 68ch;
+}
+
+/*
+ * The opening sets the tone, so it gets the display face — but only a size the paragraph can
+ * carry. At 40px on a 24ch measure this one ran to ten lines and 347px on its own, which is a
+ * headline treatment given to something that is not a headline.
+ */
+.prose > p:first-child {
+  max-width: 34ch;
+  font-family: var(--font-display);
+  font-size: clamp(22px, 2.4vw, 30px);
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  text-wrap: pretty;
+}
+
+/* The line after it carries on the thought, so it stays larger than the body. */
+.prose > p:first-child + p {
+  max-width: 60ch;
+  font-size: clamp(19px, 1.6vw, 22px);
+  color: var(--color-fg-muted);
+}
+
+/*
+ * The sign-off, in a hand and across the whole width. Held to a reading measure it was a
+ * narrow column of very large text with the page empty beside it; this is the one line that
+ * should take the room, so the paragraph rule above does not apply to it.
+ */
+.prose > p:last-child {
+  max-width: none;
+  margin-top: 20px;
+  padding: 32px 0 8px;
+  border-top: 2px solid var(--color-accent);
+  font-family: var(--font-hand);
+  font-size: clamp(30px, 5vw, 62px);
+  font-weight: 700;
+  line-height: 1.12;
+  color: var(--color-accent);
+  text-wrap: balance;
+}
+
+/* The committee's own headings inside the story, a step down from the section title. */
+.storyHeading {
+  margin-top: 24px;
+  font-family: var(--font-hand);
+  font-weight: 700;
+  font-size: clamp(30px, 3.2vw, 42px);
+  line-height: 1.15;
+  color: var(--color-accent);
+  text-wrap: balance;
+}
+
+/*
+ * The bullets already open with an emoji, so no marker: two symbols at the head of every line
+ * is one too many. Laid across the width in columns rather than down a narrow one — eight
+ * short lines stacked single file ran most of a phone screen and left a desktop half empty.
+ */
+.storyList {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 10px 24px;
+  margin: 4px 0;
+  list-style: none;
+}
+
+.storyList li {
+  padding: 14px 18px;
+  border-radius: var(--radius-tile);
+  background: var(--color-bg-raised);
+  font-size: 17px;
+  line-height: 1.5;
   text-wrap: pretty;
 }
 
@@ -338,6 +419,24 @@
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
+}
+
+/*
+ * On a phone the bullets go back to plain lines against a rule. One column of padded cards is
+ * mostly chrome, and it made the longer list 881px on its own.
+ */
+@media (max-width: 700px) {
+  .storyList {
+    gap: 12px;
+    padding-left: 4px;
+    border-left: 2px solid var(--color-border-faint);
+  }
+
+  .storyList li {
+    padding: 0 0 0 14px;
+    border-radius: 0;
+    background: none;
+  }
 }
 
 @media (max-width: 960px) {

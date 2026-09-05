@@ -29,7 +29,7 @@ describe('ThemeSwitcher', () => {
     const options = screen.getAllByRole('radio')
     expect(options.map((o) => o.textContent)).toEqual([
       'FestivalSindoor red and marigold',
-      'Poila BoishakhCream and red, like a lal-paar sari',
+      'BoishakhiCream and red, like a lal-paar sari',
       'Saraswati PujaBasanti yellow with deep blue',
       'HoliMagenta and bright yellow',
       'MahalayaPre-dawn indigo and shiuli orange',

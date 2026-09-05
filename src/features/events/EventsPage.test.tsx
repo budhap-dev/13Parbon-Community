@@ -36,7 +36,7 @@ describe('EventsPage', () => {
     // Only the Mahalaya programme is on the calendar in the app's own fixtures.
     renderWithProviders(<EventsPage />, { route: '/events', api: createMockApi({ now: () => TEST_NOW }) })
     const note = await screen.findByRole('complementary', { name: 'More of the year to come' })
-    expect(note).toHaveTextContent('Poila Boishakh, Saraswati Puja and Holi are still being arranged')
+    expect(note).toHaveTextContent('Boishakhi, Saraswati Puja and Holi are still being arranged')
     expect(within(note).getByRole('link', { name: 'Send the committee a message' })).toHaveAttribute(
       'href',
       '/contact',

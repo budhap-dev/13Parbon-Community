@@ -1,3 +1,4 @@
+import { Link } from 'react-router'
 import { about } from '@/app/about'
 import { site } from '@/app/site'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
@@ -37,9 +38,21 @@ export function AboutPage() {
           Our story
         </h2>
         <div className={styles.prose}>
-          {about.story.map((paragraph) => (
-            <p key={paragraph}>{paragraph}</p>
-          ))}
+          {about.story.map((block) =>
+            block.kind === 'heading' ? (
+              <h3 key={block.text} className={styles.storyHeading}>
+                {block.text}
+              </h3>
+            ) : block.kind === 'list' ? (
+              <ul key={block.items[0]} className={styles.storyList}>
+                {block.items.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            ) : (
+              <p key={block.text}>{block.text}</p>
+            ),
+          )}
         </div>
       </section>
 
@@ -60,10 +73,13 @@ export function AboutPage() {
 
       <section className={styles.section} aria-labelledby="committee-title">
         <h2 id="committee-title" className={styles.sectionTitle}>
-          The committee
+          Current committee
           <span className={styles.count} aria-hidden="true">{about.committee.length}</span>
         </h2>
-        <p className={styles.lead}>Elected each year at the annual general meeting. Reach any of them through the contact form.</p>
+        <p className={styles.lead}>
+          Anyone can join the committee, depending on the committee’s policy at the time. If you would like to
+          put your name forward, or to reach any of the people below, <Link to="/contact">send us a message</Link>.
+        </p>
         <ul className={styles.committee}>
           {about.committee.map((member) => (
             <li key={member.role} className={styles.member}>

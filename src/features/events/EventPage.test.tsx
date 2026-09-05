@@ -58,8 +58,8 @@ describe('EventPage', () => {
   })
 
   it('hides registration and the countdown for past events', async () => {
-    renderEvent('poila-boishakh-cultural-programme-2026')
-    expect(await screen.findByRole('heading', { level: 1 })).toHaveTextContent('Poila Boishakh cultural programme')
+    renderEvent('boishakhi-programme-2026')
+    expect(await screen.findByRole('heading', { level: 1 })).toHaveTextContent('Boishakhi programme')
     expect(screen.queryByText(/days to go/)).not.toBeInTheDocument()
     expect(screen.queryByRole('region', { name: 'A Festival is Best Shared' })).not.toBeInTheDocument()
     expect(screen.queryByRole('region', { name: 'Would you like to perform?' })).not.toBeInTheDocument()

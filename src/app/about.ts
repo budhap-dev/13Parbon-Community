@@ -1,15 +1,75 @@
 import { site } from './site'
 
+/** A paragraph, a run of bullets, or a heading part-way down the story. */
+export type StoryBlock =
+  | { kind: 'text'; text: string }
+  | { kind: 'list'; items: readonly string[] }
+  | { kind: 'heading'; text: string }
+
 /**
  * Content for the About page. The committee edits this file; bracketed values are
  * placeholders that must be filled before launch. Nothing here is fabricated.
  */
 export const about = {
+  /**
+   * Written by the committee, and kept in their voice — the emoji and the jokes are theirs and
+   * are the point of it. Blocks rather than a flat list of paragraphs, because the piece has
+   * headings and lists in it and flattening those would lose the shape.
+   */
   story: [
-    `A Bengali cultural association in ${site.town}, started in 2022 by a handful of families who wanted their children to grow up with the festivals, songs and food they grew up with.`,
-    'Every year we gather four times: a cultural programme at Bengali New Year, Saraswati Puja, Holi, and a cultural programme at Mahalaya to open the Puja season. In between there is always something to cook too much for.',
-    '[Two or three sentences from the committee on where the association is today: how many households, what has changed, what is next.]',
-  ],
+    {
+      kind: 'text',
+      text: '13Parbon began in Leeds in 2022 with a handful of Bengali families and a shared dream: that our children would grow up knowing the festivals, songs, stories, and flavours that shaped our own childhoods!',
+    },
+    {
+      kind: 'text',
+      text: 'Living far from home, we wanted to create a space where our children could experience Bengali culture firsthand, not just hear stories about it. We wanted them to know the excitement of a new Puja outfit, the joy of Holi colours, the beauty of Rabindrasangeet, and, of course, the importance of always eating “just one more” mishti! 😄',
+    },
+    {
+      kind: 'text',
+      text: 'The name 13Parbon celebrates Bengal’s rich tradition of festivals and togetherness. Every year, we gather to celebrate some of the occasions closest to our hearts:',
+    },
+    {
+      kind: 'list',
+      items: [
+        '🌼 Boishakhi — welcoming the Bengali New Year',
+        '📚 Saraswati Puja — seeking blessings for learning and creativity',
+        '🎨 Holi — colours, laughter, and colourful faces that sometimes stay colourful for days! 😆',
+        '🎭 Mahalaya Cultural Programme — opening the Puja season through music, dance, poetry, and performances',
+      ],
+    },
+    { kind: 'text', text: 'But 13Parbon is about much more than four events a year!' },
+    {
+      kind: 'text',
+      text: 'Between festivals, there’s always a reason to meet. A simple tea gathering somehow turns into a full meal 🍲. A quick discussion becomes a two-hour adda ☕. Someone mentions cooking and suddenly enough food appears to feed an entire neighbourhood! 😂',
+    },
+    {
+      kind: 'text',
+      text: 'Together, we have built more than a cultural association. We have built a community. We celebrate achievements, support each other through challenges, share advice (whether requested or not! 😜), and create a space where everyone feels welcome.',
+    },
+    {
+      kind: 'text',
+      text: 'What started as a small group of families has grown into a warm and vibrant community bound by friendship, culture, trust, and countless shared memories. We may be miles away from Bengal, but together we’ve created a little piece of home right here in Leeds! ❤️🏡',
+    },
+    { kind: 'heading', text: 'A Few Things That Make Us… Us! 😄' },
+    {
+      kind: 'list',
+      items: [
+        '✨ Every event planning meeting starts with “Let’s keep it simple this year…” and ends with dance performances, decorations, matching outfits, and a feast! 🤣',
+        '✨ We can organise a cultural programme faster than we can decide the menu! 🍽️',
+        '✨ Our WhatsApp groups are often more active than some stock markets! 📱😆',
+        '✨ Someone is always reminding everyone to RSVP. Someone else is always forgetting to RSVP. 😜',
+        '✨ We help each other whenever needed… and sometimes even when not needed! ❤️',
+        '✨ Every child in our community has at least ten unofficial aunts and uncles looking out for them! 🥰',
+        '✨ We may disagree on many things, but never on the importance of good food and good company! 🍤🍮',
+        '✨ Most importantly, everyone who joins us becomes part of the family! 🤗',
+      ],
+    },
+    {
+      kind: 'text',
+      text: '13Parbon is not just an organisation. It’s friendship, culture, laughter, food, endless adda, and a home away from home! ❤️🎉',
+    },
+  ] as const satisfies readonly StoryBlock[],
   values: [
     { icon: 'mic', title: 'Everyone on stage', text: 'Children, first-timers and grandparents all get a turn. The programme is made by members, everyone is invited.' },
     { icon: 'users', title: 'A family is a unit', text: 'One registration per household. The more, the merrier, bring the kids and your neighbours along!' },

@@ -12,7 +12,7 @@ describe('createMockApi', () => {
       'mahalaya-cultural-programme-2026',
       'saraswati-puja-2027',
       'holi-2027',
-      'poila-boishakh-cultural-programme-2027',
+      'boishakhi-programme-2027',
     ])
   })
 
@@ -22,7 +22,7 @@ describe('createMockApi', () => {
 
   it('lists past events most recent first, and finds events by slug', async () => {
     const past = await api.events.listPast()
-    expect(past.map((e) => e.slug)).toEqual(['poila-boishakh-cultural-programme-2026'])
+    expect(past.map((e) => e.slug)).toEqual(['boishakhi-programme-2026'])
     expect((await api.events.getBySlug('holi-2027'))?.title).toBe('Holi')
     expect(await api.events.getBySlug('draft-picnic')).toBeNull()
     expect(await api.events.getBySlug('committee-meeting')).toBeNull()
@@ -67,7 +67,7 @@ describe('createMockApi', () => {
   })
 
   it('lists the four occasions in the community year', async () => {
-    expect((await api.festivals.list()).map((f) => f.id)).toEqual(['poila-boishakh', 'mahalaya', 'saraswati-puja', 'holi'])
+    expect((await api.festivals.list()).map((f) => f.id)).toEqual(['boishakhi', 'mahalaya', 'saraswati-puja', 'holi'])
   })
 
   it('returns only approved media from public albums', async () => {
@@ -79,7 +79,7 @@ describe('createMockApi', () => {
 
   it('lists public albums newest first with their approved media and a cover', async () => {
     const albums = await api.gallery.listAlbums()
-    expect(albums.map((a) => a.slug)).toEqual(['poila-boishakh-2026', 'holi-2026', 'saraswati-puja-2026', 'mahalaya-2025'])
+    expect(albums.map((a) => a.slug)).toEqual(['boishakhi-2026', 'holi-2026', 'saraswati-puja-2026', 'mahalaya-2025'])
     const holi = await api.gallery.getAlbum('holi-2026')
     expect(holi?.media.map((m) => m.id)).toEqual(['m-3'])
     expect(holi?.cover?.id).toBe('m-3')
