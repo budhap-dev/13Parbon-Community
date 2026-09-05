@@ -37,6 +37,12 @@
   --font-display: 'Bricolage Grotesque', 'Arial Black', 'Helvetica Neue', Arial, sans-serif;
   --font-body: 'Hind Siliguri', 'Bricolage Grotesque', 'Helvetica Neue', Arial, sans-serif;
   --font-script: 'Tiro Bangla', 'Noto Serif Bengali', serif;
+  /*
+   * A hand for the few lines that are the community talking rather than the site informing.
+   * Latin only — it has no Bengali, so anything in Bengali stays with --font-script. Keep it
+   * to short lines at a decent size: handwriting is tiring to read in a paragraph.
+   */
+  --font-hand: 'Caveat', 'Segoe Script', 'Bradley Hand', cursive;
 
   --radius-pill: 999px;
   --radius-card: 20px;

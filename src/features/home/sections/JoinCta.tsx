@@ -19,7 +19,12 @@ export function JoinCta() {
             stay, talk to the committee.
           </p>
         </div>
-        <Button to="/events">See what’s on</Button>
+        <div className={styles.joinActions}>
+          <Button to="/events">See what’s on</Button>
+          <Button to="/about" variant="line">
+            Our story
+          </Button>
+        </div>
       </section>
     </Container>
   )
