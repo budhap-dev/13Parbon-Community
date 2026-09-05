@@ -3,8 +3,9 @@
  * committee. Update this file when a backend, analytics or payments are added.
  */
 export const privacy = {
-  updatedOn: '[Date]',
-  controller: '[Association legal name], [Town]. Contact: [hello@example.org].',
+  /* Change this whenever anything on this page changes: it is the date the notice took effect. */
+  updatedOn: '5 September 2026',
+  controller: '13Parbon, Leeds.',
   sections: [
     {
       title: 'What we collect',
@@ -29,9 +30,11 @@ export const privacy = {
       ],
     },
     {
-      title: 'Photos',
+      title: 'Your name and your photographs',
       body: [
-        'We publish photos from our events in the gallery. If you or your child appear in a photo you would like taken down, tell us through the contact form and we will remove it.',
+        'We list the committee and our members by name on the About page, and we publish photographs from our events in the gallery.',
+        'If you would rather your name was not on this website, tell us through the contact form or by email and we will take it off. The same goes for any photograph you or your child appear in.',
+        'You do not have to give a reason, and asking makes no difference to your membership or your welcome at anything we put on.',
       ],
     },
     {

@@ -26,7 +26,7 @@ export const site = {
    * and shows a note instead, so an unconfirmed address never points somewhere wrong.
    */
   coordinates: { lat: 53.7397, lon: -1.6156 } as { lat: number; lon: number } | null,
-  email: '[hello@example.org]',
+  email: '13parbon.Leeds@gmail.com',
   /**
    * Photographs of members are parked until everyone in them has been asked. This hides the
    * gallery from the navigation and the photo sections from the home page. The pages still
@@ -137,8 +137,23 @@ export const site = {
       icon: 'facebook',
       href: 'https://www.facebook.com/groups/1337437436797813/',
       mention: 'Facebook',
+      blurb: 'Announcements, and photographs after the day.',
     },
-    { name: 'WhatsApp', icon: 'whatsapp', href: null, mention: 'our WhatsApp group' },
+    {
+      name: 'Instagram',
+      icon: 'instagram',
+      href: 'https://www.instagram.com/13parbon.leeds',
+      mention: 'Instagram',
+      blurb: 'Pictures from our programmes.',
+    },
+    {
+      name: 'WhatsApp group',
+      icon: 'whatsapp',
+      /* No invite address to give out, so this one is named rather than linked. */
+      href: null,
+      mention: 'our WhatsApp group',
+      blurb: 'Day-to-day talk, reminders and last-minute changes. Ask any member to add you.',
+    },
   ],
 } as const
 

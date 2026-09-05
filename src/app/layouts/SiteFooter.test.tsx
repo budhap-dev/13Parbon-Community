@@ -15,7 +15,10 @@ describe('SiteFooter', () => {
     expect(facebook).toHaveAttribute('href', 'https://www.facebook.com/groups/1337437436797813/')
     expect(facebook).toHaveAttribute('target', '_blank')
     // Channels the community does not have, or has not given an address for, are left out.
-    expect(screen.queryByRole('link', { name: 'Instagram' })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Instagram' })).toHaveAttribute(
+      'href',
+      'https://www.instagram.com/13parbon.leeds',
+    )
     expect(screen.queryByRole('link', { name: 'WhatsApp' })).not.toBeInTheDocument()
   })
 })

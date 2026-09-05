@@ -2,16 +2,16 @@ import { render, screen } from '@testing-library/react'
 import { NotConnected } from './NotConnected'
 
 describe('NotConnected', () => {
-  it('says what is not ready and offers the social channels while the email is a placeholder', () => {
-    render(<NotConnected action="send a message" />)
-    expect(screen.getByRole('heading', { name: 'Not quite ready to send a message here' })).toBeInTheDocument()
-    expect(screen.getByText(/rather tell you than take your details/)).toBeInTheDocument()
-    // Both channels are named; only the one with an address is a link.
-    expect(screen.getByRole('link', { name: 'Facebook' })).toHaveAttribute(
+  it('gives the two ways to reach the committee, and does not dwell on the form', () => {
+    render(<NotConnected />)
+    expect(screen.getByRole('heading', { name: 'Talk to us' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: '13parbon.Leeds@gmail.com' })).toHaveAttribute(
       'href',
-      'https://www.facebook.com/groups/1337437436797813/',
+      'mailto:13parbon.Leeds@gmail.com',
     )
-    expect(screen.getByText(/reach us on/)).toHaveTextContent('Facebook and our WhatsApp group')
-    expect(screen.queryByRole('link', { name: /WhatsApp/ })).not.toBeInTheDocument()
+    expect(screen.getByText(/WhatsApp group/)).toBeInTheDocument()
+    // Somebody here wants a way through, not an account of what we have not built.
+    expect(screen.queryByText(/Not quite ready/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/still setting this up/)).not.toBeInTheDocument()
   })
 })

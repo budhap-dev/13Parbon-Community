@@ -1,16 +1,97 @@
+/*
+ * One column down the page rather than a form beside a sidebar. With submissions switched off
+ * the old layout was a heading, a small panel and three icons in an otherwise empty grid.
+ */
 .page {
-  display: grid;
-  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
-  gap: 64px;
-  align-items: start;
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
   padding-top: 48px;
   padding-bottom: 96px;
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .main {
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: 24px;
+  max-width: 640px;
+}
+
+.formTitle {
+  font-size: clamp(24px, 2.6vw, 34px);
+}
+
+/* Every way through, given the same weight and laid across the page. */
+.channels {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  list-style: none;
+}
+
+.channel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 26px 24px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-bg-raised);
+  transition:
+    border-color var(--motion-fast) ease,
+    transform var(--motion-fast) ease;
+}
+
+.channel:hover {
+  border-color: var(--color-accent);
+  transform: translateY(-2px);
+}
+
+.channelIcon {
+  color: var(--color-accent);
+}
+
+.channelName {
+  font-size: 22px;
+}
+
+.channelBlurb {
+  flex: 1 1 auto;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--color-fg-muted);
+  text-wrap: pretty;
+}
+
+.channelLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+/* Named but not linked: there is no invite address to hand out. */
+.channelNote {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  font-size: 15px;
+  color: var(--color-fg-faint);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .channel:hover {
+    transform: none;
+  }
 }
 
 .title {
@@ -233,4 +314,14 @@
     grid-template-columns: minmax(0, 1fr);
     gap: 32px;
   }
+}
+
+/* Names the group of cards for a screen reader without repeating it on the page. */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
