@@ -1,10 +1,12 @@
 /**
  * The privacy notice, written for the site as it is today. Bracketed values are for the
- * committee. Update this file when a backend, analytics or payments are added.
+ * committee. Update this file when a backend or payments are added, and whenever what the
+ * site collects changes: the analytics note here has to match what <Analytics /> in App.tsx
+ * actually does.
  */
 export const privacy = {
   /* Change this whenever anything on this page changes: it is the date the notice took effect. */
-  updatedOn: '5 September 2026',
+  updatedOn: '7 September 2026',
   controller: '13Parbon, Leeds.',
   sections: [
     {
@@ -25,7 +27,8 @@ export const privacy = {
     {
       title: 'Cookies and tracking',
       body: [
-        'The site sets no tracking cookies and runs no analytics. Your theme choice is stored in your own browser and never sent to us.',
+        'The site sets no cookies of its own. Your theme choice is stored in your own browser and never sent to us.',
+        'We count page views using Vercel Web Analytics, run by the company that hosts this site. It records which page was opened, roughly where in the world from, and what kind of device and browser it was, so we can see which pages are read. It uses no cookies, keeps no IP addresses, builds no profile of you, and cannot follow you to any other website. We only ever see totals, never a person.',
         'The map on our contact page is served by OpenStreetMap, which does not track visitors. Following the directions link hands the venue address to your own maps app.',
       ],
     },
