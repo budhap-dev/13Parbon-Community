@@ -24,17 +24,22 @@ describe('EventPage', () => {
     expect(screen.getByText('Saturday 10 October')).toBeInTheDocument()
     expect(screen.getByText(/1:30 pm to 5:30 pm/)).toBeInTheDocument()
     expect(screen.getByText('37 days to go')).toBeInTheDocument()
-    // Nothing to book: the details go out on the channels the community already uses.
-    expect(screen.getByText(/There is nothing to book/)).toBeInTheDocument()
+    // The registration form, opened away from the site.
+    const register = screen.getByRole('link', { name: 'Register to come' })
+    expect(register).toHaveAttribute('href', 'https://forms.example.org/attend')
+    expect(register).toHaveAttribute('target', '_blank')
+    expect(screen.queryByText(/There is nothing to book/)).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Facebook page' })).toHaveAttribute(
       'href',
       'https://www.facebook.com/groups/1337437436797813/',
     )
-    expect(screen.getByRole('link', { name: 'tell the committee' })).toHaveAttribute('href', '/contact')
-    // Coming and performing are two different things to put your name down for.
+    // Coming and performing are two different things to put your name down for, on two forms.
     const stage = screen.getByRole('region', { name: 'Would you like to perform?' })
     expect(within(stage).getByText(/there is a place for you on the stage/)).toBeInTheDocument()
-    expect(within(stage).getByRole('link', { name: 'Register to perform' })).toHaveAttribute('href', '/contact')
+    expect(within(stage).getByRole('link', { name: 'Register to perform' })).toHaveAttribute(
+      'href',
+      'https://forms.example.org/perform',
+    )
     const help = screen.getByRole('region', { name: 'A Festival is Best Shared' })
     expect(within(help).getByText(/We warmly welcome volunteers/)).toBeInTheDocument()
     expect(within(help).getByText(/please let us know/)).toBeInTheDocument()
@@ -63,6 +68,14 @@ describe('EventPage', () => {
     expect(screen.queryByText(/days to go/)).not.toBeInTheDocument()
     expect(screen.queryByRole('region', { name: 'A Festival is Best Shared' })).not.toBeInTheDocument()
     expect(screen.queryByRole('region', { name: 'Would you like to perform?' })).not.toBeInTheDocument()
+  })
+
+  it('says there is nothing to book when the event has no form', async () => {
+    renderEvent('saraswati-puja-2027')
+    expect(await screen.findByRole('heading', { level: 1, name: 'Saraswati Puja' })).toBeInTheDocument()
+    expect(screen.getByText(/There is nothing to book/)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'tell the committee' })).toHaveAttribute('href', '/contact')
+    expect(screen.queryByRole('link', { name: 'Register to come' })).not.toBeInTheDocument()
   })
 
   it('shows not found for an unknown or unlisted event', async () => {

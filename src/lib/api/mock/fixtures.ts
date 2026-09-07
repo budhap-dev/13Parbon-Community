@@ -9,7 +9,8 @@ import type { VolunteerRole } from '@/domain/volunteer'
  * a cultural programme at Bengali New Year, Saraswati Puja, Holi, and a cultural
  * programme at Mahalaya, before Durga Puja.
  *
- * Confirmed: the Mahalaya programme on 10 October 2026.
+ * Confirmed: the Mahalaya programme on 10 October 2026, its time taken from the registration
+ * form, which is what people are told when they sign up.
  * To confirm with the committee: the 2027 dates, venues and headcounts below.
  */
 export function buildFixtures() {
@@ -19,14 +20,18 @@ export function buildFixtures() {
       slug: 'mahalaya-cultural-programme-2026',
       title: 'Cultural programme',
       summary: 'Our Mahalaya Day: food, music, songs, dance and other cultural performances  to open the Puja season.',
-      startsAt: '2026-10-10T13:30:00',
-      endsAt: '2026-10-10T17:30:00',
+      startsAt: '2026-10-10T14:30:00',
+      endsAt: '2026-10-10T18:00:00',
       venue: 'St Andrew’s Community Hall, Morley',
       venueAddress: 'Leeds, LS27 0JU',
       coordinates: { lat: 53.7397, lon: -1.6156 },
       festivalId: 'mahalaya',
       isPublic: true,
       registrationOpen: true,
+      registrationUrl:
+        'https://docs.google.com/forms/d/e/1FAIpQLScmX_VTO-_FDfb8Wn2YD43HSK9Xa6fHQYBQNGfuSKnEzKg9tg/viewform',
+      performerFormUrl:
+        'https://docs.google.com/forms/d/e/1FAIpQLSerCd_B2SfsuOmPtPkH66bZfCjasCd7fLm1X4dnjO6n6h9XZw/viewform',
       householdsRegistered: 31,
       theme: {
         bengali: 'দুর্গাপূজার সেকাল ও একাল',

@@ -21,6 +21,18 @@ export type Event = {
   festivalId?: string
   isPublic: boolean
   registrationOpen: boolean
+  /**
+   * Where people put their name down to come. A Google Form the committee owns, so the
+   * replies land in a sheet they already know how to read. Absent means there is nothing
+   * to book, and the page says so rather than showing a button that goes nowhere.
+   */
+  registrationUrl?: string
+  /**
+   * Where performers sign up for the stage, which is a separate form with separate
+   * questions: what you would like to do, and how long it runs. Absent sends people to
+   * the contact page instead.
+   */
+  performerFormUrl?: string
   householdsRegistered: number
   /**
    * The theme the committee has set for the programme. Written in Bengali, with a plain

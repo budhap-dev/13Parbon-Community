@@ -59,6 +59,12 @@ export function NextEvent() {
           </ul>
           <p className={styles.eventMeta}>{event.summary}</p>
           <div className={styles.eventActions}>
+            {/* The form is the one thing worth doing from here; everything else is on the event page. */}
+            {event.registrationOpen && event.registrationUrl ? (
+              <Button href={event.registrationUrl} variant="ink" size="sm">
+                Register to come
+              </Button>
+            ) : null}
             {/* Volunteering is explained on the event page, alongside everything else. */}
             <Button to={`/events/${event.slug}`} variant="inkLine" size="sm">
               Event details
