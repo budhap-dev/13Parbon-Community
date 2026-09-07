@@ -22,6 +22,8 @@ export const testEvents: Event[] = [
     festivalId: 'mahalaya',
     isPublic: true,
     registrationOpen: true,
+    registrationUrl: 'https://forms.example.org/attend',
+    performerFormUrl: 'https://forms.example.org/perform',
     householdsRegistered: 31,
     theme: {
       bengali: 'দুর্গাপূজার সেকাল ও একাল',

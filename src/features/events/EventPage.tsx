@@ -44,6 +44,8 @@ export function EventPage() {
   if (!event) return <NotFoundPage />
 
   const days = daysUntil(event.startsAt, now)
+  /* A form is only worth offering while registration is open; otherwise the page has nothing to book. */
+  const registrationUrl = event.registrationOpen ? event.registrationUrl : undefined
   const countdown = describeCountdown(days)
   const isPast = days < 0 && event.status === 'past'
 
@@ -110,6 +112,7 @@ export function EventPage() {
         <p className={styles.summary}>{event.summary}</p>
         {!isPast ? (
           <div className={styles.actions}>
+            {registrationUrl ? <Button href={registrationUrl}>Register to come</Button> : null}
             {event.volunteerCall ? (
               site.volunteerFormUrl ? (
                 <Button href={site.volunteerFormUrl} variant="line">
@@ -127,14 +130,26 @@ export function EventPage() {
           </div>
         ) : null}
         {!isPast ? (
-          <p className={styles.note}>
-            There is nothing to book. We put the details out on our WhatsApp group and{' '}
-            <a href={facebook?.href} target="_blank" rel="noreferrer">
-              Facebook page
-            </a>
-            , so keep an eye there. Or <Link to="/contact">tell the committee</Link> you are coming and we will
-            add you to the numbers.
-          </p>
+          registrationUrl ? (
+            <p className={styles.note}>
+              Registering takes a minute and opens in a new tab. It helps us cook for the right number, so
+              please put your household down even if we already know you are coming. Anything else, and any
+              last-minute change, goes out on our WhatsApp group and{' '}
+              <a href={facebook?.href} target="_blank" rel="noreferrer">
+                Facebook page
+              </a>
+              .
+            </p>
+          ) : (
+            <p className={styles.note}>
+              There is nothing to book. We put the details out on our WhatsApp group and{' '}
+              <a href={facebook?.href} target="_blank" rel="noreferrer">
+                Facebook page
+              </a>
+              , so keep an eye there. Or <Link to="/contact">tell the committee</Link> you are coming and we will
+              add you to the numbers.
+            </p>
+          )
         ) : null}
       </article>
 
@@ -168,9 +183,15 @@ export function EventPage() {
               Would you like to perform?
             </h2>
             <p className={styles.roleMeta}>{event.performerCall}</p>
-            <Button to="/contact" variant="line">
-              Register to perform
-            </Button>
+            {event.performerFormUrl ? (
+              <Button href={event.performerFormUrl} variant="line">
+                Register to perform
+              </Button>
+            ) : (
+              <Button to="/contact" variant="line">
+                Register to perform
+              </Button>
+            )}
           </section>
         ) : null}
 
