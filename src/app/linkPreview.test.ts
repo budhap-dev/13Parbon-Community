@@ -16,7 +16,7 @@ describe('the card shown when a link is shared', () => {
   it('gives a crawler a title, a description and a picture', () => {
     expect(meta('property', 'og:title')).toBe('13Parbon Community')
     expect(meta('property', 'og:description')).toMatch(/Bengali cultural association in Leeds/)
-    expect(meta('property', 'og:image')).toBe('https://13parbon.vercel.app/brand/share-card.jpg')
+    expect(meta('property', 'og:image')).toBe('https://13parbon.org.uk/brand/share-card.jpg')
   })
 
   it('points at the picture absolutely, since it is fetched from outside the site', () => {
@@ -37,7 +37,7 @@ describe('the sitemap', () => {
   it('lists only pages that exist and are meant to be found', () => {
     // The listed URLs, not the whole file: the comment in it names the pages left out.
     const listed = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) =>
-      m[1].replace('https://13parbon.vercel.app', ''),
+      m[1].replace('https://13parbon.org.uk', ''),
     )
     expect(listed).toEqual(['/', '/events', '/about', '/contact', '/privacy'])
     // /join was removed and the other two are parked: sending a crawler to any of them is a
