@@ -35,7 +35,7 @@ allowed to land back on:
 
 ```
 http://localhost:5173/portal
-https://13parbon.vercel.app/portal
+https://13parbon.org.uk/portal
 ```
 
 Miss those and Google will sign someone in and then refuse to return them.

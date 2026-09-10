@@ -133,7 +133,7 @@ The frontend is built against the `lib/api` interface and a mock adapter, so pha
 
 ### Hosting — **decided: Vercel** (2026-09-03)
 
-Production builds from `main` at https://13parbon.vercel.app, with a preview URL on every PR. `vercel.json` rewrites every route to `index.html` for client-side routing. Netlify config is kept in the repo as a fallback.
+Production builds from `main` at https://13parbon.org.uk, with a preview URL on every PR. `vercel.json` rewrites every route to `index.html` for client-side routing, and redirects the old `13parbon.vercel.app` host to the custom domain. Netlify config is kept in the repo as a fallback.
 
 ## 6. Cross-cutting concerns
 

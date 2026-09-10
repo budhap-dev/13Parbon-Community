@@ -63,7 +63,7 @@ Brand assets live in `public/brand/`: the full logo, the round emblem used in th
 
 ## Deployment
 
-Production: https://13parbon.vercel.app, built by Vercel from `main`. Every pull request gets a preview URL. Client routes are served by the rewrite in `vercel.json`; `netlify.toml` and `public/_redirects` do the same if the site ever moves to Netlify.
+Production: https://13parbon.org.uk, built by Vercel from `main`. The domain is registered through Cloudflare, which also serves its DNS; the records point at Vercel unproxied, so Vercel issues the certificate. `www` redirects to the bare domain, and so does the old `13parbon.vercel.app` address, by the host rule in `vercel.json` — links shared before the move still land in the right place, but there is only ever one live site. The rule matches that exact host, so preview URLs are unaffected. Every pull request gets a preview URL. Client routes are served by the rewrite in `vercel.json`; `netlify.toml` and `public/_redirects` do the same if the site ever moves to Netlify.
 
 ### Connecting Supabase
 
