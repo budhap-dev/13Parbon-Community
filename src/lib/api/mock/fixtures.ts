@@ -168,6 +168,33 @@ export function buildFixtures() {
     { id: 'al-private', slug: 'committee-dinner', title: 'Committee dinner', publishedAt: '2026-06-01T12:00:00', visibility: 'members' },
   ]
 
+/**
+ * Where the community photographs live. They are in Cloudflare R2 rather than in this repo
+ * on purpose: they show members and their children, and the privacy page promises to take
+ * any of them down on request. Git history cannot honour that promise — a file committed
+ * once stays recoverable by anyone who clones — while deleting an object really deletes it.
+ */
+const PHOTOS = 'https://photos.13parbon.org.uk'
+
+/**
+ * One album's photographs, named as they were uploaded: full/<slug>-01.jpg and up, with a
+ * matching thumbnail beside each. No captions yet — the committee knows who is in these and
+ * what the moment was, and a guess here would be worse than the silence.
+ */
+const albumPhotos = (albumId: string, slug: string, count: number): Media[] =>
+  Array.from({ length: count }, (_, i) => {
+    const name = `${slug}-${String(i + 1).padStart(2, '0')}`
+    return {
+      id: `m-${name}`,
+      albumId,
+      type: 'photo' as const,
+      url: `${PHOTOS}/full/${name}.jpg`,
+      thumbnailUrl: `${PHOTOS}/thumb/${name}.jpg`,
+      approved: true,
+    }
+  })
+
+  /** The placeholder drawings still standing in for albums we have no photographs for yet. */
   const photo = (id: string, albumId: string, slug: string, caption: string, approved = true): Media => ({
     id,
     albumId,
@@ -179,11 +206,9 @@ export function buildFixtures() {
   })
 
   const media: Media[] = [
-    photo('m-1', 'al-boishakhi-2026', 'poila-boishakh', 'Rabindrasangeet at the Boishakhi programme'),
-    photo('m-2', 'al-boishakhi-2026', 'kids-on-stage', 'The kids take the stage'),
+    ...albumPhotos('al-boishakhi-2026', 'boishakhi-2026', 17),
+    ...albumPhotos('al-saraswati-2026', 'saraswati-puja-2026', 14),
     photo('m-3', 'al-holi-2026', 'holi', 'Holi colours'),
-    photo('m-4', 'al-saraswati-2026', 'saraswati-puja', 'Saraswati Puja morning'),
-    photo('m-5', 'al-saraswati-2026', 'bhog', 'Lunch after the pujo'),
     photo('m-6', 'al-mahalaya-2025', 'mahalaya', 'The choir at last year’s Mahalaya programme'),
     photo('m-7', 'al-holi-2026', 'holi', 'Awaiting moderation', false),
     photo('m-8', 'al-private', 'bhog', 'Committee dinner'),

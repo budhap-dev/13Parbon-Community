@@ -72,7 +72,8 @@ describe('createMockApi', () => {
 
   it('returns only approved media from public albums', async () => {
     const media = await api.gallery.listRecentMedia(10)
-    expect(media).toHaveLength(6)
+    // There are more than ten approved photographs now, so this is the limit doing its job.
+    expect(media).toHaveLength(10)
     expect(media.every((m) => m.approved)).toBe(true)
     expect(media.some((m) => m.albumId === 'al-private')).toBe(false)
   })
