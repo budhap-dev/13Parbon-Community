@@ -69,7 +69,8 @@ describe('moving between photographs', () => {
   it('comes in from the right going forward and the left going back', async () => {
     render(<Harness />)
     await userEvent.click(screen.getByRole('button', { name: 'open' }))
-    const photo = () => screen.getByRole('dialog').querySelector('img')
+    // The stage may hold two: the one arriving is the one carrying data-enter.
+    const photo = () => screen.getByRole('dialog').querySelector('img[data-enter]')
     expect(photo()).toHaveAttribute('data-enter', 'none')
     await userEvent.click(screen.getByRole('button', { name: 'Next photo' }))
     expect(photo()).toHaveAttribute('data-enter', 'next')
@@ -80,7 +81,8 @@ describe('moving between photographs', () => {
   it('keeps going the same way when it wraps round the end', async () => {
     render(<Harness />)
     await userEvent.click(screen.getByRole('button', { name: 'open' }))
-    const photo = () => screen.getByRole('dialog').querySelector('img')
+    // The stage may hold two: the one arriving is the one carrying data-enter.
+    const photo = () => screen.getByRole('dialog').querySelector('img[data-enter]')
     // Opens on the second of three: forward twice lands on the first, having wrapped.
     await userEvent.click(screen.getByRole('button', { name: 'Next photo' }))
     await userEvent.click(screen.getByRole('button', { name: 'Next photo' }))
@@ -172,3 +174,49 @@ describe('a photograph that offers somewhere to go', () => {
     expect(screen.getByRole('link', { name: 'See all of Boishakhi 2026' })).toHaveFocus()
   })
 })
+
+describe('the photographs either side', () => {
+  it('shows the one before and the one after, as scenery the screen reader does not hear', async () => {
+    render(<Harness />)
+    await userEvent.click(screen.getByRole('button', { name: 'open' }))
+    // Opens on the second of three, so the first and the third sit either side.
+    const peeks = [...screen.getByRole('dialog').querySelectorAll('img[aria-hidden="true"]')]
+    expect(peeks.map((img) => img.getAttribute('src'))).toEqual(['/a.svg', '/c.svg'])
+    expect(peeks.every((img) => img.getAttribute('alt') === '')).toBe(true)
+  })
+
+  it('shows nothing either side of a photograph that is the only one', () => {
+    render(<Lightbox items={[items[0]]} index={0} onChange={() => {}} onClose={() => {}} />)
+    expect(screen.getByRole('dialog').querySelectorAll('img[aria-hidden="true"]')).toHaveLength(0)
+  })
+})
+
+describe('opening again', () => {
+  function TwoDoors() {
+    const [index, setIndex] = useState<number | null>(null)
+    return (
+      <>
+        <button type="button" onClick={() => setIndex(0)}>
+          first
+        </button>
+        <button type="button" onClick={() => setIndex(2)}>
+          third
+        </button>
+        <Lightbox items={items} index={index} onChange={setIndex} onClose={() => setIndex(null)} />
+      </>
+    )
+  }
+
+  /**
+   * Nothing was stepped past to get here, so nothing should turn. The viewer used to remember
+   * the last photograph across closing, and opening on another one animated as a move.
+   */
+  it('does not turn when opened on a different photograph from last time', async () => {
+    render(<TwoDoors />)
+    await userEvent.click(screen.getByRole('button', { name: 'first' }))
+    await userEvent.keyboard('{Escape}')
+    await userEvent.click(screen.getByRole('button', { name: 'third' }))
+    expect(screen.getByRole('dialog').querySelector('img[data-enter]')).toHaveAttribute('data-enter', 'none')
+  })
+})
+
