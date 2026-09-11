@@ -195,8 +195,8 @@ const albumPhotos = (albumId: string, slug: string, count: number): Media[] =>
   })
 
   const media: Media[] = [
-    ...albumPhotos('al-boishakhi-2026', 'boishakhi-2026', 21),
-    ...albumPhotos('al-saraswati-2026', 'saraswati-puja-2026', 27),
+    ...albumPhotos('al-boishakhi-2026', 'boishakhi-2026', 28),
+    ...albumPhotos('al-saraswati-2026', 'saraswati-puja-2026', 35),
   ]
 
   const volunteerRoles: VolunteerRole[] = [
