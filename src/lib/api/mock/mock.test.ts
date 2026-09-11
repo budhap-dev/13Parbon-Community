@@ -72,7 +72,7 @@ describe('createMockApi', () => {
 
   it('returns only approved media from public albums', async () => {
     const media = await api.gallery.listRecentMedia(10)
-    // There are thirty-one approved photographs, so this is the limit doing its job.
+    // There are forty-one approved photographs, so this is the limit doing its job.
     expect(media).toHaveLength(10)
     expect(media.every((m) => m.approved)).toBe(true)
     expect(media.some((m) => m.albumId === 'al-private')).toBe(false)
@@ -82,7 +82,7 @@ describe('createMockApi', () => {
     const albums = await api.gallery.listAlbums()
     expect(albums.map((a) => a.slug)).toEqual(['boishakhi-2026', 'saraswati-puja-2026'])
     const saraswati = await api.gallery.getAlbum('saraswati-puja-2026')
-    expect(saraswati?.media).toHaveLength(14)
+    expect(saraswati?.media).toHaveLength(22)
     // The cover is one of the album's own photographs, but not a fixed one — see below.
     expect(saraswati?.media.map((p) => p.id)).toContain(saraswati?.cover?.id)
     // The members-only album stays hidden even to somebody who knows its address.
