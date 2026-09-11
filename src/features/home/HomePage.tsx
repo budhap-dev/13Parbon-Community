@@ -5,8 +5,7 @@ import styles from './Home.module.css'
 import { Hero } from './sections/Hero'
 import { JoinCta } from './sections/JoinCta'
 import { NextEvent } from './sections/NextEvent'
-import { PhotoCarousel } from './sections/PhotoCarousel'
-import { PhotoMosaic } from './sections/PhotoMosaic'
+import { PhotoStrip } from './sections/PhotoStrip'
 import { UpcomingEvents } from './sections/UpcomingEvents'
 import { VolunteerStrip } from './sections/VolunteerStrip'
 import { WhoWeAre } from './sections/WhoWeAre'
@@ -22,11 +21,10 @@ export function HomePage() {
       <Hero />
       {show('nextEvent') ? <NextEvent /> : null}
       <WhoWeAre />
-      {site.showPhotos && show('photos') ? <PhotoMosaic /> : null}
+      {site.showPhotos && show('photos') ? <PhotoStrip /> : null}
       {show('yearStrip') ? <YearStrip /> : null}
       {show('upcoming') ? <UpcomingEvents /> : null}
       {show('volunteer') ? <VolunteerStrip /> : null}
-      {site.showPhotos && show('photos') ? <PhotoCarousel /> : null}
       <JoinCta />
     </div>
   )

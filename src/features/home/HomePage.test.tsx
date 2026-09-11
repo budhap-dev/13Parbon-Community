@@ -1,4 +1,5 @@
 import { screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { createEmptyApi, renderWithProviders } from '@/test/render'
 import { HomePage } from './HomePage'
 
@@ -22,14 +23,31 @@ describe('HomePage', () => {
     expect(within(closing).getByRole('link', { name: 'Our story' })).toHaveAttribute('href', '/about')
   })
 
-  it('shows the public MVP: the next event and the year, but no photographs', async () => {
+  it('shows the next event, the year and the photographs', async () => {
     renderWithProviders(<HomePage />)
     expect(await screen.findByText('Next event')).toBeInTheDocument()
     expect(await screen.findByRole('region', { name: 'Our year' })).toBeInTheDocument()
-    // Photographs of members are parked until everyone in them has been asked.
-    expect(screen.queryByRole('region', { name: 'Moments from our year' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('region', { name: 'Photos from last year' })).not.toBeInTheDocument()
+    // One photo section, a carousel: the mosaic and the second strip are gone.
+    expect(await screen.findByRole('region', { name: 'Moments from our year' })).toBeInTheDocument()
+    expect(await screen.findByRole('region', { name: 'Photographs from our events' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'All albums' })).toHaveAttribute('href', '/gallery')
+    // Still parked for the MVP: the route works, it is simply not advertised.
     expect(screen.queryByRole('heading', { name: 'Coming up' })).not.toBeInTheDocument()
+  })
+
+  /**
+   * The photographs here are mixed from several albums, so the one somebody stopped on is the
+   * only clue they have about where the rest of that evening is.
+   */
+  it('opens a photograph full size, and says which album it came from', async () => {
+    renderWithProviders(<HomePage />)
+    const strip = await screen.findByRole('region', { name: 'Photographs from our events' })
+    await userEvent.click(within(strip).getByRole('button', { name: 'Open photo 1 of 12 full size' }))
+    const dialog = await screen.findByRole('dialog')
+    const album = within(dialog).getByRole('link', { name: /^See all of / })
+    expect(album).toHaveAttribute('href', expect.stringContaining('/gallery/'))
+    await userEvent.keyboard('{Escape}')
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
   it('features the next event with a countdown and registration', async () => {

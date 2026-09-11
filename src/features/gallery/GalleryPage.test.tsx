@@ -9,10 +9,10 @@ describe('GalleryPage', () => {
   it('lists public albums newest first with covers and counts', async () => {
     renderWithProviders(<GalleryPage />, { route: '/gallery' })
     const titles = (await screen.findAllByRole('heading', { level: 2 })).map((h) => h.textContent)
-    expect(titles).toEqual(['Boishakhi 2026', 'Holi 2026', 'Saraswati Puja 2026', 'Mahalaya 2025'])
-    expect(screen.getByRole('link', { name: 'Holi 2026' })).toHaveAttribute('href', '/gallery/holi-2026')
+    expect(titles).toEqual(['Boishakhi 2026', 'Saraswati Puja 2026'])
+    expect(screen.getByRole('link', { name: 'Saraswati Puja 2026' })).toHaveAttribute('href', '/gallery/saraswati-puja-2026')
     expect(screen.getByText('April 2026 · 17 photos')).toBeInTheDocument()
-    expect(screen.getByText('March 2026 · 1 photo')).toBeInTheDocument()
+    expect(screen.getByText('February 2026 · 14 photos')).toBeInTheDocument()
     expect(document.title).toBe('Gallery · 13Parbon Community')
   })
 

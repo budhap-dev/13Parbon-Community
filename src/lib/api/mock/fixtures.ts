@@ -161,10 +161,10 @@ export function buildFixtures() {
   ]
 
   const albums: Album[] = [
-    { id: 'al-boishakhi-2026', slug: 'boishakhi-2026', title: 'Boishakhi 2026', description: 'Our Boishakh evening at St Andrew’s Community Hall, April 2026.', publishedAt: '2026-04-20T12:00:00', visibility: 'public' },
-    { id: 'al-holi-2026', slug: 'holi-2026', title: 'Holi 2026', description: 'Colours in the park, March 2026.', publishedAt: '2026-03-10T12:00:00', visibility: 'public' },
-    { id: 'al-saraswati-2026', slug: 'saraswati-puja-2026', title: 'Saraswati Puja 2026', description: 'Morning pujo and hatekhori, February 2026.', publishedAt: '2026-02-05T12:00:00', visibility: 'public' },
-    { id: 'al-mahalaya-2025', slug: 'mahalaya-2025', title: 'Mahalaya 2025', description: 'A tribute to the divine feminine.', publishedAt: '2025-09-25T12:00:00', visibility: 'public' },
+    { id: 'al-boishakhi-2026', slug: 'boishakhi-2026', title: 'Boishakhi 2026', description: 'Our Boishakh evening at St Andrew’s Community Hall, April 2026.', festivalId: 'boishakhi', publishedAt: '2026-04-20T12:00:00', visibility: 'public' },
+    { id: 'al-saraswati-2026', slug: 'saraswati-puja-2026', title: 'Saraswati Puja 2026', description: 'Morning pujo and hatekhori, February 2026.', festivalId: 'saraswati-puja', publishedAt: '2026-02-05T12:00:00', visibility: 'public' },
+    // Not a published album. It is here so that the members-only filter has something to
+    // hide: every gallery call drops it, which is what keeps private albums private.
     { id: 'al-private', slug: 'committee-dinner', title: 'Committee dinner', publishedAt: '2026-06-01T12:00:00', visibility: 'members' },
   ]
 
@@ -194,24 +194,9 @@ const albumPhotos = (albumId: string, slug: string, count: number): Media[] =>
     }
   })
 
-  /** The placeholder drawings still standing in for albums we have no photographs for yet. */
-  const photo = (id: string, albumId: string, slug: string, caption: string, approved = true): Media => ({
-    id,
-    albumId,
-    type: 'photo',
-    url: `/photos/${slug}.svg`,
-    thumbnailUrl: `/photos/${slug}.svg`,
-    caption,
-    approved,
-  })
-
   const media: Media[] = [
     ...albumPhotos('al-boishakhi-2026', 'boishakhi-2026', 17),
     ...albumPhotos('al-saraswati-2026', 'saraswati-puja-2026', 14),
-    photo('m-3', 'al-holi-2026', 'holi', 'Holi colours'),
-    photo('m-6', 'al-mahalaya-2025', 'mahalaya', 'The choir at last year’s Mahalaya programme'),
-    photo('m-7', 'al-holi-2026', 'holi', 'Awaiting moderation', false),
-    photo('m-8', 'al-private', 'bhog', 'Committee dinner'),
   ]
 
   const volunteerRoles: VolunteerRole[] = [

@@ -4,23 +4,56 @@
   gap: 16px;
 }
 
+/* Holds the track and the two arrows that sit over its edges. */
+.viewport {
+  position: relative;
+}
+
 .track {
   display: flex;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   scroll-behavior: smooth;
   scrollbar-width: none;
-  border-radius: var(--radius-tile);
-  background: var(--color-bg-raised);
+  /* The slides carry their own gap as padding, so the track's width divides evenly by the
+     slide width. That is what lets a page be exactly one trackful. */
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .track::-webkit-scrollbar {
   display: none;
 }
 
+/*
+  How many photographs are in view. The width is a percentage rather than a fixed size so a
+  page is always a whole number of slides, which is what the component measures to work out
+  its pages. Two on a phone, more as there is room.
+*/
 .slide {
-  flex: 0 0 100%;
+  flex: 0 0 50%;
+  box-sizing: border-box;
+  padding-right: 12px;
   scroll-snap-align: start;
+}
+
+@media (min-width: 560px) {
+  .slide {
+    flex-basis: 33.3333%;
+  }
+}
+
+@media (min-width: 900px) {
+  .slide {
+    flex-basis: 25%;
+  }
+}
+
+@media (min-width: 1200px) {
+  .slide {
+    flex-basis: 20%;
+  }
 }
 
 .figure {
@@ -32,18 +65,21 @@
   width: 100%;
   aspect-ratio: 3 / 2;
   object-fit: cover;
+  border-radius: var(--radius-tile);
+  background: var(--color-bg-raised);
 }
 
 .caption {
   position: absolute;
   left: 0;
-  right: 0;
+  right: 12px;
   bottom: 0;
   padding: 40px 20px 16px;
   font-size: 16px;
   font-weight: 600;
   color: var(--color-fg);
   background: linear-gradient(to top, rgba(0, 0, 0, 0.55), transparent);
+  border-radius: 0 0 var(--radius-tile) var(--radius-tile);
 }
 
 .status {
@@ -55,33 +91,57 @@
   white-space: nowrap;
 }
 
-.controls {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-}
-
-.arrow {
+/* The arrows sit over the ends of the strip, as they do on a shop's category rail. */
+.prev,
+.next {
+  position: absolute;
+  top: 50%;
+  z-index: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
+  width: 44px;
+  height: 44px;
+  transform: translateY(-50%);
   border: 1.5px solid var(--color-border);
   border-radius: var(--radius-pill);
-  background: transparent;
+  background: var(--color-bg);
   color: var(--color-fg);
   cursor: pointer;
-  transition: border-color var(--motion-fast) ease;
+  transition:
+    border-color var(--motion-fast) ease,
+    opacity var(--motion-fast) ease;
 }
 
-.arrow:hover {
+.prev:hover,
+.next:hover {
   border-color: var(--color-fg);
+}
+
+.prev {
+  left: -8px;
+}
+
+.next {
+  right: 4px;
+}
+
+@media (min-width: 900px) {
+  .prev {
+    left: -22px;
+  }
+
+  .next {
+    right: -10px;
+  }
 }
 
 .dots {
   display: flex;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
   gap: 8px;
 }
 
@@ -118,4 +178,14 @@
   .dots {
     gap: 0;
   }
+}
+
+/* The photograph as a target, when the strip is asked to open one full size. */
+.open {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: zoom-in;
 }
