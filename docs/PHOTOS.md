@@ -53,6 +53,23 @@ parses the result again to prove none survived.
 The script needs macOS, for `sips`. It is not a dependency of the app and does not run in the
 build, in the same way as `scripts/make-share-card.mjs`.
 
+### More photographs for an album that already exists
+
+Number them on from where the album left off, rather than re-running over everything:
+
+```sh
+node scripts/prepare-photos.mjs ~/Desktop/more-boishakhi boishakhi-2026 --start=18
+```
+
+Re-running over the whole folder instead would renumber every photograph, so `…-05.jpg`
+could become a different picture, every object would have to be uploaded again, and any link
+somebody had already shared would point somewhere else. `--start` avoids all three: the new
+files are `18` and up, nothing already in the bucket is touched, and only the count in
+`fixtures.ts` changes.
+
+The current counts are in `fixtures.ts` — the number passed to `albumPhotos` — so `--start`
+is that number plus one.
+
 ### 2. Upload
 
 Cloudflare dashboard → R2 → `13parbon-photos` → **Objects**, then drag in the `full` and

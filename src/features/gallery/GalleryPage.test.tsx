@@ -11,8 +11,8 @@ describe('GalleryPage', () => {
     const titles = (await screen.findAllByRole('heading', { level: 2 })).map((h) => h.textContent)
     expect(titles).toEqual(['Boishakhi 2026', 'Saraswati Puja 2026'])
     expect(screen.getByRole('link', { name: 'Saraswati Puja 2026' })).toHaveAttribute('href', '/gallery/saraswati-puja-2026')
-    expect(screen.getByText('April 2026 · 17 photos')).toBeInTheDocument()
-    expect(screen.getByText('February 2026 · 14 photos')).toBeInTheDocument()
+    expect(screen.getByText('April 2026 · 21 photos')).toBeInTheDocument()
+    expect(screen.getByText('February 2026 · 27 photos')).toBeInTheDocument()
     expect(document.title).toBe('Gallery · 13Parbon Community')
   })
 
@@ -50,9 +50,9 @@ describe('AlbumPage', () => {
     expect(screen.getByText('Our Boishakh evening at St Andrew’s Community Hall, April 2026.')).toBeInTheDocument()
     // These have no captions yet, so the label falls back to the photo's place in the album.
     await userEvent.click(screen.getByRole('button', { name: 'Open photo: photo 2' }))
-    expect(screen.getByRole('dialog', { name: 'Photo 2 of 17' })).toBeInTheDocument()
+    expect(screen.getByRole('dialog', { name: 'Photo 2 of 21' })).toBeInTheDocument()
     await userEvent.keyboard('{ArrowLeft}')
-    expect(screen.getByRole('dialog', { name: 'Photo 1 of 17' })).toBeInTheDocument()
+    expect(screen.getByRole('dialog', { name: 'Photo 1 of 21' })).toBeInTheDocument()
     await userEvent.keyboard('{Escape}')
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     expect(document.title).toBe('Boishakhi 2026 · 13Parbon Community')
