@@ -15,6 +15,17 @@ describe('GalleryPage', () => {
     expect(screen.getByText('March 2026 · 1 photo')).toBeInTheDocument()
     expect(document.title).toBe('Gallery · 13Parbon Community')
   })
+
+  /**
+   * The privacy page makes the promise; this is the page where somebody discovers they are in
+   * a photograph. If the way to object is only a page away, it may as well not be there.
+   */
+  it('says how to have a photograph taken down, and links to the way to ask', async () => {
+    renderWithProviders(<GalleryPage />, { route: '/gallery' })
+    await screen.findAllByRole('heading', { level: 2 })
+    expect(screen.getByText(/rather not be/)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'tell us' })).toHaveAttribute('href', '/contact')
+  })
 })
 
 describe('AlbumPage', () => {
@@ -39,6 +50,12 @@ describe('AlbumPage', () => {
     await userEvent.keyboard('{Escape}')
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     expect(document.title).toBe('Boishakhi 2026 · 13Parbon Community')
+  })
+
+  it('repeats the takedown offer beside the photographs themselves', async () => {
+    renderAlbum('saraswati-puja-2026')
+    await screen.findByRole('heading', { level: 1, name: 'Saraswati Puja 2026' })
+    expect(screen.getByRole('link', { name: 'tell us' })).toHaveAttribute('href', '/contact')
   })
 
   it('shows not found for a members-only or unknown album', async () => {

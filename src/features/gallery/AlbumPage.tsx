@@ -6,6 +6,7 @@ import { LoadFailed } from '@/components/LoadFailed'
 import { Lightbox } from '@/components/Lightbox'
 import { NotFoundPage } from '@/features/placeholder'
 import { useAlbum } from '@/lib/api'
+import { RemovalNotice } from './RemovalNotice'
 import styles from './Gallery.module.css'
 
 export function AlbumPage() {
@@ -56,6 +57,7 @@ export function AlbumPage() {
           ))}
         </ul>
       )}
+      <RemovalNotice />
       <Lightbox items={items} index={open} onChange={setOpen} onClose={() => setOpen(null)} />
     </Container>
   )

@@ -4,6 +4,7 @@ import { Container } from '@/components/Container'
 import { LoadFailed } from '@/components/LoadFailed'
 import { formatMonthYear } from '@/domain/dates'
 import { useAlbums } from '@/lib/api'
+import { RemovalNotice } from './RemovalNotice'
 import styles from './Gallery.module.css'
 
 export function GalleryPage() {
@@ -43,6 +44,7 @@ export function GalleryPage() {
           ))}
         </ul>
       )}
+      <RemovalNotice />
     </Container>
   )
 }

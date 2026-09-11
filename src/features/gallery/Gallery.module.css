@@ -143,3 +143,11 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* Sits under the photographs: quiet, but on the same page as the thing it is about. */
+.notice {
+  max-width: 640px;
+  font-size: 16px;
+  color: var(--color-fg-muted);
+  text-wrap: pretty;
+}
