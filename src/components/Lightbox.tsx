@@ -37,6 +37,8 @@ export function Lightbox({ items, index, onChange, onClose, renderAction }: Prop
   const closeRef = useRef<HTMLButtonElement>(null)
   /** Where a finger went down, so touchend can tell a swipe from a tap. Null while idle. */
   const touchStart = useRef<{ x: number; y: number } | null>(null)
+  /** The photograph shown last, so the next one can come in from the side it came from. */
+  const shown = useRef<number | null>(null)
   const open = index !== null && items[index] !== undefined
 
   useEffect(() => {
@@ -55,6 +57,23 @@ export function Lightbox({ items, index, onChange, onClose, renderAction }: Prop
   const item = items[index]
   const count = items.length
   const go = (next: number) => onChange(((next % count) + count) % count)
+
+  /**
+   * Which way the photograph should arrive from. Wrapping off either end counts as carrying
+   * on in the same direction, so going past the last picture does not slide backwards.
+   */
+  const previous = shown.current
+  const direction =
+    previous === null || previous === index
+      ? 'none'
+      : previous === count - 1 && index === 0
+        ? 'next'
+        : previous === 0 && index === count - 1
+          ? 'prev'
+          : index > previous
+            ? 'next'
+            : 'prev'
+  shown.current = index
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.key === 'Escape') {
@@ -138,7 +157,9 @@ export function Lightbox({ items, index, onChange, onClose, renderAction }: Prop
             {index + 1} of {count}
           </span>
         </figcaption>
-        <img src={item.src} alt={item.alt} className={styles.image} />
+        {/* Keyed by the photograph, so React replaces the element rather than swapping its
+            src — which is what lets the arriving one animate every time. */}
+        <img key={item.id} src={item.src} alt={item.alt} className={styles.image} data-enter={direction} />
       </figure>
       {count > 1 ? (
         <button type="button" className={styles.next} onClick={() => go(index + 1)} aria-label="Next photo">

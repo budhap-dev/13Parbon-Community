@@ -61,6 +61,34 @@ describe('Lightbox', () => {
   })
 })
 
+describe('moving between photographs', () => {
+  /**
+   * The photograph arrives from the side it was reached from. Wrapping past either end keeps
+   * going the same way, so stepping off the last picture does not slide backwards.
+   */
+  it('comes in from the right going forward and the left going back', async () => {
+    render(<Harness />)
+    await userEvent.click(screen.getByRole('button', { name: 'open' }))
+    const photo = () => screen.getByRole('dialog').querySelector('img')
+    expect(photo()).toHaveAttribute('data-enter', 'none')
+    await userEvent.click(screen.getByRole('button', { name: 'Next photo' }))
+    expect(photo()).toHaveAttribute('data-enter', 'next')
+    await userEvent.click(screen.getByRole('button', { name: 'Previous photo' }))
+    expect(photo()).toHaveAttribute('data-enter', 'prev')
+  })
+
+  it('keeps going the same way when it wraps round the end', async () => {
+    render(<Harness />)
+    await userEvent.click(screen.getByRole('button', { name: 'open' }))
+    const photo = () => screen.getByRole('dialog').querySelector('img')
+    // Opens on the second of three: forward twice lands on the first, having wrapped.
+    await userEvent.click(screen.getByRole('button', { name: 'Next photo' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Next photo' }))
+    expect(screen.getByRole('dialog')).toHaveAccessibleName('Photo: One')
+    expect(photo()).toHaveAttribute('data-enter', 'next')
+  })
+})
+
 describe('swiping', () => {
   function swipe(dx: number, dy = 0) {
     const dialog = screen.getByRole('dialog')
