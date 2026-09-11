@@ -41,7 +41,7 @@ describe('EventsPage', () => {
     expect(await screen.findByText(/Nothing scheduled yet for Saraswati Puja/)).toBeInTheDocument()
     const link = await screen.findByRole('link', { name: /Photos from Saraswati Puja 2026/ })
     expect(link).toHaveAttribute('href', '/gallery/saraswati-puja-2026')
-    expect(link).toHaveTextContent('14 photos')
+    expect(link).toHaveTextContent('27 photos')
   })
 
   it('says nothing extra when an occasion has no album to offer', async () => {

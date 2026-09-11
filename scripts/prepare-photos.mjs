@@ -2,8 +2,13 @@
  * Gets a folder of photographs ready for the gallery, and writes them where they can be
  * dragged into the Cloudflare R2 bucket:
  *
- *   node scripts/prepare-photos.mjs <folder> <album-slug> [outDir]
+ *   node scripts/prepare-photos.mjs <folder> <album-slug> [outDir] [--start=N]
  *   node scripts/prepare-photos.mjs ~/Desktop/holi-2027 holi-2027
+ *
+ * More photographs for an album that already exists go in with --start, numbered on from
+ * where it left off, so nothing already uploaded is renumbered or has to be sent again:
+ *
+ *   node scripts/prepare-photos.mjs ~/Desktop/more-boishakhi boishakhi-2026 --start=18
  *
  * Three things happen to every file, and the second is the one that matters:
  *
@@ -26,9 +31,12 @@ const THUMB_PX = 600
 const FULL_QUALITY = 70
 const THUMB_QUALITY = 68
 
-const [source, slug, outArg] = process.argv.slice(2)
-if (!source || !slug) {
-  console.error('usage: node scripts/prepare-photos.mjs <folder> <album-slug> [outDir]')
+const args = process.argv.slice(2)
+const startArg = args.find((a) => a.startsWith('--start='))
+const [source, slug, outArg] = args.filter((a) => !a.startsWith('--'))
+const start = startArg ? Number(startArg.split('=')[1]) : 1
+if (!source || !slug || !Number.isInteger(start) || start < 1) {
+  console.error('usage: node scripts/prepare-photos.mjs <folder> <album-slug> [outDir] [--start=N]')
   process.exit(1)
 }
 const out = resolve(outArg ?? join(process.cwd(), 'photos-out'))
@@ -98,7 +106,7 @@ let outBytes = 0
 let dirty = 0
 
 files.forEach((name, i) => {
-  const id = `${slug}-${String(i + 1).padStart(2, '0')}`
+  const id = `${slug}-${String(start + i).padStart(2, '0')}`
   const from = join(source, name)
   sourceBytes += statSync(from).size
   for (const [dir, px, quality] of [
@@ -117,7 +125,9 @@ const mb = (bytes) => `${(bytes / 1024 / 1024).toFixed(1)}MB`
 console.log(`\n${files.length} photographs: ${mb(sourceBytes)} -> ${mb(outBytes)}`)
 console.log(dirty === 0 ? 'metadata: none left, on any file' : `METADATA STILL PRESENT on ${dirty} file(s) — do not upload`)
 console.log(`\nwritten to ${out}`)
-console.log(`\nUpload full/ and thumb/ to the 13parbon-photos bucket, then in fixtures.ts add the`)
-console.log(`album and its photographs, using that album's own id:`)
-console.log(`  ...albumPhotos('<the album id>', '${slug}', ${files.length}),`)
+const last = start + files.length - 1
+console.log(`\nUpload full/ and thumb/ to the 13parbon-photos bucket. Numbered ${String(start).padStart(2, '0')} to ${last},`)
+console.log(start === 1 ? `so this is the whole album.` : `so nothing already there is disturbed.`)
+console.log(`\nIn fixtures.ts the album's count becomes ${last}:`)
+console.log(`  ...albumPhotos('<the album id>', '${slug}', ${last}),`)
 if (dirty > 0) process.exit(1)
