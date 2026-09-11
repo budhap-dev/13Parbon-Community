@@ -299,14 +299,6 @@
   text-wrap: pretty;
 }
 
-.households {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 17px;
-  color: var(--color-fg-muted);
-}
-
 .actions {
   display: flex;
   flex-wrap: wrap;
@@ -379,33 +371,10 @@
   margin-top: 14px;
 }
 
-.roleList {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.role {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 12px 0;
-  border-top: 1px solid var(--color-border-faint);
-}
-
-.roleName {
-  font-weight: 600;
-  font-size: 17px;
-}
-
 .roleMeta {
   font-size: 16px;
   line-height: 1.5;
   color: var(--color-fg-muted);
-}
-
-.roleFull {
-  color: var(--color-fg-faint);
 }
 
 @media (max-width: 960px) {
@@ -435,4 +404,51 @@
   .side {
     order: 4;
   }
+}
+
+/* The photographs offered when an occasion has no date yet: a way on, not a consolation. */
+.albumLink {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  width: fit-content;
+  max-width: 100%;
+  margin: 20px auto 0;
+  padding: 12px 20px 12px 12px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-card);
+  color: inherit;
+  text-align: left;
+  text-decoration: none;
+  transition: border-color 120ms ease;
+}
+
+.albumLink:hover,
+.albumLink:focus-visible {
+  border-color: var(--color-accent);
+}
+
+.albumCover {
+  width: 72px;
+  height: 72px;
+  flex: none;
+  border-radius: calc(var(--radius-card) - 6px);
+  object-fit: cover;
+}
+
+.albumText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.albumTitle {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--color-fg);
+}
+
+.albumMeta {
+  font-size: 15px;
+  color: var(--color-fg-muted);
 }
