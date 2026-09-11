@@ -28,6 +28,12 @@ export const site = {
   coordinates: { lat: 53.7397, lon: -1.6156 } as { lat: number; lon: number } | null,
   email: '13parbon.Leeds@gmail.com',
   /**
+   * A line at the top of the gallery while the albums are still going up, so an empty-looking
+   * year reads as work in progress rather than as all there is. Set it to null once the back
+   * catalogue is in and the note stops being true.
+   */
+  galleryNote: 'We have only just started putting these up — more albums are on the way.' as string | null,
+  /**
    * Whether the gallery is in the navigation and the photographs appear on the home page.
    *
    * The committee's position is the one the privacy page states: we publish photographs from

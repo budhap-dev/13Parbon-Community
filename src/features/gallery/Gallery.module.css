@@ -151,3 +151,14 @@
   color: var(--color-fg-muted);
   text-wrap: pretty;
 }
+
+/* Said once at the top, while the albums are still going up. */
+.note {
+  max-width: 640px;
+  padding: 12px 16px;
+  border-radius: var(--radius-card);
+  background: var(--color-bg-raised);
+  font-size: 16px;
+  color: var(--color-fg-muted);
+  text-wrap: pretty;
+}

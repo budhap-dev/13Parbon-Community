@@ -16,6 +16,12 @@ describe('GalleryPage', () => {
     expect(document.title).toBe('Gallery · 13Parbon Community')
   })
 
+  it('says the albums are still going up, so two of them do not read as all there is', async () => {
+    renderWithProviders(<GalleryPage />, { route: '/gallery' })
+    await screen.findAllByRole('heading', { level: 2 })
+    expect(screen.getByText(/only just started putting these up/)).toBeInTheDocument()
+  })
+
   /**
    * The privacy page makes the promise; this is the page where somebody discovers they are in
    * a photograph. If the way to object is only a page away, it may as well not be there.
