@@ -2,7 +2,7 @@
 
 > *Baro mase tero parbon* — twelve months, thirteen festivals. A community app for people who always have something to gather around.
 
-Read the [project story](docs/STORY.md) for the vision and the [portal plan](docs/PLAN.md) for structure, architecture and delivery phases.
+Read the [project story](docs/STORY.md) for the vision and the [portal plan](docs/PLAN.md) for structure, architecture and delivery phases. [Photographs](docs/PHOTOS.md) covers how pictures from an event reach the gallery, and why they are not kept in this repository.
 
 ## Stack
 
@@ -36,6 +36,13 @@ npm run dev        # http://localhost:5173
 | `npm run test:coverage` | Run Vitest with coverage (70% floor) |
 | `npm run check` | Lint, typecheck and test in one go |
 
+Two more are run by hand rather than by the build, and need macOS:
+
+| Script | What it does |
+|---|---|
+| `node scripts/prepare-photos.mjs <folder> <slug>` | Resizes an event's photographs, strips their metadata and names them for the gallery. See [Photographs](docs/PHOTOS.md). |
+| `node scripts/make-share-card.mjs` | Redraws `public/brand/share-card.jpg`, the picture shown when a link is shared. Needs Chrome. |
+
 ## Project layout
 
 ```
@@ -49,10 +56,10 @@ src/
   components/        # shared UI (Button, Container, Carousel, Icon, SectionHeading)
   features/          # one folder per capability (home, events, news, gallery, about, contact, membership, privacy, placeholder)
   test/              # Vitest setup and render helpers
-public/photos/       # placeholder photos for the mock gallery
 docs/
   STORY.md           # project story and vision
   PLAN.md            # portal structure, architecture and delivery phases
+  PHOTOS.md          # how photographs reach the gallery, and where they are kept
 ```
 
 Import from `src` with the `@/` alias, for example `import { Button } from '@/components/Button'`.

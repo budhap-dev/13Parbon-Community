@@ -161,32 +161,42 @@ export function buildFixtures() {
   ]
 
   const albums: Album[] = [
-    { id: 'al-boishakhi-2026', slug: 'boishakhi-2026', title: 'Boishakhi 2026', description: 'Our Boishakh evening at St Andrew’s Community Hall, April 2026.', publishedAt: '2026-04-20T12:00:00', visibility: 'public' },
-    { id: 'al-holi-2026', slug: 'holi-2026', title: 'Holi 2026', description: 'Colours in the park, March 2026.', publishedAt: '2026-03-10T12:00:00', visibility: 'public' },
-    { id: 'al-saraswati-2026', slug: 'saraswati-puja-2026', title: 'Saraswati Puja 2026', description: 'Morning pujo and hatekhori, February 2026.', publishedAt: '2026-02-05T12:00:00', visibility: 'public' },
-    { id: 'al-mahalaya-2025', slug: 'mahalaya-2025', title: 'Mahalaya 2025', description: 'A tribute to the divine feminine.', publishedAt: '2025-09-25T12:00:00', visibility: 'public' },
+    { id: 'al-boishakhi-2026', slug: 'boishakhi-2026', title: 'Boishakhi 2026', description: 'Our Boishakh evening at St Andrew’s Community Hall, April 2026.', festivalId: 'boishakhi', publishedAt: '2026-04-20T12:00:00', visibility: 'public' },
+    { id: 'al-saraswati-2026', slug: 'saraswati-puja-2026', title: 'Saraswati Puja 2026', description: 'Morning pujo and hatekhori, February 2026.', festivalId: 'saraswati-puja', publishedAt: '2026-02-05T12:00:00', visibility: 'public' },
+    // Not a published album. It is here so that the members-only filter has something to
+    // hide: every gallery call drops it, which is what keeps private albums private.
     { id: 'al-private', slug: 'committee-dinner', title: 'Committee dinner', publishedAt: '2026-06-01T12:00:00', visibility: 'members' },
   ]
 
-  const photo = (id: string, albumId: string, slug: string, caption: string, approved = true): Media => ({
-    id,
-    albumId,
-    type: 'photo',
-    url: `/photos/${slug}.svg`,
-    thumbnailUrl: `/photos/${slug}.svg`,
-    caption,
-    approved,
+/**
+ * Where the community photographs live. They are in Cloudflare R2 rather than in this repo
+ * on purpose: they show members and their children, and the privacy page promises to take
+ * any of them down on request. Git history cannot honour that promise — a file committed
+ * once stays recoverable by anyone who clones — while deleting an object really deletes it.
+ */
+const PHOTOS = 'https://photos.13parbon.org.uk'
+
+/**
+ * One album's photographs, named as they were uploaded: full/<slug>-01.jpg and up, with a
+ * matching thumbnail beside each. No captions yet — the committee knows who is in these and
+ * what the moment was, and a guess here would be worse than the silence.
+ */
+const albumPhotos = (albumId: string, slug: string, count: number): Media[] =>
+  Array.from({ length: count }, (_, i) => {
+    const name = `${slug}-${String(i + 1).padStart(2, '0')}`
+    return {
+      id: `m-${name}`,
+      albumId,
+      type: 'photo' as const,
+      url: `${PHOTOS}/full/${name}.jpg`,
+      thumbnailUrl: `${PHOTOS}/thumb/${name}.jpg`,
+      approved: true,
+    }
   })
 
   const media: Media[] = [
-    photo('m-1', 'al-boishakhi-2026', 'poila-boishakh', 'Rabindrasangeet at the Boishakhi programme'),
-    photo('m-2', 'al-boishakhi-2026', 'kids-on-stage', 'The kids take the stage'),
-    photo('m-3', 'al-holi-2026', 'holi', 'Holi colours'),
-    photo('m-4', 'al-saraswati-2026', 'saraswati-puja', 'Saraswati Puja morning'),
-    photo('m-5', 'al-saraswati-2026', 'bhog', 'Lunch after the pujo'),
-    photo('m-6', 'al-mahalaya-2025', 'mahalaya', 'The choir at last year’s Mahalaya programme'),
-    photo('m-7', 'al-holi-2026', 'holi', 'Awaiting moderation', false),
-    photo('m-8', 'al-private', 'bhog', 'Committee dinner'),
+    ...albumPhotos('al-boishakhi-2026', 'boishakhi-2026', 17),
+    ...albumPhotos('al-saraswati-2026', 'saraswati-puja-2026', 14),
   ]
 
   const volunteerRoles: VolunteerRole[] = [

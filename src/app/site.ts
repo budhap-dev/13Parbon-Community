@@ -28,11 +28,20 @@ export const site = {
   coordinates: { lat: 53.7397, lon: -1.6156 } as { lat: number; lon: number } | null,
   email: '13parbon.Leeds@gmail.com',
   /**
-   * Photographs of members are parked until everyone in them has been asked. This hides the
-   * gallery from the navigation and the photo sections from the home page. The pages still
-   * work for anyone who knows the address. Set it to true once consent is in hand.
+   * A line at the top of the gallery while the albums are still going up, so an empty-looking
+   * year reads as work in progress rather than as all there is. Set it to null once the back
+   * catalogue is in and the note stops being true.
    */
-  showPhotos: false,
+  galleryNote: 'We have only just started putting these up — more albums are on the way.' as string | null,
+  /**
+   * Whether the gallery is in the navigation and the photographs appear on the home page.
+   *
+   * The committee's position is the one the privacy page states: we publish photographs from
+   * our events, and we take any of them down when the person in them asks, no reason needed.
+   * The offer to do that sits under the photographs themselves, not only on the privacy page.
+   * Set this back to false to pull the whole gallery at once if that is ever needed.
+   */
+  showPhotos: true,
   /**
    * Photographs behind this year's theme, all the committee's own. They are shown in black
    * and white and come into colour as the seam passes: সেকাল to একাল, the past becoming the

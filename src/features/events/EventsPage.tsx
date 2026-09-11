@@ -7,6 +7,7 @@ import { Icon } from '@/components/Icon'
 import { formatMonthYear, monthKey } from '@/domain/dates'
 import type { Event } from '@/domain/event'
 import { useFestivals, usePastEvents, useUpcomingEvents } from '@/lib/api'
+import { FestivalAlbum } from './FestivalAlbum'
 import styles from './Events.module.css'
 
 function groupByMonth(events: Event[]): { key: string; label: string; events: Event[] }[] {
@@ -84,10 +85,14 @@ export function EventsPage() {
       ) : isError ? (
         <LoadFailed what="the calendar" onRetry={() => void refetch()} />
       ) : upcomingMonths.length === 0 ? (
-        <p className={styles.empty}>
-          {activeFestival ? `Nothing scheduled yet for ${activeFestival.name}. ` : 'Nothing scheduled yet. '}
-          Check back soon, or <Link to="/contact">ask the committee</Link>.
-        </p>
+        <div className={styles.empty}>
+          <p>
+            {activeFestival ? `Nothing scheduled yet for ${activeFestival.name}. ` : 'Nothing scheduled yet. '}
+            Check back soon, or <Link to="/contact">ask the committee</Link>.
+          </p>
+          {activeFestival ? <FestivalAlbum festival={activeFestival} /> : null}
+
+        </div>
       ) : (
         upcomingMonths.map((month) => (
           <section key={month.key} className={styles.month} aria-labelledby={`month-${month.key}`}>

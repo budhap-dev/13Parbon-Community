@@ -7,6 +7,8 @@ export type Album = {
   /** One line on where and when. */
   description?: string
   eventId?: string
+  /** The festival this album is from, so a year with no date yet can still offer last year's. */
+  festivalId?: string
   /** ISO 8601 timestamp */
   publishedAt: string
   visibility: Visibility

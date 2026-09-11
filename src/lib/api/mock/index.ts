@@ -42,9 +42,31 @@ export function createMockApi({ now = () => new Date(), latencyMs = 0, events }:
 
   const sentMessages: ContactMessage[] = []
 
+  /**
+   * A handful taken at random rather than the first few. Without it the home page shows the
+   * same faces to everybody for as long as an album is the newest one, and the rest of the
+   * evening is never seen. Drawn per fetch: React Query holds the answer, so the page is
+   * steady while it is being read and different on the next visit.
+   */
+  const someOf = <T,>(items: T[], count: number): T[] => {
+    const pool = [...items]
+    for (let i = pool.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[pool[i], pool[j]] = [pool[j], pool[i]]
+    }
+    return pool.slice(0, count)
+  }
+
   const withMedia = (album: (typeof fixtures.albums)[number]): AlbumWithMedia => {
     const media = fixtures.media.filter((m) => m.albumId === album.id && m.approved)
-    return { ...album, media, cover: media[0] }
+    /**
+     * A different photograph fronts the album each time the gallery is fetched, so one face
+     * is not the whole of an evening every time somebody visits. It is picked per fetch
+     * rather than per render: React Query holds the answer, so the cover stays put while a
+     * page is being read and is different on the next visit.
+     */
+    const cover = media.length > 0 ? media[Math.floor(Math.random() * media.length)] : undefined
+    return { ...album, media, cover }
   }
   const publicAlbums = () =>
     fixtures.albums
@@ -64,7 +86,7 @@ export function createMockApi({ now = () => new Date(), latencyMs = 0, events }:
       list: () => delay([...fixtures.festivals], latencyMs),
     },
     gallery: {
-      listRecentMedia: (limit = 6) => delay(publicAlbums().flatMap((a) => a.media).slice(0, limit), latencyMs),
+      listRecentMedia: (limit = 6) => delay(someOf(publicAlbums().flatMap((a) => a.media), limit), latencyMs),
       listAlbums: () => delay(publicAlbums(), latencyMs),
       getAlbum: (slug) => delay(publicAlbums().find((a) => a.slug === slug) ?? null, latencyMs),
     },

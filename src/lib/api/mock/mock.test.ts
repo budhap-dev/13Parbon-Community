@@ -72,18 +72,46 @@ describe('createMockApi', () => {
 
   it('returns only approved media from public albums', async () => {
     const media = await api.gallery.listRecentMedia(10)
-    expect(media).toHaveLength(6)
+    // There are thirty-one approved photographs, so this is the limit doing its job.
+    expect(media).toHaveLength(10)
     expect(media.every((m) => m.approved)).toBe(true)
     expect(media.some((m) => m.albumId === 'al-private')).toBe(false)
   })
 
   it('lists public albums newest first with their approved media and a cover', async () => {
     const albums = await api.gallery.listAlbums()
-    expect(albums.map((a) => a.slug)).toEqual(['boishakhi-2026', 'holi-2026', 'saraswati-puja-2026', 'mahalaya-2025'])
-    const holi = await api.gallery.getAlbum('holi-2026')
-    expect(holi?.media.map((m) => m.id)).toEqual(['m-3'])
-    expect(holi?.cover?.id).toBe('m-3')
+    expect(albums.map((a) => a.slug)).toEqual(['boishakhi-2026', 'saraswati-puja-2026'])
+    const saraswati = await api.gallery.getAlbum('saraswati-puja-2026')
+    expect(saraswati?.media).toHaveLength(14)
+    // The cover is one of the album's own photographs, but not a fixed one — see below.
+    expect(saraswati?.media.map((p) => p.id)).toContain(saraswati?.cover?.id)
+    // The members-only album stays hidden even to somebody who knows its address.
     expect(await api.gallery.getAlbum('committee-dinner')).toBeNull()
+  })
+
+  it('draws a different handful of photographs for the home page each time', async () => {
+    const seen = new Set<string>()
+    for (let i = 0; i < 15; i += 1) {
+      const media = await api.gallery.listRecentMedia(5)
+      expect(media).toHaveLength(5)
+      expect(media.every((p) => p.approved)).toBe(true)
+      // No photograph twice in one draw: five tiles, five different pictures.
+      expect(new Set(media.map((p) => p.id)).size).toBe(5)
+      seen.add(media.map((p) => p.id).join())
+    }
+    expect(seen.size).toBeGreaterThan(1)
+  })
+
+  it('fronts an album with a different photograph each time it is fetched', async () => {
+    const seen = new Set<string>()
+    for (let i = 0; i < 25; i += 1) {
+      const album = await api.gallery.getAlbum('saraswati-puja-2026')
+      expect(album?.media.map((p) => p.id)).toContain(album?.cover?.id)
+      if (album?.cover) seen.add(album.cover.id)
+    }
+    // Twenty-five draws from fourteen photographs landing on one of them would be a one in
+    // ten-to-the-twenty-eight event, so this is not a flaky assertion.
+    expect(seen.size).toBeGreaterThan(1)
   })
 
   it('returns only volunteer roles with free slots', async () => {

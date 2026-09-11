@@ -1,9 +1,11 @@
 import { Link } from 'react-router'
+import { site } from '@/app/site'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { Container } from '@/components/Container'
 import { LoadFailed } from '@/components/LoadFailed'
 import { formatMonthYear } from '@/domain/dates'
 import { useAlbums } from '@/lib/api'
+import { RemovalNotice } from './RemovalNotice'
 import styles from './Gallery.module.css'
 
 export function GalleryPage() {
@@ -15,6 +17,7 @@ export function GalleryPage() {
       <header className={styles.head}>
         <h1 className={styles.title}>Gallery</h1>
         <p className={styles.intro}>Photos from past events, organised by occasion and year. Memories that used to live on one phone.</p>
+        {site.galleryNote ? <p className={styles.note}>{site.galleryNote}</p> : null}
       </header>
       {isPending ? (
         <p className={styles.empty} aria-busy="true">
@@ -43,6 +46,7 @@ export function GalleryPage() {
           ))}
         </ul>
       )}
+      <RemovalNotice />
     </Container>
   )
 }

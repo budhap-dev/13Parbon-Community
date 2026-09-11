@@ -32,6 +32,24 @@ describe('EventsPage', () => {
     expect(await screen.findByText(/Nothing scheduled yet/)).toBeInTheDocument()
   })
 
+  /**
+   * An occasion with no date is where somebody lands wanting to know what the evening is
+   * like. Photographs from the last one answer that; the message on its own does not.
+   */
+  it('offers last year’s photographs when an occasion has no date yet', async () => {
+    renderWithProviders(<EventsPage />, { route: '/events?festival=saraswati-puja', api: createMockApi({ now: () => TEST_NOW }) })
+    expect(await screen.findByText(/Nothing scheduled yet for Saraswati Puja/)).toBeInTheDocument()
+    const link = await screen.findByRole('link', { name: /Photos from Saraswati Puja 2026/ })
+    expect(link).toHaveAttribute('href', '/gallery/saraswati-puja-2026')
+    expect(link).toHaveTextContent('14 photos')
+  })
+
+  it('says nothing extra when an occasion has no album to offer', async () => {
+    renderWithProviders(<EventsPage />, { route: '/events?festival=holi', api: createMockApi({ now: () => TEST_NOW }) })
+    expect(await screen.findByText(/Nothing scheduled yet for Holi/)).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /^Photos from/ })).not.toBeInTheDocument()
+  })
+
   it('names the occasions still waiting for a date, and offers to tell you', async () => {
     // Only the Mahalaya programme is on the calendar in the app's own fixtures.
     renderWithProviders(<EventsPage />, { route: '/events', api: createMockApi({ now: () => TEST_NOW }) })

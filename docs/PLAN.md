@@ -133,6 +133,11 @@ The frontend is built against the `lib/api` interface and a mock adapter, so pha
 
 ### Hosting — **decided: Vercel** (2026-09-03)
 
+Photographs are not in this repository. They live in a Cloudflare R2 bucket, served from
+`photos.13parbon.org.uk`, because git history is permanent and the privacy page promises to
+take a photograph down when the person in it asks. [PHOTOS.md](PHOTOS.md) has the whole
+picture: the preparation script, the upload, and why the gallery is kept out of search.
+
 Production builds from `main` at https://13parbon.org.uk, with a preview URL on every PR. `vercel.json` rewrites every route to `index.html` for client-side routing, and redirects the old `13parbon.vercel.app` host to the custom domain. Netlify config is kept in the repo as a fallback.
 
 ## 6. Cross-cutting concerns
@@ -166,7 +171,7 @@ Each phase is shippable on its own and lands as a series of small PRs.
 | **1 — Public site** ✅ | Router, layouts, design tokens, Home, About, Events list & detail, News, Gallery, Contact. Mock data. Deployed. | Done 2026-09-03. Live on Vercel; Lighthouse 100/100/100/100 desktop. |
 | **2 — Identity & membership** | Supabase project. Contact writes live (adapter and schema already in the repo). Google sign-in. Admin adds households and sets roles. Member dashboard, household, directory, documents. | A committee member adds a household; that household signs in with Google and sees their dashboard. |
 | **3 — Events end to end** | Admin creates events. Registration (member + guest). Countdown. Attendance tracking. Volunteer roles and sign-up. | Organiser runs a real event through the app. |
-| **4 — Content & media** | Admin CMS for pages, announcements, news, newsletters. Media upload, albums, moderation. | Committee publishes without a developer. |
+| **4 — Content & media** | Admin CMS for pages, announcements, news, newsletters. Media upload, albums, moderation. | Committee publishes without a developer. Until then, photographs go up by hand — see [PHOTOS.md](PHOTOS.md). |
 | **5 — Community** | Member directory with privacy controls, groups. Documents library. Forum with moderation. | Members find each other and talk without WhatsApp. |
 | **6 — Insight** | Reports: member growth, attendance, registrations, traffic. Exports. | Committee gets a one-page monthly picture. |
 

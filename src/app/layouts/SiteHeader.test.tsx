@@ -24,8 +24,7 @@ describe('SiteHeader', () => {
     expect(screen.getByRole('link', { name: 'Events' })).toHaveAttribute('aria-current', 'page')
     // Parked until there is real news to carry: the route still works, it is not advertised.
     expect(screen.queryByRole('link', { name: 'News' })).not.toBeInTheDocument()
-    // Parked until everyone in the photographs has been asked.
-    expect(screen.queryByRole('link', { name: 'Gallery' })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Gallery' })).toHaveAttribute('href', '/gallery')
     // Parked for the MVP: the route still works, it is simply not advertised.
     expect(screen.queryByRole('link', { name: 'Member sign-in' })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: /^Theme/ })).toBeInTheDocument()

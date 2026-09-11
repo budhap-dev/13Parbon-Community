@@ -6,7 +6,11 @@
   grid-template-columns: 64px minmax(0, 1fr) 64px;
   align-items: center;
   padding: 24px;
-  background: rgba(0, 0, 0, 0.88);
+  /* Dark alone was not enough: the page behind is bright, and its text read straight through
+     the caption. Blurring it settles the photograph on something quiet. */
+  background: rgba(0, 0, 0, 0.92);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   color: #fff3e3;
 }
 
@@ -65,10 +69,14 @@
 }
 
 .caption {
+  /* Stacked, not in a row: the way out reads first, the tally sits under it. */
   display: flex;
-  gap: 18px;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
   font-size: 16px;
   font-weight: 600;
+  text-align: center;
 }
 
 .count {
@@ -95,4 +103,16 @@
   .next {
     right: 16px;
   }
+}
+
+/* Where the photograph offers somewhere to go: the album it belongs to. */
+.action {
+  display: block;
+}
+
+.action a {
+  color: var(--color-accent);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }

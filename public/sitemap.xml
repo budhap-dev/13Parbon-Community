@@ -1,8 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Only pages that exist and are meant to be found. /gallery and /news are parked behind flags
-  in src/app/site.ts and /join was removed altogether, so none of the three belongs here until
-  they are back in the navigation.
+  Only pages that exist and are meant to be found. /news is parked behind a flag in
+  src/app/site.ts and /join was removed altogether, so neither belongs here.
+
+  /gallery is the exception that is deliberate rather than pending: it is in the navigation and
+  open to anyone, but it is kept out of search by robots.txt, so listing it here would be
+  asking for the opposite of what that file says. Photographs of members are for the community
+  to share, not for an image search to find.
 -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://13parbon.org.uk/</loc></url>
