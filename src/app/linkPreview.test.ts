@@ -3,6 +3,7 @@
 import html from '../../index.html?raw'
 import sitemap from '../../public/sitemap.xml?raw'
 import robots from '../../public/robots.txt?raw'
+import { publicNav } from './nav'
 
 /**
  * The one address the site calls its own. Everything a crawler is handed has to agree with
@@ -79,6 +80,32 @@ describe('the address the site claims as its own', () => {
     expect(robots).toMatch(/^User-agent:\s*\*/m)
     expect(robots).toMatch(/^Allow:\s*\//m)
     expect(robots).toMatch(new RegExp(`^Sitemap:\\s*${escaped}/sitemap\\.xml$`, 'm'))
+  })
+})
+
+/**
+ * The sitemap went stale once already: the gallery came back into the navigation and nothing
+ * noticed, because the test named the five pages it expected instead of asking what the site
+ * actually offers. This asks.
+ */
+describe('the navigation and what crawlers are told', () => {
+  const listed = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1].replace(origin, '') || '/')
+  const disallowed = [...robots.matchAll(/^Disallow:\s*(\S+)/gm)].map((m) => m[1])
+  const blocked = (path: string) => disallowed.some((rule) => path === rule || path.startsWith(`${rule}/`))
+
+  it('accounts for every page in the navigation, by listing it or by keeping it out on purpose', () => {
+    for (const item of publicNav) {
+      const accounted = listed.includes(item.to) || blocked(item.to)
+      expect(accounted, `${item.to} is in the navigation but neither in the sitemap nor disallowed in robots.txt`).toBe(true)
+    }
+  })
+
+  it('keeps the gallery out of search while leaving the rest in', () => {
+    // The committee's decision: open to anyone with the link, not in an image search.
+    expect(blocked('/gallery')).toBe(true)
+    expect(listed).not.toContain('/gallery')
+    expect(blocked('/')).toBe(false)
+    expect(blocked('/events')).toBe(false)
   })
 })
 

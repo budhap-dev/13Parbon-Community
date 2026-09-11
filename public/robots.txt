@@ -1,4 +1,10 @@
 User-agent: *
 Allow: /
+# The gallery is open to anyone with the link, and left out of search on purpose. The
+# photographs are of members and their children, and a picture that is easy to share with the
+# community is a different thing from one that turns up in an image search for something else.
+# Taking it out of the index is also what makes the promise on the privacy page cheap to keep.
+# This rule stays inside the group above: a blank line here would end the record.
+Disallow: /gallery
 
 Sitemap: https://13parbon.org.uk/sitemap.xml
