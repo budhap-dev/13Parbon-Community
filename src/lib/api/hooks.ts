@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { ContactInput } from '@/domain/contact'
 import type { AttendanceDraft } from '@/domain/attendance'
+import type { EventDraft } from '@/domain/event'
 import type { SettingsDraft } from '@/domain/settings'
 import type { AlbumDraft } from '@/domain/gallery'
 import type { AnnouncementDraft, NewsDraft } from '@/domain/news'
@@ -261,6 +262,22 @@ export function useAlbum(slug: string) {
 /**
  * Every album, published or not. The committee's view of the gallery.
  */
+export function useAllEvents() {
+  const api = useApi()
+  const viewer = useViewer()
+  return useQuery({ queryKey: ['events', 'all', asks(viewer)], queryFn: () => api.events.listAll(viewer) })
+}
+
+export function useSaveEvent() {
+  const api = useApi()
+  const viewer = useViewer()
+  const queries = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, draft }: { id: string; draft: EventDraft }) => api.events.save(id, draft, viewer),
+    onSuccess: () => queries.invalidateQueries({ queryKey: ['events'] }),
+  })
+}
+
 export function useSaveSettings() {
   const api = useApi()
   const viewer = useViewer()

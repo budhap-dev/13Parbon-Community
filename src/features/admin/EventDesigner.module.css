@@ -1,0 +1,148 @@
+.split {
+  display: grid;
+  gap: 28px;
+  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 1fr);
+  align-items: start;
+}
+
+/* The preview follows the form down a long page rather than scrolling off the top of it. */
+.preview {
+  position: sticky;
+  top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.previewLabel {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0.7;
+}
+
+.card {
+  border: 2px solid var(--line, rgba(0, 0, 0, 0.14));
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.cover {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  display: block;
+  background: var(--tint, rgba(0, 0, 0, 0.06));
+}
+
+.coverEmpty {
+  aspect-ratio: 16 / 9;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  opacity: 0.6;
+  background: var(--tint, rgba(0, 0, 0, 0.06));
+}
+
+.cardBody {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.kicker {
+  margin: 0;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.title {
+  margin: 0;
+  font-size: 22px;
+  line-height: 1.2;
+}
+
+.theme {
+  margin: 0;
+  font-size: 15px;
+}
+
+.themeEnglish {
+  opacity: 0.72;
+  font-size: 14px;
+}
+
+.meta,
+.summary {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.meta {
+  opacity: 0.72;
+}
+
+.countdown {
+  margin: 4px 0 0;
+  font-size: 14px;
+}
+
+.countdown strong {
+  font-size: 22px;
+}
+
+.programme {
+  margin: 4px 0 0;
+  padding-left: 18px;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.cta,
+.ctaOff {
+  margin: 6px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 12px;
+  border-radius: 999px;
+  text-align: center;
+}
+
+.cta {
+  background: var(--gold, #c9a227);
+  color: #241d0c;
+}
+
+.ctaOff {
+  border: 2px dashed var(--line, rgba(0, 0, 0, 0.2));
+  font-weight: 500;
+  opacity: 0.72;
+}
+
+.line {
+  display: grid;
+  grid-template-columns: 130px minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .split {
+    grid-template-columns: 1fr;
+  }
+
+  .preview {
+    position: static;
+    order: -1;
+  }
+}
+
+@media (max-width: 520px) {
+  .line {
+    grid-template-columns: 1fr;
+  }
+}

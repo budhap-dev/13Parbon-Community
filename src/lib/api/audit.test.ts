@@ -19,7 +19,7 @@ const api = () => withAuditTrail(createMockApi())
  * so the something has to be caught at the door.
  */
 const READS = [
-  'events.listUpcoming', 'events.listPast', 'events.getNext', 'events.getBySlug',
+  'events.listUpcoming', 'events.listPast', 'events.getNext', 'events.getBySlug', 'events.listAll',
   'festivals.list',
   'gallery.listRecentMedia', 'gallery.listAlbums', 'gallery.getAlbum', 'gallery.listAllAlbums',
   'news.listPosts', 'news.getPost', 'news.listAnnouncements', 'news.listNewsletters',
@@ -38,7 +38,7 @@ const AUDITED = [
   'portal.addHousehold', 'portal.updateHousehold', 'portal.deleteHousehold', 'portal.resolveSignInAttempt', 'portal.recordAttendance',
   'gallery.createAlbum', 'gallery.updateAlbum', 'gallery.setCover', 'gallery.setCaption',
   'gallery.reorder', 'gallery.deleteMedia',
-  'settings.save',
+  'settings.save', 'events.save',
   'news.createPost', 'news.updatePost',
   'news.createAnnouncement', 'news.updateAnnouncement', 'news.removeAnnouncement',
 ]

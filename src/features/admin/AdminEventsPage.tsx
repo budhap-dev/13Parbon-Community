@@ -3,9 +3,12 @@ import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { Button } from '@/components/Button'
 import { Icon } from '@/components/Icon'
 import { formatDateWithYear, formatLongDate, formatTime } from '@/domain/dates'
-import { useAttendance, useNextEvent, usePastEvents, useRecordAttendance, useUpcomingEvents } from '@/lib/api'
+import { useAllEvents, useAttendance, useNextEvent, usePastEvents, useRecordAttendance, useSaveEvent, useUpcomingEvents } from '@/lib/api'
+import type { Event } from '@/domain/event'
+import { useState } from 'react'
 import { peopleAt } from '@/domain/attendance'
 import { AttendanceForm } from './AttendanceForm'
+import { EventDesigner } from './EventDesigner'
 import styles from '@/features/portal/Portal.module.css'
 
 export function AdminEventsPage() {
@@ -17,8 +20,41 @@ export function AdminEventsPage() {
   const { data: attendance } = useAttendance()
   const record = useRecordAttendance()
   const eventsToCount = [...(past ?? []), ...(upcoming ?? [])]
+  const { data: allEvents } = useAllEvents()
+  const saveEvent = useSaveEvent()
+  const [designing, setDesigning] = useState<Event | null>(null)
   const tool0 = site.tools[0].href
 
+
+  if (designing) {
+    return (
+      <div className={styles.page}>
+        <div className={styles.top}>
+          <div>
+            <p className={styles.eyebrow}>Designing</p>
+            <h1 className={styles.title} style={{ marginTop: 6 }}>
+              {designing.title}
+            </h1>
+            <p className={styles.sub}>
+              How this evening looks to somebody arriving to find out what is on. The planner still
+              holds the logistics.
+            </p>
+          </div>
+        </div>
+        <section className={styles.panel}>
+          <div className={styles.pad}>
+            <EventDesigner
+              event={designing}
+              saving={saveEvent.isPending}
+              error={saveEvent.isError ? saveEvent.error.message : undefined}
+              onCancel={() => setDesigning(null)}
+              onSave={(draft) => saveEvent.mutate({ id: designing.id, draft }, { onSuccess: () => setDesigning(null) })}
+            />
+          </div>
+        </section>
+      </div>
+    )
+  }
 
   return (
     <div className={styles.page}>
@@ -87,7 +123,7 @@ export function AdminEventsPage() {
               </tr>
             </thead>
             <tbody>
-              {[...(upcoming ?? []), ...(past ?? [])].map((e) => (
+              {(allEvents ?? [...(upcoming ?? []), ...(past ?? [])]).map((e) => (
                 <tr key={e.id}>
                   <td>
                     <strong>{e.title}</strong>
@@ -102,6 +138,11 @@ export function AdminEventsPage() {
                     <span className={e.status === 'published' ? styles.pillLive : styles.pillPast}>
                       {e.status === 'published' ? 'Published' : e.status === 'past' ? 'Past' : 'Draft'}
                     </span>
+                  </td>
+                  <td>
+                    <Button variant="line" size="sm" aria-label={`Design ${e.title}`} onClick={() => setDesigning(e)}>
+                      Design
+                    </Button>
                   </td>
                 </tr>
               ))}

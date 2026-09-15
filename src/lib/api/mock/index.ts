@@ -2,7 +2,7 @@ import { isUpcoming } from '@/domain/dates'
 import { isValidAttendance, type EventAttendance } from '@/domain/attendance'
 import { isValidContact, type ContactMessage } from '@/domain/contact'
 import { isLive, isValid, slugFrom, validateAnnouncement, validateNews, type Announcement, type AnnouncementDraft, type NewsDraft, type NewsPost } from '@/domain/news'
-import type { Event } from '@/domain/event'
+import { isValidEvent, tidyProgramme, type Event, type EventDraft } from '@/domain/event'
 import { inOrder, pinnedCover, type AlbumDraft, type AlbumWithMedia } from '@/domain/gallery'
 import { validateSettings, type SiteSettings } from '@/domain/settings'
 import { defaultSettings } from '@/app/site'
@@ -89,6 +89,39 @@ function shapeOfAnnouncement(draft: AnnouncementDraft, fallbackPublishAt: string
     publishAt: draft.publishAt || fallbackPublishAt,
     ...(draft.expiresAt ? { expiresAt: draft.expiresAt } : {}),
     ...(draft.link?.label.trim() && draft.link.to.trim() ? { link: draft.link } : {}),
+  }
+}
+
+/** The draft, with the empty strings turned back into absent fields. */
+function shapeOfEvent(draft: EventDraft) {
+  const text = (value: string) => (value.trim() ? value.trim() : undefined)
+  const programme = tidyProgramme(draft.programme)
+  return {
+    title: draft.title.trim(),
+    summary: draft.summary.trim(),
+    startsAt: draft.startsAt,
+    endsAt: text(draft.endsAt),
+    venue: draft.venue.trim(),
+    venueAddress: text(draft.venueAddress),
+    coordinates: draft.coordinates ?? undefined,
+    coverImageUrl: text(draft.coverImageUrl),
+    // An empty theme is absent rather than three empty strings, or the page draws a blank kicker.
+    theme: draft.theme.bengali.trim()
+      ? {
+          bengali: draft.theme.bengali.trim(),
+          bengaliSubtitle: text(draft.theme.bengaliSubtitle),
+          english: text(draft.theme.english),
+        }
+      : undefined,
+    programme: programme.length > 0 ? programme : undefined,
+    registrationUrl: text(draft.registrationUrl),
+    performerFormUrl: text(draft.performerFormUrl),
+    registrationOpen: draft.registrationOpen,
+    volunteerCall: text(draft.volunteerCall),
+    performerCall: text(draft.performerCall),
+    householdsRegistered: draft.householdsRegistered,
+    status: draft.status,
+    isPublic: draft.isPublic,
   }
 }
 
@@ -188,6 +221,18 @@ export function createMockApi({ now = () => new Date(), latencyMs = 0, events }:
       listPast: (limit = 10) => delay(pastEvents().slice(0, limit), latencyMs),
       getNext: () => delay(upcomingEvents()[0] ?? null, latencyMs),
       getBySlug: (slug) => delay(allEvents.find((e) => e.slug === slug && visible(e)) ?? null, latencyMs),
+
+      listAll: (viewer) =>
+        delay(isAdmin(viewer) ? [...allEvents].sort((a, b) => b.startsAt.localeCompare(a.startsAt)) : [], latencyMs),
+
+      save: (id, draft, viewer) => {
+        if (!isAdmin(viewer)) return Promise.reject(new NotAllowed('only the committee can do that'))
+        const event = allEvents.find((e) => e.id === id)
+        if (!event) return Promise.reject(new NotAllowed('no such event'))
+        if (!isValidEvent(draft)) return Promise.reject(new NotAllowed('that event is not ready'))
+        Object.assign(event, shapeOfEvent(draft))
+        return delay(event, latencyMs)
+      },
     },
     festivals: {
       list: () => delay([...fixtures.festivals], latencyMs),

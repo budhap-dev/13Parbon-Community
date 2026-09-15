@@ -6,7 +6,7 @@
 > **What this is:** the order of work from [MEMBER-LOGIN.md](MEMBER-LOGIN.md), broken into steps
 > that can be ticked off. That document says *what* and *why*; this one says *where we are*.
 >
-> **Last updated:** 2026-09-15 · **Current step:** 4 · **Ticked:** 60 of 85
+> **Last updated:** 2026-09-15 · **Current step:** 4 · **Ticked:** 62 of 87
 
 ## How this is kept
 
@@ -59,7 +59,7 @@ twenty screens.
 | 0 | Foundations | 8–11 | **done on mocks** — 0.2, 0.3, 0.4 complete; 0.1 and the running of it blocked on the project |
 | 1 | The smallest write, end to end | 0.5 | **mostly done** — brought forward into 0.2 |
 | 2 | Households | ~5 | ✅ **done** |
-| 3 | Events | ~1 | **mostly dropped** — the planner app owns it |
+| 3 | Events | ~2 | **design screen built**; the planner owns the logistics |
 | 4 | Media | ~4 | **in progress** — the screen is built; only the bucket is unwired |
 | 5 | Content | ~4.5 | **done bar the pending strings in `site.ts`** |
 | 6 | Ready to merge | ~2 | not started |
@@ -324,7 +324,7 @@ in full every time focus landed there. The notes are tied on with `aria-describe
 
 ---
 
-## Step 3 — Events · ~1 day *(was ~4.5)*
+## Step 3 — Events · ~2 days *(was ~4.5)*
 
 > **Mostly gone, 2026-09-15.** The committee already runs
 > [budhap-dev/event-management](https://github.com/budhap-dev/event-management) for this, live at
@@ -333,9 +333,26 @@ in full every time focus landed there. The notes are tied on with `aria-describe
 > place to keep the same dates correct.
 
 - [ ] **Decide how an event gets from that app to this one.** The only real work left here
-- [ ] Render `cancelled` — the status is in the `Event` type and nothing draws it
+- [x] A design screen for how an event looks to the public — the other half of the planner
+- [x] A cover photograph and a programme, neither of which the model had
+- [ ] Render `cancelled` on the public pages — the status can be set now, and nothing draws it
 - [x] The `Registration` fixtures are gone from `/admin/events` and the dashboard — removed, not filled
 - [ ] Volunteer roles and sign-up — in the domain, in PLAN phase 3, and not covered by the other app either
+
+**The design screen** *(2026-09-15)*. The planner holds the logistics — tasks, teams, who is
+bringing the urn. This holds front of house: what somebody sees on arriving to find out what is
+on. They overlap on the title, the date and the venue, and nowhere else, so it is the other half
+of the same evening rather than a second copy of the planner.
+
+It previews as you type, beside the form. A theme in Bengali with a subtitle and an English
+rendering is hard to picture from four text boxes, and these fields end up on a page nobody edits
+them next to. The preview also says *why* there is no booking button — closed, or no address yet
+— rather than just not drawing one.
+
+Two fields the model never had: a cover photograph (an address in the bucket, never a file in the
+repository, because an event cover is usually last year's evening with members' faces in it) and
+a programme. **Not "speakers":** nobody is booked here, the stage is filled by members who put
+their names down, which is what `performerCall` asks for.
 
 **Dropped, because the other app owns them:** creating and editing events, publish/unpublish,
 cancelling, copying last year's, and the cancellation email.
@@ -577,5 +594,6 @@ invitation, so nothing to approve and no passwords to reset.
 | 2026-09-15 | 5 | `/admin/content` wired — three buttons had done nothing. Caught a new post reading as "taken down". 525 → 533 tests. |
 | 2026-09-15 | — | Retention settled: the count is kept for good, the names for twelve months. `close_year()` counts before it deletes. 533 → 537 tests. |
 | 2026-09-15 | 3 | The committee types the headcount in. 537 → 551 tests. |
+| 2026-09-15 | 3 | An event design screen, with a live preview. Added a cover photograph and a programme to the model. 552 → 563 tests. |
 | 2026-09-15 | 5 | The switches moved out of `site.ts` into the admin. `nav.ts` stopped being a constant. Found `/news` missing from the sitemap. 546 → 552 tests. |
 | 2026-09-15 | 3 | `Registration` removed everywhere — no personal booking data enters the app at all, so the retention machinery went with it. 551 → 545 tests, and six fewer is the point. |

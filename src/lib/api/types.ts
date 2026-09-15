@@ -1,4 +1,4 @@
-import type { Event } from '@/domain/event'
+import type { Event, EventDraft } from '@/domain/event'
 import type { Festival } from '@/domain/festival'
 import type { Album, AlbumDraft, AlbumWithMedia, Media } from '@/domain/gallery'
 import type { ContactInput, ContactMessage } from '@/domain/contact'
@@ -29,6 +29,15 @@ export interface ApiClient {
     getNext(): Promise<Event | null>
     /** A published, public event by slug, or null. */
     getBySlug(slug: string): Promise<Event | null>
+    /** Every event, drafts and past ones included. Empty for anybody who is not an admin. */
+    listAll(viewer: Viewer): Promise<Event[]>
+    /**
+     * Saves how an event is presented.
+     *
+     * The committee's planner holds the logistics; this holds front of house. They overlap on
+     * the title, the date and the venue and nowhere else.
+     */
+    save(id: string, draft: EventDraft, viewer: Viewer): Promise<Event>
   }
   festivals: {
     list(): Promise<Festival[]>
