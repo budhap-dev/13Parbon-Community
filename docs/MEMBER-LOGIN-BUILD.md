@@ -6,7 +6,7 @@
 > **What this is:** the order of work from [MEMBER-LOGIN.md](MEMBER-LOGIN.md), broken into steps
 > that can be ticked off. That document says *what* and *why*; this one says *where we are*.
 >
-> **Last updated:** 2026-09-15 · **Current step:** 4 · **Ticked:** 65 of 90
+> **Last updated:** 2026-09-15 · **Current step:** 4 · **Ticked:** 66 of 90
 
 ## How this is kept
 
@@ -338,7 +338,7 @@ in full every time focus landed there. The notes are tied on with `aria-describe
 - [x] Archive an evening that has been and gone
 - [x] A cover photograph and a programme, neither of which the model had
 - [x] Five quiet ways for the cover to move, and the cover drawn on the public event page
-- [ ] Render `cancelled` on the public pages — the status can be set now, and nothing draws it
+- [x] Render `cancelled` on the public pages — and make a cancelled evening reachable at all
 - [x] The `Registration` fixtures are gone from `/admin/events` and the dashboard — removed, not filled
 - [ ] Volunteer roles and sign-up — in the domain, in PLAN phase 3, and not covered by the other app either
 
@@ -356,6 +356,24 @@ Two fields the model never had: a cover photograph (an address in the bucket, ne
 repository, because an event cover is usually last year's evening with members' faces in it) and
 a programme. **Not "speakers":** nobody is booked here, the stage is filled by members who put
 their names down, which is what `performerCall` asks for.
+
+**A cancelled evening used to vanish** *(fixed 2026-09-15)*. It was filtered out of every
+listing *and* out of `getBySlug`, so its page answered as though it had never existed. Anybody
+holding the link, or who saw it last week, learned nothing — which is how somebody ends up
+outside a hall on a Saturday. It is reachable now, it stays in the calendar marked, and the page
+says what happened before anything else.
+
+Said as a sentence rather than a badge, and it names the venue: whoever is reading has almost
+certainly come to find out what time to turn up, and a small grey pill beside the title is easy
+to read straight past.
+
+Everything that invites somebody to it goes with it — the booking button even when booking was
+left open, the call for performers, the call for volunteers, and the countdown, which is removed
+rather than hidden so nothing reads it aloud. *Ask a question* stays, because somebody wanting to
+know what happened is exactly who is on that page.
+
+The home page skips it when choosing the next event: the next event means the next one that is
+actually happening.
 
 **Where a new event comes from** *(2026-09-15)*. Here. The design screen could only edit what
 already existed, and nothing could add one — so with events arriving from the planner still
@@ -631,6 +649,7 @@ invitation, so nothing to approve and no passwords to reset.
 | 2026-09-15 | 5 | `/admin/content` wired — three buttons had done nothing. Caught a new post reading as "taken down". 525 → 533 tests. |
 | 2026-09-15 | — | Retention settled: the count is kept for good, the names for twelve months. `close_year()` counts before it deletes. 533 → 537 tests. |
 | 2026-09-15 | 3 | The committee types the headcount in. 537 → 551 tests. |
+| 2026-09-15 | 3 | A cancelled evening stops disappearing and starts saying so. 592 → 600 tests. |
 | 2026-09-15 | 3 | Cover animations, and the cover drawn on the public event page at last. 579 → 592 tests. |
 | 2026-09-15 | 3 | Events can be added here and archived; editing a live one says so. Found the mock sharing event objects between clients. 563 → 579 tests. |
 | 2026-09-15 | 3 | An event design screen, with a live preview. Added a cover photograph and a programme to the model. 552 → 563 tests. |

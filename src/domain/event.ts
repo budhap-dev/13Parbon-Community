@@ -144,6 +144,11 @@ export function tidyProgramme(programme: { time: string; what: string }[]): { ti
  * It starts as a draft and not public. Nothing should reach the website because somebody opened
  * a form and was called away — the committee says when it goes up, and has to mean it.
  */
+/** Called off. Still has a page, and that page says so. */
+export function isCancelled(event: Pick<Event, 'status'>): boolean {
+  return event.status === 'cancelled'
+}
+
 export function blankEvent(): EventDraft {
   return {
     title: '',

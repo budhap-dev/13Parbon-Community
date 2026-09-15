@@ -178,16 +178,29 @@ export function createMockApi({ now = () => new Date(), latencyMs = 0, events }:
   /** What the committee has chosen, starting from what the code says. */
   let saved: SiteSettings = { ...defaultSettings, home: { ...defaultSettings.home } }
 
-  const visible = (event: Event) => event.isPublic && event.status !== 'draft' && event.status !== 'cancelled'
+  /**
+   * Has a page somebody can open.
+   *
+   * A cancelled evening counts. It used to be filtered out everywhere, which meant its page
+   * answered as though it had never existed — so anybody holding the link, or who saw it last
+   * week, learned nothing. That is how people end up outside a hall on a Saturday. It is
+   * reachable, and it says what happened.
+   */
+  const reachable = (event: Event) => event.isPublic && event.status !== 'draft'
 
+  /** Actually going ahead. What "the next event" means, and what a countdown counts to. */
+  const goingAhead = (event: Event) => reachable(event) && event.status === 'published'
+
+  // Cancelled evenings stay in the list until their date has passed, marked as cancelled.
+  // Quietly dropping one is indistinguishable from never having announced it.
   const upcomingEvents = () =>
     allEvents
-      .filter((event) => visible(event) && event.status === 'published' && isUpcoming(event.startsAt, now()))
+      .filter((event) => reachable(event) && event.status !== 'past' && isUpcoming(event.startsAt, now()))
       .sort((a, b) => a.startsAt.localeCompare(b.startsAt))
 
   const pastEvents = () =>
     allEvents
-      .filter((event) => visible(event) && !isUpcoming(event.startsAt, now()))
+      .filter((event) => reachable(event) && !isUpcoming(event.startsAt, now()))
       .sort((a, b) => b.startsAt.localeCompare(a.startsAt))
 
   const sentMessages: ContactMessage[] = []
@@ -230,8 +243,9 @@ export function createMockApi({ now = () => new Date(), latencyMs = 0, events }:
     events: {
       listUpcoming: (limit = 10) => delay(upcomingEvents().slice(0, limit), latencyMs),
       listPast: (limit = 10) => delay(pastEvents().slice(0, limit), latencyMs),
-      getNext: () => delay(upcomingEvents()[0] ?? null, latencyMs),
-      getBySlug: (slug) => delay(allEvents.find((e) => e.slug === slug && visible(e)) ?? null, latencyMs),
+      // The next one that is actually happening: a countdown to a cancelled evening is cruel.
+      getNext: () => delay(upcomingEvents().find(goingAhead) ?? null, latencyMs),
+      getBySlug: (slug) => delay(allEvents.find((e) => e.slug === slug && reachable(e)) ?? null, latencyMs),
 
       listAll: (viewer) =>
         delay(isAdmin(viewer) ? [...allEvents].sort((a, b) => b.startsAt.localeCompare(a.startsAt)) : [], latencyMs),

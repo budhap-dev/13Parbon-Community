@@ -470,3 +470,21 @@
     margin-bottom: 20px;
   }
 }
+
+/*
+ * A cancelled evening.
+ *
+ * Loud, because the alternative is somebody standing outside a hall. It reads as a sentence
+ * rather than a badge: whoever is looking has almost certainly come to find out what time to
+ * turn up, and a small grey pill beside the title is easy to read straight past.
+ */
+.cancelled {
+  margin: 0 0 24px;
+  padding: 16px 18px;
+  border-radius: var(--radius-md, 12px);
+  border: 2px solid var(--error, #b3261e);
+  color: var(--error, #b3261e);
+  font-size: 16px;
+  line-height: 1.55;
+  max-width: 62ch;
+}

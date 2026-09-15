@@ -10,6 +10,7 @@ import { ShareButton } from '@/components/ShareButton'
 import { ThenNowCollage } from '@/components/ThenNowCollage'
 import { VenueMap } from '@/components/VenueMap'
 import { daysUntil, describeCountdown, formatLongDate, formatTime } from '@/domain/dates'
+import { isCancelled } from '@/domain/event'
 import { NotFoundPage } from '@/features/placeholder'
 import { useEvent } from '@/lib/api'
 import { useNow } from '@/lib/clock'
@@ -46,7 +47,9 @@ export function EventPage() {
 
   const days = daysUntil(event.startsAt, now)
   /* A form is only worth offering while registration is open; otherwise the page has nothing to book. */
-  const registrationUrl = event.registrationOpen ? event.registrationUrl : undefined
+  const cancelled = isCancelled(event)
+  // Nothing to book, nothing to count down to, and no form to put your name on the stage.
+  const registrationUrl = cancelled || !event.registrationOpen ? undefined : event.registrationUrl
   const countdown = describeCountdown(days)
   const isPast = days < 0 && event.status === 'past'
 
@@ -63,6 +66,15 @@ export function EventPage() {
           {event.title}
         </h1>
       </header>
+
+      {/* Before anything else on the page, and phrased as a sentence rather than a badge: the
+          person reading has probably arrived to find out when to turn up. */}
+      {cancelled ? (
+        <p className={styles.cancelled} role="status">
+          <strong>This event has been cancelled.</strong> It is not going ahead on{' '}
+          {formatLongDate(event.startsAt)}. We are sorry — please do not come to {event.venue}.
+        </p>
+      ) : null}
 
       {event.coverImageUrl ? (
         <CoverImage
@@ -124,7 +136,7 @@ export function EventPage() {
         {!isPast ? (
           <div className={styles.actions}>
             {registrationUrl ? <Button href={registrationUrl}>Register to come</Button> : null}
-            {event.volunteerCall ? (
+            {event.volunteerCall && !cancelled ? (
               site.volunteerFormUrl ? (
                 <Button href={site.volunteerFormUrl} variant="line">
                   Volunteer
@@ -175,7 +187,9 @@ export function EventPage() {
           </section>
         ) : null}
 
-        {!isPast ? (
+        {/* Not merely hidden: a countdown to an evening that is not happening should not be in
+            the page at all, for anything reading it aloud or scraping it. */}
+        {!isPast && !cancelled ? (
           <p className={styles.countdown}>
           <span className="sr-only">{`${countdown.value} ${countdown.label}`}</span>
             <span className={styles.countValue} aria-hidden="true">
@@ -187,7 +201,7 @@ export function EventPage() {
           </p>
         ) : null}
 
-        {!isPast && event.performerCall ? (
+        {!isPast && !cancelled && event.performerCall ? (
           <section className={styles.roles} aria-labelledby="perform-title">
             <h2 id="perform-title" className={styles.rolesTitle}>
               <Icon name="mic" size={22} className={styles.rolesIcon} />
@@ -206,7 +220,7 @@ export function EventPage() {
           </section>
         ) : null}
 
-        {!isPast && event.volunteerCall ? (
+        {!isPast && !cancelled && event.volunteerCall ? (
           <section className={styles.roles} aria-labelledby="roles-title">
             <h2 id="roles-title" className={styles.rolesTitle}>
               <Icon name="heart" size={22} className={styles.rolesIcon} />
