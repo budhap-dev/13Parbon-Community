@@ -1,8 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { ContactInput } from '@/domain/contact'
+import type { AlbumDraft } from '@/domain/gallery'
 import type { HouseholdDraft, Viewer } from '@/domain/household'
 import { useSignedIn } from '@/lib/auth/session'
 import { useApi } from './context'
+import type { ApiClient } from './types'
 
 /**
  * Who the current request is being made by. The real client will put this in a token; here it
@@ -253,6 +255,60 @@ export function useAlbum(slug: string) {
   const api = useApi()
   return useQuery({ queryKey: ['gallery', 'album', slug], queryFn: () => api.gallery.getAlbum(slug) })
 }
+
+/**
+ * Every album, published or not. The committee's view of the gallery.
+ */
+export function useAllAlbums() {
+  const api = useApi()
+  const viewer = useViewer()
+  return useQuery({
+    queryKey: ['gallery', 'all', asks(viewer)],
+    queryFn: () => api.gallery.listAllAlbums(viewer),
+  })
+}
+
+/**
+ * The gallery writes. Each invalidates the whole gallery tree rather than one key: a
+ * photograph shows in its album, in the recent strip on the home page, and as somebody's
+ * cover, and a write that refreshed only the screen it was made from would leave the rest
+ * quietly wrong.
+ */
+function useGalleryWrite<A>(run: (api: ApiClient, viewer: Viewer, args: A) => Promise<unknown>) {
+  const api = useApi()
+  const viewer = useViewer()
+  const queries = useQueryClient()
+  return useMutation({
+    mutationFn: (args: A) => run(api, viewer, args),
+    onSuccess: () => queries.invalidateQueries({ queryKey: ['gallery'] }),
+  })
+}
+
+export const useCreateAlbum = () =>
+  useGalleryWrite((api, viewer, draft: AlbumDraft) => api.gallery.createAlbum(draft, viewer))
+
+export const useUpdateAlbum = () =>
+  useGalleryWrite((api, viewer, { id, draft }: { id: string; draft: AlbumDraft }) =>
+    api.gallery.updateAlbum(id, draft, viewer),
+  )
+
+export const useSetCover = () =>
+  useGalleryWrite((api, viewer, { albumId, mediaId }: { albumId: string; mediaId: string }) =>
+    api.gallery.setCover(albumId, mediaId, viewer),
+  )
+
+export const useSetCaption = () =>
+  useGalleryWrite((api, viewer, { mediaId, caption }: { mediaId: string; caption: string }) =>
+    api.gallery.setCaption(mediaId, caption, viewer),
+  )
+
+export const useReorderMedia = () =>
+  useGalleryWrite((api, viewer, { albumId, mediaIds }: { albumId: string; mediaIds: string[] }) =>
+    api.gallery.reorder(albumId, mediaIds, viewer),
+  )
+
+export const useDeleteMedia = () =>
+  useGalleryWrite((api, viewer, id: string) => api.gallery.deleteMedia(id, viewer))
 
 export function useOpenVolunteerRoles() {
   const api = useApi()

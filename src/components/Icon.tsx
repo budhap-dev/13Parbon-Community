@@ -28,6 +28,7 @@ export type IconName =
   | 'sparkle'
   | 'badge'
   | 'share'
+  | 'image'
 
 const paths: Record<IconName, ReactElement> = {
   users: (
@@ -155,6 +156,14 @@ const paths: Record<IconName, ReactElement> = {
     </>
   ),
   message: <path d="M4 5h16v12H8l-4 4z" />,
+  // A framed picture with a hill and a sun in it, which is what a photograph looks like at 18px.
+  image: (
+    <>
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <circle cx="8.5" cy="10" r="1.5" />
+      <path d="M21 16l-5-5-6 6" />
+    </>
+  ),
   external: (
     <>
       <path d="M14 4h6v6" />

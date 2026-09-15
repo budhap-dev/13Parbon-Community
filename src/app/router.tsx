@@ -9,7 +9,14 @@ import { PrivacyPage } from '@/features/privacy'
 import { HomePage } from '@/features/home'
 import { ArticlePage, NewsPage } from '@/features/news'
 import { NotFoundPage } from '@/features/placeholder'
-import { AdminContentPage, AdminEventsPage, AdminMessagesPage, AdminOverviewPage, AdminPeoplePage } from '@/features/admin'
+import {
+  AdminContentPage,
+  AdminEventsPage,
+  AdminMediaPage,
+  AdminMessagesPage,
+  AdminOverviewPage,
+  AdminPeoplePage,
+} from '@/features/admin'
 import { DashboardPage, DirectoryPage, DocumentsPage, HouseholdPage } from '@/features/portal'
 import { PortalLayout } from './layouts/PortalLayout'
 import { PublicLayout } from './layouts/PublicLayout'
@@ -59,6 +66,7 @@ export const routes: RouteObject[] = [
           { path: '/admin/people', Component: AdminPeoplePage },
           { path: '/admin/events', Component: AdminEventsPage },
           { path: '/admin/content', Component: AdminContentPage },
+          { path: '/admin/media', Component: AdminMediaPage },
           { path: '/admin/messages', Component: AdminMessagesPage },
         ],
       },

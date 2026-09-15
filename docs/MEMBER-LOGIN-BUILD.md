@@ -60,7 +60,7 @@ twenty screens.
 | 1 | The smallest write, end to end | 0.5 | **mostly done** — brought forward into 0.2 |
 | 2 | Households | ~5 | ✅ **done** |
 | 3 | Events | ~1 | **mostly dropped** — the planner app owns it |
-| 4 | Media | ~4 | **in progress** — albums and photographs are managed; the bucket is not wired |
+| 4 | Media | ~4 | **in progress** — the screen is built; only the bucket is unwired |
 | 5 | Content | ~4.5 | not started |
 | 6 | Ready to merge | ~2 | not started |
 | | **Total** | **~32–36** *(incl. tests, adapters, states)* | |
@@ -405,6 +405,12 @@ fronts with another's picture. And a reorder has to be the whole album, once eac
 list would quietly drop everything missing to the end, which is the kind of thing nobody notices
 until an album is in the wrong order for a year.
 
+**The screen it is all driven from** is `/admin/media`, which did not exist — the route was in
+PLAN's map and never built. Albums on one screen, the photographs of one album on the next:
+caption, pin as the face, move earlier or later, take down. It says what the upload accepts
+before anybody tries, and it says the metadata never leaves the machine, because that is the
+promise and a promise nobody is told about is not much of one.
+
 **What is not covered, honestly.** The canvas itself cannot be exercised in the test environment,
 so the three-line wrapper around `createImageBitmap` and `toBlob` has no test; everything it is
 handed to does. And the quality against `sips` at q70/q68 still wants one side-by-side look in a
@@ -507,3 +513,4 @@ invitation, so nothing to approve and no passwords to reset.
 | 2026-09-15 | — | Order settled: interface first, database at the end — but the SQL gets run against a throwaway project early, rather than accumulating screens on top of SQL nobody has executed. |
 | 2026-09-15 | 4 | Photograph preparation: re-encode rather than strip, orientation applied first, output checked byte by byte before anything is sent. 443 → 472 tests. |
 | 2026-09-15 | 4 | Albums, covers, captions, order and takedown — all audited. Found the random cover was deliberate, so pinning overrides it rather than replacing it. 472 → 489 tests. |
+| 2026-09-15 | 4 | `/admin/media` built — the route was in PLAN's map and never existed. 489 → 503 tests. |

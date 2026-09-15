@@ -44,6 +44,7 @@ export function PortalLayout() {
     { label: 'People', to: '/admin/people', icon: 'users', count: attempts?.length },
     { label: 'Events', to: '/admin/events', icon: 'calendar' },
     { label: 'Content', to: '/admin/content', icon: 'layout' },
+    { label: 'Photographs', to: '/admin/media', icon: 'image' },
     { label: 'Messages', to: '/admin/messages', icon: 'message' },
   ]
 
