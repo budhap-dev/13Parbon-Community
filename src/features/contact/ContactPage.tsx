@@ -1,4 +1,5 @@
 import { useId, useState, type FormEvent } from "react";
+import { useSearchParams } from "react-router";
 import { site } from "@/app/site";
 import { useSettings } from "@/app/SettingsContext";
 import { useDocumentTitle } from "@/app/useDocumentTitle";
@@ -6,6 +7,7 @@ import { Button } from "@/components/Button";
 import { Container } from "@/components/Container";
 import { Icon } from "@/components/Icon";
 import {
+  TAKEDOWN_PROMISE,
   validateContact,
   type ContactErrors,
   type ContactInput,
@@ -13,13 +15,29 @@ import {
 import { useApi, useSendContact } from "@/lib/api";
 import styles from "./Contact.module.css";
 
-const empty: ContactInput = { name: "", email: "", subject: "", message: "" };
+const empty: ContactInput = { name: "", email: "", subject: "", message: "", kind: "general" };
 
 export function ContactPage() {
   const { text } = useSettings()
   useDocumentTitle("Contact us");
   const id = useId();
-  const [values, setValues] = useState<ContactInput>(empty);
+  /**
+   * Arriving from the gallery's takedown notice, the form already knows why.
+   *
+   * Re-typing "please take down the photograph of my daughter" into a blank box, under a
+   * heading that says Contact us, is a small indignity at a moment that is not a small one.
+   */
+  const [search] = useSearchParams();
+  const aboutPhoto = search.get("about") === "photo";
+  const [values, setValues] = useState<ContactInput>(() =>
+    aboutPhoto
+      ? {
+          ...empty,
+          kind: "photo",
+          subject: "Please take down a photograph",
+        }
+      : empty,
+  );
   const [errors, setErrors] = useState<ContactErrors>({});
   const send = useSendContact();
   const { delivers } = useApi();
@@ -140,6 +158,15 @@ export function ContactPage() {
           ))}
         </ul>
       </section>
+
+      {aboutPhoto ? (
+        <p className={styles.note} role="status">
+          <strong>Asking us to take a photograph down.</strong> Tell us which one, in whatever way
+          is easiest — the album, roughly when it was taken, or just what is in it. We will take it
+          down {TAKEDOWN_PROMISE}.
+          {delivers ? '' : ` Use the email address above and put “take down a photograph” in the subject.`}
+        </p>
+      ) : null}
 
       {delivers ? (
         <section className={styles.main} aria-labelledby="form-title">

@@ -191,6 +191,16 @@ export function buildPortalFixtures() {
       createdAt: '2026-09-01T08:40:00',
     },
     {
+      id: 'cm-photo',
+      name: 'Anjali Roy',
+      email: 'anjali@example.com',
+      subject: 'Please take down a photograph',
+      kind: 'photo' as const,
+      message:
+        'There is a picture of my daughter in the Boishakhi album — she is in the yellow kurta near the front of the stage. She would rather it were not there. Thank you.',
+      createdAt: '2026-09-02T21:40:00',
+    },
+    {
       id: 'cm-3',
       name: 'Ruma Das',
       email: 'ruma@example.com',

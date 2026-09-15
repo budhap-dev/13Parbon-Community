@@ -131,7 +131,7 @@ export interface ApiClient {
      * The smallest write there is, and deliberately the first: it exercises the whole path —
      * contract, mock, mutation, cache invalidation — on something with nothing at stake.
      */
-    markHandled(id: string, viewer: Viewer): Promise<ContactMessage>
+    markHandled(id: string, viewer: Viewer, note?: string): Promise<ContactMessage>
   }
   /**
    * Everything behind the sign-in.

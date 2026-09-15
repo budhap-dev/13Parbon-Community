@@ -133,7 +133,8 @@ describe('the committee', () => {
 describe('marking a message handled', () => {
   it('records who dealt with it, and the inbox says so afterwards', async () => {
     const a = api()
-    const [first] = await a.contact.listMessages(admin)
+    // Not simply the first: a takedown now sorts to the top and needs a note.
+    const first = (await a.contact.listMessages(admin)).find((m) => m.kind !== 'photo')!
     expect(first.handledBy).toBeUndefined()
 
     const updated = await a.contact.markHandled(first.id, admin)

@@ -471,15 +471,27 @@ export function createMockApi({ now = () => new Date(), latencyMs = 0, events }:
       listMessages: (viewer) =>
         delay(
           isAdmin(viewer)
-            ? [...portal.messages, ...sentMessages].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+            ? [...portal.messages, ...sentMessages].sort(
+                (a, b) =>
+                  // Takedowns that nobody has dealt with, first. An inbox where one arrives
+                  // between a parking question and a request to sing is an inbox where it waits.
+                  Number(b.kind === 'photo' && !b.handledBy) - Number(a.kind === 'photo' && !a.handledBy) ||
+                  b.createdAt.localeCompare(a.createdAt),
+              )
             : [],
           latencyMs,
         ),
-      markHandled: (id, viewer) => {
+      markHandled: (id, viewer, note) => {
         if (!isAdmin(viewer)) return Promise.reject(new NotAllowed('only the committee can handle a message'))
         const message = [...portal.messages, ...sentMessages].find((m) => m.id === id)
         if (!message) return Promise.reject(new NotAllowed('no such message'))
+        // A takedown has to say what happened to the photograph. "Handled" on its own does not
+        // tell anybody whether the picture actually came out of the bucket.
+        if (message.kind === 'photo' && !note?.trim()) {
+          return Promise.reject(new NotAllowed('say what happened to the photograph'))
+        }
         message.handledBy = viewer.householdId
+        if (note?.trim()) message.handledNote = note.trim()
         return delay(message, latencyMs)
       },
     },

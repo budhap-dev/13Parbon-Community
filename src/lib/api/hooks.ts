@@ -150,7 +150,7 @@ export function useMarkMessageHandled() {
   const viewer = useViewer()
   const queries = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => api.contact.markHandled(id, viewer),
+    mutationFn: ({ id, note }: { id: string; note?: string }) => api.contact.markHandled(id, viewer, note),
     onSuccess: () => queries.invalidateQueries({ queryKey: ['contact', 'messages'] }),
   })
 }

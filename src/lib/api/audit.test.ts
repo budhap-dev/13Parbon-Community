@@ -91,7 +91,7 @@ describe('every audited write', () => {
 
     const writes: [string, () => Promise<unknown>][] = [
       ['contact.markHandled', async () => {
-        const message = (await a.contact.listMessages(admin)).find((m) => !m.handledBy)!
+        const message = (await a.contact.listMessages(admin)).find((m) => !m.handledBy && m.kind !== 'photo')!
         return a.contact.markHandled(message.id, admin)
       }],
       ['gallery.updateAlbum', () => a.gallery.updateAlbum(album.id, { title: 'A different name', visibility: 'public' }, admin)],
@@ -116,7 +116,7 @@ describe('every audited write', () => {
 describe('the audit trail', () => {
   it('records a write without the caller asking it to', async () => {
     const a = api()
-    const message = (await a.contact.listMessages(admin)).find((m) => !m.handledBy)!
+    const message = (await a.contact.listMessages(admin)).find((m) => !m.handledBy && m.kind !== 'photo')!
     await a.contact.markHandled(message.id, admin)
 
     const trail = await a.audit.list(admin)
@@ -127,7 +127,7 @@ describe('the audit trail', () => {
 
   it('keeps what the value was as well as what it became', async () => {
     const a = api()
-    const message = (await a.contact.listMessages(admin)).find((m) => !m.handledBy)!
+    const message = (await a.contact.listMessages(admin)).find((m) => !m.handledBy && m.kind !== 'photo')!
     await a.contact.markHandled(message.id, admin)
 
     const [entry] = await a.audit.list(admin)
@@ -136,7 +136,7 @@ describe('the audit trail', () => {
 
   it('names who did it', async () => {
     const a = api()
-    const message = (await a.contact.listMessages(admin)).find((m) => !m.handledBy)!
+    const message = (await a.contact.listMessages(admin)).find((m) => !m.handledBy && m.kind !== 'photo')!
     await a.contact.markHandled(message.id, admin)
     expect((await a.audit.list(admin))[0].actorHouseholdId).toBe('hh-chatterjee')
   })
@@ -155,7 +155,7 @@ describe('the audit trail', () => {
 
   it('is the committee\'s to read, and nobody else\'s', async () => {
     const a = api()
-    const message = (await a.contact.listMessages(admin)).find((m) => !m.handledBy)!
+    const message = (await a.contact.listMessages(admin)).find((m) => !m.handledBy && m.kind !== 'photo')!
     await a.contact.markHandled(message.id, admin)
 
     expect(await a.audit.list(member)).toEqual([])
@@ -164,7 +164,7 @@ describe('the audit trail', () => {
 
   it('writes no line for a change that changed nothing', async () => {
     const a = api()
-    const message = (await a.contact.listMessages(admin)).find((m) => !m.handledBy)!
+    const message = (await a.contact.listMessages(admin)).find((m) => !m.handledBy && m.kind !== 'photo')!
     await a.contact.markHandled(message.id, admin)
     await a.contact.markHandled(message.id, admin)
     // Twice, same value the second time. One line, not two.
@@ -186,7 +186,8 @@ describe('the audit trail', () => {
   it('reads newest first, and stops where it is asked to', async () => {
     const a = api()
     const messages = await a.contact.listMessages(admin)
-    const unhandled = messages.filter((m) => !m.handledBy).slice(0, 2)
+    // A takedown needs a note, so it is left out of a test that is about ordering.
+    const unhandled = messages.filter((m) => !m.handledBy && m.kind !== 'photo').slice(0, 2)
     for (const m of unhandled) await a.contact.markHandled(m.id, admin)
 
     const trail = await a.audit.list(admin, 1)

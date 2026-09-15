@@ -6,7 +6,7 @@
 > **What this is:** the order of work from [MEMBER-LOGIN.md](MEMBER-LOGIN.md), broken into steps
 > that can be ticked off. That document says *what* and *why*; this one says *where we are*.
 >
-> **Last updated:** 2026-09-15 · **Current step:** 4 · **Ticked:** 70 of 91
+> **Last updated:** 2026-09-15 · **Current step:** 4 · **Ticked:** 71 of 91
 
 ## How this is kept
 
@@ -449,7 +449,7 @@ The takedown promise stops depending on a macOS script and a person remembering 
       renaming objects in a bucket is not a thing to ask of anybody
 - [x] Delete a photograph — the contract says in as many words that an adapter hiding the row
       and leaving the file has broken the promise while appearing to keep it
-- [ ] Somewhere for a takedown request to land, with a promised turnaround
+- [x] Somewhere for a takedown request to land, with a promised turnaround
 
 **Done when:** a committee member on a laptop, with no terminal, puts an album up — and a
 photograph with GPS in it arrives in the bucket with none.
@@ -493,6 +493,23 @@ PLAN's map and never built. Albums on one screen, the photographs of one album o
 caption, pin as the face, move earlier or later, take down. It says what the upload accepts
 before anybody tries, and it says the metadata never leaves the machine, because that is the
 promise and a promise nobody is told about is not much of one.
+
+**The takedown promise has a route now** *(2026-09-15)*. The gallery has always said *tell us and
+we will take it down* — and it linked to the ordinary contact form, so a request arrived between a
+parking question and somebody asking to sing, with nothing marking it and nothing recording that
+the picture actually came out. A promise made in public with no process behind it.
+
+Four small things, none of them clever. The link carries why somebody is there, so they are not
+retyping *please take down the photograph of my daughter* into a blank box under a heading that
+says Contact us. The promise is one constant, so the gallery, the form and the inbox cannot
+promise slightly different things. Requests nobody has dealt with sort above everything else and
+are counted separately. And **marking one done requires saying what was done** — "handled" on its
+own does not tell anybody whether the photograph came out of the bucket, which is the only part
+that matters.
+
+It also meets somebody where the contact form is switched off, which it is on a build with no
+Supabase: the notice appears anyway and points at the email address. The promise does not depend
+on the form working.
 
 **Uploading, from the screen** *(2026-09-15)*. The cover field used to say "an address in the
 photo bucket, never a file from this repository", which told the committee what not to do without
@@ -700,6 +717,7 @@ invitation, so nothing to approve and no passwords to reset.
 | 2026-09-15 | 5 | `/admin/content` wired — three buttons had done nothing. Caught a new post reading as "taken down". 525 → 533 tests. |
 | 2026-09-15 | — | Retention settled: the count is kept for good, the names for twelve months. `close_year()` counts before it deletes. 533 → 537 tests. |
 | 2026-09-15 | 3 | The committee types the headcount in. 537 → 551 tests. |
+| 2026-09-15 | 4 | The takedown promise got a route, a turnaround and a record of what was done. 651 → 660 tests. |
 | 2026-09-15 | 6 | Accessibility audited on every page and coverage enforced in CI — both had been stated standards nobody checked. Found the home page's loading placeholder announcing nothing. 634 → 651 tests. |
 | 2026-09-15 | 5 | The gap count computed rather than typed, and seven pending strings made editable. 620 → 628 tests. |
 | 2026-09-15 | 4 | The browser half of uploading a photograph, off until a bucket is configured. 607 → 619 tests. |

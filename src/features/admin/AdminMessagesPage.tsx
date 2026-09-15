@@ -3,6 +3,7 @@ import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { Button } from '@/components/Button'
 import { formatLongDate, formatTime } from '@/domain/dates'
 import { paragraphs } from '@/domain/news'
+import { TAKEDOWN_PROMISE } from '@/domain/contact'
 import { useContactMessages, useMarkMessageHandled, useViewer } from '@/lib/api'
 import { can } from '@/lib/auth/permissions'
 import styles from '@/features/portal/Portal.module.css'
@@ -13,10 +14,12 @@ export function AdminMessagesPage() {
   const markHandled = useMarkMessageHandled()
   const mayHandle = can(useViewer(), 'messages:handle')
   const [openId, setOpenId] = useState<string | null>(null)
+  const [note, setNote] = useState('')
 
   const list = messages ?? []
   const open = list.find((m) => m.id === openId) ?? list[0]
   const unread = list.filter((m) => !m.handledBy).length
+  const waitingPhotos = list.filter((m) => m.kind === 'photo' && !m.handledBy).length
 
   return (
     <div className={styles.page}>
@@ -40,7 +43,12 @@ export function AdminMessagesPage() {
               <h2 id="inbox-title" className={styles.panelTitle}>
                 Inbox
               </h2>
-              <span className={`${styles.muted} ${styles.tiny}`}>{unread} unread</span>
+              <span className={`${styles.muted} ${styles.tiny}`}>
+                {unread} unread
+                {waitingPhotos > 0
+                  ? ` · ${waitingPhotos} ${waitingPhotos === 1 ? 'photograph' : 'photographs'} to take down`
+                  : ''}
+              </span>
             </div>
             <ul className={styles.list}>
               {list.map((message) => (
@@ -54,7 +62,10 @@ export function AdminMessagesPage() {
                   >
                     {message.handledBy ? null : <span className={styles.dot} />}
                     <span className={styles.listBody}>
-                      <strong>{message.subject}</strong>
+                      <strong>
+                        {message.kind === 'photo' ? '📷 ' : ''}
+                        {message.subject}
+                      </strong>
                       <span className={`${styles.muted} ${styles.tiny}`}>
                         {message.name} · {formatLongDate(message.createdAt)}
                         {message.handledBy ? ` · handled by ${message.handledBy}` : ''}
@@ -84,6 +95,28 @@ export function AdminMessagesPage() {
                     {text}
                   </p>
                 ))}
+                {open.kind === 'photo' && !open.handledBy ? (
+                  <div className={styles.pad} style={{ padding: 0 }}>
+                    <p className={styles.note}>
+                      <strong>Somebody wants a photograph taken down.</strong> We said {TAKEDOWN_PROMISE}.
+                      Take it out of the album on the Photographs page first — deleting there really
+                      deletes it — then say here what you did.
+                    </p>
+                    <label className={`${styles.label}`} htmlFor="handled-note" style={{ display: 'block', marginTop: 12 }}>
+                      What happened to the photograph
+                    </label>
+                    <input
+                      id="handled-note"
+                      className={styles.input}
+                      value={note}
+                      placeholder="Deleted boishakhi-2026-14 from the album"
+                      onChange={(e) => setNote(e.target.value)}
+                    />
+                  </div>
+                ) : null}
+                {open.handledNote ? (
+                  <p className={`${styles.muted} ${styles.tiny}`}>What was done: {open.handledNote}</p>
+                ) : null}
                 <div className={styles.actions}>
                   <Button variant="gold" size="sm" href={`mailto:${open.email}`}>
                     Reply by email
@@ -91,8 +124,14 @@ export function AdminMessagesPage() {
                   <Button
                     variant="line"
                     size="sm"
-                    disabled={!mayHandle || Boolean(open.handledBy) || markHandled.isPending}
-                    onClick={() => markHandled.mutate(open.id)}
+                    disabled={
+                      !mayHandle ||
+                      Boolean(open.handledBy) ||
+                      markHandled.isPending ||
+                      // A takedown cannot be marked done until somebody says what was done.
+                      (open.kind === 'photo' && !note.trim())
+                    }
+                    onClick={() => markHandled.mutate({ id: open.id, note }, { onSuccess: () => setNote('') })}
                   >
                     {open.handledBy ? 'Handled' : markHandled.isPending ? 'Marking…' : 'Mark handled'}
                   </Button>

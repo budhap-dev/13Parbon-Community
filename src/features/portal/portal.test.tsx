@@ -198,7 +198,10 @@ describe('committee pages', () => {
 
   it('opens a message from the inbox', async () => {
     renderAt('/admin/messages', admin)
-    expect(await screen.findByRole('heading', { level: 2, name: 'Parking on the night' })).toBeInTheDocument()
+    // The inbox opens on the takedown now: it sorts above everything nobody has dealt with.
+    expect(await screen.findByRole('heading', { level: 2, name: 'Please take down a photograph' })).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: /Parking on the night/ }))
+    expect(screen.getByRole('heading', { level: 2, name: 'Parking on the night' })).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: /New to the area/ }))
     expect(screen.getByRole('heading', { level: 2, name: 'New to the area' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Reply by email' })).toHaveAttribute('href', 'mailto:ruma@example.com')
@@ -209,6 +212,8 @@ describe('committee pages', () => {
   it('marks a message handled, and the inbox agrees afterwards', async () => {
     renderAt('/admin/messages', admin)
     const inbox = await screen.findByRole('region', { name: 'Inbox' })
+    // Open an ordinary message: a takedown cannot be marked done without saying what was done.
+    await userEvent.click(within(inbox).getByRole('button', { name: /Parking on the night/ }))
     // One fixture message is already dealt with, so count rather than assume an empty start.
     const before = within(inbox).queryAllByText(/handled by/).length
     const unreadBefore = within(inbox).getByText(/unread/).textContent
@@ -223,6 +228,8 @@ describe('committee pages', () => {
 
   it('does not offer to handle a message twice', async () => {
     renderAt('/admin/messages', admin)
+    const inbox = await screen.findByRole('region', { name: 'Inbox' })
+    await userEvent.click(within(inbox).getByRole('button', { name: /Parking on the night/ }))
     await userEvent.click(await screen.findByRole('button', { name: 'Mark handled' }))
     expect(await screen.findByRole('button', { name: 'Handled' })).toBeDisabled()
     expect(screen.queryByRole('button', { name: 'Mark handled' })).not.toBeInTheDocument()

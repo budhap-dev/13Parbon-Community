@@ -1,8 +1,19 @@
+/**
+ * What the message is about.
+ *
+ * `photo` is somebody asking for a photograph of themselves or their child to be taken down.
+ * It is marked rather than left to read like any other message, because it is the one promise
+ * on the site with a person waiting behind it — and because an inbox where it arrives between a
+ * parking question and a request to sing is an inbox where it waits a week.
+ */
+export type ContactKind = 'general' | 'photo'
+
 export type ContactInput = {
   name: string
   email: string
   subject: string
   message: string
+  kind?: ContactKind
 }
 
 export type ContactMessage = ContactInput & {
@@ -11,7 +22,20 @@ export type ContactMessage = ContactInput & {
   createdAt: string
   /** Who on the committee dealt with it. Absent means nobody has yet. */
   handledBy?: string
+  /**
+   * What was done about it.
+   *
+   * Only asked for on a takedown, where "handled" on its own does not say whether the
+   * photograph actually came out of the bucket — which is the only part that matters.
+   */
+  handledNote?: string
 }
+
+/**
+ * What the site promises, in one place so the gallery, the form and the inbox cannot each
+ * promise something slightly different.
+ */
+export const TAKEDOWN_PROMISE = 'within three days, and you do not have to give a reason'
 
 export type ContactErrors = Partial<Record<keyof ContactInput, string>>
 

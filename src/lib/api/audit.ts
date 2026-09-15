@@ -73,14 +73,20 @@ export function withAuditTrail(base: ApiClient, now: () => Date = () => new Date
       // `send` is not recorded, matching the trigger: it is attached to contact_messages for
       // updates only. Every visitor using the form would otherwise write a line saying a
       // visitor used the form, which the table already says.
-      markHandled: async (id, viewer) => {
+      markHandled: async (id, viewer, note) => {
         // Read the old value out now, not a reference to the row it lives on. The mock changes
         // rows in place, so holding the object and reading it after the write gives the new
         // value twice and a diff of nothing — which is a silently empty trail, the one failure
         // an audit trail must not have.
         const was = (await base.contact.listMessages(viewer)).find((m) => m.id === id)?.handledBy
-        const after = await base.contact.markHandled(id, viewer)
-        record(viewer, 'messages:handle', { kind: 'contact_messages', id }, { handledBy: was }, { handledBy: after.handledBy })
+        const after = await base.contact.markHandled(id, viewer, note)
+        record(
+          viewer,
+          'messages:handle',
+          { kind: 'contact_messages', id },
+          { handledBy: was },
+          { handledBy: after.handledBy, handledNote: after.handledNote },
+        )
         return after
       },
     },
