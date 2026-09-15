@@ -6,6 +6,9 @@ import {
   SETTING_LABELS,
   SITE_TEXT_FIELDS,
   SITE_TEXT_KEYS,
+  rollFromText,
+  rollToText,
+  tidyCommittee,
   type SectionAudience,
   type SiteSettings,
 } from '@/domain/settings'
@@ -44,15 +47,24 @@ export function SiteSwitches({
     ...settings,
     home: { ...settings.home },
     text: { ...settings.text },
+    committee: settings.committee.map((row) => ({ ...row })),
+    members: [...settings.members],
   }))
-  const changed = JSON.stringify(draft) !== JSON.stringify(settings)
+  /** Held as typed, so a half-written line does not vanish between keystrokes. */
+  const [roll, setRoll] = useState(() => rollToText(settings.members))
+  const changed =
+    JSON.stringify({ ...draft, committee: tidyCommittee(draft.committee), members: rollFromText(roll) }) !==
+    JSON.stringify(settings)
+
+  const setRow = (i: number, changes: Partial<(typeof draft.committee)[number]>) =>
+    setDraft({ ...draft, committee: draft.committee.map((row, j) => (i === j ? { ...row, ...changes } : row)) })
 
   return (
     <form
       className={styles.form}
       onSubmit={(e) => {
         e.preventDefault()
-        onSave(draft)
+        onSave({ ...draft, committee: tidyCommittee(draft.committee), members: rollFromText(roll) })
       }}
     >
       <fieldset className={styles.form} style={{ border: 0, margin: 0, padding: 0 }}>
@@ -117,6 +129,81 @@ export function SiteSwitches({
             </div>
           )
         })}
+      </fieldset>
+
+      <fieldset className={styles.form} style={{ border: 0, margin: 0, padding: 0 }}>
+        <legend className={styles.label}>The committee</legend>
+        <p className={styles.hint}>
+          As shown on the About page, in this order — which is not a ranking. It changes at the AGM
+          every year, which is exactly the sort of thing that should not need a developer.
+        </p>
+        {draft.committee.map((row, i) => (
+          <div key={i} className={styles.row}>
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor={`role-${i}`}>
+                Role {i + 1}
+              </label>
+              <input
+                id={`role-${i}`}
+                className={styles.input}
+                value={row.role}
+                onChange={(e) => setRow(i, { role: e.target.value })}
+              />
+            </div>
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor={`name-${i}`}>
+                Name {i + 1}
+              </label>
+              <input
+                id={`name-${i}`}
+                className={styles.input}
+                value={row.name}
+                onChange={(e) => setRow(i, { name: e.target.value })}
+              />
+            </div>
+            <div className={styles.actions} style={{ alignSelf: 'end', paddingBottom: 2 }}>
+              <Button
+                variant="line"
+                size="sm"
+                aria-label={`Remove ${row.name || `row ${i + 1}`}`}
+                onClick={() => setDraft({ ...draft, committee: draft.committee.filter((_, j) => j !== i) })}
+              >
+                Remove
+              </Button>
+            </div>
+          </div>
+        ))}
+        <div className={styles.actions}>
+          <Button
+            variant="line"
+            size="sm"
+            onClick={() => setDraft({ ...draft, committee: [...draft.committee, { role: '', name: '' }] })}
+          >
+            Add somebody
+          </Button>
+        </div>
+      </fieldset>
+
+      <fieldset className={styles.form} style={{ border: 0, margin: 0, padding: 0 }}>
+        <legend className={styles.label}>The members’ roll</legend>
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="roll">
+            One name to a line
+          </label>
+          <textarea
+            id="roll"
+            className={styles.textarea}
+            rows={10}
+            value={roll}
+            aria-describedby="roll-note"
+            onChange={(e) => setRoll(e.target.value)}
+          />
+          <p id="roll-note" className={styles.hint}>
+            Names only — nothing here says where anybody lives, how old they are or how to reach
+            them. {rollFromText(roll).length} on the roll. Take a name out the day its owner asks;
+            that used to mean waiting for a developer.
+          </p>
+        </div>
       </fieldset>
 
       <fieldset className={styles.form} style={{ border: 0, margin: 0, padding: 0 }}>

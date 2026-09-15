@@ -1,5 +1,3 @@
-import type { SiteSettings } from '@/domain/settings'
-
 /**
  * Facts about this community that the committee owns.
  * Bracketed values are placeholders to be filled in; nothing here is fabricated.
@@ -181,29 +179,4 @@ export function activeSocial(): (SocialChannel & { href: string })[] {
  */
 export function isPlaceholder(value: string): boolean {
   return value.trim().startsWith('[')
-}
-
-/**
- * What the switches are when nothing has been saved.
- *
- * The committee changes these in the admin, and their choice is stored; this is what the site
- * does before anybody has made one, and what it falls back to if the settings cannot be read.
- * A site that loses its database should not suddenly publish the things the committee had
- * switched off, so every default here is the cautious answer.
- */
-export const defaultSettings: SiteSettings = {
-  showMemberSignIn: site.showMemberSignIn,
-  showNews: site.showNews,
-  showNextEventStrip: site.showNextEventStrip,
-  showPhotos: site.showPhotos,
-  home: { ...site.home },
-  text: {
-    tagline: site.tagline,
-    mission: site.mission,
-    missionStatement: site.missionStatement,
-    venue: site.venue,
-    address: site.address,
-    email: site.email,
-    galleryNote: site.galleryNote ?? '',
-  },
 }

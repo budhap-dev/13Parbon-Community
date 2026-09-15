@@ -71,6 +71,60 @@ describe('the words on the public pages', () => {
   })
 })
 
+describe('the committee and the roll', () => {
+  it('shows who is on the committee, as the About page does', async () => {
+    renderAt('/admin/content')
+    const panel = await switches()
+
+    expect(within(panel).getByLabelText('Role 1')).toHaveValue('Secretary')
+    expect(within(panel).getByLabelText('Name 1')).toHaveValue('Mr. Dalim Ghosh')
+  })
+
+  it('says the order is not a ranking, because somebody will wonder', async () => {
+    renderAt('/admin/content')
+    const panel = await switches()
+    expect(within(panel).getByText(/which is not a ranking/)).toBeInTheDocument()
+  })
+
+  it('adds somebody and takes somebody off', async () => {
+    renderAt('/admin/content')
+    const panel = await switches()
+    const rows = () => within(panel).getAllByLabelText(/^Role \d+$/).length
+
+    const before = rows()
+    await userEvent.click(within(panel).getByRole('button', { name: 'Add somebody' }))
+    expect(rows()).toBe(before + 1)
+
+    await userEvent.click(within(panel).getAllByRole('button', { name: /^Remove / })[0])
+    expect(rows()).toBe(before)
+  })
+
+  it('keeps the roll as one name to a line, and counts it', async () => {
+    renderAt('/admin/content')
+    const panel = await switches()
+
+    const roll = within(panel).getByLabelText('One name to a line')
+    expect((roll as HTMLTextAreaElement).value.split('\n').length).toBe(31)
+    expect(within(panel).getByText(/31 on the roll/)).toBeInTheDocument()
+  })
+
+  it('says the roll is names and nothing else', async () => {
+    renderAt('/admin/content')
+    const panel = await switches()
+    // The About page has always promised this; until now keeping it meant a pull request.
+    expect(within(panel).getByText(/Take a name out the day its owner asks/)).toBeInTheDocument()
+  })
+
+  it('drops a half-typed committee row rather than saving it', async () => {
+    renderAt('/admin/content')
+    const panel = await switches()
+
+    await userEvent.click(within(panel).getByRole('button', { name: 'Add somebody' }))
+    // A blank row is not a change, so there is still nothing to save.
+    expect(within(panel).getByRole('button', { name: 'Save the switches' })).toBeDisabled()
+  })
+})
+
 describe('what throwing a switch changes', () => {
   it('puts News into the navigation for everybody', async () => {
     renderAt('/admin/content')

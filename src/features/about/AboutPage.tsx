@@ -9,7 +9,7 @@ import { Icon, type IconName } from '@/components/Icon'
 import styles from './About.module.css'
 
 export function AboutPage() {
-  const { text } = useSettings()
+  const { text, committee, members } = useSettings()
   useDocumentTitle('About us')
 
   return (
@@ -76,14 +76,14 @@ export function AboutPage() {
       <section className={styles.section} aria-labelledby="committee-title">
         <h2 id="committee-title" className={styles.sectionTitle}>
           Current committee
-          <span className={styles.count} aria-hidden="true">{about.committee.length}</span>
+          <span className={styles.count} aria-hidden="true">{committee.length}</span>
         </h2>
         <p className={styles.lead}>
           Anyone can join the committee, depending on the committee’s policy at the time. If you would like to
           put your name forward, or to reach any of the people below, <Link to="/contact">send us a message</Link>.
         </p>
         <ul className={styles.committee}>
-          {about.committee.map((member) => (
+          {committee.map((member) => (
             <li key={member.role} className={styles.member}>
               <span className={styles.memberRole}>{member.role}</span>
               <span className={styles.memberLine}>
@@ -98,14 +98,14 @@ export function AboutPage() {
       <section className={styles.section} aria-labelledby="members-title">
         <h2 id="members-title" className={styles.sectionTitle}>
           Our members
-          <span className={styles.count} aria-hidden="true">{about.members.length}</span>
+          <span className={styles.count} aria-hidden="true">{members.length}</span>
         </h2>
         <p className={styles.lead}>
           The people who make up the association. Membership runs by household, and the roll is
           kept by the committee.
         </p>
         <ul className={styles.members}>
-          {about.members.map((name) => (
+          {members.map((name) => (
             <li key={name} className={styles.memberEntry}>
               <Icon name="badge" size={22} className={styles.entryBadge} />
               <span className={styles.entryName}>{name}</span>

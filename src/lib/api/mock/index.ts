@@ -6,7 +6,7 @@ import { isValidEvent, tidyProgramme, type Event, type EventDraft } from '@/doma
 import { uniqueSlug } from '@/domain/slug'
 import { inOrder, pinnedCover, type AlbumDraft, type AlbumWithMedia } from '@/domain/gallery'
 import { validateSettings, type SiteSettings } from '@/domain/settings'
-import { defaultSettings } from '@/app/site'
+import { defaultSettings } from '@/app/defaults'
 import { directoryEntry, isAdmin, isMember, isValidHousehold, type Household, type HouseholdDraft, type Person, type Viewer } from '@/domain/household'
 import { ATTENDANCE_NOTE, CONTACT_NOTE, PHOTOGRAPH_NOTE, type HouseholdExport } from '@/domain/subjectAccess'
 import type { ApiClient } from '../types'

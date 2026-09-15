@@ -1,6 +1,6 @@
 import { createContext, useContext, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { defaultSettings } from '@/app/site'
+import { defaultSettings } from '@/app/defaults'
 import type { SiteSettings } from '@/domain/settings'
 import { useApi } from '@/lib/api'
 

@@ -4,7 +4,7 @@ import html from '../../index.html?raw'
 import sitemap from '../../public/sitemap.xml?raw'
 import robots from '../../public/robots.txt?raw'
 import { publicNav } from './nav'
-import { defaultSettings } from './site'
+import { defaultSettings } from './defaults'
 
 /**
  * The one address the site calls its own. Everything a crawler is handed has to agree with

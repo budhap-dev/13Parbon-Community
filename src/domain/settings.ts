@@ -68,6 +68,9 @@ export const SITE_TEXT_FIELDS: Record<SiteTextKey, { label: string; note: string
   },
 }
 
+/** One line of the committee: what they do, and who they are. */
+export type CommitteeMember = { role: string; name: string }
+
 export type SiteSettings = {
   /** Whether the sign-in is offered in the header and footer. */
   showMemberSignIn: boolean
@@ -81,6 +84,21 @@ export type SiteSettings = {
   home: Record<HomeSection, SectionAudience>
   /** The words the committee owns. Empty means "use what the code says". */
   text: Record<SiteTextKey, string>
+  /**
+   * Who is on the committee this year.
+   *
+   * It changes at the AGM, every year, which is exactly the sort of thing that should not need
+   * a developer and a deploy. In the order the committee gave them, which is not a ranking.
+   */
+  committee: CommitteeMember[]
+  /**
+   * The members' roll: names, and nothing else.
+   *
+   * Nothing here says where anybody lives, how old they are or how to reach them. The About page
+   * has always said this is the committee's to keep current and that a name comes out the day
+   * its owner asks — which until now meant a pull request on the day somebody asked.
+   */
+  members: string[]
 }
 
 export type SettingsDraft = SiteSettings
@@ -91,7 +109,10 @@ export type SettingsDraft = SiteSettings
  * Kept next to the type so a new switch cannot be added without saying what it does — a row of
  * unlabelled toggles is a good way to have somebody turn the gallery off by accident.
  */
-export const SETTING_LABELS: Record<keyof Omit<SiteSettings, 'home' | 'text'>, { label: string; note: string }> = {
+export const SETTING_LABELS: Record<
+  keyof Omit<SiteSettings, 'home' | 'text' | 'committee' | 'members'>,
+  { label: string; note: string }
+> = {
   showPhotos: {
     label: 'Photographs',
     note: 'The gallery in the navigation, and pictures on the home page. Turning this off pulls the whole gallery at once.',
@@ -122,5 +143,32 @@ export const HOME_SECTION_LABELS: Record<HomeSection, string> = {
 export function validateSettings(draft: SettingsDraft): boolean {
   const audiences: SectionAudience[] = ['public', 'members', 'admins']
   if (!HOME_SECTIONS.every((section) => audiences.includes(draft.home[section]))) return false
-  return SITE_TEXT_KEYS.every((key) => typeof draft.text[key] === 'string')
+  if (!SITE_TEXT_KEYS.every((key) => typeof draft.text[key] === 'string')) return false
+  // A row with a name and no role, or the other way about, is half-typed rather than wrong —
+  // it is dropped on save. A row with neither was never a row.
+  return Array.isArray(draft.committee) && Array.isArray(draft.members)
+}
+
+/** The committee as it should be saved: complete rows only, in the order they were given. */
+export function tidyCommittee(rows: CommitteeMember[]): CommitteeMember[] {
+  return rows
+    .map((row) => ({ role: row.role.trim(), name: row.name.trim() }))
+    .filter((row) => row.role && row.name)
+}
+
+/**
+ * The roll, from a box with one name to a line.
+ *
+ * A textarea rather than thirty-one boxes: the list is pasted from somewhere else as often as
+ * it is typed, and thirty-one inputs is a form nobody finishes.
+ */
+export function rollFromText(text: string): string[] {
+  return text
+    .split('\n')
+    .map((name) => name.trim())
+    .filter(Boolean)
+}
+
+export function rollToText(names: string[]): string {
+  return names.join('\n')
 }
