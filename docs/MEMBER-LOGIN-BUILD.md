@@ -6,7 +6,7 @@
 > **What this is:** the order of work from [MEMBER-LOGIN.md](MEMBER-LOGIN.md), broken into steps
 > that can be ticked off. That document says *what* and *why*; this one says *where we are*.
 >
-> **Last updated:** 2026-09-15 · **Current step:** 2 · **Ticked:** 45 of 84
+> **Last updated:** 2026-09-15 · **Current step:** 4 · **Ticked:** 46 of 84
 
 ## How this is kept
 
@@ -20,6 +20,37 @@
 - **Merge `main` into this branch every week or so.** Main keeps moving — albums, fixes — and one
   large reconciliation at the end is worse than six small ones.
 
+## The order this is being built in
+
+**Decided 2026-09-15: finish the interface first, stand the database up at the end.**
+
+It works because the app was built for it — `ApiClient` with a mock adapter — and because of
+what 0.2 fixed. The mock used to be *more permissive* than the database, which would have meant
+every screen written in the belief that it could ask for anything. It now refuses exactly what
+the policies refuse, `can()` states the same rules a third time, and `mock/rules.test.ts` mirrors
+`verify.sql` block for block. Screens built on that are built against real constraints.
+
+It also makes the decisions better. Two of the best calls so far — registration stays on Google
+Forms, events stay in the planner app — were "we already have that", and both were easier to see
+with something concrete in front of us.
+
+**One thing is not deferred with the rest: proving the SQL runs.** `portal.sql` is ~600 lines
+nobody has executed, and every week of interface work adds screens resting on it. An RLS mistake
+is a leak, not a glitch, and the cost of finding one grows the whole time. That does not need
+*the* project, though — a throwaway Supabase project, ten minutes, `schema.sql` then `portal.sql`
+then `verify.sql`, read the output, delete it. No Google sign-in, no domain, nothing committed to.
+It also catches the fixtures drifting from the `check` constraints, which they will over another
+twenty screens.
+
+**What the interface cannot finish on its own**, so "done" stays honest:
+
+| | |
+|---|---|
+| Persistence *is* the feature in places | 0.2's "survives a reload" cannot be met by any mock |
+| The Supabase adapter | Every method exists twice and the real half is currently zero. Mechanical, because the contract is narrow — but it all arrives at once |
+| Real failure states | A policy's 403, a conflicting write, a dropped connection. Simulable; which ones actually happen, Postgres tells you |
+| Media upload | Wants R2 credentials rather than Supabase — same shape of blocker, different key |
+
 ## Where it stands
 
 | Step | | Days | Status |
@@ -27,7 +58,7 @@
 | — | The story, checked and amended | — | ✅ done 2026-09-15 |
 | 0 | Foundations | 8–11 | **done on mocks** — 0.2, 0.3, 0.4 complete; 0.1 and the running of it blocked on the project |
 | 1 | The smallest write, end to end | 0.5 | **mostly done** — brought forward into 0.2 |
-| 2 | Households | ~5 | **all but the sign-in attempts buttons** |
+| 2 | Households | ~5 | ✅ **done** |
 | 3 | Events | ~1 | **mostly dropped** — the planner app owns it |
 | 4 | Media | ~4 | not started |
 | 5 | Content | ~4.5 | not started |
@@ -215,7 +246,8 @@ The data everything else hangs off.
 - [x] Record and change `googleEmail` — this is what "reset password" actually means here
 - [x] Set membership status (`active` / `lapsed`) and `paidTo`
 - [x] Assign the `admin` role, **and refuse to remove the last admin** — refused at the API now, not only by the button; still no constraint behind it in Postgres
-- [ ] Sign-in attempts: add them, or mark resolved — the list is already on the page, read-only
+- [x] Sign-in attempts: add them, or mark resolved — and "add them" arrives knowing the address,
+      because retyping one we were already given is how somebody gets locked out
 - [x] A member editing their own household: same form, different permissions
 - [x] A member's own privacy choices: `listedInDirectory`, `shareEmail`, `sharePhone`
 - [x] Export a household as the GDPR subject-access answer — readable on the page, and savable
@@ -438,3 +470,5 @@ invitation, so nothing to approve and no passwords to reset.
 | 2026-09-15 | — | Six decisions answered: no video for now, placeholder avatars, no sponsors, JPG/PNG/JPEG only, one-year retention, committee CSV to review. |
 | 2026-09-15 | 2 | Committee CSV: counts not names, and guarded against a household name that opens as a formula. 414 → 425 tests. |
 | 2026-09-15 | 2 | Erasure, taking the registrations with it. Copy offered first, name typed to confirm, never your own and never the last admin. 425 → 437 tests. |
+| 2026-09-15 | 2 | Sign-in attempts answered from the screen; "add them" carries the address across. **Step 2 done.** 437 → 443 tests. |
+| 2026-09-15 | — | Order settled: interface first, database at the end — but the SQL gets run against a throwaway project early, rather than accumulating screens on top of SQL nobody has executed. |

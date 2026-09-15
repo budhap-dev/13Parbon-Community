@@ -132,6 +132,13 @@ export interface ApiClient {
      * Admin only, never your own household, and never the last admin.
      */
     deleteHousehold(id: string, viewer: Viewer): Promise<void>
+    /**
+     * Marks a knock as dealt with — they were added, or the committee decided not to.
+     *
+     * Kept rather than removed, so somebody turned away twice does not read as somebody turned
+     * away once. The list on the People screen shows what is still waiting.
+     */
+    resolveSignInAttempt(id: string, viewer: Viewer): Promise<SignInAttempt>
   }
   /**
    * What has been changed, and by whom. Written by `withAuditTrail` here and by a trigger in

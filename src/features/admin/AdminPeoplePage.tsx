@@ -6,11 +6,13 @@ import { RemoveHousehold } from '@/components/RemoveHousehold'
 import { formatLongDate } from '@/domain/dates'
 import { committeeCsv, committeeCsvFilename } from '@/domain/committeeExport'
 import { describeSize, type Household } from '@/domain/household'
+import type { HouseholdDraft } from '@/domain/household'
 import {
   useAddHousehold,
   useDeleteHousehold,
   useHouseholdExport,
   useHouseholds,
+  useResolveSignInAttempt,
   useSignInAttempts,
   useUpdateHousehold,
   useViewer,
@@ -23,17 +25,37 @@ export function AdminPeoplePage() {
   const who = useSignedIn()
   const viewer = useViewer()
   const { data: households, isPending } = useHouseholds()
-  const { data: attempts } = useSignInAttempts()
+  const { data: allAttempts } = useSignInAttempts()
+  // Resolved ones are kept, so a second knock does not read as a first — but the screen is
+  // about what still wants a decision.
+  const attempts = allAttempts?.filter((a) => !a.resolved)
   const add = useAddHousehold()
   const update = useUpdateHousehold()
   const remove = useDeleteHousehold()
+  const resolve = useResolveSignInAttempt()
   const [open, setOpenRaw] = useState<Household | 'new' | null>(null)
+  // What we already know about somebody who has been knocking, carried into the empty form.
+  const [prefill, setPrefill] = useState<Partial<HouseholdDraft> | undefined>()
   const copy = useHouseholdExport(open && open !== 'new' ? open.id : undefined)
   // null is closed, 'new' is the invitation form, a household is that one being edited.
-  const setOpen = (next: Household | 'new' | null) => {
+  const setOpen = (next: Household | 'new' | null, from?: Partial<HouseholdDraft>) => {
     remove.reset()
+    setPrefill(from)
     setOpenRaw(next)
   }
+
+  /**
+   * Turning a knock into an invitation. Google told us the address and the name it is under,
+   * and re-typing what we were already told is how addresses get mistyped — which, here, is
+   * somebody locked out for a reason nobody can guess.
+   */
+  const inviteFromAttempt = (attempt: { email: string; name: string }) =>
+    setOpen('new', {
+      googleEmail: attempt.email,
+      email: attempt.email,
+      contactName: attempt.name,
+      people: [{ name: attempt.name, ageGroup: 'adult' }],
+    })
 
   const neverSignedIn = households?.filter((h) => !h.googleEmail).length ?? 0
 
@@ -71,6 +93,7 @@ export function AdminPeoplePage() {
           <div className={styles.pad}>
             <HouseholdForm
               household={adding ? undefined : open}
+              prefill={adding ? prefill : undefined}
               viewer={viewer}
               saving={saving}
               error={failure}
@@ -158,10 +181,21 @@ export function AdminPeoplePage() {
                     </td>
                     <td>
                       <span className={styles.actions}>
-                        <Button variant="gold" size="sm" onClick={() => {}}>
+                        <Button
+                          variant="gold"
+                          size="sm"
+                          aria-label={`Add household for ${attempt.email}`}
+                          onClick={() => inviteFromAttempt(attempt)}
+                        >
                           Add household
                         </Button>
-                        <Button variant="line" size="sm" onClick={() => {}}>
+                        <Button
+                          variant="line"
+                          size="sm"
+                          disabled={resolve.isPending}
+                          aria-label={`Ignore ${attempt.email}`}
+                          onClick={() => resolve.mutate(attempt.id)}
+                        >
                           Ignore
                         </Button>
                       </span>
@@ -233,8 +267,13 @@ export function AdminPeoplePage() {
                       </span>
                     </td>
                     <td>
-                      <Button variant="line" size="sm" onClick={() => setOpen(household)}>
-                        Edit<span className="sr-only"> {household.name}</span>
+                      <Button
+                        variant="line"
+                        size="sm"
+                        aria-label={`Edit ${household.name}`}
+                        onClick={() => setOpen(household)}
+                      >
+                        Edit
                       </Button>
                     </td>
                   </tr>

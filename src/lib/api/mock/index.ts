@@ -308,6 +308,14 @@ export function createMockApi({ now = () => new Date(), latencyMs = 0, events }:
         return delay(result, latencyMs)
       },
 
+      resolveSignInAttempt: (id, viewer) => {
+        if (!isAdmin(viewer)) return Promise.reject(new NotAllowed('only the committee can do that'))
+        const attempt = portal.signInAttempts.find((a) => a.id === id)
+        if (!attempt) return Promise.reject(new NotAllowed('no such sign-in attempt'))
+        attempt.resolved = true
+        return delay(attempt, latencyMs)
+      },
+
       deleteHousehold: (id, viewer) => {
         if (!isAdmin(viewer)) return Promise.reject(new NotAllowed('only the committee can remove a household'))
         const index = portal.households.findIndex((h) => h.id === id)

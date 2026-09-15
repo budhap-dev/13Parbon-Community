@@ -1,4 +1,4 @@
-import { cleanup, render, screen, within } from '@testing-library/react'
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { routes } from '@/app/router'
@@ -376,6 +376,30 @@ describe('the committee managing households', () => {
     const [, after] = await screen.findAllByRole('table')
     const updated = within(after).getByRole('row', { name: /The Sens/ })
     expect(within(updated).getByText('Admin')).toBeInTheDocument()
+  })
+})
+
+describe('somebody knocking', () => {
+  it('turns a knock into an invitation, without retyping what Google told us', async () => {
+    renderAt('/admin/people', admin)
+    await userEvent.click(await screen.findByRole('button', { name: /Add household for priya.dutta@gmail.com/ }))
+
+    // Retyping an address we were already given is how addresses get mistyped — and a mistyped
+    // sign-in address is somebody locked out for a reason nobody can guess.
+    expect(await screen.findByLabelText(/Google address/)).toHaveValue('priya.dutta@gmail.com')
+    expect(screen.getByLabelText('Who the committee speaks to')).toHaveValue('Priya Dutta')
+    expect(screen.getByLabelText('Name')).toHaveValue('Priya Dutta')
+  })
+
+  it('takes a knock off the list once it has been dealt with', async () => {
+    renderAt('/admin/people', admin)
+    expect(await screen.findByText('amit.bose@gmail.com')).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: /Ignore amit.bose@gmail.com/ }))
+
+    await waitFor(() => expect(screen.queryByText('amit.bose@gmail.com')).not.toBeInTheDocument())
+    // The other one is untouched.
+    expect(screen.getByText('priya.dutta@gmail.com')).toBeInTheDocument()
   })
 })
 

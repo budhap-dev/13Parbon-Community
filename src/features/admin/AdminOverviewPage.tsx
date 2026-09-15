@@ -19,7 +19,8 @@ function Stat({ label, value, note, accent }: { label: string; value: string | n
 export function AdminOverviewPage() {
   useDocumentTitle('Committee overview')
   const { data: households } = useHouseholds()
-  const { data: attempts } = useSignInAttempts()
+  const { data: allAttempts } = useSignInAttempts()
+  const attempts = allAttempts?.filter((a) => !a.resolved)
   const { data: messages } = useContactMessages()
   const { data: event } = useNextEvent()
   const { data: registrations } = useEventRegistrations(event?.id)

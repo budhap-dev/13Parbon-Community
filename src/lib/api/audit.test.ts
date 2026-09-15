@@ -32,7 +32,7 @@ const READS = [
 ]
 
 /** Writes that leave a line in the trail. */
-const AUDITED = ['contact.markHandled', 'portal.addHousehold', 'portal.updateHousehold', 'portal.deleteHousehold']
+const AUDITED = ['contact.markHandled', 'portal.addHousehold', 'portal.updateHousehold', 'portal.deleteHousehold', 'portal.resolveSignInAttempt']
 
 /**
  * Writes that deliberately do not. `send` matches the trigger, which is attached to

@@ -273,6 +273,33 @@ describe('the committee managing households', () => {
   })
 })
 
+describe('somebody knocking', () => {
+  it('is only the committee\'s to deal with', async () => {
+    const a = api()
+    await expect(a.portal.resolveSignInAttempt('sa-1', member)).rejects.toThrow(/committee/i)
+    expect(await a.portal.listSignInAttempts(member)).toEqual([])
+  })
+
+  it('is kept once dealt with, not deleted', async () => {
+    const a = api()
+    await a.portal.resolveSignInAttempt('sa-1', admin)
+    const attempts = await a.portal.listSignInAttempts(admin)
+    // Somebody turned away twice should not read as somebody turned away once.
+    expect(attempts.find((x) => x.id === 'sa-1')?.resolved).toBe(true)
+  })
+
+  it('leaves the others alone', async () => {
+    const a = api()
+    await a.portal.resolveSignInAttempt('sa-1', admin)
+    const attempts = await a.portal.listSignInAttempts(admin)
+    expect(attempts.filter((x) => !x.resolved)).toHaveLength(1)
+  })
+
+  it('says nothing about one that was never there', async () => {
+    await expect(api().portal.resolveSignInAttempt('sa-nope', admin)).rejects.toThrow(/no such/i)
+  })
+})
+
 describe('erasing a household', () => {
   it('is not a member\'s to do', async () => {
     await expect(api().portal.deleteHousehold('hh-ghosh', member)).rejects.toThrow(/committee/i)

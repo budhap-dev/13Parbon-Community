@@ -18,6 +18,11 @@ import styles from './HouseholdForm.module.css'
 type Props = {
   /** The household being edited, or nothing at all when one is being added. */
   household?: Household
+  /**
+   * A starting point for a household that does not exist yet — what we already know about
+   * somebody who has been knocking. Ignored when `household` is given.
+   */
+  prefill?: Partial<HouseholdDraft>
   viewer: Viewer
   onSave: (draft: HouseholdDraft) => void
   saving?: boolean
@@ -68,7 +73,7 @@ function Check({
 
 const emptyPerson: PersonInput = { name: '', ageGroup: 'adult' }
 
-function draftFrom(household?: Household): HouseholdDraft {
+function draftFrom(household?: Household, prefill?: Partial<HouseholdDraft>): HouseholdDraft {
   if (!household) {
     return {
       name: '',
@@ -84,6 +89,7 @@ function draftFrom(household?: Household): HouseholdDraft {
       role: 'member',
       membershipStatus: 'active',
       membershipPaidTo: '',
+      ...prefill,
     }
   }
   return {
@@ -112,8 +118,8 @@ function draftFrom(household?: Household): HouseholdDraft {
  * was rendered on — a member opening this on their own household sees their own details and
  * none of the committee's.
  */
-export function HouseholdForm({ household, viewer, onSave, saving, saved, error }: Props) {
-  const [draft, setDraft] = useState<HouseholdDraft>(() => draftFrom(household))
+export function HouseholdForm({ household, prefill, viewer, onSave, saving, saved, error }: Props) {
+  const [draft, setDraft] = useState<HouseholdDraft>(() => draftFrom(household, prefill))
   const [errors, setErrors] = useState<HouseholdErrors>({})
   const ids = useId()
 

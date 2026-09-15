@@ -203,6 +203,16 @@ export function useUpdateHousehold() {
  * something to have on hand: assembling it reaches across most of the tables, and a household
  * opening their own page has not asked for it.
  */
+export function useResolveSignInAttempt() {
+  const api = useApi()
+  const viewer = useViewer()
+  const queries = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => api.portal.resolveSignInAttempt(id, viewer),
+    onSuccess: () => queries.invalidateQueries({ queryKey: ['portal'] }),
+  })
+}
+
 export function useDeleteHousehold() {
   const api = useApi()
   const viewer = useViewer()
