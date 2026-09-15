@@ -6,7 +6,7 @@
 > **What this is:** the order of work from [MEMBER-LOGIN.md](MEMBER-LOGIN.md), broken into steps
 > that can be ticked off. That document says *what* and *why*; this one says *where we are*.
 >
-> **Last updated:** 2026-09-15 · **Current step:** 4 · **Ticked:** 71 of 91
+> **Last updated:** 2026-09-15 · **Current step:** 4 · **Ticked:** 74 of 91
 
 ## How this is kept
 
@@ -56,7 +56,7 @@ twenty screens.
 | Step | | Days | Status |
 |---|---|---|---|
 | — | The story, checked and amended | — | ✅ done 2026-09-15 |
-| 0 | Foundations | 8–11 | **done on mocks** — 0.2, 0.3, 0.4 complete; 0.1 and the running of it blocked on the project |
+| 0 | Foundations | 8–11 | ✅ **done** — the policies are run and pass |
 | 1 | The smallest write, end to end | 0.5 | **mostly done** — brought forward into 0.2 |
 | 2 | Households | ~5 | ✅ **done** |
 | 3 | Events | ~2 | **design screen built**; the planner owns the logistics |
@@ -78,9 +78,13 @@ stored until this is right, and it is free to get right while the data is still 
 
 ### 0.1 Row level security · 5–7 days
 
-> **Written, not yet run.** There is no Postgres, Docker or Supabase CLI on this machine, and
-> [no Supabase project yet](SIGN-IN.md) — that is the committee's to create. So everything below
-> is reviewed SQL, not executed SQL, and the step does not close until it has been run.
+> **Run, and it passed** *(2026-09-15)*. Against the committee's existing planner project, into
+> a `portal` schema of its own. `verify.sql` raised nothing, which is how it reports success —
+> every check in it fails by raising. Eight tables, sixteen policies, six functions, two triggers,
+> and the planner's five tables untouched beside them.
+>
+> What is still unproven is the part only a browser can show: signing in as a member and finding
+> that another household is not there. That waits on Google.
 
 - [x] Rewrite `supabase/portal.sql`: tables now come before the functions that query them
 - [x] Replace `current_setting(...)::jsonb` with `auth.jwt()`, which folds the empty string to null
@@ -92,13 +96,20 @@ stored until this is right, and it is free to get right while the data is still 
 - [x] Explicit grants, rather than trusting Supabase's default privileges *(found on the way)*
 - [x] Keep `service_role` executing the helpers after revoking them from `public` *(found on the way)*
 - [x] Rewrite `verify.sql` so it exercises the policies, not only the helper functions *(found on the way)*
-- [ ] **Run `portal.sql`, then `verify.sql`, in the project** — blocked on the project existing
+- [x] **Run `portal.sql`, then `verify.sql`, in the project** — passed 2026-09-15, first time
 - [ ] Sign in as a member and an admin in the live site and try to read what each should not
-- [ ] Take `supabase/portal.sql` and `supabase/verify.sql` out of `.gitignore` and commit them
-      — both are ignored today, so this work is not even stageable until then
+- [x] Take `supabase/portal.sql` and `supabase/verify.sql` out of `.gitignore` and commit them
 
 **Done when:** a signed-in member, using the browser console and their own token, cannot read
 another household. Demonstrated, not assumed.
+
+**One scare, and it was mine.** The check I wrote to prove the planner was untouched asked
+whether `public.people` had row level security on, and expected `false`. It came back `true` —
+which is the planner's own doing, because Supabase switches RLS on by default for tables made
+through its dashboard, and that table has four policies of its own. I had written the wrong
+expectation, not found a problem. The evidence that settles it is simpler than any query: the
+planner still works, and it could not if something here had enabled RLS on its table without a
+policy.
 
 **What changed, and why**
 
@@ -167,7 +178,7 @@ the mistakes were made.
 - [x] Written by a trigger in the database and by a wrapper around the client, not by each caller
 - [x] Readable by admins; writable by nobody, including admins — no insert or update policy exists
 - [x] A guard that fails if any method is added to the contract without deciding whether it audits
-- [ ] Run the trigger against the project — blocked with 0.1
+- [x] Run the trigger against the project
 
 **Done when:** changing a value leaves a row behind, without the calling code asking it to.
 *True on mocks, and tested. The trigger is written but unrun, like the rest of 0.1.*
@@ -717,6 +728,7 @@ invitation, so nothing to approve and no passwords to reset.
 | 2026-09-15 | 5 | `/admin/content` wired — three buttons had done nothing. Caught a new post reading as "taken down". 525 → 533 tests. |
 | 2026-09-15 | — | Retention settled: the count is kept for good, the names for twelve months. `close_year()` counts before it deletes. 533 → 537 tests. |
 | 2026-09-15 | 3 | The committee types the headcount in. 537 → 551 tests. |
+| 2026-09-15 | 0.1 | **`portal.sql` and `verify.sql` run against a real database, and passed first time.** Into a `portal` schema in the committee's planner project. Out of `.gitignore` at last. |
 | 2026-09-15 | 4 | The takedown promise got a route, a turnaround and a record of what was done. 651 → 660 tests. |
 | 2026-09-15 | 6 | Accessibility audited on every page and coverage enforced in CI — both had been stated standards nobody checked. Found the home page's loading placeholder announcing nothing. 634 → 651 tests. |
 | 2026-09-15 | 5 | The gap count computed rather than typed, and seven pending strings made editable. 620 → 628 tests. |
