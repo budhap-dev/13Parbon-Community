@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { ContactInput } from '@/domain/contact'
+import type { AttendanceDraft } from '@/domain/attendance'
 import type { AlbumDraft } from '@/domain/gallery'
 import type { AnnouncementDraft, NewsDraft } from '@/domain/news'
 import type { HouseholdDraft, Viewer } from '@/domain/household'
@@ -212,6 +213,25 @@ export function useResolveSignInAttempt() {
   const queries = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => api.portal.resolveSignInAttempt(id, viewer),
+    onSuccess: () => queries.invalidateQueries({ queryKey: ['portal'] }),
+  })
+}
+
+export function useAttendance() {
+  const api = useApi()
+  const viewer = useViewer()
+  return useQuery({
+    queryKey: ['portal', 'attendance', asks(viewer)],
+    queryFn: () => api.portal.listAttendance(viewer),
+  })
+}
+
+export function useRecordAttendance() {
+  const api = useApi()
+  const viewer = useViewer()
+  const queries = useQueryClient()
+  return useMutation({
+    mutationFn: (draft: AttendanceDraft) => api.portal.recordAttendance(draft, viewer),
     onSuccess: () => queries.invalidateQueries({ queryKey: ['portal'] }),
   })
 }

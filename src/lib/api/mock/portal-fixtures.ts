@@ -1,4 +1,5 @@
 import type { CommunityDocument, SignInAttempt } from '@/domain/document'
+import type { EventAttendance } from '@/domain/attendance'
 import type { Household } from '@/domain/household'
 import type { ContactMessage } from '@/domain/contact'
 import type { Registration } from '@/domain/registration'
@@ -211,5 +212,11 @@ export function buildPortalFixtures() {
     },
   ]
 
-  return { households, registrations, documents, signInAttempts, messages }
+  /** A couple of years of numbers, which is what the history looks like once it has run a while. */
+  const attendance: EventAttendance[] = [
+    { eventId: 'ev-poila-2026', heldOn: '2026-04-18', households: 41, adults: 96, children: 34, recordedAt: '2026-04-20T10:00:00' },
+    { eventId: 'ev-saraswati-2026', heldOn: '2026-02-01', households: 28, adults: 61, children: 40, recordedAt: '2026-02-03T10:00:00' },
+  ]
+
+  return { households, registrations, documents, signInAttempts, messages, attendance }
 }

@@ -4,7 +4,17 @@ import { Button } from '@/components/Button'
 import { Icon } from '@/components/Icon'
 import { formatDateWithYear, formatLongDate, formatTime } from '@/domain/dates'
 import { totalsFor } from '@/domain/registration'
-import { useEventRegistrations, useHouseholds, useNextEvent, usePastEvents, useUpcomingEvents } from '@/lib/api'
+import {
+  useAttendance,
+  useEventRegistrations,
+  useHouseholds,
+  useNextEvent,
+  usePastEvents,
+  useRecordAttendance,
+  useUpcomingEvents,
+} from '@/lib/api'
+import { peopleAt } from '@/domain/attendance'
+import { AttendanceForm } from './AttendanceForm'
 import styles from '@/features/portal/Portal.module.css'
 
 export function AdminEventsPage() {
@@ -14,6 +24,10 @@ export function AdminEventsPage() {
   const { data: households } = useHouseholds()
   const { data: upcoming } = useUpcomingEvents(20)
   const { data: past } = usePastEvents(6)
+
+  const { data: attendance } = useAttendance()
+  const record = useRecordAttendance()
+  const eventsToCount = [...(past ?? []), ...(upcoming ?? [])]
 
   const totals = totalsFor(registrations ?? [])
   const byId = new Map((households ?? []).map((h) => [h.id, h]))
@@ -177,6 +191,61 @@ export function AdminEventsPage() {
           </table>
         </div>
       </section>
+      <section className={styles.panel} aria-labelledby="attendance-title">
+        <div className={styles.panelHead}>
+          <h2 id="attendance-title" className={styles.panelTitle}>
+            How many came
+          </h2>
+        </div>
+        <div className={styles.pad}>
+          <p className={`${styles.muted} ${styles.tiny}`} style={{ marginBottom: 16 }}>
+            After the night, put the numbers in from your form's replies. The sheet stays where it
+            is — this keeps the count and nothing about who, which is all the history and the
+            caterer ever need.
+          </p>
+          {eventsToCount.length > 0 ? (
+            <AttendanceForm
+              events={eventsToCount}
+              existing={attendance ?? []}
+              saving={record.isPending}
+              error={record.isError ? record.error.message : undefined}
+              onSave={(draft) => record.mutate(draft)}
+            />
+          ) : (
+            <p className={styles.empty} aria-busy="true">
+              Loading the events…
+            </p>
+          )}
+        </div>
+
+        {attendance && attendance.length > 0 ? (
+          <div className={styles.scroll}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>Event</th>
+                  <th>Held</th>
+                  <th className={styles.num}>Households</th>
+                  <th className={styles.num}>People</th>
+                </tr>
+              </thead>
+              <tbody>
+                {attendance.map((year) => (
+                  <tr key={year.eventId}>
+                    <td>
+                      <strong>{year.eventId}</strong>
+                    </td>
+                    <td className={styles.muted}>{formatDateWithYear(year.heldOn)}</td>
+                    <td className={`${styles.num} ${styles.muted}`}>{year.households}</td>
+                    <td className={styles.num}>{peopleAt(year)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : null}
+      </section>
+
     </div>
   )
 }

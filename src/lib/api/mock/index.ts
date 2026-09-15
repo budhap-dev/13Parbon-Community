@@ -1,4 +1,5 @@
 import { isUpcoming } from '@/domain/dates'
+import { isValidAttendance, type EventAttendance } from '@/domain/attendance'
 import { isValidContact, type ContactMessage } from '@/domain/contact'
 import { isLive, isValid, slugFrom, validateAnnouncement, validateNews, type Announcement, type AnnouncementDraft, type NewsDraft, type NewsPost } from '@/domain/news'
 import type { Event } from '@/domain/event'
@@ -450,6 +451,23 @@ export function createMockApi({ now = () => new Date(), latencyMs = 0, events }:
             : [],
           latencyMs,
         ),
+
+      listAttendance: (viewer) =>
+        delay(
+          isMember(viewer) ? [...portal.attendance].sort((a, b) => b.heldOn.localeCompare(a.heldOn)) : [],
+          latencyMs,
+        ),
+
+      recordAttendance: (draft, viewer) => {
+        if (!isAdmin(viewer)) return Promise.reject(new NotAllowed('only the committee can record that'))
+        if (!isValidAttendance(draft)) return Promise.reject(new NotAllowed('those numbers do not look right'))
+        const existing = portal.attendance.find((a) => a.eventId === draft.eventId)
+        const record: EventAttendance = { ...draft, recordedAt: now().toISOString() }
+        // One per event. Saving again corrects the number rather than adding a second one.
+        if (existing) Object.assign(existing, record)
+        else portal.attendance.push(record)
+        return delay(existing ?? record, latencyMs)
+      },
 
       addHousehold: (draft, viewer) => {
         if (!isAdmin(viewer)) return Promise.reject(new NotAllowed('only the committee can add a household'))

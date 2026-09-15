@@ -198,6 +198,21 @@ export function withAuditTrail(base: ApiClient, now: () => Date = () => new Date
     },
     portal: {
       ...base.portal,
+      recordAttendance: async (draft, viewer) => {
+        const was = snapshot(
+          await base.portal.listAttendance(viewer).then((all) => all.find((x) => x.eventId === draft.eventId)),
+          'households',
+          'adults',
+          'children',
+        )
+        const saved = await base.portal.recordAttendance(draft, viewer)
+        record(viewer, 'attendance:record', { kind: 'event_attendance', id: draft.eventId }, was, {
+          households: saved.households,
+          adults: saved.adults,
+          children: saved.children,
+        })
+        return saved
+      },
       addHousehold: async (draft, viewer) => {
         const household = await base.portal.addHousehold(draft, viewer)
         record(viewer, 'household:add', { kind: 'households', id: household.id }, {}, flatten(household))

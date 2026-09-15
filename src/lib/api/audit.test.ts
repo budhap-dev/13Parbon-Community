@@ -27,7 +27,7 @@ const READS = [
   'contact.listMessages',
   'portal.identify', 'portal.getHousehold', 'portal.listHouseholds', 'portal.listDirectory',
   'portal.listDocuments', 'portal.listRegistrationsForHousehold', 'portal.listRegistrationsForEvent',
-  'portal.listSignInAttempts', 'portal.exportHousehold',
+  'portal.listSignInAttempts', 'portal.exportHousehold', 'portal.listAttendance',
   'audit.list',
   'volunteering.listOpenRoles', 'volunteering.listRolesForEvent',
 ]
@@ -35,7 +35,7 @@ const READS = [
 /** Writes that leave a line in the trail. */
 const AUDITED = [
   'contact.markHandled',
-  'portal.addHousehold', 'portal.updateHousehold', 'portal.deleteHousehold', 'portal.resolveSignInAttempt',
+  'portal.addHousehold', 'portal.updateHousehold', 'portal.deleteHousehold', 'portal.resolveSignInAttempt', 'portal.recordAttendance',
   'gallery.createAlbum', 'gallery.updateAlbum', 'gallery.setCover', 'gallery.setCaption',
   'gallery.reorder', 'gallery.deleteMedia',
   'news.createPost', 'news.updatePost',

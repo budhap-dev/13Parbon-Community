@@ -5,6 +5,7 @@ import type { ContactInput, ContactMessage } from '@/domain/contact'
 import type { CommunityDocument, SignInAttempt } from '@/domain/document'
 import type { DirectoryEntry, Household, HouseholdDraft, Viewer } from '@/domain/household'
 import type { Registration } from '@/domain/registration'
+import type { AttendanceDraft, EventAttendance } from '@/domain/attendance'
 import type { AuditEntry } from '@/domain/audit'
 import type { HouseholdExport } from '@/domain/subjectAccess'
 import type { Announcement, AnnouncementDraft, NewsDraft, NewsPost, Newsletter } from '@/domain/news'
@@ -143,6 +144,18 @@ export interface ApiClient {
     listRegistrationsForHousehold(householdId: string, viewer: Viewer): Promise<Registration[]>
     /** Every registration for one event, newest first. Admin only. */
     listRegistrationsForEvent(eventId: string, viewer: Viewer): Promise<Registration[]>
+    /**
+     * How many came to each event, newest first. Readable by any member: it is the history the
+     * portal shows, and there is nobody in it.
+     */
+    listAttendance(viewer: Viewer): Promise<EventAttendance[]>
+    /**
+     * Records how many came. Admin only, and one record per event — saving again corrects it.
+     *
+     * Typed in rather than counted up. Bookings live in the committee's Google Form and stay
+     * there; a number is the only thing that needs to cross, and it brings nobody with it.
+     */
+    recordAttendance(draft: AttendanceDraft, viewer: Viewer): Promise<EventAttendance>
     /** Google accounts that signed in but matched no household. Admin only. */
     listSignInAttempts(viewer: Viewer): Promise<SignInAttempt[]>
     /**
