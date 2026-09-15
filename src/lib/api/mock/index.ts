@@ -311,7 +311,6 @@ export function createMockApi({ now = () => new Date(), latencyMs = 0, events }:
           slug,
           ...shapeOfPost(draft),
           publishedAt: draft.published ? now().toISOString() : undefined,
-          hidden: !draft.published,
         }
         fixtures.posts.push(post)
         return delay(post, latencyMs)

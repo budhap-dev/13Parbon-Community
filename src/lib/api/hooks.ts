@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { ContactInput } from '@/domain/contact'
 import type { AlbumDraft } from '@/domain/gallery'
+import type { AnnouncementDraft, NewsDraft } from '@/domain/news'
 import type { HouseholdDraft, Viewer } from '@/domain/household'
 import { useSignedIn } from '@/lib/auth/session'
 import { useApi } from './context'
@@ -259,6 +260,43 @@ export function useAlbum(slug: string) {
 /**
  * Every album, published or not. The committee's view of the gallery.
  */
+export function useAllPosts() {
+  const api = useApi()
+  const viewer = useViewer()
+  return useQuery({ queryKey: ['news', 'all-posts', asks(viewer)], queryFn: () => api.news.listAllPosts(viewer) })
+}
+
+export function useAllAnnouncements() {
+  const api = useApi()
+  const viewer = useViewer()
+  return useQuery({
+    queryKey: ['news', 'all-announcements', asks(viewer)],
+    queryFn: () => api.news.listAllAnnouncements(viewer),
+  })
+}
+
+/** Writes on the news tree. Invalidates all of it: a piece shows in the list and on the home page. */
+function useNewsWrite<A>(run: (api: ApiClient, viewer: Viewer, args: A) => Promise<unknown>) {
+  const api = useApi()
+  const viewer = useViewer()
+  const queries = useQueryClient()
+  return useMutation({
+    mutationFn: (args: A) => run(api, viewer, args),
+    onSuccess: () => queries.invalidateQueries({ queryKey: ['news'] }),
+  })
+}
+
+export const useCreatePost = () => useNewsWrite((api, viewer, draft: NewsDraft) => api.news.createPost(draft, viewer))
+export const useUpdatePost = () =>
+  useNewsWrite((api, viewer, { id, draft }: { id: string; draft: NewsDraft }) => api.news.updatePost(id, draft, viewer))
+export const useCreateAnnouncement = () =>
+  useNewsWrite((api, viewer, draft: AnnouncementDraft) => api.news.createAnnouncement(draft, viewer))
+export const useUpdateAnnouncement = () =>
+  useNewsWrite((api, viewer, { id, draft }: { id: string; draft: AnnouncementDraft }) =>
+    api.news.updateAnnouncement(id, draft, viewer),
+  )
+export const useRemoveAnnouncement = () => useNewsWrite((api, viewer, id: string) => api.news.removeAnnouncement(id, viewer))
+
 export function useAllAlbums() {
   const api = useApi()
   const viewer = useViewer()

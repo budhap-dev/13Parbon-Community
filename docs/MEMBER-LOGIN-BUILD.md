@@ -61,7 +61,7 @@ twenty screens.
 | 2 | Households | ~5 | ✅ **done** |
 | 3 | Events | ~1 | **mostly dropped** — the planner app owns it |
 | 4 | Media | ~4 | **in progress** — the screen is built; only the bucket is unwired |
-| 5 | Content | ~4.5 | **in progress** — the writes are in; the screen is next |
+| 5 | Content | ~4.5 | **in progress** — news and notices done; the `site.ts` switches left |
 | 6 | Ready to merge | ~2 | not started |
 | | **Total** | **~32–36** *(incl. tests, adapters, states)* | |
 
@@ -444,6 +444,16 @@ Last, because a page of placeholders reads worse than no page.
 
 **Done when:** the committee publishes something without a developer.
 
+**The screen** is `/admin/content`, where three buttons had been wired to nothing. A noticeboard
+panel that says whether each notice is waiting, showing or finished; the news list with its real
+status; and one form each. The news form is a textarea, and says so: *leave a blank line between
+paragraphs, that is all the formatting there is.* The notice form counts down from 500 and tells
+you a long one wants to be a news post.
+
+**Draft and taken down are not the same thing**, and the list says which. A piece that was never
+published is a draft; one that went up and came off is taken down, and keeps the date it first
+went up. Writing the tests caught a new post being marked *taken down* the moment it was saved.
+
 **No rich text, and none needed.** The plan budgeted news as the spike. `NewsPost.body` is plain
 paragraphs split on blank lines by `paragraphs()`, so a textarea is the honest editor. Third time
 this project has got smaller by reading what is already there.
@@ -544,3 +554,5 @@ invitation, so nothing to approve and no passwords to reset.
 | 2026-09-15 | 4 | Albums, covers, captions, order and takedown — all audited. Found the random cover was deliberate, so pinning overrides it rather than replacing it. 472 → 489 tests. |
 | 2026-09-15 | 4 | `/admin/media` built — the route was in PLAN's map and never existed. 489 → 503 tests. |
 | 2026-09-15 | 5 | Announcements and news posts, with drafts and unpublishing. No rich text needed. Caught the audit wrapper recording nothing on two writes. 503 → 520 tests. |
+| 2026-09-15 | 4 | Photographs page reworked after review: open large, drag to reorder, trash on the picture. Kept arrow keys, since dragging has no keyboard path. 522 → 525 tests. |
+| 2026-09-15 | 5 | `/admin/content` wired — three buttons had done nothing. Caught a new post reading as "taken down". 525 → 533 tests. |

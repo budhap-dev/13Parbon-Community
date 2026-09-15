@@ -1,8 +1,22 @@
+import { useState } from 'react'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { Button } from '@/components/Button'
 import { formatDateWithYear } from '@/domain/dates'
-import { useAlbums, useNewsletters, useNewsPosts } from '@/lib/api'
+import { isLive, type Announcement, type NewsPost } from '@/domain/news'
+import {
+  useAlbums,
+  useAllAnnouncements,
+  useAllPosts,
+  useCreateAnnouncement,
+  useCreatePost,
+  useNewsletters,
+  useRemoveAnnouncement,
+  useUpdateAnnouncement,
+  useUpdatePost,
+} from '@/lib/api'
+import { useNow } from '@/lib/clock'
 import styles from '@/features/portal/Portal.module.css'
+import { AnnouncementForm, NewsForm } from './ContentForms'
 
 /** Gaps the committee still has to fill, counted from the content files. */
 const gaps = [
@@ -13,10 +27,85 @@ const gaps = [
 
 export function AdminContentPage() {
   useDocumentTitle('Content')
-  const { data: posts } = useNewsPosts()
+  const { data: posts } = useAllPosts()
+  const { data: announcements } = useAllAnnouncements()
   const { data: albums } = useAlbums()
   const { data: newsletters } = useNewsletters()
   const totalGaps = gaps.reduce((n, g) => n + g.count, 0)
+
+  const createPost = useCreatePost()
+  const updatePost = useUpdatePost()
+  const createNotice = useCreateAnnouncement()
+  const updateNotice = useUpdateAnnouncement()
+  const removeNotice = useRemoveAnnouncement()
+  // Read once per render: the same instant should decide every row, or a notice could read as
+  // both waiting and finished in one table.
+  const at = useNow().toISOString()
+
+  /** Which form is open: nothing, a new one, or an existing piece or notice. */
+  const [editing, setEditing] = useState<
+    { kind: 'post'; post?: NewsPost } | { kind: 'notice'; notice?: Announcement } | null
+  >(null)
+
+  if (editing?.kind === 'post') {
+    return (
+      <div className={styles.page}>
+        <div className={styles.top}>
+          <div>
+            <h1 className={styles.title}>{editing.post ? 'Edit the piece' : 'Write something'}</h1>
+            <p className={styles.sub}>
+              Nothing goes on the website until you say so, and taking it off again keeps the writing.
+            </p>
+          </div>
+        </div>
+        <section className={styles.panel}>
+          <div className={styles.pad}>
+            <NewsForm
+              post={editing.post}
+              saving={createPost.isPending || updatePost.isPending}
+              error={createPost.isError ? createPost.error.message : updatePost.isError ? updatePost.error.message : undefined}
+              onCancel={() => setEditing(null)}
+              onSave={(draft) =>
+                editing.post
+                  ? updatePost.mutate({ id: editing.post.id, draft }, { onSuccess: () => setEditing(null) })
+                  : createPost.mutate(draft, { onSuccess: () => setEditing(null) })
+              }
+            />
+          </div>
+        </section>
+      </div>
+    )
+  }
+
+  if (editing?.kind === 'notice') {
+    return (
+      <div className={styles.page}>
+        <div className={styles.top}>
+          <div>
+            <h1 className={styles.title}>{editing.notice ? 'Edit the notice' : 'Put up a notice'}</h1>
+            <p className={styles.sub}>
+              Short, and few. A noticeboard people can read at a glance is the whole point of it.
+            </p>
+          </div>
+        </div>
+        <section className={styles.panel}>
+          <div className={styles.pad}>
+            <AnnouncementForm
+              announcement={editing.notice}
+              saving={createNotice.isPending || updateNotice.isPending}
+              error={createNotice.isError ? createNotice.error.message : updateNotice.isError ? updateNotice.error.message : undefined}
+              onCancel={() => setEditing(null)}
+              onSave={(draft) =>
+                editing.notice
+                  ? updateNotice.mutate({ id: editing.notice.id, draft }, { onSuccess: () => setEditing(null) })
+                  : createNotice.mutate(draft, { onSuccess: () => setEditing(null) })
+              }
+            />
+          </div>
+        </section>
+      </div>
+    )
+  }
 
   return (
     <div className={styles.page}>
@@ -25,9 +114,14 @@ export function AdminContentPage() {
           <h1 className={styles.title}>Content</h1>
           <p className={styles.sub}>Everything the public sees. Publish when you are ready, not before.</p>
         </div>
-        <Button variant="gold" size="sm" onClick={() => {}}>
-          Write something
-        </Button>
+        <span className={styles.actions}>
+          <Button variant="line" size="sm" onClick={() => setEditing({ kind: 'notice' })}>
+            Put up a notice
+          </Button>
+          <Button variant="gold" size="sm" onClick={() => setEditing({ kind: 'post' })}>
+            Write something
+          </Button>
+        </span>
       </div>
 
       <p className={styles.note}>
@@ -68,13 +162,84 @@ export function AdminContentPage() {
         </div>
       </section>
 
+      <section className={styles.panel} aria-labelledby="notices-title">
+        <div className={styles.panelHead}>
+          <h2 id="notices-title" className={styles.panelTitle}>
+            The noticeboard
+          </h2>
+          <Button variant="line" size="sm" onClick={() => setEditing({ kind: 'notice' })}>
+            Put up a notice
+          </Button>
+        </div>
+        {!announcements?.length ? (
+          <p className={styles.empty}>Nothing on the board.</p>
+        ) : (
+          <div className={styles.scroll}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>Notice</th>
+                  <th>Who sees it</th>
+                  <th>Showing</th>
+                  <th><span className="sr-only">Actions</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                {announcements.map((notice) => (
+                  <tr key={notice.id}>
+                    <td>
+                      <strong>{notice.pinned ? '📌 ' : ''}{notice.title}</strong>
+                      <br />
+                      <span className={`${styles.muted} ${styles.tiny}`}>{notice.body}</span>
+                    </td>
+                    <td className={styles.muted}>{notice.audience === 'public' ? 'Anybody' : 'Members'}</td>
+                    <td>
+                      <span className={isLive(notice, at) ? styles.pillLive : styles.pillWait}>
+                        {isLive(notice, at) ? 'On the board' : notice.publishAt > at ? 'Waiting' : 'Finished'}
+                      </span>
+                    </td>
+                    <td>
+                      <span className={styles.actions}>
+                        <Button
+                          variant="line"
+                          size="sm"
+                          aria-label={`Edit ${notice.title}`}
+                          onClick={() => setEditing({ kind: 'notice', notice })}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          variant="line"
+                          size="sm"
+                          aria-label={`Take ${notice.title} off the board`}
+                          disabled={removeNotice.isPending}
+                          onClick={() => removeNotice.mutate(notice.id)}
+                        >
+                          Take off
+                        </Button>
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        <div className={styles.pad} style={{ paddingTop: 14 }}>
+          <p className={styles.note}>
+            A notice taken off the board is gone — there is no version of it worth keeping once it has
+            stopped being true. A news piece is different: that is unpublished, and the writing stays.
+          </p>
+        </div>
+      </section>
+
       <div className={styles.two}>
         <section className={styles.panel} aria-labelledby="news-title">
           <div className={styles.panelHead}>
             <h2 id="news-title" className={styles.panelTitle}>
               News
             </h2>
-            <Button variant="line" size="sm" onClick={() => {}}>
+            <Button variant="line" size="sm" onClick={() => setEditing({ kind: 'post' })}>
               New article
             </Button>
           </div>
@@ -85,6 +250,7 @@ export function AdminContentPage() {
                   <th>Article</th>
                   <th>Tags</th>
                   <th>Status</th>
+                  <th><span className="sr-only">Edit</span></th>
                 </tr>
               </thead>
               <tbody>
@@ -107,7 +273,24 @@ export function AdminContentPage() {
                       </ul>
                     </td>
                     <td>
-                      <span className={styles.pillLive}>Published</span>
+                      <span
+                        className={
+                          !post.publishedAt ? styles.pillWait : post.hidden ? styles.pillPast : styles.pillLive
+                        }
+                      >
+                        {/* Never up is a draft; up and then off is taken down. Not the same thing. */}
+                        {!post.publishedAt ? 'Draft' : post.hidden ? 'Taken down' : 'Published'}
+                      </span>
+                    </td>
+                    <td>
+                      <Button
+                        variant="line"
+                        size="sm"
+                        aria-label={`Edit ${post.title}`}
+                        onClick={() => setEditing({ kind: 'post', post })}
+                      >
+                        Edit
+                      </Button>
                     </td>
                   </tr>
                 ))}

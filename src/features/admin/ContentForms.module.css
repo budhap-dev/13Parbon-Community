@@ -1,0 +1,96 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.row {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.input,
+.textarea {
+  padding: 12px;
+  border: 2px solid var(--line, rgba(0, 0, 0, 0.2));
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+
+.input {
+  min-height: 46px;
+  padding: 0 12px;
+}
+
+.textarea {
+  line-height: 1.6;
+  resize: vertical;
+  /* Writing, so it reads like writing rather than like a form field. */
+  max-width: 68ch;
+}
+
+.input:focus-visible,
+.textarea:focus-visible {
+  outline: 3px solid var(--gold, #c9a227);
+  outline-offset: 1px;
+}
+
+.input[aria-invalid='true'],
+.textarea[aria-invalid='true'] {
+  border-color: var(--error, #b3261e);
+}
+
+.hint {
+  margin: 0;
+  font-size: 13px;
+  opacity: 0.72;
+  line-height: 1.5;
+  max-width: 62ch;
+}
+
+.error {
+  margin: 0;
+  font-size: 13px;
+  color: var(--error, #b3261e);
+}
+
+.check {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.check input {
+  margin-top: 3px;
+  width: 20px;
+  height: 20px;
+  flex: none;
+}
+
+.check label {
+  display: block;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
