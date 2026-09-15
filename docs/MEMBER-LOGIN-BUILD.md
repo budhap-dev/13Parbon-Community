@@ -6,7 +6,7 @@
 > **What this is:** the order of work from [MEMBER-LOGIN.md](MEMBER-LOGIN.md), broken into steps
 > that can be ticked off. That document says *what* and *why*; this one says *where we are*.
 >
-> **Last updated:** 2026-09-15 · **Current step:** 4 · **Ticked:** 46 of 84
+> **Last updated:** 2026-09-15 · **Current step:** 4 · **Ticked:** 49 of 85
 
 ## How this is kept
 
@@ -60,7 +60,7 @@ twenty screens.
 | 1 | The smallest write, end to end | 0.5 | **mostly done** — brought forward into 0.2 |
 | 2 | Households | ~5 | ✅ **done** |
 | 3 | Events | ~1 | **mostly dropped** — the planner app owns it |
-| 4 | Media | ~4 | not started |
+| 4 | Media | ~4 | **in progress** — the metadata guarantee is in |
 | 5 | Content | ~4.5 | not started |
 | 6 | Ready to merge | ~2 | not started |
 | | **Total** | **~32–36** *(incl. tests, adapters, states)* | |
@@ -362,10 +362,11 @@ is built, and worth a look at what the planner already stores.
 The takedown promise stops depending on a macOS script and a person remembering to run it.
 
 - [ ] Presign endpoint (Vercel function) — R2 credentials cannot go in the browser
-- [ ] Client-side re-encode to 1600 and 600, which never writes metadata rather than stripping it
-- [ ] Apply EXIF orientation before discarding it, or portrait photographs come out sideways
+- [x] Client-side re-encode to 1600 and 600, which never writes metadata rather than stripping it
+- [x] Apply EXIF orientation before discarding it, or portrait photographs come out sideways
 - [x] HEIC: **decided 2026-09-15** — JPG, JPEG and PNG only, and the screen says so
-- [ ] Verify the uploaded object server-side — carry over the script's refusal to publish anything still carrying metadata
+- [x] Verify in the browser before anything is sent — the script's refusal, carried over
+- [ ] Verify the object again server-side, once there is a server side to verify it on
 - [ ] Compare quality against `sips` at q70/q68 before switching over
 - [ ] Create and edit albums
 - [ ] Choose an album cover — the mock currently picks one **at random**
@@ -376,6 +377,26 @@ The takedown promise stops depending on a macOS script and a person remembering 
 
 **Done when:** a committee member on a laptop, with no terminal, puts an album up — and a
 photograph with GPS in it arrives in the bucket with none.
+
+**It does not strip metadata; it never writes any.** The picture is re-encoded from a pixel
+buffer, so EXIF, GPS, camera, date, XMP, IPTC and the little preview image EXIF carries — which
+is the pre-crop picture, and the one people forget — are gone by construction rather than by
+having been carefully removed. And the original never leaves the machine: sending a 12MB
+photograph to a server to have its GPS taken off means the GPS was on the server.
+
+**Orientation is the trap.** The rotation a phone records lives in EXIF — inside the thing being
+thrown away. Decode without applying it first and every portrait photograph comes out on its
+side; it is the commonest bug in browser-side EXIF stripping. `imageOrientation: 'from-image'`
+is the whole fix.
+
+**It checks its own work.** The output is read back byte by byte and refused if anything survived,
+so the promise rests on the bytes rather than on the canvas having behaved. That refusal — *"do
+not upload"* and a non-zero exit — is the best line in `prepare-photos.mjs`.
+
+**What is not covered, honestly.** The canvas itself cannot be exercised in the test environment,
+so the three-line wrapper around `createImageBitmap` and `toBlob` has no test; everything it is
+handed to does. And the quality against `sips` at q70/q68 still wants one side-by-side look in a
+real browser before the back catalogue's successor goes through it.
 
 ---
 
@@ -472,3 +493,4 @@ invitation, so nothing to approve and no passwords to reset.
 | 2026-09-15 | 2 | Erasure, taking the registrations with it. Copy offered first, name typed to confirm, never your own and never the last admin. 425 → 437 tests. |
 | 2026-09-15 | 2 | Sign-in attempts answered from the screen; "add them" carries the address across. **Step 2 done.** 437 → 443 tests. |
 | 2026-09-15 | — | Order settled: interface first, database at the end — but the SQL gets run against a throwaway project early, rather than accumulating screens on top of SQL nobody has executed. |
+| 2026-09-15 | 4 | Photograph preparation: re-encode rather than strip, orientation applied first, output checked byte by byte before anything is sent. 443 → 472 tests. |
