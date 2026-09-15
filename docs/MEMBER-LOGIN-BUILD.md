@@ -494,6 +494,7 @@ The gate, not a formality. Nothing above matters if this is skipped.
 
 | Still open | Blocks |
 |---|---|
+| Does `setCover` get a way back onto a screen? Kept 2026-09-15, and unreachable meanwhile | Step 4 |
 | Event summaries: written, or drafted for editing? | Step 5 |
 | How an event reaches this site from the planner app | Step 3 |
 | Backups: does the R2 bucket need a second copy? *(to discuss)* | Step 6 |
@@ -506,7 +507,7 @@ The gate, not a formality. Nothing above matters if this is skipped.
 | **Profile photographs** | Placeholders, not real ones — which also means no faces stored, and so no takedown obligation created |
 | **Sponsors** | None. Dropped from step 4 |
 | **Uploads** | JPG, JPEG and PNG only |
-| **Retention** | One year for attendance records |
+| **Retention** | One year for the attendance rows; **the counts are kept for good** (confirmed 2026-09-15) |
 | **Erasure** | The registrations go too — decided 2026-09-15, and what `on delete cascade` already does |
 | **Committee CSV** | Built 2026-09-15 — household, contact, email, phone, adults, children, membership, paid to, role, in directory. **Columns still to review** |
 
@@ -519,12 +520,12 @@ iOS converts to JPEG when a photo is shared or emailed rather than copied off th
 upload screen has to say which formats it takes, out loud, rather than silently ignoring the
 files it cannot read.
 
-*A retention policy with nothing enforcing it is a sentence, not a policy.* One year means
-something has to actually delete those rows after a year: a scheduled job, or a job on the
-committee's list. And it collides with "preserve past attendance records" and the history
-timeline in the story — a year from now, last year's numbers are gone. The usual way out is to
-keep the counts and drop the names: aggregate per event, indefinitely; household-linked rows,
-twelve months. Worth confirming that is what was meant.
+*A retention policy with nothing enforcing it is a sentence, not a policy.* Confirmed
+2026-09-15: **the count survives, the names do not.** `event_attendance` holds how many came to
+each event and nothing about who; `close_year()` writes those totals and then deletes the rows
+behind them, in that order, because a number worked out after the deletion is a number nobody
+can work out. It still has to be scheduled — a `pg_cron` line is in the file, and without
+`pg_cron` it is a date in the committee's calendar. Neither happening is the failure mode.
 
 **Settled already:** event management lives in the separate planner app · registration stays on Google Forms and stays separate · no separate CMS,
 content goes in Supabase behind narrow admin forms · two roles, no role builder · membership is by
@@ -556,3 +557,4 @@ invitation, so nothing to approve and no passwords to reset.
 | 2026-09-15 | 5 | Announcements and news posts, with drafts and unpublishing. No rich text needed. Caught the audit wrapper recording nothing on two writes. 503 → 520 tests. |
 | 2026-09-15 | 4 | Photographs page reworked after review: open large, drag to reorder, trash on the picture. Kept arrow keys, since dragging has no keyboard path. 522 → 525 tests. |
 | 2026-09-15 | 5 | `/admin/content` wired — three buttons had done nothing. Caught a new post reading as "taken down". 525 → 533 tests. |
+| 2026-09-15 | — | Retention settled: the count is kept for good, the names for twelve months. `close_year()` counts before it deletes. 533 → 537 tests. |
