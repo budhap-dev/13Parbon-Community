@@ -73,7 +73,7 @@ hang off the household. "Add a member" means "add a household with people in it"
 | Manage membership status | Model is `active` \| `lapsed` with a `paidTo` date | Not "Active/Inactive". Lapsed is a status on the household, never a role — a lapsed member still signs in, they just see a renewal notice |
 | Import/export member data | Not built | Keep, and **do import first**: the committee already has the spreadsheet, and typing it back in by hand is a worse first day than a one-off import. Export doubles as the GDPR subject-access answer in §8 |
 | Reset member passwords | — | **Drop.** There are no passwords. Sign-in is Google only. The equivalent job — changing or unlinking the `googleEmail` on a household — belongs under "edit a household" |
-| Manage member profile photos | Nothing in the model; no avatar field | **Park, and a question.** A face on our server is a face we have promised to remove on request (§6). A directory of names works fine without one. Worth being sure the committee wants this before building the takedown path for it |
+| Manage member profile photos | Nothing in the model; no avatar field | **Answered 2026-09-15: placeholders, not photographs.** Which settles the worry rather than deferring it — a generated avatar is not a face, so nothing here is a picture anybody can ask us to take down |
 | View member activity history | Not built | Depends on the audit table in §8. The cheap useful half is already there in the domain: what this household has registered for (`listRegistrationsForHousehold`) |
 
 ---
@@ -152,7 +152,7 @@ exactly.
 | Add registration links | Built (`registrationUrl`, `performerFormUrl`) | — |
 | Add countdown timer | Built, in days | — |
 | Display event schedule | **New.** No running order in the model | Same field as "the programme" above. One feature, not two |
-| Highlight sponsors | **New.** Nothing in the model | A question before a feature: are there sponsors? If it is one or two local businesses, a line and a logo on the event page is the whole job |
+| Highlight sponsors | — | **Dropped 2026-09-15: there are none.** Nothing to build, and nothing left in the model owing it a field |
 
 ---
 
@@ -182,8 +182,8 @@ an operation on that bucket. [PHOTOS.md](PHOTOS.md) has the detail.
 
 | Asked for | Where it stands | Amendment |
 |---|---|---|
-| Upload photographs | `scripts/prepare-photos.mjs` plus a manual upload | An in-app upload must keep every guarantee the script makes: resize to 1600 and 600, **strip the metadata** — location, camera, date — and refuse to finish if any file still carries it |
-| Upload videos | **Nothing, anywhere** | **Decision needed.** R2's free tier is 10GB with free traffic; 63 photographs use a fraction of a percent of it and video would not. Embedding from YouTube is the cheap answer, at the cost of sending viewers somewhere with recommendations down the side |
+| Upload photographs | `scripts/prepare-photos.mjs` plus a manual upload | An in-app upload must keep every guarantee the script makes: resize to 1600 and 600, **strip the metadata** — location, camera, date — and refuse to finish if any file still carries it. **JPG, JPEG and PNG only** (2026-09-15), which is narrower than the script: it takes HEIC, and an iPhone shoots HEIC. The screen has to say which formats it takes rather than quietly ignoring the rest |
+| Upload videos | **Nothing, anywhere** | **Deferred 2026-09-15**, with a placeholder where it will go. The hosting question is untouched and still real: R2's free tier is 10GB with free traffic, which 63 photographs barely touch and video would not, so embedding from YouTube stays the cheap answer when it comes up |
 | Create albums | `Album` exists; nothing creates one | Keep |
 | Edit album details | Not built | Keep |
 | Reorder photographs | **New.** `Media` has no order; today the filename is the order (`-01`, `-02`) | Either add an order field or keep ordering by filename and say so. Renaming files in a bucket to reorder a page is not a thing to ask of anyone |

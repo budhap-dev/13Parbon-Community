@@ -3,6 +3,7 @@ import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { Button } from '@/components/Button'
 import { HouseholdForm } from '@/components/HouseholdForm'
 import { formatLongDate } from '@/domain/dates'
+import { committeeCsv, committeeCsvFilename } from '@/domain/committeeExport'
 import { describeSize, type Household } from '@/domain/household'
 import { useAddHousehold, useHouseholds, useSignInAttempts, useUpdateHousehold, useViewer } from '@/lib/api'
 import { useSignedIn } from '@/lib/auth/session'
@@ -20,6 +21,17 @@ export function AdminPeoplePage() {
   const [open, setOpen] = useState<Household | 'new' | null>(null)
 
   const neverSignedIn = households?.filter((h) => !h.googleEmail).length ?? 0
+
+  const saveList = () => {
+    if (!households?.length) return
+    const blob = new Blob([committeeCsv(households)], { type: 'text/csv;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = committeeCsvFilename(new Date().toISOString())
+    link.click()
+    setTimeout(() => URL.revokeObjectURL(url), 0)
+  }
   const saving = add.isPending || update.isPending
   const failure = add.isError ? add.error.message : update.isError ? update.error.message : undefined
 
@@ -69,9 +81,14 @@ export function AdminPeoplePage() {
             committee.
           </p>
         </div>
-        <Button variant="gold" size="sm" onClick={() => setOpen('new')}>
-          Add a household
-        </Button>
+        <div className={styles.actions}>
+          <Button variant="line" size="sm" onClick={saveList} disabled={!households?.length}>
+            Save the list
+          </Button>
+          <Button variant="gold" size="sm" onClick={() => setOpen('new')}>
+            Add a household
+          </Button>
+        </div>
       </div>
 
       {attempts && attempts.length > 0 ? (
@@ -194,6 +211,11 @@ export function AdminPeoplePage() {
           <p className={styles.note}>
             A household can only sign in with the Google address recorded here. Only an admin can change a role, and
             the portal will not let you remove your own admin rights if you are the last one.
+          </p>
+          <p className={styles.note}>
+            “Save the list” gives you a spreadsheet of households and headcounts — the numbers a caterer or a
+            treasurer asks for. It carries no children’s names, no notes about anybody, and no sign-in addresses,
+            because a file like that gets forwarded.
           </p>
         </div>
       </section>

@@ -6,7 +6,7 @@
 > **What this is:** the order of work from [MEMBER-LOGIN.md](MEMBER-LOGIN.md), broken into steps
 > that can be ticked off. That document says *what* and *why*; this one says *where we are*.
 >
-> **Last updated:** 2026-09-15 · **Current step:** 2 · **Ticked:** 42 of 83
+> **Last updated:** 2026-09-15 · **Current step:** 2 · **Ticked:** 44 of 84
 
 ## How this is kept
 
@@ -220,6 +220,7 @@ The data everything else hangs off.
 - [x] A member's own privacy choices: `listedInDirectory`, `shareEmail`, `sharePhone`
 - [x] Export a household as the GDPR subject-access answer — readable on the page, and savable
       as a file
+- [x] The committee's working list as a spreadsheet — counts, not names; safe to open
 - [ ] Delete a household — erasure, once it is decided what happens to their registrations
 
 **Done when:** a committee member adds a household that is not their own, that household signs in
@@ -239,6 +240,10 @@ the page — so a member who reaches the committee's route still cannot see the 
 contact form was hand-rolled against a `validate…()` helper in the domain. This follows that,
 rather than adding two dependencies to a mobile-first site that scores 100 on Lighthouse. Worth
 revisiting only if the forms get much harder than this one.
+
+**Both exports now exist.** Subject access is readable on the page with the file alongside;
+the committee's list is a CSV of households and headcounts. They were one box, and they wanted
+opposite instincts.
 
 **Two exports, not one.** The box said "export" and was hiding two different jobs. *Subject
 access* answers a household asking what we hold: it errs towards completeness and goes to them.
@@ -319,7 +324,7 @@ The takedown promise stops depending on a macOS script and a person remembering 
 - [ ] Presign endpoint (Vercel function) — R2 credentials cannot go in the browser
 - [ ] Client-side re-encode to 1600 and 600, which never writes metadata rather than stripping it
 - [ ] Apply EXIF orientation before discarding it, or portrait photographs come out sideways
-- [ ] Decide HEIC: accept JPEG/PNG only and say so, or carry a wasm decoder
+- [x] HEIC: **decided 2026-09-15** — JPG, JPEG and PNG only, and the screen says so
 - [ ] Verify the uploaded object server-side — carry over the script's refusal to publish anything still carrying metadata
 - [ ] Compare quality against `sips` at q70/q68 before switching over
 - [ ] Create and edit albums
@@ -369,16 +374,39 @@ The gate, not a formality. Nothing above matters if this is skipped.
 
 ## Open decisions, and what each one blocks
 
-| | Blocks |
+| Still open | Blocks |
 |---|---|
-| Video: host, embed, or leave out? | Step 4 |
-| Profile photographs: worth the takedown obligation? | Steps 2, 4 |
-| Sponsors: are there any? | Step 3 |
-| Retention: how long are attendance records kept, and is the audit trail exported before an erasure? | Steps 3, 6 |
-| Backups: does the R2 bucket need a second copy? | Step 6 |
 | Event summaries: written, or drafted for editing? | Step 5 |
 | How an event reaches this site from the planner app | Step 3 |
 | Erasure: what happens to a deleted household's registrations? | Step 2 |
+| Backups: does the R2 bucket need a second copy? *(to discuss)* | Step 6 |
+
+### Answered 2026-09-15
+
+| | |
+|---|---|
+| **Video** | Not needed now. A placeholder where it will go, and no hosting decision taken |
+| **Profile photographs** | Placeholders, not real ones — which also means no faces stored, and so no takedown obligation created |
+| **Sponsors** | None. Dropped from step 4 |
+| **Uploads** | JPG, JPEG and PNG only |
+| **Retention** | One year for attendance records |
+| **Committee CSV** | Built 2026-09-15 — household, contact, email, phone, adults, children, membership, paid to, role, in directory. **Columns still to review** |
+
+**Two consequences worth reading before those are final.**
+
+*No HEIC is a step back from the script.* `prepare-photos.mjs` accepts HEIC today because `sips`
+decodes it, and an iPhone shoots HEIC by default. So a committee member dragging photographs
+straight off a phone will be refused where the script would have coped. It is usually survivable —
+iOS converts to JPEG when a photo is shared or emailed rather than copied off the device — but the
+upload screen has to say which formats it takes, out loud, rather than silently ignoring the
+files it cannot read.
+
+*A retention policy with nothing enforcing it is a sentence, not a policy.* One year means
+something has to actually delete those rows after a year: a scheduled job, or a job on the
+committee's list. And it collides with "preserve past attendance records" and the history
+timeline in the story — a year from now, last year's numbers are gone. The usual way out is to
+keep the counts and drop the names: aggregate per event, indefinitely; household-linked rows,
+twelve months. Worth confirming that is what was meant.
 
 **Settled already:** event management lives in the separate planner app · registration stays on Google Forms and stays separate · no separate CMS,
 content goes in Supabase behind narrow admin forms · two roles, no role builder · membership is by
@@ -399,3 +427,5 @@ invitation, so nothing to approve and no passwords to reset.
 | 2026-09-15 | 2 | `addHousehold` / `updateHousehold`, audited, with the committee's columns refused from a member at the API. Wired into both pages. 378 → 397 tests. |
 | 2026-09-15 | 3 | Event management dropped: the committee already runs a separate planner app. Step 3 cut from ~4.5 days to ~1. |
 | 2026-09-15 | 2 | Subject-access export: readable on the page, savable as a file. Matched messages by address because they carry no household, and said out loud what it cannot answer about photographs. 397 → 414 tests. |
+| 2026-09-15 | — | Six decisions answered: no video for now, placeholder avatars, no sponsors, JPG/PNG/JPEG only, one-year retention, committee CSV to review. |
+| 2026-09-15 | 2 | Committee CSV: counts not names, and guarded against a household name that opens as a formula. 414 → 425 tests. |

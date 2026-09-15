@@ -307,6 +307,16 @@ describe('the committee managing households', () => {
     expect(screen.getByText(/Who should the committee speak to/)).toBeInTheDocument()
   })
 
+  it('offers the list as a spreadsheet, and says what it leaves out', async () => {
+    renderAt('/admin/people', admin)
+    // Wait for the households themselves: the button is there while they load, and correctly
+    // refuses to save a list it has not got yet.
+    await screen.findAllByRole('table')
+    expect(await screen.findByRole('button', { name: 'Save the list' })).toBeEnabled()
+    // The promise on the page has to match what committeeCsv actually does.
+    expect(screen.getByText(/no children’s names, no notes about anybody, and no sign-in addresses/)).toBeInTheDocument()
+  })
+
   it('opens a household from the list and changes its role', async () => {
     renderAt('/admin/people', admin)
     const [, table] = await screen.findAllByRole('table')
