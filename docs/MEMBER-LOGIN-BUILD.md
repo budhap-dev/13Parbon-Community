@@ -6,7 +6,7 @@
 > **What this is:** the order of work from [MEMBER-LOGIN.md](MEMBER-LOGIN.md), broken into steps
 > that can be ticked off. That document says *what* and *why*; this one says *where we are*.
 >
-> **Last updated:** 2026-09-15 · **Current step:** 2 · **Ticked:** 44 of 84
+> **Last updated:** 2026-09-15 · **Current step:** 2 · **Ticked:** 45 of 84
 
 ## How this is kept
 
@@ -27,7 +27,7 @@
 | — | The story, checked and amended | — | ✅ done 2026-09-15 |
 | 0 | Foundations | 8–11 | **done on mocks** — 0.2, 0.3, 0.4 complete; 0.1 and the running of it blocked on the project |
 | 1 | The smallest write, end to end | 0.5 | **mostly done** — brought forward into 0.2 |
-| 2 | Households | ~5 | **in progress** — form, mutations and both pages done; attempts, export and delete left |
+| 2 | Households | ~5 | **all but the sign-in attempts buttons** |
 | 3 | Events | ~1 | **mostly dropped** — the planner app owns it |
 | 4 | Media | ~4 | not started |
 | 5 | Content | ~4.5 | not started |
@@ -221,7 +221,7 @@ The data everything else hangs off.
 - [x] Export a household as the GDPR subject-access answer — readable on the page, and savable
       as a file
 - [x] The committee's working list as a spreadsheet — counts, not names; safe to open
-- [ ] Delete a household — erasure, once it is decided what happens to their registrations
+- [x] Delete a household — erasure, with the copy offered first and the name typed to confirm
 
 **Done when:** a committee member adds a household that is not their own, that household signs in
 with Google, sees their dashboard, and edits their own details. *(PLAN phase 2 exit criterion.)*
@@ -240,6 +240,14 @@ the page — so a member who reaches the committee's route still cannot see the 
 contact form was hand-rolled against a `validate…()` helper in the domain. This follows that,
 rather than adding two dependencies to a mobile-first site that scores 100 on Lighthouse. Worth
 revisiting only if the forms get much harder than this one.
+
+**Erasure takes the registrations with it** *(decided 2026-09-15)*. The cleaner reading, and what
+the schema already does. The cost is real and the screen says it out loud: past events lose those
+headcounts, so the attendance history thins out behind you. Three guards — never your own
+household, never the last admin, and the household's name typed to confirm, because a dialog is
+something people click through and this is not an action to lose to a misclick. The copy is
+offered in the same panel rather than somewhere else: afterwards it is the only record of that
+household that will exist, and *you should have taken one first* is a poor thing to say then.
 
 **Both exports now exist.** Subject access is readable on the page with the file alongside;
 the committee's list is a CSV of households and headcounts. They were one box, and they wanted
@@ -378,7 +386,6 @@ The gate, not a formality. Nothing above matters if this is skipped.
 |---|---|
 | Event summaries: written, or drafted for editing? | Step 5 |
 | How an event reaches this site from the planner app | Step 3 |
-| Erasure: what happens to a deleted household's registrations? | Step 2 |
 | Backups: does the R2 bucket need a second copy? *(to discuss)* | Step 6 |
 
 ### Answered 2026-09-15
@@ -390,6 +397,7 @@ The gate, not a formality. Nothing above matters if this is skipped.
 | **Sponsors** | None. Dropped from step 4 |
 | **Uploads** | JPG, JPEG and PNG only |
 | **Retention** | One year for attendance records |
+| **Erasure** | The registrations go too — decided 2026-09-15, and what `on delete cascade` already does |
 | **Committee CSV** | Built 2026-09-15 — household, contact, email, phone, adults, children, membership, paid to, role, in directory. **Columns still to review** |
 
 **Two consequences worth reading before those are final.**
@@ -429,3 +437,4 @@ invitation, so nothing to approve and no passwords to reset.
 | 2026-09-15 | 2 | Subject-access export: readable on the page, savable as a file. Matched messages by address because they carry no household, and said out loud what it cannot answer about photographs. 397 → 414 tests. |
 | 2026-09-15 | — | Six decisions answered: no video for now, placeholder avatars, no sponsors, JPG/PNG/JPEG only, one-year retention, committee CSV to review. |
 | 2026-09-15 | 2 | Committee CSV: counts not names, and guarded against a household name that opens as a formula. 414 → 425 tests. |
+| 2026-09-15 | 2 | Erasure, taking the registrations with it. Copy offered first, name typed to confirm, never your own and never the last admin. 425 → 437 tests. |

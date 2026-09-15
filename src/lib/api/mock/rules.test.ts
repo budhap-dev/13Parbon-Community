@@ -273,6 +273,58 @@ describe('the committee managing households', () => {
   })
 })
 
+describe('erasing a household', () => {
+  it('is not a member\'s to do', async () => {
+    await expect(api().portal.deleteHousehold('hh-ghosh', member)).rejects.toThrow(/committee/i)
+  })
+
+  it('takes the household, the people in it and what they were recorded at', async () => {
+    const a = api()
+    const before = await a.portal.listRegistrationsForHousehold('hh-sen', admin)
+    expect(before.length).toBeGreaterThan(0)
+
+    await a.portal.deleteHousehold('hh-sen', admin)
+
+    expect(await a.portal.getHousehold('hh-sen', admin)).toBeNull()
+    // Decided 2026-09-15: the registrations go too. This is what on delete cascade does.
+    expect(await a.portal.listRegistrationsForHousehold('hh-sen', admin)).toEqual([])
+  })
+
+  it('takes them out of the directory as well', async () => {
+    const a = api()
+    await a.portal.deleteHousehold('hh-sen', admin)
+    const entries = await a.portal.listDirectory(otherMember)
+    expect(entries.some((e) => e.id === 'hh-sen')).toBe(false)
+  })
+
+  it('frees the Google address, so they can be invited back', async () => {
+    const a = api()
+    await a.portal.deleteHousehold('hh-sen', admin)
+    expect(await a.portal.identify('rina.sen@gmail.com')).toBeNull()
+  })
+
+  it('refuses an admin removing their own household', async () => {
+    const a = api()
+    await expect(a.portal.deleteHousehold('hh-chatterjee', admin)).rejects.toThrow(/your own/i)
+  })
+
+  it('refuses the last admin, so the committee cannot erase its way out', async () => {
+    const a = api()
+    const admins = (await a.portal.listHouseholds(admin)).filter((h) => h.role === 'admin')
+    const others = admins.filter((h) => h.id !== 'hh-chatterjee')
+    for (const h of others) await a.portal.deleteHousehold(h.id, admin)
+    // Only the acting admin is left, and they are refused twice over.
+    await expect(a.portal.deleteHousehold('hh-chatterjee', admin)).rejects.toThrow(/your own/i)
+  })
+
+  it('says nothing about a household that was never there', async () => {
+    await expect(api().portal.deleteHousehold('hh-nothing', admin)).rejects.toThrow(/no such household/i)
+  })
+
+  // The trail is the wrapper's job, so what erasure leaves behind is checked in audit.test.ts.
+  // This file tests the bare mock on purpose: these are the rules, not the recording of them.
+})
+
 describe('identifying somebody at sign-in', () => {
   it('finds the household recorded against an address', async () => {
     const who = await api().portal.identify('rina.sen@gmail.com')

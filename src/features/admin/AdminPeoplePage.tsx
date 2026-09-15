@@ -2,10 +2,19 @@ import { useState } from 'react'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { Button } from '@/components/Button'
 import { HouseholdForm } from '@/components/HouseholdForm'
+import { RemoveHousehold } from '@/components/RemoveHousehold'
 import { formatLongDate } from '@/domain/dates'
 import { committeeCsv, committeeCsvFilename } from '@/domain/committeeExport'
 import { describeSize, type Household } from '@/domain/household'
-import { useAddHousehold, useHouseholds, useSignInAttempts, useUpdateHousehold, useViewer } from '@/lib/api'
+import {
+  useAddHousehold,
+  useDeleteHousehold,
+  useHouseholdExport,
+  useHouseholds,
+  useSignInAttempts,
+  useUpdateHousehold,
+  useViewer,
+} from '@/lib/api'
 import { useSignedIn } from '@/lib/auth/session'
 import styles from '@/features/portal/Portal.module.css'
 
@@ -17,8 +26,14 @@ export function AdminPeoplePage() {
   const { data: attempts } = useSignInAttempts()
   const add = useAddHousehold()
   const update = useUpdateHousehold()
+  const remove = useDeleteHousehold()
+  const [open, setOpenRaw] = useState<Household | 'new' | null>(null)
+  const copy = useHouseholdExport(open && open !== 'new' ? open.id : undefined)
   // null is closed, 'new' is the invitation form, a household is that one being edited.
-  const [open, setOpen] = useState<Household | 'new' | null>(null)
+  const setOpen = (next: Household | 'new' | null) => {
+    remove.reset()
+    setOpenRaw(next)
+  }
 
   const neverSignedIn = households?.filter((h) => !h.googleEmail).length ?? 0
 
@@ -67,6 +82,27 @@ export function AdminPeoplePage() {
             />
           </div>
         </section>
+
+        {!adding && open.id !== who?.householdId ? (
+          <section className={styles.panel} aria-labelledby="remove-title">
+            <div className={styles.panelHead}>
+              <h2 id="remove-title" className={styles.panelTitle}>
+                Removing them
+              </h2>
+            </div>
+            <div className={styles.pad}>
+              <RemoveHousehold
+                household={open}
+                removing={remove.isPending}
+                error={remove.isError ? remove.error.message : undefined}
+                copy={copy.data}
+                gatheringCopy={copy.isFetching}
+                onAskForCopy={() => void copy.refetch()}
+                onRemove={() => remove.mutate(open.id, { onSuccess: () => setOpen(null) })}
+              />
+            </div>
+          </section>
+        ) : null}
       </div>
     )
   }

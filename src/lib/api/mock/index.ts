@@ -308,6 +308,31 @@ export function createMockApi({ now = () => new Date(), latencyMs = 0, events }:
         return delay(result, latencyMs)
       },
 
+      deleteHousehold: (id, viewer) => {
+        if (!isAdmin(viewer)) return Promise.reject(new NotAllowed('only the committee can remove a household'))
+        const index = portal.households.findIndex((h) => h.id === id)
+        if (index === -1) return Promise.reject(new NotAllowed('no such household'))
+
+        // Not your own: an admin removing themselves is almost always a misclick, and there is
+        // nobody left on that side of the screen to undo it.
+        if (viewer.householdId === id) {
+          return Promise.reject(new NotAllowed('you cannot remove your own household'))
+        }
+        if (
+          portal.households[index].role === 'admin' &&
+          portal.households.filter((h) => h.role === 'admin').length <= 1
+        ) {
+          return Promise.reject(new NotAllowed('that is the last admin — make somebody else one first'))
+        }
+
+        portal.households.splice(index, 1)
+        // What `on delete cascade` does in Postgres. Decided: the registrations go too.
+        for (let i = portal.registrations.length - 1; i >= 0; i -= 1) {
+          if (portal.registrations[i].householdId === id) portal.registrations.splice(i, 1)
+        }
+        return delay(undefined, latencyMs)
+      },
+
       updateHousehold: (id, draft, viewer) => {
         const existing = portal.households.find((h) => h.id === id)
         // Not found and not allowed give the same answer, as everywhere else here.

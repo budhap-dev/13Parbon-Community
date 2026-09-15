@@ -32,7 +32,7 @@ const READS = [
 ]
 
 /** Writes that leave a line in the trail. */
-const AUDITED = ['contact.markHandled', 'portal.addHousehold', 'portal.updateHousehold']
+const AUDITED = ['contact.markHandled', 'portal.addHousehold', 'portal.updateHousehold', 'portal.deleteHousehold']
 
 /**
  * Writes that deliberately do not. `send` matches the trigger, which is attached to
@@ -115,6 +115,18 @@ describe('the audit trail', () => {
     await a.contact.markHandled(message.id, admin)
     // Twice, same value the second time. One line, not two.
     expect(await a.audit.list(admin)).toHaveLength(1)
+  })
+
+  it('says what an erased household was, since nothing else will', async () => {
+    const a = api()
+    await a.portal.deleteHousehold('hh-sen', admin)
+
+    const [entry] = await a.audit.list(admin)
+    expect(entry.action).toBe('household:remove')
+    expect(entry.subject).toEqual({ kind: 'households', id: 'hh-sen' })
+    // Read before the row went: afterwards there is nothing left to describe.
+    expect(entry.changes.name.from).toBe('The Sens')
+    expect(entry.changes.name.to).toBeUndefined()
   })
 
   it('reads newest first, and stops where it is asked to', async () => {

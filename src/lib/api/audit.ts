@@ -81,6 +81,12 @@ export function withAuditTrail(base: ApiClient, now: () => Date = () => new Date
       // The trail lives here, so the part of an export that comes from it is filled in here
       // too. Which fields moved, never who moved them: a household is entitled to know its
       // membership was marked lapsed; which committee member did it is a fact about them.
+      deleteHousehold: async (id, viewer) => {
+        // Read before the row is gone, or there is nothing left to say what was removed.
+        const was = await base.portal.getHousehold(id, viewer).then((h) => (h ? flatten(h) : {}))
+        await base.portal.deleteHousehold(id, viewer)
+        record(viewer, 'household:remove', { kind: 'households', id }, was, {})
+      },
       exportHousehold: async (id, viewer) => {
         const result = await base.portal.exportHousehold(id, viewer)
         return {

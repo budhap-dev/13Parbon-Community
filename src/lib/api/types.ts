@@ -121,6 +121,17 @@ export interface ApiClient {
      * household did goes with it.
      */
     exportHousehold(id: string, viewer: Viewer): Promise<HouseholdExport>
+    /**
+     * Erases a household: the record, everybody in it, and everything they were recorded at.
+     *
+     * Decided 2026-09-15 — the registrations go too, which is what the schema already does
+     * (`on delete cascade`) and the cleaner reading of erasure. The cost is real and worth
+     * stating: past events lose those headcounts, so the attendance history thins out behind
+     * you. Take the export first; it is the only copy there will be.
+     *
+     * Admin only, never your own household, and never the last admin.
+     */
+    deleteHousehold(id: string, viewer: Viewer): Promise<void>
   }
   /**
    * What has been changed, and by whom. Written by `withAuditTrail` here and by a trigger in

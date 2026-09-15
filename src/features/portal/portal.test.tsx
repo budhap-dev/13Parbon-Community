@@ -317,6 +317,53 @@ describe('the committee managing households', () => {
     expect(screen.getByText(/no children’s names, no notes about anybody, and no sign-in addresses/)).toBeInTheDocument()
   })
 
+  it('will not erase a household on one click', async () => {
+    renderAt('/admin/people', admin)
+    const [, table] = await screen.findAllByRole('table')
+    await userEvent.click(within(table).getByRole('row', { name: /The Sens/ }).querySelector('button')!)
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Remove this household' }))
+    // The confirm stays shut until the name is typed, so this cannot go to a misclick.
+    expect(screen.getByRole('button', { name: 'Remove permanently' })).toBeDisabled()
+
+    await userEvent.type(screen.getByLabelText(/Type .* to confirm/), 'The Sens')
+    expect(screen.getByRole('button', { name: 'Remove permanently' })).toBeEnabled()
+  })
+
+  it('offers the copy in the same place, before anything is erased', async () => {
+    renderAt('/admin/people', admin)
+    const [, table] = await screen.findAllByRole('table')
+    await userEvent.click(within(table).getByRole('row', { name: /The Sens/ }).querySelector('button')!)
+    await userEvent.click(await screen.findByRole('button', { name: 'Remove this household' }))
+
+    // "You should have taken a copy first" is a poor thing to say afterwards.
+    expect(screen.getByText(/Take a copy first/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Show me everything you hold/ })).toBeInTheDocument()
+  })
+
+  it('erases the household, and it leaves the list', async () => {
+    renderAt('/admin/people', admin)
+    const [, table] = await screen.findAllByRole('table')
+    await userEvent.click(within(table).getByRole('row', { name: /The Sens/ }).querySelector('button')!)
+    await userEvent.click(await screen.findByRole('button', { name: 'Remove this household' }))
+    await userEvent.type(screen.getByLabelText(/Type .* to confirm/), 'The Sens')
+    await userEvent.click(screen.getByRole('button', { name: 'Remove permanently' }))
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'People' })).toBeInTheDocument()
+    const [, after] = await screen.findAllByRole('table')
+    expect(within(after).queryByRole('row', { name: /The Sens/ })).not.toBeInTheDocument()
+  })
+
+  it('does not offer to erase the committee member doing the looking', async () => {
+    renderAt('/admin/people', admin)
+    const [, table] = await screen.findAllByRole('table')
+    const own = within(table).getByRole('row', { name: /The Chatterjees/ })
+    await userEvent.click(own.querySelector('button')!)
+
+    await screen.findByLabelText('Household name')
+    expect(screen.queryByRole('button', { name: 'Remove this household' })).not.toBeInTheDocument()
+  })
+
   it('opens a household from the list and changes its role', async () => {
     renderAt('/admin/people', admin)
     const [, table] = await screen.findAllByRole('table')
