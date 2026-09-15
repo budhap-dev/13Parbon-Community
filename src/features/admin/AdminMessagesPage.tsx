@@ -3,13 +3,15 @@ import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { Button } from '@/components/Button'
 import { formatLongDate, formatTime } from '@/domain/dates'
 import { paragraphs } from '@/domain/news'
-import { useContactMessages, useMarkMessageHandled } from '@/lib/api'
+import { useContactMessages, useMarkMessageHandled, useViewer } from '@/lib/api'
+import { can } from '@/lib/auth/permissions'
 import styles from '@/features/portal/Portal.module.css'
 
 export function AdminMessagesPage() {
   useDocumentTitle('Messages')
   const { data: messages, isPending } = useContactMessages()
   const markHandled = useMarkMessageHandled()
+  const mayHandle = can(useViewer(), 'messages:handle')
   const [openId, setOpenId] = useState<string | null>(null)
 
   const list = messages ?? []
@@ -89,7 +91,7 @@ export function AdminMessagesPage() {
                   <Button
                     variant="line"
                     size="sm"
-                    disabled={Boolean(open.handledBy) || markHandled.isPending}
+                    disabled={!mayHandle || Boolean(open.handledBy) || markHandled.isPending}
                     onClick={() => markHandled.mutate(open.id)}
                   >
                     {open.handledBy ? 'Handled' : markHandled.isPending ? 'Marking…' : 'Mark handled'}

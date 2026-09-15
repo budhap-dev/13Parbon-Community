@@ -4,7 +4,8 @@ import { site } from '@/app/site'
 import { Icon, type IconName } from '@/components/Icon'
 import { useGoogleSignIn } from '@/lib/auth/GoogleSignIn'
 import { useSignedIn } from '@/lib/auth/session'
-import { useSignInAttempts } from '@/lib/api'
+import { useSignInAttempts, useViewer } from '@/lib/api'
+import { can } from '@/lib/auth/permissions'
 import styles from './PortalLayout.module.css'
 
 type Item = { label: string; to: string; icon: IconName; end?: boolean; count?: number }
@@ -18,6 +19,8 @@ const memberNav: Item[] = [
 
 export function PortalLayout() {
   const who = useSignedIn()
+  // The same answer that guards the routes, so the navigation cannot offer a door that shuts.
+  const onTheCommittee = can(useViewer(), 'admin:enter')
   const { signOut } = useGoogleSignIn()
   const { pathname } = useLocation()
   const mainRef = useRef<HTMLElement>(null)
@@ -73,7 +76,7 @@ export function PortalLayout() {
           <span>{site.wordmark}</span>
         </Link>
         <nav aria-label="Your household">{renderGroup('Your household', memberNav)}</nav>
-        {who.role === 'admin' ? (
+        {onTheCommittee ? (
           <>
             <nav aria-label="Committee">{renderGroup('Committee', committeeNav)}</nav>
             <nav aria-label="Other tools">

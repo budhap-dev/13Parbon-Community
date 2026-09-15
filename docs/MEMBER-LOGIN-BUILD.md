@@ -6,7 +6,7 @@
 > **What this is:** the order of work from [MEMBER-LOGIN.md](MEMBER-LOGIN.md), broken into steps
 > that can be ticked off. That document says *what* and *why*; this one says *where we are*.
 >
-> **Last updated:** 2026-09-15 · **Current step:** 0.2 · **Ticked:** 22 of 82
+> **Last updated:** 2026-09-15 · **Current step:** 0.4 · **Ticked:** 26 of 84
 
 ## How this is kept
 
@@ -25,7 +25,7 @@
 | Step | | Days | Status |
 |---|---|---|---|
 | — | The story, checked and amended | — | ✅ done 2026-09-15 |
-| 0 | Foundations | 8–11 | **in progress** — 0.1 written (blocked on the project), 0.2 done on mocks |
+| 0 | Foundations | 8–11 | **in progress** — 0.1 blocked on the project, 0.2 and 0.4 done, 0.3 next |
 | 1 | The smallest write, end to end | 0.5 | **mostly done** — brought forward into 0.2 |
 | 2 | Households | ~5 | not started |
 | 3 | Events | ~4.5 | not started |
@@ -140,11 +140,26 @@ the mistakes were made.
 
 ### 0.4 One place that answers "may they?" · 0.5–1 day
 
-- [ ] `can(user, action, resource)` in `src/lib/auth/permissions.ts` — planned in PLAN §2, never written
-- [ ] Table-driven tests for every role × action
-- [ ] Routes and buttons ask `can()` rather than checking `role === 'admin'` inline
+- [x] `can(viewer, action, resource)` in `src/lib/auth/permissions.ts` — planned in PLAN §2, never written until now
+- [x] Table-driven tests for every role × action — 82 of them
+- [x] `RequireSession`, the portal navigation and the first button all ask `can()`
+- [x] `canStopBeingAdmin()`, so the committee cannot lock itself out
+- [ ] A database guard for the last admin — `canStopBeingAdmin` is a courtesy until there is one
 
-**Done when:** the permission tests fail if a rule changes.
+**Done when:** the permission tests fail if a rule changes. *Better than that in the end: the
+table is typed `Record<Action, …>`, so adding an action without deciding who may do it fails to
+compile. A permission with no stated answer is exactly the kind that defaults to whatever the
+first caller assumed.*
+
+**Deliberately the weakest of the three enforcers.** It runs in the browser, so it decides what
+the app *shows*, never what anybody can *reach* — someone editing their own JavaScript can make
+every `can()` return true and still get nothing back, because the policies do not ask this file's
+opinion. Its job is to stop a person being offered a button that was only ever going to fail.
+Every rule in it names the policy it mirrors.
+
+**Left alone on purpose:** the role *pills* in `PortalLayout`, `AdminPeoplePage` and `LoginPage`.
+Those display what somebody is; they do not decide what somebody may do. Routing a label through
+a permission check would make `can()` look like it governs more than it does.
 
 ---
 
@@ -171,7 +186,7 @@ The data everything else hangs off.
 - [ ] Edit a household, committee-side
 - [ ] Record and change `googleEmail` — this is what "reset password" actually means here
 - [ ] Set membership status (`active` / `lapsed`) and `paidTo`
-- [ ] Assign the `admin` role, **and refuse to remove the last admin**
+- [ ] Assign the `admin` role, **and refuse to remove the last admin** — `canStopBeingAdmin()` is written and tested; it still needs a constraint behind it
 - [ ] Sign-in attempts: add them, or mark resolved — the list is already on the page, read-only
 - [ ] A member editing their own household: same form, different permissions
 - [ ] A member's own privacy choices: `listedInDirectory`, `shareEmail`, `sharePhone`
@@ -280,3 +295,4 @@ invitation, so nothing to approve and no passwords to reset.
 | 2026-09-15 | — | The committee's eight-section list checked against the repo and amended. Branch opened. |
 | 2026-09-15 | 0.1 | `portal.sql` and `verify.sql` rewritten. Three known faults fixed, three more found. Not run: no Supabase project yet. |
 | 2026-09-15 | 0.2 | Contract narrowed and given a viewer; the mock now refuses what the policies refuse. Found the directory handing whole households to the browser. First write shipped. 228 → 255 tests. |
+| 2026-09-15 | 0.4 | `can()` written, every rule naming the policy it mirrors. Route guard, navigation and the first button all ask it. 255 → 337 tests, coverage 90%. |
