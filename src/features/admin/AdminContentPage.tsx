@@ -17,16 +17,10 @@ import {
 } from '@/lib/api'
 import { useNow } from '@/lib/clock'
 import { useSettings } from '@/app/SettingsContext'
+import { countGaps, gapsNow } from '@/app/gaps'
 import styles from '@/features/portal/Portal.module.css'
 import { AnnouncementForm, NewsForm } from './ContentForms'
 import { SiteSwitches } from './SiteSwitches'
-
-/** Gaps the committee still has to fill, counted from the content files. */
-const gaps = [
-  { page: 'Home page', detail: 'headline, who we are, join box', count: 7 },
-  { page: 'About us', detail: 'story, committee names, FAQ', count: 13 },
-  { page: 'Privacy', detail: 'legal name, review date', count: 4 },
-]
 
 export function AdminContentPage() {
   useDocumentTitle('Content')
@@ -34,7 +28,8 @@ export function AdminContentPage() {
   const { data: announcements } = useAllAnnouncements()
   const { data: albums } = useAlbums()
   const { data: newsletters } = useNewsletters()
-  const totalGaps = gaps.reduce((n, g) => n + g.count, 0)
+  const gaps = gapsNow()
+  const totalGaps = countGaps(gaps)
 
   const createPost = useCreatePost()
   const updatePost = useUpdatePost()
@@ -130,8 +125,17 @@ export function AdminContentPage() {
       </div>
 
       <p className={styles.note}>
-        <strong>{totalGaps} gaps still showing publicly.</strong> Anything written in square brackets is visible to
-        visitors exactly as it appears in the content files.
+        {totalGaps === 0 ? (
+          <strong>Nothing left in brackets.</strong>
+        ) : (
+          <>
+            <strong>
+              {totalGaps} {totalGaps === 1 ? 'gap' : 'gaps'} still showing publicly.
+            </strong>{' '}
+            Anything written in square brackets is visible to visitors exactly as it appears.
+          </>
+        )}{' '}
+        Counted from the pages themselves, so this cannot go stale.
       </p>
 
       <section className={styles.panel} aria-labelledby="pages-title">
@@ -156,9 +160,15 @@ export function AdminContentPage() {
                   <td>
                     <strong>{gap.page}</strong>
                   </td>
-                  <td className={`${styles.muted} ${styles.tiny}`}>{gap.detail}</td>
+                  <td className={`${styles.muted} ${styles.tiny}`}>
+                    {/* Which ones, not just how many. "13 to fill in" sends somebody looking
+                        through a file; naming them sends them to the line. */}
+                    {gap.where.length > 0 ? gap.where.join(', ') : 'Nothing in brackets'}
+                  </td>
                   <td>
-                    <span className={styles.pillWait}>{gap.count} to fill in</span>
+                    <span className={gap.where.length > 0 ? styles.pillWait : styles.pillLive}>
+                      {gap.where.length > 0 ? `${gap.where.length} to fill in` : 'Done'}
+                    </span>
                   </td>
                 </tr>
               ))}

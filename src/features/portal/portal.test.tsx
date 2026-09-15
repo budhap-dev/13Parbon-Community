@@ -179,10 +179,21 @@ describe('committee pages', () => {
     expect(screen.queryByRole('navigation', { name: 'Other tools' })).not.toBeInTheDocument()
   })
 
-  it('counts the gaps still showing on the public site', async () => {
+  it('counts the gaps from the pages themselves, not from a number somebody typed', async () => {
     renderAt('/admin/content', admin)
-    expect(await screen.findByText(/24 gaps still showing publicly/)).toBeInTheDocument()
+    // It said 24 — 7, 13 and 4, written when the pages were built and never recounted. By the
+    // time anybody looked, the committee had filled in all but one of them.
+    expect(await screen.findByText(/1 gap still showing publicly/)).toBeInTheDocument()
+    expect(screen.getByText(/cannot go stale/)).toBeInTheDocument()
     expect(screen.getByText('Home page')).toBeInTheDocument()
+  })
+
+  it('names which ones, rather than sending somebody looking through a file', async () => {
+    renderAt('/admin/content', admin)
+    await screen.findByText('Home page')
+    expect(screen.getByText('missionStatement')).toBeInTheDocument()
+    // And says so plainly where a page is finished.
+    expect(screen.getAllByText('Nothing in brackets').length).toBeGreaterThan(0)
   })
 
   it('opens a message from the inbox', async () => {
