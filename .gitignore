@@ -30,8 +30,11 @@ coverage
 .env.local
 .env*.local
 
-# Draft Supabase policies, not ready to ship. The helper functions reference tables before
-# they exist, current_setting(...)::jsonb can throw, and the auth.users triggers could block
-# sign-in. Kept locally until they are fixed and verified against a real project.
+# Supabase policies, held back until they have actually been run. The three faults this note
+# used to list are fixed (2026-09-15, feat/member-login): the helpers no longer reference
+# tables before they exist, auth.jwt() replaces current_setting(...)::jsonb, and the
+# auth.users triggers can no longer fail a sign-in. What is still missing is a project to run
+# them against — see docs/MEMBER-LOGIN-BUILD.md step 0.1. Untrack these once verify.sql has
+# passed there, because unverified policies read as promises the database has not made.
 supabase/portal.sql
 supabase/verify.sql
