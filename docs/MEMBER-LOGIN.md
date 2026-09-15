@@ -239,6 +239,9 @@ Not criticism of the list — these are the pieces that fall between its heading
 
 ## Order of work, when it is picked up
 
+Broken into steps that can be ticked off in [MEMBER-LOGIN-BUILD.md](MEMBER-LOGIN-BUILD.md),
+which is where progress is kept. This table is the reasoning behind the order.
+
 | | Why first |
 |---|---|
 | 1. Correct `supabase/portal.sql`, row level security on every table | Nothing real can be stored until this is right, and it is free to do while the data is fake |
