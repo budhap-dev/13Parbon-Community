@@ -25,5 +25,7 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run typecheck
-      - run: npm run test
+      # Coverage, not plain test: vite.config.ts sets a 70% floor and nothing was checking
+      # it, so the threshold had been decoration since it was written.
+      - run: npm run test:coverage
       - run: npm run build

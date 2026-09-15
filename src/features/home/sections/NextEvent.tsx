@@ -14,7 +14,10 @@ export function NextEvent() {
   if (isPending) {
     return (
       <Container>
-        <div className={styles.eventSkeleton} aria-busy="true" aria-label="Loading the next event" />
+        {/* role="status", because a bare div may not carry aria-label: ARIA prohibits it on
+            anything with no role, so this announced nothing at all. Every other placeholder in
+            the app is a <p> with words in it, which is why only this one was wrong. */}
+        <div className={styles.eventSkeleton} role="status" aria-busy="true" aria-label="Loading the next event" />
       </Container>
     )
   }

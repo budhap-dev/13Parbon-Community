@@ -27,7 +27,12 @@ export default defineConfig({
       provider: 'v8',
       include: ['src/**/*.{ts,tsx}'],
       exclude: ['src/main.tsx', 'src/test/**', 'src/**/*.d.ts', 'src/**/*.test.{ts,tsx}'],
-      thresholds: { branches: 70, functions: 70, lines: 70, statements: 70 },
+      /*
+       * Raised from 70 once CI actually started checking it. The suite has sat near 90 for a
+       * while; a floor well under where you are is a floor that never catches anything, and the
+       * point of one is to notice the day a screen arrives with no tests behind it.
+       */
+      thresholds: { branches: 78, functions: 85, lines: 88, statements: 86 },
     },
   },
 })

@@ -6,7 +6,7 @@
 > **What this is:** the order of work from [MEMBER-LOGIN.md](MEMBER-LOGIN.md), broken into steps
 > that can be ticked off. That document says *what* and *why*; this one says *where we are*.
 >
-> **Last updated:** 2026-09-15 · **Current step:** 4 · **Ticked:** 68 of 91
+> **Last updated:** 2026-09-15 · **Current step:** 4 · **Ticked:** 70 of 91
 
 ## How this is kept
 
@@ -605,8 +605,24 @@ it were new. `hidden` carries the taking-down; the date stays.
 
 The gate, not a formality. Nothing above matters if this is skipped.
 
-- [ ] Coverage still above the floor, and the floor raised
-- [ ] `vitest-axe` passing on every new page
+**Two of the project's own standards were not being met, and nothing said so** *(fixed
+2026-09-15)*. PLAN §7 asked for `vitest-axe` on every page-level component; it had never been
+installed, so a dozen screens went up on a project whose story says grandparents are first-class
+users with nothing checking them. And `vite.config.ts` set a coverage floor of 70% that CI never
+ran — it called `npm run test`, not `test:coverage`, so the threshold had been decoration since
+it was written and the suite would have passed at 40%.
+
+Both are real now: seventeen pages audited one test each, so a failure names the page, and the
+floor is raised to where the suite actually sits. A floor well under where you are never catches
+anything, and the point of one is to notice the day a screen arrives with nothing behind it.
+
+**The audit is the automated half, and the helper says so.** axe finds missing labels, unlabelled
+controls, bad heading order and broken landmarks. It cannot tell whether a label makes sense,
+whether focus lands anywhere useful, or whether alt text describes the picture. Contrast is off
+because jsdom does not paint — that one belongs in a browser.
+
+- [x] Coverage above the floor, the floor raised, **and CI actually checking it**
+- [x] `vitest-axe` passing on every page — public, portal and committee
 - [ ] RLS verified once more, from a browser, as a member
 - [ ] The audit table has rows in it from real use, not tests
 - [ ] `main` merged in, conflicts resolved
@@ -684,6 +700,7 @@ invitation, so nothing to approve and no passwords to reset.
 | 2026-09-15 | 5 | `/admin/content` wired — three buttons had done nothing. Caught a new post reading as "taken down". 525 → 533 tests. |
 | 2026-09-15 | — | Retention settled: the count is kept for good, the names for twelve months. `close_year()` counts before it deletes. 533 → 537 tests. |
 | 2026-09-15 | 3 | The committee types the headcount in. 537 → 551 tests. |
+| 2026-09-15 | 6 | Accessibility audited on every page and coverage enforced in CI — both had been stated standards nobody checked. Found the home page's loading placeholder announcing nothing. 634 → 651 tests. |
 | 2026-09-15 | 5 | The gap count computed rather than typed, and seven pending strings made editable. 620 → 628 tests. |
 | 2026-09-15 | 4 | The browser half of uploading a photograph, off until a bucket is configured. 607 → 619 tests. |
 | 2026-09-15 | 3 | A cancelled evening stops disappearing and starts saying so. 592 → 600 tests. |
