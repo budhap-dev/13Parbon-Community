@@ -4,9 +4,12 @@ import {
   HOME_SECTIONS,
   HOME_SECTION_LABELS,
   SETTING_LABELS,
+  SITE_TEXT_FIELDS,
+  SITE_TEXT_KEYS,
   type SectionAudience,
   type SiteSettings,
 } from '@/domain/settings'
+import { isPlaceholder } from '@/app/site'
 import styles from './ContentForms.module.css'
 
 const AUDIENCES: { value: SectionAudience; label: string }[] = [
@@ -37,7 +40,11 @@ export function SiteSwitches({
   saved?: boolean
   error?: string
 }) {
-  const [draft, setDraft] = useState<SiteSettings>(() => ({ ...settings, home: { ...settings.home } }))
+  const [draft, setDraft] = useState<SiteSettings>(() => ({
+    ...settings,
+    home: { ...settings.home },
+    text: { ...settings.text },
+  }))
   const changed = JSON.stringify(draft) !== JSON.stringify(settings)
 
   return (
@@ -67,6 +74,49 @@ export function SiteSwitches({
             </span>
           </div>
         ))}
+      </fieldset>
+
+      <fieldset className={styles.form} style={{ border: 0, margin: 0, padding: 0 }}>
+        <legend className={styles.label}>The words on the public pages</legend>
+        <p className={styles.hint}>
+          Only the lines that change. The FAQ, the committee list and the captions under the theme
+          photographs still live in the files — ask a developer for those.
+        </p>
+        {SITE_TEXT_KEYS.map((key) => {
+          const field = SITE_TEXT_FIELDS[key]
+          const bracketed = isPlaceholder(draft.text[key] ?? '')
+          return (
+            <div key={key} className={styles.field}>
+              <label className={styles.label} htmlFor={`text-${key}`}>
+                {field.label}
+              </label>
+              {field.lines ? (
+                <textarea
+                  id={`text-${key}`}
+                  className={styles.textarea}
+                  rows={field.lines}
+                  value={draft.text[key] ?? ''}
+                  aria-describedby={`text-${key}-note`}
+                  onChange={(e) => setDraft({ ...draft, text: { ...draft.text, [key]: e.target.value } })}
+                />
+              ) : (
+                <input
+                  id={`text-${key}`}
+                  className={styles.input}
+                  value={draft.text[key] ?? ''}
+                  aria-describedby={`text-${key}-note`}
+                  onChange={(e) => setDraft({ ...draft, text: { ...draft.text, [key]: e.target.value } })}
+                />
+              )}
+              <p id={`text-${key}-note`} className={styles.hint}>
+                {field.note}
+                {/* The bracket convention is the one thing about these files somebody has to be
+                    told, and this is the moment they would meet it. */}
+                {bracketed ? ' Still in brackets, so visitors are shown nothing here.' : ''}
+              </p>
+            </div>
+          )
+        })}
       </fieldset>
 
       <fieldset className={styles.form} style={{ border: 0, margin: 0, padding: 0 }}>

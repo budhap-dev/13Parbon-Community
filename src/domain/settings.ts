@@ -26,6 +26,48 @@ export type HomeSection = (typeof HOME_SECTIONS)[number]
  * `site.ts` still holds the values these fall back to, so a project with nothing saved behaves
  * exactly as the code says.
  */
+/**
+ * The words on the public pages that belong to the committee rather than to the code.
+ *
+ * Only flat strings, and only the ones that actually change. The FAQ, the committee list and
+ * the captions under the theme photographs are nested arrays, and an editor for those is a
+ * different piece of work — they are left in the files until somebody needs to change one
+ * without a developer.
+ */
+export const SITE_TEXT_KEYS = [
+  'tagline',
+  'mission',
+  'missionStatement',
+  'venue',
+  'address',
+  'email',
+  'galleryNote',
+] as const
+
+export type SiteTextKey = (typeof SITE_TEXT_KEYS)[number]
+
+export const SITE_TEXT_FIELDS: Record<SiteTextKey, { label: string; note: string; lines?: number }> = {
+  tagline: { label: 'Tagline', note: 'The line under the name, on the home page and in link previews.' },
+  mission: {
+    label: 'Who we are',
+    note: 'The paragraph that says what this is, for somebody who has never been.',
+    lines: 4,
+  },
+  missionStatement: {
+    label: 'Mission and vision',
+    note: 'Two or three sentences from the committee. Left in [brackets] it is hidden rather than shown as a placeholder.',
+    lines: 4,
+  },
+  venue: { label: 'Where we usually meet', note: 'The hall’s name, as people would say it.' },
+  address: { label: 'Address', note: 'Used on the contact page and to place the map.' },
+  email: { label: 'Email', note: 'Where the contact page points, and where replies come from.' },
+  galleryNote: {
+    label: 'Note on the gallery',
+    note: 'A line at the top while albums are still going up. Empty removes it, which is right once the back catalogue is in.',
+    lines: 2,
+  },
+}
+
 export type SiteSettings = {
   /** Whether the sign-in is offered in the header and footer. */
   showMemberSignIn: boolean
@@ -37,6 +79,8 @@ export type SiteSettings = {
   showPhotos: boolean
   /** Who each home page section is for. */
   home: Record<HomeSection, SectionAudience>
+  /** The words the committee owns. Empty means "use what the code says". */
+  text: Record<SiteTextKey, string>
 }
 
 export type SettingsDraft = SiteSettings
@@ -47,7 +91,7 @@ export type SettingsDraft = SiteSettings
  * Kept next to the type so a new switch cannot be added without saying what it does — a row of
  * unlabelled toggles is a good way to have somebody turn the gallery off by accident.
  */
-export const SETTING_LABELS: Record<keyof Omit<SiteSettings, 'home'>, { label: string; note: string }> = {
+export const SETTING_LABELS: Record<keyof Omit<SiteSettings, 'home' | 'text'>, { label: string; note: string }> = {
   showPhotos: {
     label: 'Photographs',
     note: 'The gallery in the navigation, and pictures on the home page. Turning this off pulls the whole gallery at once.',
@@ -77,5 +121,6 @@ export const HOME_SECTION_LABELS: Record<HomeSection, string> = {
 /** Nothing here can be wrong in a way a form allows, but a bad saved value should not get through. */
 export function validateSettings(draft: SettingsDraft): boolean {
   const audiences: SectionAudience[] = ['public', 'members', 'admins']
-  return HOME_SECTIONS.every((section) => audiences.includes(draft.home[section]))
+  if (!HOME_SECTIONS.every((section) => audiences.includes(draft.home[section]))) return false
+  return SITE_TEXT_KEYS.every((key) => typeof draft.text[key] === 'string')
 }

@@ -6,7 +6,7 @@
 > **What this is:** the order of work from [MEMBER-LOGIN.md](MEMBER-LOGIN.md), broken into steps
 > that can be ticked off. That document says *what* and *why*; this one says *where we are*.
 >
-> **Last updated:** 2026-09-15 · **Current step:** 4 · **Ticked:** 67 of 91
+> **Last updated:** 2026-09-15 · **Current step:** 4 · **Ticked:** 68 of 91
 
 ## How this is kept
 
@@ -61,7 +61,7 @@ twenty screens.
 | 2 | Households | ~5 | ✅ **done** |
 | 3 | Events | ~2 | **design screen built**; the planner owns the logistics |
 | 4 | Media | ~4 | **in progress** — the screen is built; only the bucket is unwired |
-| 5 | Content | ~4.5 | **done bar the pending strings in `site.ts`** |
+| 5 | Content | ~4.5 | ✅ **done** bar the nested content (FAQ, committee list, theme captions) |
 | 6 | Ready to merge | ~2 | not started |
 | | **Total** | **~32–36** *(incl. tests, adapters, states)* | |
 
@@ -529,13 +529,27 @@ Last, because a page of placeholders reads worse than no page.
 - [x] News posts — **and there is no spike.** The model is plain paragraphs (`paragraphs()`
       splits on blank lines), so a textarea is the honest editor and no rich text is needed
 - [x] Unpublish rather than delete, with the change recorded as its own kind of change
-- [ ] Edit the FAQ entries in `src/app/about.ts`
-- [ ] Edit the pending strings in `src/app/site.ts` — mission statement, gallery note
+- [ ] Edit the FAQ entries in `src/app/about.ts` — nested, so still a code change
+- [x] Edit the pending strings in `src/app/site.ts` — mission, venue, address, email, gallery note
 - [x] Move the `site.home` section switches into the admin
 - [x] Move `showNextEventStrip` into the admin — and `showPhotos`, `showNews` and `showMemberSignIn` with it
 - [ ] Write the first real news before turning `showNews` on
 
 **Done when:** the committee publishes something without a developer.
+
+**The gap count was a lie, and is now counted** *(2026-09-15)*. The content screen announced
+*24 gaps still showing publicly* — 7, 13 and 4, hand-written when the pages were built and never
+recounted. There was one. The committee had filled in the rest months ago and the screen was
+still nagging them about twenty-three things they had done. It walks `site.ts`, `about.ts` and
+`privacy.ts` for bracketed strings now, and **names** them: *"13 to fill in"* sends somebody
+looking through a file, *"missionStatement"* sends them to the line.
+
+**Seven of those lines are editable** — tagline, who we are, mission and vision, venue, address,
+email, the gallery note. Flat strings only, and the screen says so: the FAQ, the committee list
+and the captions under the theme photographs are nested arrays and stay in the files until
+somebody needs to change one without a developer. It also says when a line is still in brackets,
+because that convention is the one thing about these files somebody has to be told, and the form
+is where they would meet it.
 
 **The switches are the committee's now.** `showPhotos`, `showNews`, `showNextEventStrip`,
 `showMemberSignIn` and the five home page audiences were a typed const in `site.ts` — turning the
@@ -670,6 +684,7 @@ invitation, so nothing to approve and no passwords to reset.
 | 2026-09-15 | 5 | `/admin/content` wired — three buttons had done nothing. Caught a new post reading as "taken down". 525 → 533 tests. |
 | 2026-09-15 | — | Retention settled: the count is kept for good, the names for twelve months. `close_year()` counts before it deletes. 533 → 537 tests. |
 | 2026-09-15 | 3 | The committee types the headcount in. 537 → 551 tests. |
+| 2026-09-15 | 5 | The gap count computed rather than typed, and seven pending strings made editable. 620 → 628 tests. |
 | 2026-09-15 | 4 | The browser half of uploading a photograph, off until a bucket is configured. 607 → 619 tests. |
 | 2026-09-15 | 3 | A cancelled evening stops disappearing and starts saying so. 592 → 600 tests. |
 | 2026-09-15 | 3 | Cover animations, and the cover drawn on the public event page at last. 579 → 592 tests. |

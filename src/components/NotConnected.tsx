@@ -1,4 +1,4 @@
-import { site } from '@/app/site'
+import { useSettings } from '@/app/SettingsContext'
 import { Icon } from './Icon'
 import styles from './NotConnected.module.css'
 
@@ -10,6 +10,7 @@ import styles from './NotConnected.module.css'
  * ones. So it gives them those and says nothing about the form.
  */
 export function NotConnected() {
+  const { text } = useSettings()
   return (
     <section className={styles.box} aria-labelledby="not-connected-title">
       <Icon name="megaphone" className={styles.icon} />
@@ -18,7 +19,7 @@ export function NotConnected() {
           Talk to us
         </h2>
         <p className={styles.text}>
-          Email the committee at <a href={`mailto:${site.email}`}>{site.email}</a>, or say hello in our WhatsApp
+          Email the committee at <a href={`mailto:${text.email}`}>{text.email}</a>, or say hello in our WhatsApp
           group. Someone will come back to you.
         </p>
       </div>

@@ -1,6 +1,7 @@
 import { Link } from 'react-router'
 import { about } from '@/app/about'
 import { site } from '@/app/site'
+import { useSettings } from '@/app/SettingsContext'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { Button } from '@/components/Button'
 import { Container } from '@/components/Container'
@@ -8,6 +9,7 @@ import { Icon, type IconName } from '@/components/Icon'
 import styles from './About.module.css'
 
 export function AboutPage() {
+  const { text } = useSettings()
   useDocumentTitle('About us')
 
   return (
@@ -17,8 +19,8 @@ export function AboutPage() {
           <h1 id="about-title" className={styles.title}>
             About us
           </h1>
-          <p className={styles.lead}>{site.tagline}</p>
-          <p className={styles.lead}>{site.mission}</p>
+          <p className={styles.lead}>{text.tagline}</p>
+          <p className={styles.lead}>{text.mission}</p>
           <div className={styles.cta}>
             <Button to="/events" variant="cream" size="sm">
               What’s on

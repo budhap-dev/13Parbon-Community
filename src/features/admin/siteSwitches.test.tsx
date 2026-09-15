@@ -39,6 +39,38 @@ describe('the switches', () => {
   })
 })
 
+describe('the words on the public pages', () => {
+  it('offers the lines that change, and says where the rest live', async () => {
+    renderAt('/admin/content')
+    const panel = await switches()
+
+    expect(within(panel).getByLabelText('Who we are')).toBeInTheDocument()
+    expect(within(panel).getByLabelText('Mission and vision')).toBeInTheDocument()
+    expect(within(panel).getByLabelText('Note on the gallery')).toBeInTheDocument()
+    // Honest about what it does not cover, rather than leaving somebody hunting.
+    expect(within(panel).getByText(/still live in the files/)).toBeInTheDocument()
+  })
+
+  it('says when a line is still in brackets and therefore not shown at all', async () => {
+    renderAt('/admin/content')
+    const panel = await switches()
+    // The bracket convention is the one thing about these files somebody has to be told.
+    expect(within(panel).getByText(/Still in brackets, so visitors are shown nothing here/)).toBeInTheDocument()
+  })
+
+  it('changes what the public sees when it is saved', async () => {
+    renderAt('/admin/content')
+    const panel = await switches()
+
+    const mission = within(panel).getByLabelText('Who we are')
+    await userEvent.clear(mission)
+    await userEvent.type(mission, 'A Bengali cultural association in Leeds, since 2019.')
+    await userEvent.click(within(panel).getByRole('button', { name: 'Save the switches' }))
+
+    await waitFor(() => expect(within(panel).getByRole('status')).toHaveTextContent('Saved.'))
+  })
+})
+
 describe('what throwing a switch changes', () => {
   it('puts News into the navigation for everybody', async () => {
     renderAt('/admin/content')

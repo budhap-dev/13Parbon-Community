@@ -1,5 +1,6 @@
 import { useId, useState, type FormEvent } from "react";
 import { site } from "@/app/site";
+import { useSettings } from "@/app/SettingsContext";
 import { useDocumentTitle } from "@/app/useDocumentTitle";
 import { Button } from "@/components/Button";
 import { Container } from "@/components/Container";
@@ -15,6 +16,7 @@ import styles from "./Contact.module.css";
 const empty: ContactInput = { name: "", email: "", subject: "", message: "" };
 
 export function ContactPage() {
+  const { text } = useSettings()
   useDocumentTitle("Contact us");
   const id = useId();
   const [values, setValues] = useState<ContactInput>(empty);
@@ -105,8 +107,8 @@ export function ContactPage() {
               The surest way to reach the committee, and where to write about
               anything to do with your details on this site.
             </p>
-            <a className={styles.channelLink} href={`mailto:${site.email}`}>
-              {site.email}
+            <a className={styles.channelLink} href={`mailto:${text.email}`}>
+              {text.email}
             </a>
           </li>
 

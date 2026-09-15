@@ -197,4 +197,13 @@ export const defaultSettings: SiteSettings = {
   showNextEventStrip: site.showNextEventStrip,
   showPhotos: site.showPhotos,
   home: { ...site.home },
+  text: {
+    tagline: site.tagline,
+    mission: site.mission,
+    missionStatement: site.missionStatement,
+    venue: site.venue,
+    address: site.address,
+    email: site.email,
+    galleryNote: site.galleryNote ?? '',
+  },
 }

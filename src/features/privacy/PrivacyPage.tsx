@@ -1,11 +1,12 @@
 import { Link } from 'react-router'
 import { privacy } from '@/app/privacy'
-import { site } from '@/app/site'
+import { useSettings } from '@/app/SettingsContext'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { Container } from '@/components/Container'
 import styles from './Privacy.module.css'
 
 export function PrivacyPage() {
+  const { text } = useSettings()
   useDocumentTitle('Privacy')
   return (
     <Container className={styles.page}>
@@ -13,7 +14,7 @@ export function PrivacyPage() {
       <p className={styles.meta}>
         Last updated {privacy.updatedOn}. Data controller: {privacy.controller} Contact{' '}
         {/* Linked, because this is the address the rest of the notice tells people to write to. */}
-        <a href={`mailto:${site.email}`}>{site.email}</a>.
+        <a href={`mailto:${text.email}`}>{text.email}</a>.
       </p>
       {privacy.sections.map((section) => (
         <section key={section.title} className={styles.section} aria-labelledby={`privacy-${section.title}`}>
