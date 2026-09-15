@@ -6,7 +6,7 @@
 > **What this is:** the order of work from [MEMBER-LOGIN.md](MEMBER-LOGIN.md), broken into steps
 > that can be ticked off. That document says *what* and *why*; this one says *where we are*.
 >
-> **Last updated:** 2026-09-15 · **Current step:** 4 · **Ticked:** 57 of 85
+> **Last updated:** 2026-09-15 · **Current step:** 4 · **Ticked:** 58 of 85
 
 ## How this is kept
 
@@ -334,7 +334,7 @@ in full every time focus landed there. The notes are tied on with `aria-describe
 
 - [ ] **Decide how an event gets from that app to this one.** The only real work left here
 - [ ] Render `cancelled` — the status is in the `Event` type and nothing draws it
-- [ ] Decide the fate of the `Registration` fixtures on `/admin/events` and the dashboard: fill from the sheet by hand, or remove
+- [x] The `Registration` fixtures are gone from `/admin/events` and the dashboard — removed, not filled
 - [ ] Volunteer roles and sign-up — in the domain, in PLAN phase 3, and not covered by the other app either
 
 **Dropped, because the other app owns them:** creating and editing events, publish/unpublish,
@@ -507,7 +507,7 @@ The gate, not a formality. Nothing above matters if this is skipped.
 | **Profile photographs** | Placeholders, not real ones — which also means no faces stored, and so no takedown obligation created |
 | **Sponsors** | None. Dropped from step 4 |
 | **Uploads** | JPG, JPEG and PNG only |
-| **Retention** | One year for the attendance rows; **the counts are kept for good** (confirmed 2026-09-15) |
+| **Retention** | Moot, in the end: the committee types the count in, so no attendance row naming a household is ever held. Nothing to retain and nothing to delete |
 | **Erasure** | The registrations go too — decided 2026-09-15, and what `on delete cascade` already does |
 | **Committee CSV** | Built 2026-09-15 — household, contact, email, phone, adults, children, membership, paid to, role, in directory. **Columns still to review** |
 
@@ -520,12 +520,10 @@ iOS converts to JPEG when a photo is shared or emailed rather than copied off th
 upload screen has to say which formats it takes, out loud, rather than silently ignoring the
 files it cannot read.
 
-*A retention policy with nothing enforcing it is a sentence, not a policy.* Confirmed
-2026-09-15: **the count survives, the names do not.** `event_attendance` holds how many came to
-each event and nothing about who; `close_year()` writes those totals and then deletes the rows
-behind them, in that order, because a number worked out after the deletion is a number nobody
-can work out. It still has to be scheduled — a `pg_cron` line is in the file, and without
-`pg_cron` it is a date in the committee's calendar. Neither happening is the failure mode.
+*The retention question dissolved.* It was asked because attendance rows named households. They
+never will: the committee types the count in after the night, so `event_attendance` holds a
+number per event and nothing about who. There is no retention rule because there is nothing
+personal to retain — which is a better answer than a `pg_cron` line nobody remembers to check.
 
 **Settled already:** event management lives in the separate planner app · registration stays on Google Forms and stays separate · no separate CMS,
 content goes in Supabase behind narrow admin forms · two roles, no role builder · membership is by
@@ -558,3 +556,5 @@ invitation, so nothing to approve and no passwords to reset.
 | 2026-09-15 | 4 | Photographs page reworked after review: open large, drag to reorder, trash on the picture. Kept arrow keys, since dragging has no keyboard path. 522 → 525 tests. |
 | 2026-09-15 | 5 | `/admin/content` wired — three buttons had done nothing. Caught a new post reading as "taken down". 525 → 533 tests. |
 | 2026-09-15 | — | Retention settled: the count is kept for good, the names for twelve months. `close_year()` counts before it deletes. 533 → 537 tests. |
+| 2026-09-15 | 3 | The committee types the headcount in. 537 → 551 tests. |
+| 2026-09-15 | 3 | `Registration` removed everywhere — no personal booking data enters the app at all, so the retention machinery went with it. 551 → 545 tests, and six fewer is the point. |

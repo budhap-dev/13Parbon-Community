@@ -120,26 +120,6 @@ export function useDocuments() {
   })
 }
 
-export function useHouseholdRegistrations(householdId: string | undefined) {
-  const api = useApi()
-  const viewer = useViewer()
-  return useQuery({
-    queryKey: ['portal', 'registrations', 'household', householdId, asks(viewer)],
-    queryFn: () => api.portal.listRegistrationsForHousehold(householdId ?? '', viewer),
-    enabled: Boolean(householdId),
-  })
-}
-
-export function useEventRegistrations(eventId: string | undefined) {
-  const api = useApi()
-  const viewer = useViewer()
-  return useQuery({
-    queryKey: ['portal', 'registrations', 'event', eventId, asks(viewer)],
-    queryFn: () => api.portal.listRegistrationsForEvent(eventId ?? '', viewer),
-    enabled: Boolean(eventId),
-  })
-}
-
 export function useSignInAttempts() {
   const api = useApi()
   const viewer = useViewer()

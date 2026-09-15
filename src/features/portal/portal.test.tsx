@@ -54,12 +54,14 @@ describe('portal access', () => {
 })
 
 describe('member pages', () => {
-  it('leads the dashboard with the next event and whether the household has registered', async () => {
+  it('leads the dashboard with the next event and a way to book', async () => {
     renderAt('/portal', member)
     const feature = (await screen.findByRole('heading', { level: 2, name: 'Cultural programme' })).closest('section')!
-    expect(within(feature).getByText(/has not registered yet/)).toBeInTheDocument()
+    // We no longer know whether this household has booked — the replies are in the committee's
+    // form — so the page says how many are coming and offers the way through, and claims nothing.
+    expect(within(feature).getByText(/households are coming so far/)).toBeInTheDocument()
     expect(within(feature).getByText('37')).toBeInTheDocument()
-    expect(within(feature).getByRole('link', { name: 'Register the household' })).toBeInTheDocument()
+    expect(within(feature).getByRole('link', { name: 'Book your places' })).toBeInTheDocument()
     expect(await screen.findByRole('heading', { name: 'Active' })).toBeInTheDocument()
   })
 
@@ -119,14 +121,13 @@ describe('committee pages', () => {
     expect(within(members).getByText('Lapsed')).toBeInTheDocument()
   })
 
-  it('adds up the headcount for the caterer', async () => {
+  it('keeps the headcount, and says where the bookings actually live', async () => {
     renderAt('/admin/events', admin)
-    expect(await screen.findByRole('heading', { level: 1, name: 'Who is coming' })).toBeInTheDocument()
-    const regs = screen.getByRole('heading', { name: 'Registrations' }).closest('section')!
-    expect(await within(regs).findByText('The Roys')).toBeInTheDocument()
-    const meals = screen.getByText('Meals to plan').closest('div')!
-    expect(within(meals).getByText('13')).toBeInTheDocument()
-    expect(within(regs).getByText('Wheelchair access needed')).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: 'Events' })).toBeInTheDocument()
+    // No household is named anywhere on this page any more, and the page says why.
+    expect(screen.getByText(/people book through the form on the event page/)).toBeInTheDocument()
+    expect(screen.queryByText('The Roys')).not.toBeInTheDocument()
+    expect(screen.queryByText('Wheelchair access needed')).not.toBeInTheDocument()
   })
 
   it('links the separate event planner, and says what each tool is for', async () => {
@@ -137,7 +138,7 @@ describe('committee pages', () => {
     expect(link).toHaveAttribute('target', '_blank')
     expect(link).toHaveAttribute('rel', 'noreferrer')
     const panel = screen.getByRole('heading', { level: 2, name: 'Event planning' }).closest('section')!
-    expect(within(panel).getByText(/counts who is coming; the planner tracks/)).toBeInTheDocument()
+    expect(within(panel).getByText(/keeps the number who came; the planner tracks/)).toBeInTheDocument()
     expect(within(panel).getByRole('link', { name: /Open the planner/ })).toHaveAttribute(
       'href',
       'https://13parbon-event-management.vercel.app/',

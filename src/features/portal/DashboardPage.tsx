@@ -1,9 +1,8 @@
-import { Link } from 'react-router'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { Button } from '@/components/Button'
 import { Icon } from '@/components/Icon'
 import { daysUntil, describeCountdown, formatDateWithYear, formatLongDate, formatTime } from '@/domain/dates'
-import { useAnnouncements, useHousehold, useHouseholdRegistrations, useNextEvent, useUpcomingEvents } from '@/lib/api'
+import { useAnnouncements, useHousehold, useNextEvent } from '@/lib/api'
 import { useSignedIn } from '@/lib/auth/session'
 import { useNow } from '@/lib/clock'
 import styles from './Portal.module.css'
@@ -13,14 +12,10 @@ export function DashboardPage() {
   const who = useSignedIn()
   const now = useNow()
   const { data: event } = useNextEvent()
-  const { data: upcoming } = useUpcomingEvents(6)
   const { data: household } = useHousehold(who?.householdId)
-  const { data: registrations } = useHouseholdRegistrations(who?.householdId)
   const { data: announcements } = useAnnouncements()
 
-  const registeredFor = new Set((registrations ?? []).map((r) => r.eventId))
   const countdown = event ? describeCountdown(daysUntil(event.startsAt, now)) : null
-  const eventsById = new Map((upcoming ?? []).map((e) => [e.id, e]))
 
   return (
     <div className={styles.page}>
@@ -41,17 +36,12 @@ export function DashboardPage() {
             <p className={styles.muted}>
               {formatLongDate(event.startsAt)}, {formatTime(event.startsAt)} · {event.venue} · {event.summary}
             </p>
-            {registeredFor.has(event.id) ? (
-              <p className={styles.note}>Your household is registered. You can change it any time before the day.</p>
-            ) : (
-              <p className={styles.note}>
-                Your household has not registered yet.
-                {event.householdsRegistered > 0 ? ` ${event.householdsRegistered} households are coming so far.` : ''}
-              </p>
-            )}
+            {event.householdsRegistered > 0 ? (
+              <p className={styles.note}>{event.householdsRegistered} households are coming so far.</p>
+            ) : null}
             <div className={styles.actions}>
               <Button to={`/events/${event.slug}`} variant="gold" size="sm">
-                {registeredFor.has(event.id) ? 'Change our registration' : 'Register the household'}
+                Book your places
               </Button>
               <Button to={`/events/${event.slug}`} variant="line" size="sm">
                 Event details
@@ -66,51 +56,6 @@ export function DashboardPage() {
       ) : null}
 
       <div className={styles.two}>
-        <section className={styles.panel} aria-labelledby="regs-title">
-          <div className={styles.panelHead}>
-            <h2 id="regs-title" className={styles.panelTitle}>
-              Your registrations
-            </h2>
-            <Link to="/events" className={styles.tiny}>
-              All events
-            </Link>
-          </div>
-          {registrations && registrations.length > 0 ? (
-            <div className={styles.scroll}>
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>Event</th>
-                    <th>Coming</th>
-                    <th>Helping</th>
-                    <th>Registered</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {registrations.map((r) => {
-                    const forEvent = eventsById.get(r.eventId)
-                    return (
-                      <tr key={r.id}>
-                        <td>
-                          <strong>{forEvent?.title ?? 'An earlier event'}</strong>
-                        </td>
-                        <td className={`${styles.num} ${styles.muted}`}>
-                          {r.adults} {r.adults === 1 ? 'adult' : 'adults'}
-                          {r.children > 0 ? `, ${r.children} ${r.children === 1 ? 'child' : 'children'}` : ''}
-                        </td>
-                        <td className={styles.muted}>{r.helping ?? '—'}</td>
-                        <td className={`${styles.muted} ${styles.tiny}`}>{formatDateWithYear(r.registeredAt)}</td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <p className={styles.empty}>Nothing yet. Register for the next event and it will appear here.</p>
-          )}
-        </section>
-
         <div className={styles.stack}>
           {household ? (
             <section className={styles.panel} aria-labelledby="membership-title">

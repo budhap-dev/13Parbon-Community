@@ -45,9 +45,11 @@ describe('what is in it', () => {
     expect(household.people.some((p) => p.note)).toBe(true)
   })
 
-  it('includes the events they were recorded at', async () => {
-    const { registrations } = await api().portal.exportHousehold('hh-sen', member)
-    expect(registrations.every((r) => r.householdId === 'hh-sen')).toBe(true)
+  it('says we do not hold which events they came to, rather than saying nothing', async () => {
+    const { notes } = await api().portal.exportHousehold('hh-sen', member)
+    // We keep a count per event and nothing about who, so there is nothing here to list — and
+    // an export that simply omitted attendance would read as "you never came to anything".
+    expect(notes.join(' ')).toMatch(/do not record which events you came to/i)
   })
 
   it('finds messages sent from an address we hold for them', async () => {

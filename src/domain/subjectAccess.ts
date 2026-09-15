@@ -1,6 +1,5 @@
 import type { ContactMessage } from './contact'
 import type { Household } from './household'
-import type { Registration } from './registration'
 
 /**
  * Everything the app holds about one household, gathered in one place so it can be handed to
@@ -16,8 +15,6 @@ export type HouseholdExport = {
   /** ISO 8601 timestamp this was put together. */
   takenAt: string
   household: Household
-  /** Every event this household was recorded at. */
-  registrations: Registration[]
   /**
    * Messages sent through the contact form from an address we can tie to this household.
    *
@@ -47,6 +44,9 @@ export type HouseholdExport = {
 
 export const PHOTOGRAPH_NOTE =
   'Photographs are not listed here. We publish pictures from our events and we hold no record of who appears in which one, so we cannot tell you which show you. We will still take down any photograph you are in, on request and without a reason.'
+
+export const ATTENDANCE_NOTE =
+  'We do not record which events you came to. Registration is handled through our booking form, and we keep only how many people came to each event — a number with nobody named in it.'
 
 export const CONTACT_NOTE =
   'Messages are matched to you by email address. Anything sent from an address we do not have for you will not appear above.'

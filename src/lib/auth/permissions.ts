@@ -44,10 +44,10 @@ export type Action =
   | 'directory:read'
   | 'documents:read'
   | 'documents:manage'
-  /** Read one household's registrations. Needs `householdId`. */
-  | 'registrations:read'
-  /** Read everyone coming to an event. */
-  | 'registrations:readForEvent'
+  /** Read how many came to each event. Numbers only; there is nobody in them. */
+  | 'attendance:read'
+  /** Record how many came. */
+  | 'attendance:record'
   | 'signInAttempts:read'
   | 'signInAttempts:resolve'
   | 'messages:read'
@@ -83,15 +83,13 @@ export function can(viewer: Viewer, action: Action, resource?: Resource): boolea
     case 'household:edit':
       return isOwn(viewer, resource)
 
-    // Mirrors: policy "own registrations only".
-    case 'registrations:read':
-      return isOwn(viewer, resource)
-
     // Mirrors: the directory view's `current_household_id() is not null`, and policy
     // "members read documents".
     case 'portal:enter':
     case 'directory:read':
     case 'documents:read':
+    // Mirrors: policy "members read attendance". A count has nobody in it.
+    case 'attendance:read':
       return true
 
     // Mirrors: policy "admins add households" / "admins remove households", policy
@@ -105,7 +103,7 @@ export function can(viewer: Viewer, action: Action, resource?: Resource): boolea
     case 'household:setSignInAddress':
     case 'household:setMembership':
     case 'documents:manage':
-    case 'registrations:readForEvent':
+    case 'attendance:record':
     case 'signInAttempts:read':
     case 'signInAttempts:resolve':
     case 'messages:read':

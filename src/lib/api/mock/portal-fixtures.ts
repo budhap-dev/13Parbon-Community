@@ -2,7 +2,6 @@ import type { CommunityDocument, SignInAttempt } from '@/domain/document'
 import type { EventAttendance } from '@/domain/attendance'
 import type { Household } from '@/domain/household'
 import type { ContactMessage } from '@/domain/contact'
-import type { Registration } from '@/domain/registration'
 
 /**
  * Sample households, registrations and documents for the portal. Enough variety to show
@@ -161,16 +160,6 @@ export function buildPortalFixtures() {
     },
   ]
 
-  const registrations: Registration[] = [
-    { id: 'rg-1', eventId: 'ev-mahalaya-2026', householdId: 'hh-roy', adults: 2, children: 0, helping: 'Sound', registeredAt: '2026-09-03T14:20:00' },
-    { id: 'rg-2', eventId: 'ev-mahalaya-2026', householdId: 'hh-banerjee', adults: 2, children: 2, helping: 'Cooking', notes: '1 vegetarian', registeredAt: '2026-09-03T11:02:00' },
-    { id: 'rg-3', eventId: 'ev-mahalaya-2026', householdId: 'hh-ghosh', adults: 1, children: 2, helping: "Children's programme", notes: 'No nuts, please', registeredAt: '2026-09-02T20:41:00' },
-    { id: 'rg-4', eventId: 'ev-mahalaya-2026', householdId: 'hh-chatterjee', adults: 1, children: 0, helping: 'Stage', registeredAt: '2026-09-01T09:15:00' },
-    { id: 'rg-5', eventId: 'ev-mahalaya-2026', householdId: 'hh-mitra', adults: 2, children: 1, notes: 'Wheelchair access needed', registeredAt: '2026-08-31T18:03:00' },
-    { id: 'rg-6', eventId: 'ev-poila-2026', householdId: 'hh-sen', adults: 2, children: 1, registeredAt: '2026-04-02T12:00:00' },
-    { id: 'rg-7', eventId: 'ev-poila-2026', householdId: 'hh-roy', adults: 2, children: 0, helping: 'Sound', registeredAt: '2026-04-01T12:00:00' },
-  ]
-
   const documents: CommunityDocument[] = [
     { id: 'doc-1', title: 'Annual general meeting minutes 2026', category: 'minutes', fileUrl: '#', addedOn: '2026-08-20' },
     { id: 'doc-2', title: 'How we run a programme', category: 'guidelines', fileUrl: '#', addedOn: '2026-06-02' },
@@ -218,5 +207,5 @@ export function buildPortalFixtures() {
     { eventId: 'ev-saraswati-2026', heldOn: '2026-02-01', households: 28, adults: 61, children: 40, recordedAt: '2026-02-03T10:00:00' },
   ]
 
-  return { households, registrations, documents, signInAttempts, messages, attendance }
+  return { households, documents, signInAttempts, messages, attendance }
 }

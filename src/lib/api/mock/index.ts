@@ -5,7 +5,7 @@ import { isLive, isValid, slugFrom, validateAnnouncement, validateNews, type Ann
 import type { Event } from '@/domain/event'
 import { inOrder, pinnedCover, type AlbumDraft, type AlbumWithMedia } from '@/domain/gallery'
 import { directoryEntry, isAdmin, isMember, isValidHousehold, type Household, type HouseholdDraft, type Person, type Viewer } from '@/domain/household'
-import { CONTACT_NOTE, PHOTOGRAPH_NOTE, type HouseholdExport } from '@/domain/subjectAccess'
+import { ATTENDANCE_NOTE, CONTACT_NOTE, PHOTOGRAPH_NOTE, type HouseholdExport } from '@/domain/subjectAccess'
 import type { ApiClient } from '../types'
 import { buildFixtures } from './fixtures'
 import { buildPortalFixtures } from './portal-fixtures'
@@ -426,24 +426,6 @@ export function createMockApi({ now = () => new Date(), latencyMs = 0, events }:
           isMember(viewer) ? [...portal.documents].sort((a, b) => b.addedOn.localeCompare(a.addedOn)) : [],
           latencyMs,
         ),
-      listRegistrationsForHousehold: (householdId, viewer) => {
-        if (viewer?.householdId !== householdId && !isAdmin(viewer)) return delay([], latencyMs)
-        return delay(
-          portal.registrations
-            .filter((r) => r.householdId === householdId)
-            .sort((a, b) => b.registeredAt.localeCompare(a.registeredAt)),
-          latencyMs,
-        )
-      },
-      listRegistrationsForEvent: (eventId, viewer) =>
-        delay(
-          isAdmin(viewer)
-            ? portal.registrations
-                .filter((r) => r.eventId === eventId)
-                .sort((a, b) => b.registeredAt.localeCompare(a.registeredAt))
-            : [],
-          latencyMs,
-        ),
       listSignInAttempts: (viewer) =>
         delay(
           isAdmin(viewer)
@@ -503,9 +485,6 @@ export function createMockApi({ now = () => new Date(), latencyMs = 0, events }:
         const result: HouseholdExport = {
           takenAt: now().toISOString(),
           household,
-          registrations: portal.registrations
-            .filter((r) => r.householdId === id)
-            .sort((a, b) => b.registeredAt.localeCompare(a.registeredAt)),
           messages: [...portal.messages, ...sentMessages]
             .filter((m) => addresses.has(m.email.toLowerCase()))
             .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
@@ -515,7 +494,7 @@ export function createMockApi({ now = () => new Date(), latencyMs = 0, events }:
           // Filled in by withAuditTrail, which is the only thing that holds the trail. The
           // same wrapper writes it, so the same wrapper is what can read it back out.
           changes: [],
-          notes: [PHOTOGRAPH_NOTE, CONTACT_NOTE],
+          notes: [ATTENDANCE_NOTE, PHOTOGRAPH_NOTE, CONTACT_NOTE],
         }
         return delay(result, latencyMs)
       },
@@ -546,10 +525,6 @@ export function createMockApi({ now = () => new Date(), latencyMs = 0, events }:
         }
 
         portal.households.splice(index, 1)
-        // What `on delete cascade` does in Postgres. Decided: the registrations go too.
-        for (let i = portal.registrations.length - 1; i >= 0; i -= 1) {
-          if (portal.registrations[i].householdId === id) portal.registrations.splice(i, 1)
-        }
         return delay(undefined, latencyMs)
       },
 

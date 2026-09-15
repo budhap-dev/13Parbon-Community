@@ -63,15 +63,13 @@ describe('a member', () => {
     await expect(a.contact.markHandled('cm-1', member)).rejects.toThrow(/not allowed/i)
   })
 
-  it('reads their own registrations and not another household\'s', async () => {
-    const a = api()
-    const mine = await a.portal.listRegistrationsForHousehold('hh-sen', member)
-    expect(mine.every((r) => r.householdId === 'hh-sen')).toBe(true)
-    expect(await a.portal.listRegistrationsForHousehold('hh-ghosh', member)).toEqual([])
+  it('reads the headcounts, which name nobody', async () => {
+    expect((await api().portal.listAttendance(member)).length).toBeGreaterThan(0)
   })
 
-  it('cannot see who is coming to an event', async () => {
-    expect(await api().portal.listRegistrationsForEvent('ev-durga-2026', member)).toEqual([])
+  it('cannot record one', async () => {
+    const draft = { eventId: 'ev-x', heldOn: '2026-10-10', households: 1, adults: 2, children: 0 }
+    await expect(api().portal.recordAttendance(draft, member)).rejects.toThrow(/committee/i)
   })
 
   it('reads the documents library', async () => {
@@ -130,11 +128,6 @@ describe('the committee', () => {
     expect((await a.portal.listSignInAttempts(admin)).length).toBeGreaterThan(0)
   })
 
-  it('sees who is coming to an event', async () => {
-    const a = api()
-    const event = await a.events.getNext()
-    expect((await a.portal.listRegistrationsForEvent(event!.id, admin)).length).toBeGreaterThan(0)
-  })
 })
 
 describe('marking a message handled', () => {
@@ -305,16 +298,18 @@ describe('erasing a household', () => {
     await expect(api().portal.deleteHousehold('hh-ghosh', member)).rejects.toThrow(/committee/i)
   })
 
-  it('takes the household, the people in it and what they were recorded at', async () => {
+  it('takes the household and the people in it', async () => {
     const a = api()
-    const before = await a.portal.listRegistrationsForHousehold('hh-sen', admin)
-    expect(before.length).toBeGreaterThan(0)
-
     await a.portal.deleteHousehold('hh-sen', admin)
-
     expect(await a.portal.getHousehold('hh-sen', admin)).toBeNull()
-    // Decided 2026-09-15: the registrations go too. This is what on delete cascade does.
-    expect(await a.portal.listRegistrationsForHousehold('hh-sen', admin)).toEqual([])
+  })
+
+  it('leaves the headcounts alone, because there is nobody in them', async () => {
+    const a = api()
+    const before = await a.portal.listAttendance(admin)
+    await a.portal.deleteHousehold('hh-sen', admin)
+    // Erasing a household does not thin out the history: the counts name nobody.
+    expect(await a.portal.listAttendance(admin)).toEqual(before)
   })
 
   it('takes them out of the directory as well', async () => {

@@ -50,8 +50,8 @@ const table: Record<Action, Row> = {
   'documents:read': { visitor: false, own: true, other: true, admin: true },
   'documents:manage': { visitor: false, own: false, other: false, admin: true },
 
-  'registrations:read': { visitor: false, own: true, other: false, admin: true },
-  'registrations:readForEvent': { visitor: false, own: false, other: false, admin: true },
+  'attendance:read': { visitor: false, own: true, other: true, admin: true },
+  'attendance:record': { visitor: false, own: false, other: false, admin: true },
 
   'signInAttempts:read': { visitor: false, own: false, other: false, admin: true },
   'signInAttempts:resolve': { visitor: false, own: false, other: false, admin: true },
@@ -84,7 +84,6 @@ describe('can', () => {
   it('refuses a member who names no household, rather than guessing they meant their own', () => {
     expect(can(member, 'household:read')).toBe(false)
     expect(can(member, 'household:edit')).toBe(false)
-    expect(can(member, 'registrations:read')).toBe(false)
   })
 
   it('lets the committee do everything a member may', () => {

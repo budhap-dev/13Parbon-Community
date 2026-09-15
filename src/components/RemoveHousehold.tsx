@@ -63,10 +63,6 @@ export function RemoveHousehold({
       <p className={styles.text}>This cannot be undone. It removes:</p>
       <ul className={styles.list}>
         <li>the household record, and every person in it</li>
-        <li>
-          every event they were recorded at — so the headcounts for those events go down, and the
-          attendance history thins out behind you
-        </li>
         <li>the account of what they did: the trail stays, but it no longer names them</li>
       </ul>
       <p className={styles.text}>

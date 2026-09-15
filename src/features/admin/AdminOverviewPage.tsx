@@ -2,8 +2,8 @@ import { Link } from 'react-router'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { Button } from '@/components/Button'
 import { formatLongDate } from '@/domain/dates'
-import { totalsFor } from '@/domain/registration'
-import { useContactMessages, useEventRegistrations, useHouseholds, useNextEvent, useSignInAttempts } from '@/lib/api'
+import { peopleAt } from '@/domain/attendance'
+import { useAttendance, useContactMessages, useHouseholds, useSignInAttempts } from '@/lib/api'
 import styles from '@/features/portal/Portal.module.css'
 
 function Stat({ label, value, note, accent }: { label: string; value: string | number; note: string; accent?: boolean }) {
@@ -22,15 +22,15 @@ export function AdminOverviewPage() {
   const { data: allAttempts } = useSignInAttempts()
   const attempts = allAttempts?.filter((a) => !a.resolved)
   const { data: messages } = useContactMessages()
-  const { data: event } = useNextEvent()
-  const { data: registrations } = useEventRegistrations(event?.id)
+  const { data: attendance } = useAttendance()
 
-  const totals = totalsFor(registrations ?? [])
+  /** The most recent night we have a number for. Nothing here is per household any more. */
+  const lastCounted = attendance?.[0]
   const memberCount = households?.length ?? 0
   const signedIn = households?.filter((h) => h.googleEmail).length ?? 0
   const admins = households?.filter((h) => h.role === 'admin').length ?? 0
   const unhandled = messages?.filter((m) => !m.handledBy) ?? []
-  const filled = memberCount > 0 ? Math.round((totals.households / memberCount) * 100) : 0
+  const filled = memberCount > 0 && lastCounted ? Math.round((lastCounted.households / memberCount) * 100) : 0
 
   return (
     <div className={styles.page}>
@@ -44,44 +44,48 @@ export function AdminOverviewPage() {
       <div className={styles.stats}>
         <Stat label="Waiting on you" value={attempts?.length ?? 0} note="tried to sign in, not on the list" accent />
         <Stat label="Unread" value={unhandled.length} note="messages from the public" accent />
-        <Stat label="Registered" value={totals.households} note={event ? `households for ${event.title}` : 'households'} />
+        <Stat
+          label="Came last time"
+          value={lastCounted ? peopleAt(lastCounted) : '—'}
+          note={lastCounted ? `${lastCounted.households} households` : 'no count recorded yet'}
+        />
         <Stat label="Members" value={memberCount} note={`${signedIn} have signed in, ${admins} admins`} />
       </div>
 
       <div className={styles.two}>
-        {event ? (
+        {lastCounted ? (
           <section className={styles.panel} aria-labelledby="fill-title">
             <div className={styles.panelHead}>
               <h2 id="fill-title" className={styles.panelTitle}>
-                {event.title} · {formatLongDate(event.startsAt)}
+                Last counted · {formatLongDate(lastCounted.heldOn)}
               </h2>
               <Button to="/admin/events" variant="line" size="sm">
-                Who is coming
+                Record a count
               </Button>
             </div>
             <div className={styles.pad} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
               <div className={styles.stats}>
                 <div>
                   <span className={styles.statLabel}>Households</span>
-                  <p className={styles.statValue}>{totals.households}</p>
+                  <p className={styles.statValue}>{lastCounted.households}</p>
                 </div>
                 <div>
                   <span className={styles.statLabel}>Adults</span>
-                  <p className={styles.statValue}>{totals.adults}</p>
+                  <p className={styles.statValue}>{lastCounted.adults}</p>
                 </div>
                 <div>
                   <span className={styles.statLabel}>Children</span>
-                  <p className={styles.statValue}>{totals.children}</p>
+                  <p className={styles.statValue}>{lastCounted.children}</p>
                 </div>
                 <div>
-                  <span className={styles.statLabel}>For the caterer</span>
-                  <p className={styles.statAccent}>{totals.people}</p>
+                  <span className={styles.statLabel}>In all</span>
+                  <p className={styles.statAccent}>{peopleAt(lastCounted)}</p>
                 </div>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
                 <div className={styles.rowBetween}>
                   <span className={`${styles.muted} ${styles.tiny}`}>
-                    {totals.households} of {memberCount} households
+                    {lastCounted.households} of {memberCount} households
                   </span>
                   <span className={`${styles.muted} ${styles.tiny}`}>{filled}%</span>
                 </div>
@@ -90,8 +94,8 @@ export function AdminOverviewPage() {
                 </div>
               </div>
               <p className={`${styles.muted} ${styles.tiny}`}>
-                {totals.helping} {totals.helping === 1 ? 'household has' : 'households have'} offered to help.{' '}
-                {totals.withNotes} left a note about food or access.
+                Counts only — we do not keep which households came. Bookings stay in the committee's
+                form.
               </p>
             </div>
           </section>

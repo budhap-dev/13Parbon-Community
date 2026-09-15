@@ -4,7 +4,6 @@ import type { Album, AlbumDraft, AlbumWithMedia, Media } from '@/domain/gallery'
 import type { ContactInput, ContactMessage } from '@/domain/contact'
 import type { CommunityDocument, SignInAttempt } from '@/domain/document'
 import type { DirectoryEntry, Household, HouseholdDraft, Viewer } from '@/domain/household'
-import type { Registration } from '@/domain/registration'
 import type { AttendanceDraft, EventAttendance } from '@/domain/attendance'
 import type { AuditEntry } from '@/domain/audit'
 import type { HouseholdExport } from '@/domain/subjectAccess'
@@ -140,10 +139,6 @@ export interface ApiClient {
     listDirectory(viewer: Viewer): Promise<DirectoryEntry[]>
     /** The documents library. Empty for anybody who is not a member. */
     listDocuments(viewer: Viewer): Promise<CommunityDocument[]>
-    /** One household's registrations, newest event first. Their own, or an admin's view of any. */
-    listRegistrationsForHousehold(householdId: string, viewer: Viewer): Promise<Registration[]>
-    /** Every registration for one event, newest first. Admin only. */
-    listRegistrationsForEvent(eventId: string, viewer: Viewer): Promise<Registration[]>
     /**
      * How many came to each event, newest first. Readable by any member: it is the history the
      * portal shows, and there is nobody in it.

@@ -51,7 +51,7 @@ export function DownloadExport({
     )
   }
 
-  const { household, registrations, messages, signInAttempts, changes, notes } = data
+  const { household, messages, signInAttempts, changes, notes } = data
 
   return (
     <div className={styles.report}>
@@ -88,22 +88,6 @@ export function DownloadExport({
             </li>
           ))}
         </ul>
-      </Group>
-
-      <Group title={`Events you were recorded at (${registrations.length})`}>
-        {registrations.length === 0 ? (
-          <p className={styles.note}>None recorded.</p>
-        ) : (
-          <ul className={styles.list}>
-            {registrations.map((r) => (
-              <li key={r.id}>
-                {r.eventId} — {r.adults} {r.adults === 1 ? 'adult' : 'adults'}
-                {r.children > 0 ? `, ${r.children} children` : ''}
-                {r.helping ? ` · helping with ${r.helping}` : ''}
-              </li>
-            ))}
-          </ul>
-        )}
       </Group>
 
       <Group title={`Messages you sent us (${messages.length})`}>

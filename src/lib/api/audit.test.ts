@@ -26,7 +26,7 @@ const READS = [
   'news.listAllPosts', 'news.listAllAnnouncements',
   'contact.listMessages',
   'portal.identify', 'portal.getHousehold', 'portal.listHouseholds', 'portal.listDirectory',
-  'portal.listDocuments', 'portal.listRegistrationsForHousehold', 'portal.listRegistrationsForEvent',
+  'portal.listDocuments',
   'portal.listSignInAttempts', 'portal.exportHousehold', 'portal.listAttendance',
   'audit.list',
   'volunteering.listOpenRoles', 'volunteering.listRolesForEvent',
