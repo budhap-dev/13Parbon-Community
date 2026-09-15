@@ -1,0 +1,100 @@
+.frame {
+  position: relative;
+  overflow: hidden;
+  background: var(--tint, rgba(0, 0, 0, 0.06));
+}
+
+.image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* The frame clips, so a moving photograph never pushes the page about. */
+  will-change: transform;
+}
+
+.zoom {
+  animation: zoom 22s ease-in-out infinite alternate;
+}
+
+.drift {
+  /* Wider than the frame, so there is somewhere to drift to. */
+  width: 112%;
+  max-width: none;
+  animation: drift 26s ease-in-out infinite alternate;
+}
+
+.fade {
+  animation: fade 1.4s ease-out both;
+}
+
+.colour {
+  animation: colour 2.6s ease-out both;
+}
+
+@keyframes zoom {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.08);
+  }
+}
+
+@keyframes drift {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-10%);
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+    transform: scale(1.02);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes colour {
+  from {
+    filter: grayscale(1) contrast(1.05);
+  }
+  to {
+    filter: grayscale(0) contrast(1);
+  }
+}
+
+/*
+ * Somebody who has asked their machine for less movement gets the photograph and nothing else.
+ *
+ * index.css already shortens every animation to a hair, which stops the motion but leaves each
+ * one on its last frame — a zoom would sit permanently zoomed in, a drift permanently shoved to
+ * one side. So these are turned off properly rather than hurried.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .zoom,
+  .drift,
+  .fade,
+  .colour {
+    animation: none;
+    transform: none;
+    filter: none;
+    opacity: 1;
+    width: 100%;
+  }
+}
+
+.empty {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  font-size: 13px;
+  opacity: 0.6;
+}

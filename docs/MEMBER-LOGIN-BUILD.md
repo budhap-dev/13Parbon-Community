@@ -6,7 +6,7 @@
 > **What this is:** the order of work from [MEMBER-LOGIN.md](MEMBER-LOGIN.md), broken into steps
 > that can be ticked off. That document says *what* and *why*; this one says *where we are*.
 >
-> **Last updated:** 2026-09-15 · **Current step:** 4 · **Ticked:** 64 of 89
+> **Last updated:** 2026-09-15 · **Current step:** 4 · **Ticked:** 65 of 90
 
 ## How this is kept
 
@@ -337,6 +337,7 @@ in full every time focus landed there. The notes are tied on with `aria-describe
 - [x] Add an event here, because front of house has to be able to create what it owns
 - [x] Archive an evening that has been and gone
 - [x] A cover photograph and a programme, neither of which the model had
+- [x] Five quiet ways for the cover to move, and the cover drawn on the public event page
 - [ ] Render `cancelled` on the public pages — the status can be set now, and nothing draws it
 - [x] The `Registration` fixtures are gone from `/admin/events` and the dashboard — removed, not filled
 - [ ] Volunteer roles and sign-up — in the domain, in PLAN phase 3, and not covered by the other app either
@@ -373,6 +374,22 @@ has been and gone and has not been filed.
 **Editing something live says so.** A published event carries a line before the form: *this is
 on the website, anything you save changes what visitors see straight away.* Changing a venue on
 the morning of the event should not feel the same as writing a draft.
+
+**The cover can move, a little** *(2026-09-15)*. Five choices — still, slow zoom, slow drift,
+fade in, and into colour, which is the same idea as this year's theme photographs. Still leads,
+because it is the right answer more often than not, and the list stays short on purpose: a
+handful of quiet options is a choice, twenty is a way of making an event page into a slideshow.
+
+All of them are CSS on `transform`, `opacity` or `filter`, which the browser animates on its own
+thread. Nothing runs JavaScript on a timer on a page that scores 100 on Lighthouse.
+
+**Anybody who has asked their machine for less movement gets none**, and the screen says so where
+the choice is made. `index.css` already shortens every animation to a hair, which stops motion
+but leaves each one on its last frame — a zoom would sit permanently zoomed in. These are turned
+off properly rather than hurried.
+
+One component draws it in both places, so the designer's preview and the public page cannot
+disagree about what a choice looks like. A preview that flatters is worse than no preview.
 
 **Dropped, because the other app owns them:** creating and editing events, publish/unpublish,
 cancelling, copying last year's, and the cancellation email.
@@ -614,6 +631,7 @@ invitation, so nothing to approve and no passwords to reset.
 | 2026-09-15 | 5 | `/admin/content` wired — three buttons had done nothing. Caught a new post reading as "taken down". 525 → 533 tests. |
 | 2026-09-15 | — | Retention settled: the count is kept for good, the names for twelve months. `close_year()` counts before it deletes. 533 → 537 tests. |
 | 2026-09-15 | 3 | The committee types the headcount in. 537 → 551 tests. |
+| 2026-09-15 | 3 | Cover animations, and the cover drawn on the public event page at last. 579 → 592 tests. |
 | 2026-09-15 | 3 | Events can be added here and archived; editing a live one says so. Found the mock sharing event objects between clients. 563 → 579 tests. |
 | 2026-09-15 | 3 | An event design screen, with a live preview. Added a cover photograph and a programme to the model. 552 → 563 tests. |
 | 2026-09-15 | 5 | The switches moved out of `site.ts` into the admin. `nav.ts` stopped being a constant. Found `/news` missing from the sitemap. 546 → 552 tests. |

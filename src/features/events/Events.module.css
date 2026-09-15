@@ -452,3 +452,21 @@
   font-size: 15px;
   color: var(--color-fg-muted);
 }
+
+/*
+ * The cover photograph, if there is one.
+ *
+ * `alt=""` on purpose: it is decoration above a heading that already says what the evening is,
+ * and a screen reader announcing "a photograph of the hall" before the title helps nobody.
+ */
+.cover {
+  border-radius: var(--radius-lg, 18px);
+  margin-bottom: 28px;
+}
+
+@media (max-width: 640px) {
+  .cover {
+    border-radius: var(--radius-md, 12px);
+    margin-bottom: 20px;
+  }
+}

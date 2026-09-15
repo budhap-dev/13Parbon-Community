@@ -1,6 +1,8 @@
 import { useState, type FormEvent } from 'react'
 import { Button } from '@/components/Button'
+import { CoverImage } from '@/components/CoverImage'
 import { Icon } from '@/components/Icon'
+import { COVER_ANIMATIONS, type CoverAnimation } from '@/domain/cover'
 import { daysUntil, describeCountdown, formatLongDate, formatTime } from '@/domain/dates'
 import { blankEvent, tidyProgramme, validateEvent, type Event, type EventDraft, type EventErrors } from '@/domain/event'
 import { useNow } from '@/lib/clock'
@@ -19,6 +21,7 @@ export function draftOfEvent(event: Event): EventDraft {
     venueAddress: event.venueAddress ?? '',
     coordinates: event.coordinates ?? null,
     coverImageUrl: event.coverImageUrl ?? '',
+    coverAnimation: event.coverAnimation ?? 'none',
     theme: {
       bengali: event.theme?.bengali ?? '',
       bengaliSubtitle: event.theme?.bengaliSubtitle ?? '',
@@ -159,6 +162,32 @@ export function EventDesigner({
         </div>
 
         {field('coverImageUrl', 'Cover photograph', {}, 'An address in the photo bucket. Never a file from this repository.')}
+
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="coverAnimation">
+            How it moves
+          </label>
+          <select
+            id="coverAnimation"
+            className={styles.input}
+            value={draft.coverAnimation}
+            aria-describedby="coverAnimation-note"
+            onChange={(e) => set('coverAnimation', e.target.value as CoverAnimation)}
+          >
+            {COVER_ANIMATIONS.map((a) => (
+              <option key={a.value} value={a.value}>
+                {a.label}
+              </option>
+            ))}
+          </select>
+          <p id="coverAnimation-note" className={styles.hint}>
+            {COVER_ANIMATIONS.find((a) => a.value === draft.coverAnimation)?.note}
+          </p>
+          <p className={styles.hint}>
+            Anybody who has asked their machine for less movement sees the photograph still,
+            whichever of these is chosen.
+          </p>
+        </div>
 
         <fieldset className={styles.form} style={{ border: 0, margin: 0, padding: 0 }}>
           <legend className={styles.label}>This year’s theme</legend>
@@ -328,11 +357,7 @@ export function EventDesigner({
       <aside className={design.preview} aria-label="How it will look">
         <p className={design.previewLabel}>How it will look</p>
         <div className={design.card}>
-          {draft.coverImageUrl ? (
-            <img src={draft.coverImageUrl} alt="" className={design.cover} />
-          ) : (
-            <div className={design.coverEmpty}>No cover photograph yet</div>
-          )}
+          <CoverImage src={draft.coverImageUrl} animation={draft.coverAnimation} />
           <div className={design.cardBody}>
             <p className={design.kicker}>Next event</p>
             <h3 className={design.title}>{draft.title || 'Untitled'}</h3>

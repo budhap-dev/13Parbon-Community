@@ -3,6 +3,7 @@ import { activeSocial, site } from '@/app/site'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { Button } from '@/components/Button'
 import { Container } from '@/components/Container'
+import { CoverImage } from '@/components/CoverImage'
 import { Icon } from '@/components/Icon'
 import { LoadFailed } from '@/components/LoadFailed'
 import { ShareButton } from '@/components/ShareButton'
@@ -62,6 +63,16 @@ export function EventPage() {
           {event.title}
         </h1>
       </header>
+
+      {event.coverImageUrl ? (
+        <CoverImage
+          src={event.coverImageUrl}
+          animation={event.coverAnimation}
+          alt=""
+          ratio="21 / 9"
+          className={styles.cover}
+        />
+      ) : null}
 
       {event.theme ? (
           <section className={styles.theme} aria-labelledby="theme-label">

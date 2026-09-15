@@ -180,6 +180,47 @@ describe('the preview', () => {
     expect(within(preview).getByText(/booking is closed/)).toBeInTheDocument()
   })
 
+  it('offers a few quiet ways for the cover to move, still first', async () => {
+    renderEvents()
+    await design()
+
+    const picker = screen.getByLabelText('How it moves')
+    expect(within(picker).getByRole('option', { name: 'Still' })).toBeInTheDocument()
+    expect(within(picker).getByRole('option', { name: 'Slow zoom' })).toBeInTheDocument()
+    expect(within(picker).getAllByRole('option').length).toBeLessThanOrEqual(6)
+  })
+
+  it('says what the chosen movement does, and changes as the choice does', async () => {
+    renderEvents()
+    await design()
+
+    await userEvent.selectOptions(screen.getByLabelText('How it moves'), 'drift')
+    expect(screen.getByText(/Suits a wide photograph/)).toBeInTheDocument()
+
+    await userEvent.selectOptions(screen.getByLabelText('How it moves'), 'colour')
+    expect(screen.getByText(/Starts black and white/)).toBeInTheDocument()
+  })
+
+  it('promises that somebody asking for less movement gets none', async () => {
+    renderEvents()
+    await design()
+    expect(screen.getByText(/asked their machine for less movement/)).toBeInTheDocument()
+  })
+
+  it('shows the movement in the preview rather than describing it', async () => {
+    renderEvents()
+    const preview = await design()
+
+    const cover = screen.getByLabelText('Cover photograph')
+    await userEvent.clear(cover)
+    await userEvent.type(cover, 'https://photos.13parbon.org.uk/full/x.jpg')
+    await userEvent.selectOptions(screen.getByLabelText('How it moves'), 'zoom')
+
+    // A preview that flattered would be worse than none, so it draws the real component.
+    const img = preview.querySelector('img')!
+    expect(img.className.split(' ')).toHaveLength(2)
+  })
+
   it('says when the cover is missing instead of showing a gap', async () => {
     renderEvents()
     const preview = await design()

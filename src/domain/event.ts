@@ -1,3 +1,4 @@
+import type { CoverAnimation } from './cover'
 export type EventStatus = 'draft' | 'published' | 'cancelled' | 'past'
 
 export type Event = {
@@ -51,6 +52,8 @@ export type Event = {
    * usually a picture of last year's evening, with members' faces in it.
    */
   coverImageUrl?: string
+  /** How the cover behaves. Absent is still. */
+  coverAnimation?: CoverAnimation
   /**
    * The running order: what happens when.
    *
@@ -88,6 +91,7 @@ export type EventDraft = {
   venueAddress: string
   coordinates: { lat: number; lon: number } | null
   coverImageUrl: string
+  coverAnimation: CoverAnimation
   theme: { bengali: string; bengaliSubtitle: string; english: string }
   programme: { time: string; what: string }[]
   registrationUrl: string
@@ -150,6 +154,7 @@ export function blankEvent(): EventDraft {
     venueAddress: '',
     coordinates: null,
     coverImageUrl: '',
+    coverAnimation: 'none',
     theme: { bengali: '', bengaliSubtitle: '', english: '' },
     programme: [],
     registrationUrl: '',

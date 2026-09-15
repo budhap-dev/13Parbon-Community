@@ -106,6 +106,7 @@ function shapeOfEvent(draft: EventDraft) {
     venueAddress: text(draft.venueAddress),
     coordinates: draft.coordinates ?? undefined,
     coverImageUrl: text(draft.coverImageUrl),
+    coverAnimation: draft.coverAnimation,
     // An empty theme is absent rather than three empty strings, or the page draws a blank kicker.
     theme: draft.theme.bengali.trim()
       ? {
