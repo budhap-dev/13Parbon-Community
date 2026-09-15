@@ -204,6 +204,8 @@ export function createMockApi({ now = () => new Date(), latencyMs = 0, events }:
           latencyMs,
         ),
     },
+    // Empty here on purpose: recording is withAuditTrail's job, wrapped around the outside.
+    audit: { list: () => delay([], latencyMs) },
     volunteering: {
       listOpenRoles: () => delay(fixtures.volunteerRoles.filter((r) => r.filled < r.slots), latencyMs),
       listRolesForEvent: (eventId) => delay(fixtures.volunteerRoles.filter((r) => r.eventId === eventId), latencyMs),

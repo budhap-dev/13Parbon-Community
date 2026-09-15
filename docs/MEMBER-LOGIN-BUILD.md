@@ -6,7 +6,7 @@
 > **What this is:** the order of work from [MEMBER-LOGIN.md](MEMBER-LOGIN.md), broken into steps
 > that can be ticked off. That document says *what* and *why*; this one says *where we are*.
 >
-> **Last updated:** 2026-09-15 · **Current step:** 0.4 · **Ticked:** 26 of 84
+> **Last updated:** 2026-09-15 · **Current step:** 0.3 · **Ticked:** 30 of 86
 
 ## How this is kept
 
@@ -25,7 +25,7 @@
 | Step | | Days | Status |
 |---|---|---|---|
 | — | The story, checked and amended | — | ✅ done 2026-09-15 |
-| 0 | Foundations | 8–11 | **in progress** — 0.1 blocked on the project, 0.2 and 0.4 done, 0.3 next |
+| 0 | Foundations | 8–11 | **done on mocks** — 0.2, 0.3, 0.4 complete; 0.1 and the running of it blocked on the project |
 | 1 | The smallest write, end to end | 0.5 | **mostly done** — brought forward into 0.2 |
 | 2 | Households | ~5 | not started |
 | 3 | Events | ~4.5 | not started |
@@ -132,11 +132,36 @@ first two say the same thing. If they ever disagree, the database is right.
 Before the first write, not after. A trail added later starts empty and misses the months where
 the mistakes were made.
 
-- [ ] Table: who, what, which record, when, before and after
-- [ ] Written to by every mutation, not by each caller remembering to
-- [ ] Readable by admins only
+- [x] Table: who, what, which record, when, and the value **before** as well as after
+- [x] Written by a trigger in the database and by a wrapper around the client, not by each caller
+- [x] Readable by admins; writable by nobody, including admins — no insert or update policy exists
+- [x] A guard that fails if any method is added to the contract without deciding whether it audits
+- [ ] Run the trigger against the project — blocked with 0.1
 
 **Done when:** changing a value leaves a row behind, without the calling code asking it to.
+*True on mocks, and tested. The trigger is written but unrun, like the rest of 0.1.*
+
+**Before, not just after.** The question asked six months later is never "did this change" — it
+is "who unpublished that", "when did she become an admin", "what was the number before". A trail
+that only records that a row moved answers none of them.
+
+**Where the mock is honestly weaker.** In Postgres the trail is a trigger on the table, so
+nothing reaching it can opt out. A mock has no triggers, so `withAuditTrail` wraps the whole
+client instead — the methods underneath neither know nor can refuse — but a *new* mutation is
+only recorded once it is added there. That gap is the one thing a wrapper cannot close, so
+`audit.test.ts` reflects over the client and fails if any method exists that nobody has classed
+as a read, an audited write, or a deliberate exception.
+
+**Found while writing it:** the wrapper read the old value off the row *after* the write. The
+mock changes rows in place, so it was reading the new value twice and diffing to nothing — a
+silently empty trail, which is the one failure an audit trail must not have. There is a
+regression test for it now, and for the matching case in the trigger: a write that changed
+nothing writes no line.
+
+**A retention question this raises.** `on delete set null` means erasing a household leaves its
+trail behind with nobody named in it. That is the right way round — somebody asking to be
+forgotten should not stay named in a log — but the committee should export the trail before
+deleting anybody, or lose the account of what that household did.
 
 ### 0.4 One place that answers "may they?" · 0.5–1 day
 
@@ -277,7 +302,7 @@ The gate, not a formality. Nothing above matters if this is skipped.
 | Video: host, embed, or leave out? | Step 4 |
 | Profile photographs: worth the takedown obligation? | Steps 2, 4 |
 | Sponsors: are there any? | Step 3 |
-| Retention: how long are attendance records kept? | Steps 3, 6 |
+| Retention: how long are attendance records kept, and is the audit trail exported before an erasure? | Steps 3, 6 |
 | Backups: does the R2 bucket need a second copy? | Step 6 |
 | Event summaries: written, or drafted for editing? | Step 5 |
 | Erasure: what happens to a deleted household's registrations? | Step 2 |
@@ -296,3 +321,4 @@ invitation, so nothing to approve and no passwords to reset.
 | 2026-09-15 | 0.1 | `portal.sql` and `verify.sql` rewritten. Three known faults fixed, three more found. Not run: no Supabase project yet. |
 | 2026-09-15 | 0.2 | Contract narrowed and given a viewer; the mock now refuses what the policies refuse. Found the directory handing whole households to the browser. First write shipped. 228 → 255 tests. |
 | 2026-09-15 | 0.4 | `can()` written, every rule naming the policy it mirrors. Route guard, navigation and the first button all ask it. 255 → 337 tests, coverage 90%. |
+| 2026-09-15 | 0.3 | Audit trail: trigger in SQL, wrapper around the client, contract guard. Caught the wrapper diffing a row against itself. 337 → 346 tests. Foundations done bar the running. |

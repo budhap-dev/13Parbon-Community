@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, type RenderOptions } from '@testing-library/react'
 import type { ReactElement, ReactNode } from 'react'
 import { MemoryRouter } from 'react-router'
-import { ApiProvider, createMockApi, type ApiClient } from '@/lib/api'
+import { ApiProvider, createMockApi, withAuditTrail, type ApiClient } from '@/lib/api'
 import { testEvents } from './events'
 import { ClockProvider } from '@/lib/clock'
 import { ThemeProvider } from '@/app/theme/ThemeContext'
@@ -13,7 +13,9 @@ import { SessionProvider, type Session } from '@/lib/auth/session'
 export const TEST_NOW = new Date('2026-09-03T10:00:00')
 
 export function createTestApi(): ApiClient {
-  return createMockApi({ now: () => TEST_NOW, events: testEvents })
+  // Wrapped exactly as createApi wraps it, so a test exercises the client the app runs on
+  // rather than a plainer one that happens to pass.
+  return withAuditTrail(createMockApi({ now: () => TEST_NOW, events: testEvents }), () => TEST_NOW)
 }
 
 /**
@@ -38,6 +40,7 @@ export function createEmptyApi(): ApiClient {
       listRegistrationsForEvent: async () => [],
       listSignInAttempts: async () => [],
     },
+    audit: { list: async () => [] },
     volunteering: { listOpenRoles: async () => [], listRolesForEvent: async () => [] },
   }
 }
@@ -67,6 +70,7 @@ export function createFailingApi(): ApiClient {
       listRegistrationsForEvent: down,
       listSignInAttempts: down,
     },
+    audit: { list: down },
     volunteering: { listOpenRoles: down, listRolesForEvent: down },
   }
 }

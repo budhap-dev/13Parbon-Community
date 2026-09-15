@@ -5,6 +5,7 @@ import type { ContactInput, ContactMessage } from '@/domain/contact'
 import type { CommunityDocument, SignInAttempt } from '@/domain/document'
 import type { DirectoryEntry, Household, Viewer } from '@/domain/household'
 import type { Registration } from '@/domain/registration'
+import type { AuditEntry } from '@/domain/audit'
 import type { Announcement, NewsPost, Newsletter } from '@/domain/news'
 import type { VolunteerRole } from '@/domain/volunteer'
 
@@ -97,6 +98,13 @@ export interface ApiClient {
     listRegistrationsForEvent(eventId: string, viewer: Viewer): Promise<Registration[]>
     /** Google accounts that signed in but matched no household. Admin only. */
     listSignInAttempts(viewer: Viewer): Promise<SignInAttempt[]>
+  }
+  /**
+   * What has been changed, and by whom. Written by `withAuditTrail` here and by a trigger in
+   * the database; read by the committee and nobody else.
+   */
+  audit: {
+    list(viewer: Viewer, limit?: number): Promise<AuditEntry[]>
   }
   volunteering: {
     /** Roles that still have free slots. */

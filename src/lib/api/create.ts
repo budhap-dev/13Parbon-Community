@@ -1,3 +1,4 @@
+import { withAuditTrail } from './audit'
 import { createMockApi } from './mock'
 import { readSupabaseConfig, withSupabaseWrites } from './supabase'
 import type { ApiClient } from './types'
@@ -10,5 +11,5 @@ import type { ApiClient } from './types'
 export function createApi(env: Record<string, string | undefined> = import.meta.env): ApiClient {
   const base = createMockApi()
   const config = readSupabaseConfig(env)
-  return config ? withSupabaseWrites(base, config) : base
+  return withAuditTrail(config ? withSupabaseWrites(base, config) : base)
 }
