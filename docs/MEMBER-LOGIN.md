@@ -101,6 +101,17 @@ the section shrinks to something worth a page.
 
 ## 3. Event management
 
+> **Settled 2026-09-15: the committee already runs a separate app for this** —
+> [budhap-dev/event-management](https://github.com/budhap-dev/event-management), live at
+> `13parbon-event-management.vercel.app` and already linked from the portal as a tool in
+> `src/app/site.ts`. Events are *managed* there. This site's job is to **show** what is on.
+>
+> That is the same shape as the registration decision: the work happens somewhere the committee
+> already knows, and this app is the front of house. It takes most of the section below off this
+> project's plate — and leaves one question in its place, which is how the event on the home page
+> learns what the other app knows. That is now the only real work in this section.
+
+
 | Asked for | Where it stands | Amendment |
 |---|---|---|
 | Create upcoming events | Not built. `/admin/events` lists them, read-only | Keep. Probably the second write after households |

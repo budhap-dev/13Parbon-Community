@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { ContactInput } from '@/domain/contact'
-import type { Viewer } from '@/domain/household'
+import type { HouseholdDraft, Viewer } from '@/domain/household'
 import { useSignedIn } from '@/lib/auth/session'
 import { useApi } from './context'
 
@@ -166,6 +166,33 @@ export function useMarkMessageHandled() {
   return useMutation({
     mutationFn: (id: string) => api.contact.markHandled(id, viewer),
     onSuccess: () => queries.invalidateQueries({ queryKey: ['contact', 'messages'] }),
+  })
+}
+
+/**
+ * Inviting a household, and saving one. Both invalidate the whole portal tree rather than one
+ * key: a household appears in the directory, in the committee's list, in its own page and in
+ * the counts on the overview, and a write that refreshed only the screen it was made from
+ * would leave the others quietly stale.
+ */
+export function useAddHousehold() {
+  const api = useApi()
+  const viewer = useViewer()
+  const queries = useQueryClient()
+  return useMutation({
+    mutationFn: (draft: HouseholdDraft) => api.portal.addHousehold(draft, viewer),
+    onSuccess: () => queries.invalidateQueries({ queryKey: ['portal'] }),
+  })
+}
+
+export function useUpdateHousehold() {
+  const api = useApi()
+  const viewer = useViewer()
+  const queries = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, draft }: { id: string; draft: HouseholdDraft }) =>
+      api.portal.updateHousehold(id, draft, viewer),
+    onSuccess: () => queries.invalidateQueries({ queryKey: ['portal'] }),
   })
 }
 

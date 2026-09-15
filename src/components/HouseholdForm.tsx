@@ -5,8 +5,8 @@ import {
   normaliseGoogleEmail,
   validateHousehold,
   type Household,
+  type HouseholdDraft,
   type HouseholdErrors,
-  type HouseholdInput,
   type MembershipStatus,
   type PersonInput,
   type Role,
@@ -14,20 +14,6 @@ import {
 } from '@/domain/household'
 import { can } from '@/lib/auth/permissions'
 import styles from './HouseholdForm.module.css'
-
-/**
- * The committee's fields. Separate from `HouseholdInput` because a member may not change any
- * of them, even on their own row — in the database that is a trigger, since row level security
- * decides rows and not columns.
- */
-export type CommitteeFields = {
-  googleEmail: string | null
-  role: Role
-  membershipStatus: MembershipStatus
-  membershipPaidTo: string
-}
-
-export type HouseholdDraft = HouseholdInput & Partial<CommitteeFields>
 
 type Props = {
   /** The household being edited, or nothing at all when one is being added. */

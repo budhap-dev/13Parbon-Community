@@ -1,7 +1,11 @@
+import { useState } from 'react'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
+import { Button } from '@/components/Button'
+import { HouseholdForm } from '@/components/HouseholdForm'
 import { adults, children } from '@/domain/household'
 import { formatDateWithYear } from '@/domain/dates'
-import { useHousehold } from '@/lib/api'
+import { useHousehold, useUpdateHousehold, useViewer } from '@/lib/api'
+import { can } from '@/lib/auth/permissions'
 import { useSignedIn } from '@/lib/auth/session'
 import styles from './Portal.module.css'
 
@@ -32,10 +36,50 @@ function Toggle({ on, title, note }: { on: boolean; title: string; note: string 
 export function HouseholdPage() {
   useDocumentTitle('My household')
   const who = useSignedIn()
+  const viewer = useViewer()
   const { data: household, isPending } = useHousehold(who?.householdId)
+  const save = useUpdateHousehold()
+  const [editing, setEditing] = useState(false)
 
   if (isPending) return <p aria-busy="true">Loading…</p>
   if (!household) return <p className={styles.empty}>We could not find your household.</p>
+
+  const mayEdit = can(viewer, 'household:edit', { householdId: household.id })
+
+  if (editing) {
+    return (
+      <div className={styles.page}>
+        <div className={styles.top}>
+          <div>
+            <h1 className={styles.title}>Edit your household</h1>
+            <p className={styles.sub}>
+              Change what the committee holds about you, and what other members can see. Your
+              membership and how you sign in are the committee's to change — ask them.
+            </p>
+          </div>
+          <Button variant="line" size="sm" onClick={() => setEditing(false)}>
+            Cancel
+          </Button>
+        </div>
+        <section className={styles.panel}>
+          <div className={styles.pad}>
+            <HouseholdForm
+              household={household}
+              viewer={viewer}
+              saving={save.isPending}
+              error={save.isError ? save.error.message : undefined}
+              onSave={(draft) =>
+                save.mutate(
+                  { id: household.id, draft },
+                  { onSuccess: () => setEditing(false) },
+                )
+              }
+            />
+          </div>
+        </section>
+      </div>
+    )
+  }
 
   return (
     <div className={styles.page}>
@@ -44,6 +88,11 @@ export function HouseholdPage() {
           <h1 className={styles.title}>My household</h1>
           <p className={styles.sub}>What the committee holds about you, and what other members can see.</p>
         </div>
+        {mayEdit ? (
+          <Button variant="gold" size="sm" onClick={() => setEditing(true)}>
+            Edit
+          </Button>
+        ) : null}
       </div>
 
       <div className={styles.two}>

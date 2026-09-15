@@ -200,6 +200,100 @@ describe('committee pages', () => {
   })
 })
 
+describe('a household editing itself', () => {
+  it('saves a change and shows it back on the page afterwards', async () => {
+    renderAt('/portal/household', member)
+    await userEvent.click(await screen.findByRole('button', { name: 'Edit' }))
+
+    const contact = await screen.findByLabelText('Who the committee speaks to')
+    await userEvent.clear(contact)
+    await userEvent.type(contact, 'Rina S Sen')
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+
+    // Back on the read-only page, showing what was saved rather than what was typed.
+    expect(await screen.findByRole('heading', { level: 1, name: 'My household' })).toBeInTheDocument()
+    expect(await screen.findByText('Rina S Sen')).toBeInTheDocument()
+  })
+
+  it('turns a privacy choice on and keeps it', async () => {
+    renderAt('/portal/household', member)
+    await userEvent.click(await screen.findByRole('button', { name: 'Edit' }))
+    await userEvent.click(await screen.findByLabelText('Show our phone number'))
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+
+    expect(await screen.findByRole('img', { name: 'Show our phone: on' })).toBeInTheDocument()
+  })
+
+  it('is not offered the committee\'s fields on its own household', async () => {
+    renderAt('/portal/household', member)
+    await userEvent.click(await screen.findByRole('button', { name: 'Edit' }))
+    await screen.findByLabelText('Household name')
+
+    expect(screen.queryByLabelText(/Google address/)).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Role')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Membership')).not.toBeInTheDocument()
+  })
+
+  it('backs out without saving', async () => {
+    renderAt('/portal/household', member)
+    await userEvent.click(await screen.findByRole('button', { name: 'Edit' }))
+    const contact = await screen.findByLabelText('Who the committee speaks to')
+    await userEvent.clear(contact)
+    await userEvent.type(contact, 'Somebody Else')
+    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+
+    // Back on the read-only page with nothing kept. Rina's name appears both as the contact
+    // and as a person in the household, so count rather than expect one.
+    expect(await screen.findByRole('heading', { level: 1, name: 'My household' })).toBeInTheDocument()
+    expect(screen.getAllByText('Rina Sen').length).toBeGreaterThan(0)
+    expect(screen.queryByText('Somebody Else')).not.toBeInTheDocument()
+  })
+})
+
+describe('the committee managing households', () => {
+  it('invites a household, and it joins the list', async () => {
+    renderAt('/admin/people', admin)
+    await userEvent.click(await screen.findByRole('button', { name: 'Add a household' }))
+
+    await userEvent.type(await screen.findByLabelText('Household name'), 'The Duttas')
+    await userEvent.type(screen.getByLabelText('Who the committee speaks to'), 'Sujata Dutta')
+    await userEvent.type(screen.getByLabelText('Email'), 'sujata@example.com')
+    await userEvent.type(screen.getByLabelText('Name'), 'Sujata Dutta')
+    await userEvent.type(screen.getByLabelText(/Google address/), 'sujata.dutta@gmail.com')
+    await userEvent.click(screen.getByRole('button', { name: 'Add the household' }))
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'People' })).toBeInTheDocument()
+    // The households table is the second one; the first lists who tried to sign in.
+    const [, table] = await screen.findAllByRole('table')
+    expect(within(table).getAllByRole('row', { name: /The Duttas/ })).toHaveLength(1)
+  })
+
+  it('will not invite a household with nobody named in it', async () => {
+    renderAt('/admin/people', admin)
+    await userEvent.click(await screen.findByRole('button', { name: 'Add a household' }))
+    await userEvent.type(await screen.findByLabelText('Household name'), 'The Nameless')
+    await userEvent.click(screen.getByRole('button', { name: 'Add the household' }))
+
+    // Still on the form, and told what is missing.
+    expect(screen.getByRole('button', { name: 'Add the household' })).toBeInTheDocument()
+    expect(screen.getByText(/Who should the committee speak to/)).toBeInTheDocument()
+  })
+
+  it('opens a household from the list and changes its role', async () => {
+    renderAt('/admin/people', admin)
+    const [, table] = await screen.findAllByRole('table')
+    const row = within(table).getByRole('row', { name: /The Sens/ })
+    await userEvent.click(within(row).getByRole('button', { name: /Edit/ }))
+
+    await userEvent.selectOptions(await screen.findByLabelText('Role'), 'admin')
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+
+    const [, after] = await screen.findAllByRole('table')
+    const updated = within(after).getByRole('row', { name: /The Sens/ })
+    expect(within(updated).getByText('Admin')).toBeInTheDocument()
+  })
+})
+
 describe('preview sign-in', () => {
   it('is offered when asked for by name, and gets you in', async () => {
     const router = renderAt('/login?preview')

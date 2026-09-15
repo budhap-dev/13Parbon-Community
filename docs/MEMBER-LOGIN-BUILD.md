@@ -6,7 +6,7 @@
 > **What this is:** the order of work from [MEMBER-LOGIN.md](MEMBER-LOGIN.md), broken into steps
 > that can be ticked off. That document says *what* and *why*; this one says *where we are*.
 >
-> **Last updated:** 2026-09-15 · **Current step:** 2 · **Ticked:** 35 of 89
+> **Last updated:** 2026-09-15 · **Current step:** 2 · **Ticked:** 41 of 83
 
 ## How this is kept
 
@@ -27,12 +27,12 @@
 | — | The story, checked and amended | — | ✅ done 2026-09-15 |
 | 0 | Foundations | 8–11 | **done on mocks** — 0.2, 0.3, 0.4 complete; 0.1 and the running of it blocked on the project |
 | 1 | The smallest write, end to end | 0.5 | **mostly done** — brought forward into 0.2 |
-| 2 | Households | ~5 | **in progress** — validation and the form done; wiring next |
-| 3 | Events | ~4.5 | not started |
+| 2 | Households | ~5 | **in progress** — form, mutations and both pages done; attempts, export and delete left |
+| 3 | Events | ~1 | **mostly dropped** — the planner app owns it |
 | 4 | Media | ~4 | not started |
 | 5 | Content | ~4.5 | not started |
 | 6 | Ready to merge | ~2 | not started |
-| | **Total** | **~35–39** *(incl. tests, adapters, states)* | |
+| | **Total** | **~32–36** *(incl. tests, adapters, states)* | |
 
 **Cheapest useful stopping point:** end of step 2. That is PLAN's phase 2 exit criterion — a
 committee member adds a household, that household signs in with Google and sees their dashboard —
@@ -205,18 +205,16 @@ foundation pieces work together on something with nothing at stake.
 
 The data everything else hangs off.
 
-- [ ] Import the committee's existing spreadsheet — **blocked: I do not have the spreadsheet.**
-      A sample of it, or its column headings, is enough to start
 - [x] `validateHousehold()` in the domain, every rule matching a `check` constraint in `portal.sql`
 - [x] The nested `people[]` form: adults and children added and removed inline, with ages and notes
 - [x] One form for adding and editing, and for the committee and the household — which fields
       appear is decided by `can()`, not by which page rendered it
-- [ ] Wire it to `/admin/people` (add, and edit any household)
-- [ ] Wire it to `/portal/household` (a household editing its own)
-- [ ] The mutations behind it: `households.add`, `households.update`
-- [ ] Record and change `googleEmail` — this is what "reset password" actually means here
-- [ ] Set membership status (`active` / `lapsed`) and `paidTo`
-- [ ] Assign the `admin` role, **and refuse to remove the last admin** — `canStopBeingAdmin()` is written and tested; it still needs a constraint behind it
+- [x] Wire it to `/admin/people` (add, and edit any household)
+- [x] Wire it to `/portal/household` (a household editing its own)
+- [x] The mutations behind it: `addHousehold` and `updateHousehold`, both audited
+- [x] Record and change `googleEmail` — this is what "reset password" actually means here
+- [x] Set membership status (`active` / `lapsed`) and `paidTo`
+- [x] Assign the `admin` role, **and refuse to remove the last admin** — refused at the API now, not only by the button; still no constraint behind it in Postgres
 - [ ] Sign-in attempts: add them, or mark resolved — the list is already on the page, read-only
 - [x] A member editing their own household: same form, different permissions
 - [x] A member's own privacy choices: `listedInDirectory`, `shareEmail`, `sharePhone`
@@ -225,6 +223,11 @@ The data everything else hangs off.
 
 **Done when:** a committee member adds a household that is not their own, that household signs in
 with Google, sees their dashboard, and edits their own details. *(PLAN phase 2 exit criterion.)*
+
+**Parked: the spreadsheet import** *(2026-09-15)*. It was to be the first job here, on the
+grounds that re-typing what the committee already has is a poor first day. Set aside for now,
+so households get added through the form to begin with. Picking it up needs nothing but the
+spreadsheet's column headings, and the sooner it happens the fewer rows there are to reconcile.
 
 **One form, not two.** Adding and editing are the same form, and so are the committee's version
 and the household's. Two forms agree about what a household is right up until the day somebody
@@ -236,26 +239,49 @@ contact form was hand-rolled against a `validate…()` helper in the domain. Thi
 rather than adding two dependencies to a mobile-first site that scores 100 on Lighthouse. Worth
 revisiting only if the forms get much harder than this one.
 
+**The rule a form cannot keep.** A draft is whatever the browser chose to send. The form does not
+draw the committee's fields for a member — but that is a fact about the form, not about the
+request, so `updateHousehold` refuses a member's draft carrying a role, a sign-in address or a
+membership change rather than quietly ignoring it. The same answer the trigger in `portal.sql`
+gives, in the same words, and tested from the API rather than through the form: testing it through
+the form would only prove the form.
+
 **Found while writing it:** every privacy checkbox had its explanatory sentence *inside* its
 `<label>`, so the accessible name of each box was the choice plus the whole sentence — read out
 in full every time focus landed there. The notes are tied on with `aria-describedby` now.
 
 ---
 
-## Step 3 — Events · ~4.5 days
+## Step 3 — Events · ~1 day *(was ~4.5)*
 
-- [ ] Create an event — ~18 fields including nested `theme` and per-event coordinates
-- [ ] Edit an event
-- [ ] Publish / unpublish (`draft` → `published`)
-- [ ] Cancel an event, and **render `cancelled`** — the status is in the type and nothing shows it
-- [ ] Wire up Resend, so a cancellation reaches the households who registered
-- [ ] Copy last year's event, carrying `festivalId`, venue and copy, then change the date
-- [ ] Manage the Google Form link and the `householdsRegistered` count — the bookings stay in the sheet
-- [ ] Decide the fate of the `Registration` fixtures on `/admin/events` and the dashboard: fill by hand, or remove
-- [ ] Volunteer roles and sign-up — in the domain, in PLAN phase 3, missing from the committee's list
+> **Mostly gone, 2026-09-15.** The committee already runs
+> [budhap-dev/event-management](https://github.com/budhap-dev/event-management) for this, live at
+> `13parbon-event-management.vercel.app` and already linked from the portal. Events are managed
+> there; this site shows what is on. Building a second event back office here would be a second
+> place to keep the same dates correct.
 
-**Done when:** an organiser puts a real event up, changes it, and cancels a test one that emails
-its registrants.
+- [ ] **Decide how an event gets from that app to this one.** The only real work left here
+- [ ] Render `cancelled` — the status is in the `Event` type and nothing draws it
+- [ ] Decide the fate of the `Registration` fixtures on `/admin/events` and the dashboard: fill from the sheet by hand, or remove
+- [ ] Volunteer roles and sign-up — in the domain, in PLAN phase 3, and not covered by the other app either
+
+**Dropped, because the other app owns them:** creating and editing events, publish/unpublish,
+cancelling, copying last year's, and the cancellation email.
+
+**Done when:** the next event on the home page is the one the committee entered in the planner,
+without anybody typing it twice.
+
+### How the event gets here — the choice to make
+
+| | Cost | Risk |
+|---|---|---|
+| **Type it twice** — committee re-enters the handful of fields the public page shows | Nothing to build | Two places to be right, and the public one goes stale first. It is also what we do today |
+| **Export a JSON file** the planner publishes, which this site reads | Small, on both sides | Needs the other app to grow an endpoint, and a stale file is silent |
+| **One shared database** — both apps read the same Supabase project | Largest, and it couples them | The two apps then have to agree about what an event is, forever |
+
+My read: the export. It keeps the two apps independent, and the fields this site shows are few —
+title, date, venue, a line of description, the registration link. Worth confirming before anything
+is built, and worth a look at what the planner already stores.
 
 ---
 
@@ -324,9 +350,10 @@ The gate, not a formality. Nothing above matters if this is skipped.
 | Retention: how long are attendance records kept, and is the audit trail exported before an erasure? | Steps 3, 6 |
 | Backups: does the R2 bucket need a second copy? | Step 6 |
 | Event summaries: written, or drafted for editing? | Step 5 |
+| How an event reaches this site from the planner app | Step 3 |
 | Erasure: what happens to a deleted household's registrations? | Step 2 |
 
-**Settled already:** registration stays on Google Forms and stays separate · no separate CMS,
+**Settled already:** event management lives in the separate planner app · registration stays on Google Forms and stays separate · no separate CMS,
 content goes in Supabase behind narrow admin forms · two roles, no role builder · membership is by
 invitation, so nothing to approve and no passwords to reset.
 
@@ -342,3 +369,5 @@ invitation, so nothing to approve and no passwords to reset.
 | 2026-09-15 | 0.4 | `can()` written, every rule naming the policy it mirrors. Route guard, navigation and the first button all ask it. 255 → 337 tests, coverage 90%. |
 | 2026-09-15 | 0.3 | Audit trail: trigger in SQL, wrapper around the client, contract guard. Caught the wrapper diffing a row against itself. 337 → 346 tests. Foundations done bar the running. |
 | 2026-09-15 | 2 | Household validation and the shared add/edit form, with the nested people list. Caught the checkbox notes being read as part of each box's name. 346 → 378 tests. |
+| 2026-09-15 | 2 | `addHousehold` / `updateHousehold`, audited, with the committee's columns refused from a member at the API. Wired into both pages. 378 → 397 tests. |
+| 2026-09-15 | 3 | Event management dropped: the committee already runs a separate planner app. Step 3 cut from ~4.5 days to ~1. |

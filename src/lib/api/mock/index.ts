@@ -2,7 +2,7 @@ import { isUpcoming } from '@/domain/dates'
 import { isValidContact, type ContactMessage } from '@/domain/contact'
 import type { Event } from '@/domain/event'
 import type { AlbumWithMedia } from '@/domain/gallery'
-import { directoryEntry, isAdmin, isMember } from '@/domain/household'
+import { directoryEntry, isAdmin, isMember, isValidHousehold, type Household, type HouseholdDraft, type Person, type Viewer } from '@/domain/household'
 import type { ApiClient } from '../types'
 import { buildFixtures } from './fixtures'
 import { buildPortalFixtures } from './portal-fixtures'
@@ -34,6 +34,58 @@ export class NotAllowed extends Error {
     super(`Not allowed: ${what}`)
     this.name = 'NotAllowed'
   }
+}
+
+
+/** The parts of a draft that belong to the household, with people given ids. */
+function shapeOf(draft: HouseholdDraft) {
+  const people: Person[] = draft.people.map((person, i) => ({
+    id: `p-${i + 1}`,
+    name: person.name.trim(),
+    ageGroup: person.ageGroup,
+    ...(person.ageGroup === 'child' && person.age !== undefined ? { age: person.age } : {}),
+    ...(person.note?.trim() ? { note: person.note.trim() } : {}),
+  }))
+  return {
+    name: draft.name.trim(),
+    contactName: draft.contactName.trim(),
+    email: draft.email.trim(),
+    ...(draft.phone?.trim() ? { phone: draft.phone.trim() } : { phone: undefined }),
+    people,
+    interests: draft.interests,
+    listedInDirectory: draft.listedInDirectory,
+    shareEmail: draft.shareEmail,
+    sharePhone: draft.sharePhone,
+  }
+}
+
+/**
+ * Everything that would make a write wrong, before any of it is applied.
+ *
+ * The column rules are the interesting half. A draft is whatever the browser chose to send: a
+ * form that does not draw a field is no guarantee that nobody sent one, so a member offering a
+ * role is refused here rather than quietly ignored — which is the answer the database's
+ * trigger gives, in the same words.
+ */
+function checkDraft(draft: HouseholdDraft, viewer: Viewer, existing?: Household): NotAllowed | null {
+  if (!isValidHousehold(draft)) return new NotAllowed('that household is not complete')
+
+  if (!isAdmin(viewer)) {
+    const current = existing
+    if (draft.role !== undefined && draft.role !== current?.role) {
+      return new NotAllowed('only the committee can change a role')
+    }
+    if (draft.googleEmail !== undefined && draft.googleEmail !== (current?.googleEmail ?? null)) {
+      return new NotAllowed('only the committee can change the sign-in address')
+    }
+    if (
+      (draft.membershipStatus !== undefined && draft.membershipStatus !== current?.membership.status) ||
+      (draft.membershipPaidTo !== undefined && draft.membershipPaidTo !== current?.membership.paidTo)
+    ) {
+      return new NotAllowed('only the committee can change membership')
+    }
+  }
+  return null
 }
 
 export function createMockApi({ now = () => new Date(), latencyMs = 0, events }: MockApiOptions = {}): ApiClient {
@@ -203,6 +255,54 @@ export function createMockApi({ now = () => new Date(), latencyMs = 0, events }:
             : [],
           latencyMs,
         ),
+
+      addHousehold: (draft, viewer) => {
+        if (!isAdmin(viewer)) return Promise.reject(new NotAllowed('only the committee can add a household'))
+        const refusal = checkDraft(draft, viewer)
+        if (refusal) return Promise.reject(refusal)
+        if (draft.googleEmail && portal.households.some((h) => h.googleEmail === draft.googleEmail)) {
+          return Promise.reject(new NotAllowed('that Google address already belongs to a household'))
+        }
+        const household: Household = {
+          id: `hh-${portal.households.length + 1}-${draft.name.toLowerCase().replace(/[^a-z]+/g, '') || 'new'}`,
+          ...shapeOf(draft),
+          googleEmail: draft.googleEmail ?? null,
+          memberSince: now().toISOString().slice(0, 10),
+          membership: { status: draft.membershipStatus ?? 'active', paidTo: draft.membershipPaidTo ?? '' },
+          role: draft.role ?? 'member',
+        }
+        portal.households.push(household)
+        return delay(household, latencyMs)
+      },
+
+      updateHousehold: (id, draft, viewer) => {
+        const existing = portal.households.find((h) => h.id === id)
+        // Not found and not allowed give the same answer, as everywhere else here.
+        if (!existing || (viewer?.householdId !== id && !isAdmin(viewer))) {
+          return Promise.reject(new NotAllowed('no such household'))
+        }
+        const refusal = checkDraft(draft, viewer, existing)
+        if (refusal) return Promise.reject(refusal)
+
+        // The committee must not be able to lock itself out. There is no constraint behind
+        // this in Postgres yet, so for now the mock is the only thing enforcing it besides the
+        // button, and neither of those is a guarantee.
+        const losingAdmin = existing.role === 'admin' && (draft.role ?? existing.role) !== 'admin'
+        if (losingAdmin && portal.households.filter((h) => h.role === 'admin').length <= 1) {
+          return Promise.reject(new NotAllowed('that is the last admin — make somebody else one first'))
+        }
+
+        Object.assign(existing, shapeOf(draft))
+        if (isAdmin(viewer)) {
+          existing.googleEmail = draft.googleEmail ?? null
+          existing.role = draft.role ?? existing.role
+          existing.membership = {
+            status: draft.membershipStatus ?? existing.membership.status,
+            paidTo: draft.membershipPaidTo ?? existing.membership.paidTo,
+          }
+        }
+        return delay(existing, latencyMs)
+      },
     },
     // Empty here on purpose: recording is withAuditTrail's job, wrapped around the outside.
     audit: { list: () => delay([], latencyMs) },

@@ -149,6 +149,25 @@ export type HouseholdInput = {
   sharePhone: boolean
 }
 
+/**
+ * The committee's fields, kept apart from `HouseholdInput` because a member may not change any
+ * of them even on their own row. In the database that separation is a trigger, since row level
+ * security decides rows and not columns.
+ */
+export type CommitteeFields = {
+  googleEmail: string | null
+  role: Role
+  membershipStatus: MembershipStatus
+  /** ISO 8601 date, or empty for not recorded. */
+  membershipPaidTo: string
+}
+
+/**
+ * What a form hands back. The committee's half is optional because a member's form never
+ * carries it — and the API refuses it from them even if it arrives, rather than trusting that.
+ */
+export type HouseholdDraft = HouseholdInput & Partial<CommitteeFields>
+
 export type HouseholdErrors = {
   name?: string
   contactName?: string

@@ -1,8 +1,8 @@
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
-import type { Household, Viewer } from '@/domain/household'
-import { HouseholdForm, type HouseholdDraft } from './HouseholdForm'
+import type { Household, HouseholdDraft, Viewer } from '@/domain/household'
+import { HouseholdForm } from './HouseholdForm'
 
 const household: Household = {
   id: 'hh-sen',

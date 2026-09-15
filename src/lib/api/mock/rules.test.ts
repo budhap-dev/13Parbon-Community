@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { Viewer } from '@/domain/household'
+import type { HouseholdDraft, Viewer } from '@/domain/household'
 import { createMockApi } from './index'
 
 /**
@@ -152,6 +152,124 @@ describe('marking a message handled', () => {
 
   it('refuses a message that is not there', async () => {
     await expect(api().contact.markHandled('cm-nope', admin)).rejects.toThrow(/not allowed/i)
+  })
+})
+
+/**
+ * The rules a form cannot be trusted to keep.
+ *
+ * A draft is whatever the browser chose to send. `HouseholdForm` does not draw the committee's
+ * fields for a member, but that is a fact about the form, not about the request — so every one
+ * of them is refused here too, which is what the trigger in portal.sql does and why it exists.
+ */
+describe('a member saving their own household', () => {
+  const draftOf = (over: Partial<HouseholdDraft> = {}): HouseholdDraft => ({
+    name: 'The Sens',
+    contactName: 'Rina Sen',
+    email: 'rina@example.com',
+    people: [{ name: 'Rina Sen', ageGroup: 'adult' }],
+    interests: [],
+    listedInDirectory: true,
+    shareEmail: true,
+    sharePhone: false,
+    ...over,
+  })
+
+  it('saves what is theirs to save', async () => {
+    const a = api()
+    const saved = await a.portal.updateHousehold('hh-sen', draftOf({ sharePhone: true }), member)
+    expect(saved.sharePhone).toBe(true)
+    expect(saved.contactName).toBe('Rina Sen')
+  })
+
+  it('cannot promote itself, however the draft was put together', async () => {
+    const a = api()
+    await expect(a.portal.updateHousehold('hh-sen', draftOf({ role: 'admin' }), member)).rejects.toThrow(/role/i)
+    expect((await a.portal.getHousehold('hh-sen', member))?.role).toBe('member')
+  })
+
+  it('cannot change the address that signs it in', async () => {
+    const a = api()
+    await expect(
+      a.portal.updateHousehold('hh-sen', draftOf({ googleEmail: 'someone.else@gmail.com' }), member),
+    ).rejects.toThrow(/sign-in address/i)
+  })
+
+  it('cannot mark itself paid up', async () => {
+    const a = api()
+    await expect(
+      a.portal.updateHousehold('hh-sen', draftOf({ membershipPaidTo: '2099-01-01' }), member),
+    ).rejects.toThrow(/membership/i)
+  })
+
+  it('cannot save somebody else\'s, and is told nothing about whether it exists', async () => {
+    const a = api()
+    await expect(a.portal.updateHousehold('hh-ghosh', draftOf(), member)).rejects.toThrow(/no such household/i)
+    await expect(a.portal.updateHousehold('hh-nothing', draftOf(), member)).rejects.toThrow(/no such household/i)
+  })
+
+  it('cannot invite anybody', async () => {
+    await expect(api().portal.addHousehold(draftOf(), member)).rejects.toThrow(/committee/i)
+  })
+
+  it('cannot save a household with nobody grown up in it', async () => {
+    const a = api()
+    const children = draftOf({ people: [{ name: 'Mira Sen', ageGroup: 'child', age: 7 }] })
+    await expect(a.portal.updateHousehold('hh-sen', children, member)).rejects.toThrow(/not complete/i)
+  })
+})
+
+describe('the committee managing households', () => {
+  const draft: HouseholdDraft = {
+    name: 'The Newly Invited',
+    contactName: 'A Newcomer',
+    email: 'new@example.com',
+    people: [{ name: 'A Newcomer', ageGroup: 'adult' }],
+    interests: [],
+    listedInDirectory: false,
+    shareEmail: false,
+    sharePhone: false,
+    googleEmail: 'newcomer@gmail.com',
+    role: 'member',
+    membershipStatus: 'active',
+    membershipPaidTo: '2027-03-31',
+  }
+
+  it('invites a household, and it can be found by the address afterwards', async () => {
+    const a = api()
+    const added = await a.portal.addHousehold(draft, admin)
+    expect(added.name).toBe('The Newly Invited')
+    expect((await a.portal.identify('newcomer@gmail.com'))?.id).toBe(added.id)
+  })
+
+  it('refuses a sign-in address that already belongs to somebody', async () => {
+    const a = api()
+    await expect(a.portal.addHousehold({ ...draft, googleEmail: 'rina.sen@gmail.com' }, admin)).rejects.toThrow(
+      /already belongs/i,
+    )
+  })
+
+  it('leaves the address empty when the invitation has not been taken up', async () => {
+    const added = await api().portal.addHousehold({ ...draft, googleEmail: null }, admin)
+    expect(added.googleEmail).toBeNull()
+  })
+
+  it('may change a role, unlike a member', async () => {
+    const a = api()
+    const saved = await a.portal.updateHousehold('hh-sen', { ...draft, role: 'admin' }, admin)
+    expect(saved.role).toBe('admin')
+  })
+
+  it('will not demote the last admin, leaving nobody able to let anyone back in', async () => {
+    const a = api()
+    const admins = (await a.portal.listHouseholds(admin)).filter((h) => h.role === 'admin')
+    // Step them down one at a time; the final one must refuse.
+    for (const h of admins.slice(0, -1)) {
+      await a.portal.updateHousehold(h.id, { ...draft, role: 'member' }, admin)
+    }
+    const last = admins[admins.length - 1]
+    await expect(a.portal.updateHousehold(last.id, { ...draft, role: 'member' }, admin)).rejects.toThrow(/last admin/i)
+    expect((await a.portal.getHousehold(last.id, admin))?.role).toBe('admin')
   })
 })
 

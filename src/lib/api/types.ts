@@ -3,7 +3,7 @@ import type { Festival } from '@/domain/festival'
 import type { AlbumWithMedia, Media } from '@/domain/gallery'
 import type { ContactInput, ContactMessage } from '@/domain/contact'
 import type { CommunityDocument, SignInAttempt } from '@/domain/document'
-import type { DirectoryEntry, Household, Viewer } from '@/domain/household'
+import type { DirectoryEntry, Household, HouseholdDraft, Viewer } from '@/domain/household'
 import type { Registration } from '@/domain/registration'
 import type { AuditEntry } from '@/domain/audit'
 import type { Announcement, NewsPost, Newsletter } from '@/domain/news'
@@ -98,6 +98,20 @@ export interface ApiClient {
     listRegistrationsForEvent(eventId: string, viewer: Viewer): Promise<Registration[]>
     /** Google accounts that signed in but matched no household. Admin only. */
     listSignInAttempts(viewer: Viewer): Promise<SignInAttempt[]>
+    /**
+     * Invites a household. Admin only — this is the whole invitation model, and the reason
+     * there is no application form anywhere in the app.
+     */
+    addHousehold(draft: HouseholdDraft, viewer: Viewer): Promise<Household>
+    /**
+     * Saves a household. A member may save their own; the committee may save any.
+     *
+     * The committee's fields on the draft are refused, not ignored, when they come from a
+     * member — the same answer the database's trigger gives, and for the same reason: a draft
+     * is whatever the browser chose to send, and a form that does not show a field is no
+     * guarantee that nobody sent one.
+     */
+    updateHousehold(id: string, draft: HouseholdDraft, viewer: Viewer): Promise<Household>
   }
   /**
    * What has been changed, and by whom. Written by `withAuditTrail` here and by a trigger in

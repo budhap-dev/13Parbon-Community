@@ -1,18 +1,63 @@
+import { useState } from 'react'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { Button } from '@/components/Button'
+import { HouseholdForm } from '@/components/HouseholdForm'
 import { formatLongDate } from '@/domain/dates'
-import { describeSize } from '@/domain/household'
-import { useHouseholds, useSignInAttempts } from '@/lib/api'
+import { describeSize, type Household } from '@/domain/household'
+import { useAddHousehold, useHouseholds, useSignInAttempts, useUpdateHousehold, useViewer } from '@/lib/api'
 import { useSignedIn } from '@/lib/auth/session'
 import styles from '@/features/portal/Portal.module.css'
 
 export function AdminPeoplePage() {
   useDocumentTitle('People')
   const who = useSignedIn()
+  const viewer = useViewer()
   const { data: households, isPending } = useHouseholds()
   const { data: attempts } = useSignInAttempts()
+  const add = useAddHousehold()
+  const update = useUpdateHousehold()
+  // null is closed, 'new' is the invitation form, a household is that one being edited.
+  const [open, setOpen] = useState<Household | 'new' | null>(null)
 
   const neverSignedIn = households?.filter((h) => !h.googleEmail).length ?? 0
+  const saving = add.isPending || update.isPending
+  const failure = add.isError ? add.error.message : update.isError ? update.error.message : undefined
+
+  if (open) {
+    const adding = open === 'new'
+    return (
+      <div className={styles.page}>
+        <div className={styles.top}>
+          <div>
+            <h1 className={styles.title}>{adding ? 'Add a household' : open.name}</h1>
+            <p className={styles.sub}>
+              {adding
+                ? 'Membership is by invitation. Recording the Google address here is what lets them in — there is no other way and nobody can set their own.'
+                : 'Everything the committee holds about this household. Changes are recorded against your name.'}
+            </p>
+          </div>
+          <Button variant="line" size="sm" onClick={() => setOpen(null)}>
+            Cancel
+          </Button>
+        </div>
+        <section className={styles.panel}>
+          <div className={styles.pad}>
+            <HouseholdForm
+              household={adding ? undefined : open}
+              viewer={viewer}
+              saving={saving}
+              error={failure}
+              onSave={(draft) =>
+                adding
+                  ? add.mutate(draft, { onSuccess: () => setOpen(null) })
+                  : update.mutate({ id: open.id, draft }, { onSuccess: () => setOpen(null) })
+              }
+            />
+          </div>
+        </section>
+      </div>
+    )
+  }
 
   return (
     <div className={styles.page}>
@@ -24,7 +69,7 @@ export function AdminPeoplePage() {
             committee.
           </p>
         </div>
-        <Button variant="gold" size="sm" onClick={() => {}}>
+        <Button variant="gold" size="sm" onClick={() => setOpen('new')}>
           Add a household
         </Button>
       </div>
@@ -107,6 +152,7 @@ export function AdminPeoplePage() {
                   <th>Size</th>
                   <th>Membership</th>
                   <th>Role</th>
+                  <th><span className="sr-only">Edit</span></th>
                 </tr>
               </thead>
               <tbody>
@@ -132,6 +178,11 @@ export function AdminPeoplePage() {
                       <span className={household.role === 'admin' ? styles.pillWait : styles.pill}>
                         {household.role === 'admin' ? 'Admin' : 'Member'}
                       </span>
+                    </td>
+                    <td>
+                      <Button variant="line" size="sm" onClick={() => setOpen(household)}>
+                        Edit<span className="sr-only"> {household.name}</span>
+                      </Button>
                     </td>
                   </tr>
                 ))}

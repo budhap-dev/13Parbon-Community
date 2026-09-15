@@ -16,6 +16,20 @@ import type { ApiClient } from './types'
  *
  * Applied outermost, so a write goes through it whichever adapter ends up handling it.
  */
+/**
+ * A household as a flat set of fields, so two versions of it can be compared field by field.
+ * `people` is compared as a whole: who is in a household is one fact about it, and a trail
+ * saying person 3's name moved by one position is noise.
+ */
+function flatten(household: Record<string, unknown>): Record<string, unknown> {
+  const { people, membership, ...rest } = household
+  return {
+    ...rest,
+    people: JSON.stringify(people),
+    membership: JSON.stringify(membership),
+  }
+}
+
 export function withAuditTrail(base: ApiClient, now: () => Date = () => new Date()): ApiClient {
   const entries: AuditEntry[] = []
 
@@ -55,6 +69,22 @@ export function withAuditTrail(base: ApiClient, now: () => Date = () => new Date
         const after = await base.contact.markHandled(id, viewer)
         record(viewer, 'messages:handle', { kind: 'contact_messages', id }, { handledBy: was }, { handledBy: after.handledBy })
         return after
+      },
+    },
+    portal: {
+      ...base.portal,
+      addHousehold: async (draft, viewer) => {
+        const household = await base.portal.addHousehold(draft, viewer)
+        record(viewer, 'household:add', { kind: 'households', id: household.id }, {}, flatten(household))
+        return household
+      },
+      updateHousehold: async (id, draft, viewer) => {
+        // Flattened now, before the write: the mock changes rows in place, so holding the row
+        // and reading it afterwards gives the new values twice and a diff of nothing.
+        const was = await base.portal.getHousehold(id, viewer).then((h) => (h ? flatten(h) : {}))
+        const household = await base.portal.updateHousehold(id, draft, viewer)
+        record(viewer, 'household:edit', { kind: 'households', id }, was, flatten(household))
+        return household
       },
     },
     audit: {
