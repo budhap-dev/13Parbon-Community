@@ -7,7 +7,7 @@ import type { DirectoryEntry, Household, HouseholdDraft, Viewer } from '@/domain
 import type { Registration } from '@/domain/registration'
 import type { AuditEntry } from '@/domain/audit'
 import type { HouseholdExport } from '@/domain/subjectAccess'
-import type { Announcement, NewsPost, Newsletter } from '@/domain/news'
+import type { Announcement, AnnouncementDraft, NewsDraft, NewsPost, Newsletter } from '@/domain/news'
 import type { VolunteerRole } from '@/domain/volunteer'
 
 /**
@@ -74,6 +74,25 @@ export interface ApiClient {
     listAnnouncements(): Promise<Announcement[]>
     /** Newsletters, newest first. */
     listNewsletters(): Promise<Newsletter[]>
+
+    /** Every post including drafts, newest first. Empty for anybody who is not an admin. */
+    listAllPosts(viewer: Viewer): Promise<NewsPost[]>
+    /** Every announcement, whatever its audience or dates. Empty for anybody who is not an admin. */
+    listAllAnnouncements(viewer: Viewer): Promise<Announcement[]>
+
+    createPost(draft: NewsDraft, viewer: Viewer): Promise<NewsPost>
+    updatePost(id: string, draft: NewsDraft, viewer: Viewer): Promise<NewsPost>
+    createAnnouncement(draft: AnnouncementDraft, viewer: Viewer): Promise<Announcement>
+    updateAnnouncement(id: string, draft: AnnouncementDraft, viewer: Viewer): Promise<Announcement>
+    /**
+     * Takes an announcement off the board.
+     *
+     * Really gone, unlike a news post: an announcement is a note on a noticeboard, and there is
+     * no version of it worth keeping once it stops being true. A post is a piece of writing, so
+     * that gets unpublished instead — `published: false` on the draft — and stays there to be
+     * put back.
+     */
+    removeAnnouncement(id: string, viewer: Viewer): Promise<void>
   }
   contact: {
     /** Sends a message to the committee. Rejects with an Error when the input is invalid. */

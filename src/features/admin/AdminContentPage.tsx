@@ -94,7 +94,7 @@ export function AdminContentPage() {
                       <strong>{post.title}</strong>
                       <br />
                       <span className={`${styles.muted} ${styles.tiny}`}>
-                        {formatDateWithYear(post.publishedAt)} · {post.author}
+                        {post.publishedAt ? formatDateWithYear(post.publishedAt) : 'Not published'} · {post.author}
                       </span>
                     </td>
                     <td>

@@ -83,7 +83,7 @@ export function NewsPage() {
             shown.map((post) => (
               <article key={post.id} className={styles.post}>
                 <p className={styles.postMeta}>
-                  <span>{formatDate(post.publishedAt)}</span>
+                  {post.publishedAt ? <span>{formatDate(post.publishedAt)}</span> : null}
                   {post.tags.map((t) => (
                     <span key={t}>{t}</span>
                   ))}

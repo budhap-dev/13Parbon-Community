@@ -1,5 +1,6 @@
 import { isUpcoming } from '@/domain/dates'
 import { isValidContact, type ContactMessage } from '@/domain/contact'
+import { isLive, isValid, slugFrom, validateAnnouncement, validateNews, type Announcement, type AnnouncementDraft, type NewsDraft, type NewsPost } from '@/domain/news'
 import type { Event } from '@/domain/event'
 import { inOrder, pinnedCover, type AlbumDraft, type AlbumWithMedia } from '@/domain/gallery'
 import { directoryEntry, isAdmin, isMember, isValidHousehold, type Household, type HouseholdDraft, type Person, type Viewer } from '@/domain/household'
@@ -57,6 +58,34 @@ function shapeOf(draft: HouseholdDraft) {
     listedInDirectory: draft.listedInDirectory,
     shareEmail: draft.shareEmail,
     sharePhone: draft.sharePhone,
+  }
+}
+
+
+/** On the website: it went up at some point, and has not been taken down since. */
+const published = (post: NewsPost): post is NewsPost & { publishedAt: string } =>
+  Boolean(post.publishedAt) && !post.hidden
+const byNewest = (a: NewsPost, b: NewsPost) => (b.publishedAt ?? '').localeCompare(a.publishedAt ?? '')
+
+function shapeOfPost(draft: NewsDraft) {
+  return {
+    title: draft.title.trim(),
+    excerpt: draft.excerpt.trim(),
+    body: draft.body.trim(),
+    tags: draft.tags.filter((tag) => tag.trim()).map((tag) => tag.trim()),
+    author: draft.author.trim(),
+  }
+}
+
+function shapeOfAnnouncement(draft: AnnouncementDraft, fallbackPublishAt: string) {
+  return {
+    title: draft.title.trim(),
+    body: draft.body.trim(),
+    pinned: draft.pinned,
+    audience: draft.audience,
+    publishAt: draft.publishAt || fallbackPublishAt,
+    ...(draft.expiresAt ? { expiresAt: draft.expiresAt } : {}),
+    ...(draft.link?.label.trim() && draft.link.to.trim() ? { link: draft.link } : {}),
   }
 }
 
@@ -246,17 +275,95 @@ export function createMockApi({ now = () => new Date(), latencyMs = 0, events }:
     },
     news: {
       listPosts: (limit = 20) =>
-        delay([...fixtures.posts].sort((a, b) => b.publishedAt.localeCompare(a.publishedAt)).slice(0, limit), latencyMs),
-      getPost: (slug) => delay(fixtures.posts.find((p) => p.slug === slug) ?? null, latencyMs),
+        // Published only. Nothing filtered these before, because nothing could be a draft.
+        delay(fixtures.posts.filter(published).sort(byNewest).slice(0, limit), latencyMs),
+      getPost: (slug) => delay(fixtures.posts.filter(published).find((p) => p.slug === slug) ?? null, latencyMs),
       listAnnouncements: () => {
         const at = now().toISOString()
-        const live = fixtures.announcements.filter(
-          (a) => a.audience === 'public' && a.publishAt <= at && (!a.expiresAt || a.expiresAt > at),
-        )
+        const live = fixtures.announcements.filter((a) => a.audience === 'public' && isLive(a, at))
         live.sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.publishAt.localeCompare(a.publishAt))
         return delay(live, latencyMs)
       },
       listNewsletters: () => delay([...fixtures.newsletters].sort((a, b) => b.issuedOn.localeCompare(a.issuedOn)), latencyMs),
+
+      listAllPosts: (viewer) =>
+        delay(isAdmin(viewer) ? [...fixtures.posts].sort(byNewest) : [], latencyMs),
+
+      listAllAnnouncements: (viewer) =>
+        delay(
+          isAdmin(viewer)
+            ? [...fixtures.announcements].sort(
+                (a, b) => Number(b.pinned) - Number(a.pinned) || b.publishAt.localeCompare(a.publishAt),
+              )
+            : [],
+          latencyMs,
+        ),
+
+      createPost: (draft, viewer) => {
+        if (!isAdmin(viewer)) return Promise.reject(new NotAllowed('only the committee can write here'))
+        if (!isValid(validateNews(draft))) return Promise.reject(new NotAllowed('that piece is not finished'))
+        const slug = slugFrom(draft.title)
+        if (fixtures.posts.some((p) => p.slug === slug)) {
+          return Promise.reject(new NotAllowed('there is already a piece with that title'))
+        }
+        const post: NewsPost = {
+          id: `np-${fixtures.posts.length + 1}`,
+          slug,
+          ...shapeOfPost(draft),
+          publishedAt: draft.published ? now().toISOString() : undefined,
+          hidden: !draft.published,
+        }
+        fixtures.posts.push(post)
+        return delay(post, latencyMs)
+      },
+
+      updatePost: (id, draft, viewer) => {
+        if (!isAdmin(viewer)) return Promise.reject(new NotAllowed('only the committee can write here'))
+        const post = fixtures.posts.find((p) => p.id === id)
+        if (!post) return Promise.reject(new NotAllowed('no such piece'))
+        if (!isValid(validateNews(draft))) return Promise.reject(new NotAllowed('that piece is not finished'))
+        Object.assign(post, shapeOfPost(draft))
+        // Publishing stamps the date the first time only; taking it down hides it and keeps
+        // both the writing and the date, so a round-up of April goes back up dated April.
+        if (draft.published) {
+          post.publishedAt = post.publishedAt ?? now().toISOString()
+          post.hidden = false
+        } else {
+          post.hidden = true
+        }
+        return delay(post, latencyMs)
+      },
+
+      createAnnouncement: (draft, viewer) => {
+        if (!isAdmin(viewer)) return Promise.reject(new NotAllowed('only the committee can post a notice'))
+        if (!isValid(validateAnnouncement(draft))) return Promise.reject(new NotAllowed('that notice is not ready'))
+        const announcement: Announcement = {
+          id: `an-${fixtures.announcements.length + 1}`,
+          ...shapeOfAnnouncement(draft, now().toISOString()),
+        }
+        fixtures.announcements.push(announcement)
+        return delay(announcement, latencyMs)
+      },
+
+      updateAnnouncement: (id, draft, viewer) => {
+        if (!isAdmin(viewer)) return Promise.reject(new NotAllowed('only the committee can post a notice'))
+        const announcement = fixtures.announcements.find((a) => a.id === id)
+        if (!announcement) return Promise.reject(new NotAllowed('no such notice'))
+        if (!isValid(validateAnnouncement(draft))) return Promise.reject(new NotAllowed('that notice is not ready'))
+        const next = shapeOfAnnouncement(draft, announcement.publishAt)
+        Object.assign(announcement, next)
+        if (!next.expiresAt) delete announcement.expiresAt
+        if (!next.link) delete announcement.link
+        return delay(announcement, latencyMs)
+      },
+
+      removeAnnouncement: (id, viewer) => {
+        if (!isAdmin(viewer)) return Promise.reject(new NotAllowed('only the committee can do that'))
+        const index = fixtures.announcements.findIndex((a) => a.id === id)
+        if (index === -1) return Promise.reject(new NotAllowed('no such notice'))
+        fixtures.announcements.splice(index, 1)
+        return delay(undefined, latencyMs)
+      },
     },
     contact: {
       send: (input) => {

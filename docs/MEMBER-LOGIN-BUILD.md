@@ -6,7 +6,7 @@
 > **What this is:** the order of work from [MEMBER-LOGIN.md](MEMBER-LOGIN.md), broken into steps
 > that can be ticked off. That document says *what* and *why*; this one says *where we are*.
 >
-> **Last updated:** 2026-09-15 · **Current step:** 4 · **Ticked:** 54 of 85
+> **Last updated:** 2026-09-15 · **Current step:** 4 · **Ticked:** 57 of 85
 
 ## How this is kept
 
@@ -61,7 +61,7 @@ twenty screens.
 | 2 | Households | ~5 | ✅ **done** |
 | 3 | Events | ~1 | **mostly dropped** — the planner app owns it |
 | 4 | Media | ~4 | **in progress** — the screen is built; only the bucket is unwired |
-| 5 | Content | ~4.5 | not started |
+| 5 | Content | ~4.5 | **in progress** — the writes are in; the screen is next |
 | 6 | Ready to merge | ~2 | not started |
 | | **Total** | **~32–36** *(incl. tests, adapters, states)* | |
 
@@ -422,9 +422,10 @@ real browser before the back catalogue's successor goes through it.
 
 Last, because a page of placeholders reads worse than no page.
 
-- [ ] Announcements: create, pin, set audience, expire
-- [ ] News posts with a rich-text body *(the spike — rich text always costs more than budgeted)*
-- [ ] Unpublish rather than delete, with the change recorded
+- [x] Announcements: create, pin, set audience, expire, take off the board
+- [x] News posts — **and there is no spike.** The model is plain paragraphs (`paragraphs()`
+      splits on blank lines), so a textarea is the honest editor and no rich text is needed
+- [x] Unpublish rather than delete, with the change recorded as its own kind of change
 - [ ] Edit the FAQ entries in `src/app/about.ts`
 - [ ] Edit the pending strings in `src/app/site.ts` — mission statement, gallery note
 - [ ] Move the `site.home` section switches into the admin
@@ -432,6 +433,24 @@ Last, because a page of placeholders reads worse than no page.
 - [ ] Write the first real news before turning `showNews` on
 
 **Done when:** the committee publishes something without a developer.
+
+**No rich text, and none needed.** The plan budgeted news as the spike. `NewsPost.body` is plain
+paragraphs split on blank lines by `paragraphs()`, so a textarea is the honest editor. Third time
+this project has got smaller by reading what is already there.
+
+**Notices and pieces are taken away differently, on purpose.** An announcement is a note on a
+noticeboard: once it stops being true there is no version of it worth keeping, so removing it
+removes it. A news post is a piece of writing, so it is hidden instead — the writing stays, and
+so does the date it first went up.
+
+**Two bugs found while writing it, both mine:**
+
+*Drafts were never filtered.* `listPosts` returned every post regardless, because nothing could
+be a draft until now. Anything unfinished would have been on the website.
+
+*Taking a post down lost the date it belonged to.* Clearing `publishedAt` meant a round-up of
+April that came down for a week came back dated today, sitting at the top of the list as though
+it were new. `hidden` carries the taking-down; the date stays.
 
 ---
 
@@ -514,3 +533,4 @@ invitation, so nothing to approve and no passwords to reset.
 | 2026-09-15 | 4 | Photograph preparation: re-encode rather than strip, orientation applied first, output checked byte by byte before anything is sent. 443 → 472 tests. |
 | 2026-09-15 | 4 | Albums, covers, captions, order and takedown — all audited. Found the random cover was deliberate, so pinning overrides it rather than replacing it. 472 → 489 tests. |
 | 2026-09-15 | 4 | `/admin/media` built — the route was in PLAN's map and never existed. 489 → 503 tests. |
+| 2026-09-15 | 5 | Announcements and news posts, with drafts and unpublishing. No rich text needed. Caught the audit wrapper recording nothing on two writes. 503 → 520 tests. |

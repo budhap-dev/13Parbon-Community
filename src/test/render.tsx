@@ -37,7 +37,15 @@ export function createEmptyApi(): ApiClient {
       reorder: async () => { throw new Error('not connected') },
       deleteMedia: async () => { throw new Error('not connected') },
     },
-    news: { listPosts: async () => [], getPost: async () => null, listAnnouncements: async () => [], listNewsletters: async () => [] },
+    news: {
+      listPosts: async () => [], getPost: async () => null, listAnnouncements: async () => [], listNewsletters: async () => [],
+      listAllPosts: async () => [], listAllAnnouncements: async () => [],
+      createPost: async () => { throw new Error('not connected') },
+      updatePost: async () => { throw new Error('not connected') },
+      createAnnouncement: async () => { throw new Error('not connected') },
+      updateAnnouncement: async () => { throw new Error('not connected') },
+      removeAnnouncement: async () => { throw new Error('not connected') },
+    },
     contact: { send: async () => { throw new Error('not connected') }, listMessages: async () => [], markHandled: async () => { throw new Error('not connected') } },
     portal: {
       identify: async () => null,
@@ -75,7 +83,11 @@ export function createFailingApi(): ApiClient {
       listRecentMedia: down, listAlbums: down, getAlbum: down, listAllAlbums: down,
       createAlbum: down, updateAlbum: down, setCover: down, setCaption: down, reorder: down, deleteMedia: down,
     },
-    news: { listPosts: down, getPost: down, listAnnouncements: down, listNewsletters: down },
+    news: {
+      listPosts: down, getPost: down, listAnnouncements: down, listNewsletters: down,
+      listAllPosts: down, listAllAnnouncements: down, createPost: down, updatePost: down,
+      createAnnouncement: down, updateAnnouncement: down, removeAnnouncement: down,
+    },
     contact: { send: down, listMessages: down, markHandled: down },
     portal: {
       identify: down,

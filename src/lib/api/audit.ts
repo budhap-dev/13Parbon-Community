@@ -30,6 +30,19 @@ function flatten(household: Record<string, unknown>): Record<string, unknown> {
   }
 }
 
+/**
+ * The fields of a row, copied out now.
+ *
+ * The mock changes rows in place, so holding the row and reading it after the write gives the
+ * new values twice and a diff of nothing — a silently empty trail, which is the one failure an
+ * audit trail must not have. Every "before" in this file goes through here: the bug is easy to
+ * write, invisible when you do, and it has already been made three times.
+ */
+function snapshot<T extends object, K extends keyof T>(row: T | undefined, ...fields: K[]): Record<string, unknown> {
+  if (!row) return {}
+  return Object.fromEntries(fields.map((field) => [String(field), row[field]]))
+}
+
 export function withAuditTrail(base: ApiClient, now: () => Date = () => new Date()): ApiClient {
   const entries: AuditEntry[] = []
 
@@ -71,6 +84,63 @@ export function withAuditTrail(base: ApiClient, now: () => Date = () => new Date
         return after
       },
     },
+    news: {
+      ...base.news,
+      createPost: async (draft, viewer) => {
+        const post = await base.news.createPost(draft, viewer)
+        record(viewer, 'news:create', { kind: 'news_posts', id: post.id }, {}, { title: post.title, publishedAt: post.publishedAt })
+        return post
+      },
+      updatePost: async (id, draft, viewer) => {
+        const was = snapshot(
+          await base.news.listAllPosts(viewer).then((all) => all.find((p) => p.id === id)),
+          'title',
+          'publishedAt',
+          'hidden',
+        )
+        const post = await base.news.updatePost(id, draft, viewer)
+        // Whether a piece is on the website is the change somebody asks about later, so it is
+        // recorded by name rather than left inside a diff of the whole post.
+        record(
+          viewer,
+          !was.hidden && post.hidden ? 'news:unpublish' : 'news:edit',
+          { kind: 'news_posts', id },
+          was,
+          { title: post.title, publishedAt: post.publishedAt, hidden: post.hidden },
+        )
+        return post
+      },
+      createAnnouncement: async (draft, viewer) => {
+        const announcement = await base.news.createAnnouncement(draft, viewer)
+        record(viewer, 'announcement:create', { kind: 'announcements', id: announcement.id }, {}, { title: announcement.title })
+        return announcement
+      },
+      updateAnnouncement: async (id, draft, viewer) => {
+        const was = snapshot(
+          await base.news.listAllAnnouncements(viewer).then((all) => all.find((a) => a.id === id)),
+          'title',
+          'pinned',
+          'audience',
+        )
+        const announcement = await base.news.updateAnnouncement(id, draft, viewer)
+        record(
+          viewer,
+          'announcement:edit',
+          { kind: 'announcements', id },
+          was,
+          { title: announcement.title, pinned: announcement.pinned, audience: announcement.audience },
+        )
+        return announcement
+      },
+      removeAnnouncement: async (id, viewer) => {
+        const was = snapshot(
+          await base.news.listAllAnnouncements(viewer).then((all) => all.find((a) => a.id === id)),
+          'title',
+        )
+        await base.news.removeAnnouncement(id, viewer)
+        record(viewer, 'announcement:remove', { kind: 'announcements', id }, was, {})
+      },
+    },
     gallery: {
       ...base.gallery,
       createAlbum: async (draft, viewer) => {
@@ -79,8 +149,12 @@ export function withAuditTrail(base: ApiClient, now: () => Date = () => new Date
         return album
       },
       updateAlbum: async (id, draft, viewer) => {
-        const before = await base.gallery.listAllAlbums(viewer).then((all) => all.find((a) => a.id === id))
-        const was = before ? { title: before.title, description: before.description, visibility: before.visibility } : {}
+        const was = snapshot(
+          await base.gallery.listAllAlbums(viewer).then((all) => all.find((a) => a.id === id)),
+          'title',
+          'description',
+          'visibility',
+        )
         const album = await base.gallery.updateAlbum(id, draft, viewer)
         record(viewer, 'album:edit', { kind: 'albums', id }, was, {
           title: album.title,
@@ -90,9 +164,12 @@ export function withAuditTrail(base: ApiClient, now: () => Date = () => new Date
         return album
       },
       setCover: async (albumId, mediaId, viewer) => {
-        const before = await base.gallery.listAllAlbums(viewer).then((all) => all.find((a) => a.id === albumId))
+        const was = snapshot(
+          await base.gallery.listAllAlbums(viewer).then((all) => all.find((a) => a.id === albumId)),
+          'coverMediaId',
+        )
         const album = await base.gallery.setCover(albumId, mediaId, viewer)
-        record(viewer, 'album:setCover', { kind: 'albums', id: albumId }, { coverMediaId: before?.coverMediaId }, { coverMediaId: mediaId })
+        record(viewer, 'album:setCover', { kind: 'albums', id: albumId }, was, { coverMediaId: mediaId })
         return album
       },
       setCaption: async (mediaId, caption, viewer) => {
@@ -110,11 +187,13 @@ export function withAuditTrail(base: ApiClient, now: () => Date = () => new Date
       },
       deleteMedia: async (id, viewer) => {
         // Read before it goes: a takedown is the one thing somebody will ask about afterwards.
-        const was = await base.gallery
-          .listAllAlbums(viewer)
-          .then((all) => all.flatMap((a) => a.media).find((m) => m.id === id))
+        const was = snapshot(
+          await base.gallery.listAllAlbums(viewer).then((all) => all.flatMap((a) => a.media).find((m) => m.id === id)),
+          'url',
+          'albumId',
+        )
         await base.gallery.deleteMedia(id, viewer)
-        record(viewer, 'media:remove', { kind: 'media', id }, was ? { url: was.url, albumId: was.albumId } : {}, {})
+        record(viewer, 'media:remove', { kind: 'media', id }, was, {})
       },
     },
     portal: {
@@ -157,8 +236,20 @@ export function withAuditTrail(base: ApiClient, now: () => Date = () => new Date
       },
     },
     audit: {
+      /**
+       * Newest first, and newest means newest — not "newest by timestamp, then whatever order
+       * they happened to be in". Two changes inside the same millisecond are common (a write
+       * and the write that undid it, a script, a test) and sorting on the stamp alone leaves
+       * them in the order they were made, which is exactly backwards.
+       */
       list: async (viewer, limit = 50) =>
-        isAdmin(viewer) ? [...entries].sort((a, b) => b.at.localeCompare(a.at)).slice(0, limit) : [],
+        isAdmin(viewer)
+          ? entries
+              .map((entry, i) => ({ entry, i }))
+              .sort((a, b) => b.entry.at.localeCompare(a.entry.at) || b.i - a.i)
+              .map(({ entry }) => entry)
+              .slice(0, limit)
+          : [],
     },
   }
 }

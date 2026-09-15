@@ -23,6 +23,7 @@ const READS = [
   'festivals.list',
   'gallery.listRecentMedia', 'gallery.listAlbums', 'gallery.getAlbum', 'gallery.listAllAlbums',
   'news.listPosts', 'news.getPost', 'news.listAnnouncements', 'news.listNewsletters',
+  'news.listAllPosts', 'news.listAllAnnouncements',
   'contact.listMessages',
   'portal.identify', 'portal.getHousehold', 'portal.listHouseholds', 'portal.listDirectory',
   'portal.listDocuments', 'portal.listRegistrationsForHousehold', 'portal.listRegistrationsForEvent',
@@ -37,6 +38,8 @@ const AUDITED = [
   'portal.addHousehold', 'portal.updateHousehold', 'portal.deleteHousehold', 'portal.resolveSignInAttempt',
   'gallery.createAlbum', 'gallery.updateAlbum', 'gallery.setCover', 'gallery.setCaption',
   'gallery.reorder', 'gallery.deleteMedia',
+  'news.createPost', 'news.updatePost',
+  'news.createAnnouncement', 'news.updateAnnouncement', 'news.removeAnnouncement',
 ]
 
 /**
@@ -61,6 +64,51 @@ describe('the contract', () => {
   it('has no method that nobody has decided about', () => {
     const declared = [...READS, ...AUDITED, ...NOT_AUDITED].sort()
     expect(methodsOf(api())).toEqual(declared)
+  })
+})
+
+describe('every audited write', () => {
+  /**
+   * The bug this catches was written three times before it was noticed.
+   *
+   * The mock changes rows in place. Hold the row, write, then read the "before" values off it
+   * and you get the new values twice, diff to nothing, and record nothing at all — a silently
+   * empty trail, which is the one failure an audit trail must not have. It is invisible: the
+   * write works, the screen updates, and only the line that was supposed to be kept is missing.
+   */
+  it('leaves a line behind, for each one', async () => {
+    const a = api()
+    const album = (await a.gallery.listAllAlbums(admin)).find((x) => x.media.length > 2)!
+    const post = await a.news.createPost(
+      { title: 'A first piece', excerpt: 'Something worth reading about.', body: 'x'.repeat(60), tags: [], author: 'Someone', published: true },
+      admin,
+    )
+    const notice = await a.news.createAnnouncement(
+      { title: 'Doors at six', body: 'The hall opens at six on Saturday.', pinned: false, audience: 'public', publishAt: '', expiresAt: '' },
+      admin,
+    )
+
+    const writes: [string, () => Promise<unknown>][] = [
+      ['contact.markHandled', async () => {
+        const message = (await a.contact.listMessages(admin)).find((m) => !m.handledBy)!
+        return a.contact.markHandled(message.id, admin)
+      }],
+      ['gallery.updateAlbum', () => a.gallery.updateAlbum(album.id, { title: 'A different name', visibility: 'public' }, admin)],
+      ['gallery.setCover', () => a.gallery.setCover(album.id, album.media[1].id, admin)],
+      ['gallery.setCaption', () => a.gallery.setCaption(album.media[0].id, 'A caption', admin)],
+      ['gallery.reorder', () => a.gallery.reorder(album.id, [...album.media].reverse().map((m) => m.id), admin)],
+      ['news.updatePost', () => a.news.updatePost(post.id, { title: post.title, excerpt: post.excerpt, body: post.body, tags: [], author: post.author, published: false }, admin)],
+      ['news.updateAnnouncement', () => a.news.updateAnnouncement(notice.id, { title: 'Doors at half five', body: notice.body, pinned: true, audience: 'public', publishAt: '', expiresAt: '' }, admin)],
+      ['news.removeAnnouncement', () => a.news.removeAnnouncement(notice.id, admin)],
+      ['gallery.deleteMedia', () => a.gallery.deleteMedia(album.media[2].id, admin)],
+    ]
+
+    for (const [name, run] of writes) {
+      const before = (await a.audit.list(admin, 1000)).length
+      await run()
+      const after = (await a.audit.list(admin, 1000)).length
+      expect(after, `${name} recorded nothing`).toBeGreaterThan(before)
+    }
   })
 })
 
