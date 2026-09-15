@@ -60,6 +60,25 @@
   border-radius: 14px;
 }
 
+/* The picture is the way in, so it has to look like one and take a keyboard. */
+.open {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  border-radius: 10px;
+  cursor: zoom-in;
+  display: block;
+}
+
+.open:focus-visible {
+  outline: 3px solid var(--gold, #c9a227);
+  outline-offset: 2px;
+}
+
+.trash {
+  color: var(--error, #b3261e);
+}
+
 .thumb {
   width: 100%;
   aspect-ratio: 4 / 3;
@@ -68,10 +87,73 @@
   background: var(--tint, rgba(0, 0, 0, 0.06));
 }
 
-.cardActions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+/* The picture, with the trash sitting on it. Positioned so the control is where the thing it
+   acts on is, rather than in a row of buttons underneath that all look alike. */
+.frame {
+  position: relative;
+}
+
+.open {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  border-radius: 10px;
+  cursor: zoom-in;
+  display: block;
+  width: 100%;
+}
+
+.open:focus-visible {
+  outline: 3px solid var(--gold, #c9a227);
+  outline-offset: 2px;
+}
+
+.trash {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* 36px, which is a thumb on a phone as well as a pointer on a laptop. */
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  color: #fff;
+  /* Dark behind it rather than the page colour: it sits on a photograph, and a photograph can
+     be any colour at all. */
+  background: rgba(20, 16, 14, 0.62);
+  backdrop-filter: blur(2px);
+}
+
+.trash:hover,
+.trash:focus-visible {
+  background: var(--error, #b3261e);
+}
+
+.trash:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: -2px;
+}
+
+/* Dragging. The one being carried fades; the one it is over shows where it would land. */
+.card {
+  cursor: grab;
+}
+
+.card:active {
+  cursor: grabbing;
+}
+
+.dragging {
+  opacity: 0.45;
+}
+
+.over {
+  border-color: var(--gold, #c9a227);
+  box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.25);
 }
 
 .form {

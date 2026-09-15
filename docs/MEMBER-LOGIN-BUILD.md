@@ -369,7 +369,8 @@ The takedown promise stops depending on a macOS script and a person remembering 
 - [ ] Verify the object again server-side, once there is a server side to verify it on
 - [ ] Compare quality against `sips` at q70/q68 before switching over
 - [x] Create and edit albums
-- [x] Pin an album cover — and the rotation stays the default, because it was deliberate
+- [x] ~~Pin an album cover~~ — **taken off the screen 2026-09-15 at the committee's request.**
+      The API and its tests remain, unreachable; strip them or keep them for later
 - [x] Edit captions
 - [x] Order photographs explicitly — an explicit `position`, because reordering a page by
       renaming objects in a bucket is not a thing to ask of anybody
@@ -394,6 +395,15 @@ is the whole fix.
 **It checks its own work.** The output is read back byte by byte and refused if anything survived,
 so the promise rests on the bytes rather than on the canvas having behaved. That refusal — *"do
 not upload"* and a non-zero exit — is the best line in `prepare-photos.mjs`.
+
+**How the photographs are handled** *(reworked 2026-09-15)*. The picture is the way in: click it
+and it opens large, with left and right through the album and a delete there too. Delete is a
+trash on the picture itself rather than one of a row of lookalike buttons underneath. Order is
+changed by dragging.
+
+**Dragging has no keyboard path**, which is why the arrows did not simply disappear: the picture
+button also takes arrow keys, so reordering stays reachable without a mouse. Nothing is drawn for
+it — it lives in the button's accessible name and in the line under the album title.
 
 **The cover rotation was not a bug.** It looked like one — a random pick on every fetch — but
 there is a comment saying why: one photograph is not the whole of an evening, and a different

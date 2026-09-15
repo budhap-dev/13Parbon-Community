@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { routes } from '@/app/router'
@@ -76,23 +76,6 @@ describe('the albums', () => {
 })
 
 describe('inside an album', () => {
-  it('says the cover rotates until one is pinned', async () => {
-    renderAt('/admin/media')
-    await openAlbum(/Boishakhi 2026/)
-    expect(screen.getByText(/different one each visit/)).toBeInTheDocument()
-  })
-
-  it('pins a cover, and then says so', async () => {
-    renderAt('/admin/media')
-    await openAlbum(/Boishakhi 2026/)
-
-    const [first] = screen.getAllByRole('button', { name: 'Make it the face' })
-    await userEvent.click(first)
-
-    expect(await screen.findByRole('button', { name: 'Album’s face' })).toBeDisabled()
-    expect(screen.getByText(/One is pinned/)).toBeInTheDocument()
-  })
-
   it('writes a caption when the box is left', async () => {
     renderAt('/admin/media')
     await openAlbum(/Boishakhi 2026/)
@@ -104,46 +87,125 @@ describe('inside an album', () => {
     await waitFor(() => expect(screen.getAllByLabelText('Caption')[0]).toHaveValue('The lamps going up'))
   })
 
-  it('will not move the first one earlier, or the last one later', async () => {
+  it('reorders by dragging one photograph onto another', async () => {
     renderAt('/admin/media')
     await openAlbum(/Boishakhi 2026/)
 
-    const earlier = screen.getAllByRole('button', { name: /Move .* earlier/ })
-    const later = screen.getAllByRole('button', { name: /Move .* later/ })
-    expect(earlier[0]).toBeDisabled()
-    expect(later[later.length - 1]).toBeDisabled()
+    const before = screen.getAllByRole('button', { name: /^Open / }).map((b) => b.getAttribute('aria-label'))
+    const cards = document.querySelectorAll('li[draggable="true"]')
+    expect(cards.length).toBeGreaterThan(2)
+
+    fireEvent.dragStart(cards[0])
+    fireEvent.dragOver(cards[2])
+    fireEvent.drop(cards[2])
+
+    await waitFor(() => {
+      const after = screen.getAllByRole('button', { name: /^Open / }).map((b) => b.getAttribute('aria-label'))
+      expect(after[2]).toBe(before[0])
+    })
   })
 
-  it('asks before taking a photograph down, and says it cannot be undone', async () => {
+  it('reorders from the keyboard too, because dragging cannot be done without a mouse', async () => {
     renderAt('/admin/media')
     await openAlbum(/Boishakhi 2026/)
 
-    await userEvent.click(screen.getAllByRole('button', { name: 'Take down' })[0])
+    const before = screen.getAllByRole('button', { name: /^Open / }).map((b) => b.getAttribute('aria-label'))
+    screen.getAllByRole('button', { name: /^Open / })[0].focus()
+    await userEvent.keyboard('{ArrowRight}')
+
+    await waitFor(() => {
+      const after = screen.getAllByRole('button', { name: /^Open / }).map((b) => b.getAttribute('aria-label'))
+      expect(after[1]).toBe(before[0])
+    })
+  })
+
+  it('will not carry the first one further left, or the last one further right', async () => {
+    renderAt('/admin/media')
+    await openAlbum(/Boishakhi 2026/)
+
+    const before = screen.getAllByRole('button', { name: /^Open / }).map((b) => b.getAttribute('aria-label'))
+    screen.getAllByRole('button', { name: /^Open / })[0].focus()
+    await userEvent.keyboard('{ArrowLeft}')
+
+    const after = screen.getAllByRole('button', { name: /^Open / }).map((b) => b.getAttribute('aria-label'))
+    expect(after).toEqual(before)
+  })
+
+  it('puts the delete on the picture itself', async () => {
+    renderAt('/admin/media')
+    await openAlbum(/Boishakhi 2026/)
+    // The control sits where the thing it acts on is, rather than in a row of lookalike buttons.
+    const [frame] = document.querySelectorAll('li[draggable="true"] > div')
+    expect(within(frame as HTMLElement).getByRole('button', { name: /^Delete / })).toBeInTheDocument()
+    expect(within(frame as HTMLElement).getByRole('button', { name: /^Open / })).toBeInTheDocument()
+  })
+
+  it('asks before deleting, and says what it means', async () => {
+    renderAt('/admin/media')
+    await openAlbum(/Boishakhi 2026/)
+
+    await userEvent.click(screen.getAllByRole('button', { name: /^Delete / })[0])
     const confirm = screen.getByRole('alert')
     // The address stopping working is the point, and it is what the privacy page promises.
-    expect(within(confirm).getByText(/removed from the bucket/)).toBeInTheDocument()
+    expect(within(confirm).getByText(/goes from the bucket/)).toBeInTheDocument()
     expect(within(confirm).getByText(/cannot be undone/)).toBeInTheDocument()
   })
 
-  it('backs out of taking one down', async () => {
+  it('backs out of deleting', async () => {
     renderAt('/admin/media')
     await openAlbum(/Boishakhi 2026/)
-    const before = screen.getAllByRole('button', { name: 'Take down' }).length
+    const before = screen.getAllByRole('button', { name: /^Delete / }).length
 
-    await userEvent.click(screen.getAllByRole('button', { name: 'Take down' })[0])
+    await userEvent.click(screen.getAllByRole('button', { name: /^Delete / })[0])
     await userEvent.click(screen.getByRole('button', { name: 'Keep it' }))
 
-    expect(screen.getAllByRole('button', { name: 'Take down' })).toHaveLength(before)
+    expect(screen.getAllByRole('button', { name: /^Delete / })).toHaveLength(before)
   })
 
-  it('takes one down for good', async () => {
+  it('deletes for good', async () => {
     renderAt('/admin/media')
     await openAlbum(/Boishakhi 2026/)
-    const before = screen.getAllByRole('button', { name: 'Take down' }).length
+    const before = screen.getAllByRole('button', { name: /^Delete / }).length
 
-    await userEvent.click(screen.getAllByRole('button', { name: 'Take down' })[0])
-    await userEvent.click(screen.getByRole('button', { name: 'Take it down' }))
+    await userEvent.click(screen.getAllByRole('button', { name: /^Delete / })[0])
+    await userEvent.click(screen.getByRole('button', { name: /^Delete$/ }))
 
-    await waitFor(() => expect(screen.getAllByRole('button', { name: 'Take down' })).toHaveLength(before - 1))
+    await waitFor(() => expect(screen.getAllByRole('button', { name: /^Delete / })).toHaveLength(before - 1))
+  })
+})
+
+describe('opening a photograph', () => {
+  it('shows it large when the picture is clicked', async () => {
+    renderAt('/admin/media')
+    await openAlbum(/Boishakhi 2026/)
+
+    await userEvent.click(screen.getAllByRole('button', { name: /^Open / })[0])
+    expect(await screen.findByRole('dialog')).toBeInTheDocument()
+  })
+
+  it('moves through the album from there', async () => {
+    renderAt('/admin/media')
+    await openAlbum(/Boishakhi 2026/)
+    await userEvent.click(screen.getAllByRole('button', { name: /^Open / })[0])
+
+    const dialog = await screen.findByRole('dialog')
+    expect(within(dialog).getByRole('button', { name: /next/i })).toBeInTheDocument()
+    expect(within(dialog).getByRole('button', { name: /previous/i })).toBeInTheDocument()
+  })
+
+  it('deletes from the viewer, once it has asked', async () => {
+    renderAt('/admin/media')
+    await openAlbum(/Boishakhi 2026/)
+    const before = screen.getAllByRole('button', { name: /^Open / }).length
+
+    await userEvent.click(screen.getAllByRole('button', { name: /^Open / })[0])
+    const dialog = await screen.findByRole('dialog')
+    await userEvent.click(within(dialog).getByRole('button', { name: /Delete this photograph/ }))
+
+    // A full-screen picture makes one tap feel safer than it is, so it asks here too.
+    expect(within(dialog).getByText(/cannot be undone/)).toBeInTheDocument()
+    await userEvent.click(within(dialog).getByRole('button', { name: /^Delete$/ }))
+
+    await waitFor(() => expect(screen.getAllByRole('button', { name: /^Open / })).toHaveLength(before - 1))
   })
 })

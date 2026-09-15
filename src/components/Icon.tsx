@@ -29,6 +29,7 @@ export type IconName =
   | 'badge'
   | 'share'
   | 'image'
+  | 'trash'
 
 const paths: Record<IconName, ReactElement> = {
   users: (
@@ -156,6 +157,12 @@ const paths: Record<IconName, ReactElement> = {
     </>
   ),
   message: <path d="M4 5h16v12H8l-4 4z" />,
+  trash: (
+    <>
+      <path d="M4 7h16M10 7V5h4v2M6 7l1 13h10l1-13" />
+      <path d="M10 11v6M14 11v6" />
+    </>
+  ),
   // A framed picture with a hill and a sun in it, which is what a photograph looks like at 18px.
   image: (
     <>

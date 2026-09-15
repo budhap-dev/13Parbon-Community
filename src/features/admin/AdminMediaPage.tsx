@@ -1,18 +1,12 @@
 import { useState } from 'react'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { Button } from '@/components/Button'
+import { Icon } from '@/components/Icon'
+import { Lightbox, type LightboxItem } from '@/components/Lightbox'
 import { ACCEPTED_LABEL } from '@/domain/images'
-import { describeMedia, type AlbumDraft, type AlbumWithMedia, type Media } from '@/domain/gallery'
+import { describeMedia, type AlbumDraft, type AlbumWithMedia } from '@/domain/gallery'
 import { formatLongDate } from '@/domain/dates'
-import {
-  useAllAlbums,
-  useCreateAlbum,
-  useDeleteMedia,
-  useReorderMedia,
-  useSetCaption,
-  useSetCover,
-  useUpdateAlbum,
-} from '@/lib/api'
+import { useAllAlbums, useCreateAlbum, useDeleteMedia, useReorderMedia, useSetCaption, useUpdateAlbum } from '@/lib/api'
 import styles from '@/features/portal/Portal.module.css'
 import media from './AdminMedia.module.css'
 
@@ -57,7 +51,7 @@ export function AdminMediaPage() {
           <h1 className={styles.title}>Photographs</h1>
           <p className={styles.sub}>
             The albums on the website. Photographs are kept in the bucket, never in the code, so that
-            taking one down really takes it down.
+            deleting one really deletes it.
           </p>
         </div>
         <Button variant="gold" size="sm" onClick={() => { setOpenId(null); setEditing({ ...emptyDraft }) }}>
@@ -207,19 +201,46 @@ function AlbumPage({
   onBack: () => void
   onEdit: () => void
 }) {
-  const setCover = useSetCover()
   const setCaption = useSetCaption()
   const reorder = useReorderMedia()
   const remove = useDeleteMedia()
-  const [confirming, setConfirming] = useState<Media | null>(null)
+  const [confirming, setConfirming] = useState<string | null>(null)
+  const [open, setOpen] = useState<number | null>(null)
+  /** The photograph being dragged, and the one it is currently over. */
+  const [dragging, setDragging] = useState<number | null>(null)
+  const [over, setOver] = useState<number | null>(null)
 
   const ids = album.media.map((m) => m.id)
-  const move = (index: number, by: number) => {
+
+  const move = (from: number, to: number) => {
+    if (to < 0 || to >= ids.length || from === to) return
     const next = [...ids]
-    const to = index + by
-    if (to < 0 || to >= next.length) return
-    ;[next[index], next[to]] = [next[to], next[index]]
+    const [moved] = next.splice(from, 1)
+    next.splice(to, 0, moved)
     reorder.mutate({ albumId: album.id, mediaIds: next })
+  }
+
+  const items: LightboxItem[] = album.media.map((m) => ({
+    id: m.id,
+    src: m.url,
+    alt: m.caption ?? '',
+    caption: m.caption,
+  }))
+
+  /**
+   * Deleting from the viewer.
+   *
+   * On the last photograph the viewer closes, because there is nothing left to look at;
+   * otherwise it stays open and steps back if it was showing the end of the album.
+   */
+  const deleteFromViewer = (id: string, index: number) => {
+    remove.mutate(id, {
+      onSuccess: () => {
+        setConfirming(null)
+        if (album.media.length <= 1) setOpen(null)
+        else if (index >= album.media.length - 1) setOpen(album.media.length - 2)
+      },
+    })
   }
 
   return (
@@ -228,10 +249,8 @@ function AlbumPage({
         <div>
           <h1 className={styles.title}>{album.title}</h1>
           <p className={styles.sub}>
-            {album.media.length} {album.media.length === 1 ? 'photograph' : 'photographs'}.{' '}
-            {album.coverMediaId
-              ? 'One is pinned as the album’s face.'
-              : 'No cover pinned, so the album shows a different one each visit.'}
+            {album.media.length} {album.media.length === 1 ? 'photograph' : 'photographs'}. Open one to
+            see it large, and drag them to change the order — or focus one and use the arrow keys.
           </p>
         </div>
         <span className={styles.actions}>
@@ -259,54 +278,85 @@ function AlbumPage({
       ) : (
         <ul className={media.grid}>
           {album.media.map((item, i) => (
-            <li key={item.id} className={media.card}>
-              <img src={item.thumbnailUrl} alt={item.caption ?? ''} className={media.thumb} loading="lazy" />
-
-              <label className={media.field}>
-                <span className={media.label}>Caption</span>
-                <input
-                  className={media.input}
-                  defaultValue={item.caption ?? ''}
-                  placeholder="Left empty is better than a guess"
-                  onBlur={(e) => {
-                    if (e.target.value !== (item.caption ?? '')) {
-                      setCaption.mutate({ mediaId: item.id, caption: e.target.value })
+            <li
+              key={item.id}
+              className={[media.card, dragging === i ? media.dragging : '', over === i && dragging !== i ? media.over : '']
+                .filter(Boolean)
+                .join(' ')}
+              draggable
+              onDragStart={(e) => {
+                setDragging(i)
+                e.dataTransfer.effectAllowed = 'move'
+                // Firefox will not begin a drag unless something is on the transfer.
+                e.dataTransfer.setData('text/plain', item.id)
+              }}
+              onDragOver={(e) => {
+                e.preventDefault()
+                e.dataTransfer.dropEffect = 'move'
+                setOver(i)
+              }}
+              onDrop={(e) => {
+                e.preventDefault()
+                if (dragging !== null) move(dragging, i)
+                setDragging(null)
+                setOver(null)
+              }}
+              onDragEnd={() => {
+                setDragging(null)
+                setOver(null)
+              }}
+            >
+              <div className={media.frame}>
+                <button
+                  type="button"
+                  className={media.open}
+                  onClick={() => setOpen(i)}
+                  aria-label={`Open ${describeMedia(item)}. Arrow keys move it.`}
+                  onKeyDown={(e) => {
+                    // Dragging is for a mouse and a thumb. This is the same job for a keyboard,
+                    // and without it the only way to reorder would be one nobody can reach.
+                    if (e.key === 'ArrowLeft') {
+                      e.preventDefault()
+                      move(i, i - 1)
+                    } else if (e.key === 'ArrowRight') {
+                      e.preventDefault()
+                      move(i, i + 1)
                     }
                   }}
-                />
-              </label>
+                >
+                  <img src={item.thumbnailUrl} alt={item.caption ?? ''} className={media.thumb} loading="lazy" />
+                </button>
 
-              <div className={media.cardActions}>
-                <Button
-                  variant={album.coverMediaId === item.id ? 'gold' : 'line'}
-                  size="sm"
-                  disabled={album.coverMediaId === item.id}
-                  onClick={() => setCover.mutate({ albumId: album.id, mediaId: item.id })}
+                <button
+                  type="button"
+                  className={media.trash}
+                  aria-label={`Delete ${describeMedia(item)}`}
+                  onClick={() => setConfirming(item.id)}
                 >
-                  {album.coverMediaId === item.id ? 'Album’s face' : 'Make it the face'}
-                </Button>
-                <Button variant="line" size="sm" aria-label={`Move ${describeMedia(item)} earlier`} disabled={i === 0} onClick={() => move(i, -1)}>
-                  ←
-                </Button>
-                <Button
-                  variant="line"
-                  size="sm"
-                  aria-label={`Move ${describeMedia(item)} later`}
-                  disabled={i === album.media.length - 1}
-                  onClick={() => move(i, 1)}
-                >
-                  →
-                </Button>
-                <Button variant="line" size="sm" onClick={() => setConfirming(item)}>
-                  Take down
-                </Button>
+                  <Icon name="trash" />
+                </button>
               </div>
 
-              {confirming?.id === item.id ? (
+              {/* No visible label — the placeholder says what the box is, and under a photograph
+                  that is enough. It still needs a name for anybody not looking at it, and a
+                  placeholder is not one: it goes the moment somebody starts typing. */}
+              <input
+                className={media.input}
+                aria-label="Caption"
+                defaultValue={item.caption ?? ''}
+                placeholder="Caption"
+                onBlur={(e) => {
+                  if (e.target.value !== (item.caption ?? '')) {
+                    setCaption.mutate({ mediaId: item.id, caption: e.target.value })
+                  }
+                }}
+              />
+
+              {confirming === item.id && open === null ? (
                 <div className={media.confirm} role="alert">
                   <p className={media.confirmText}>
-                    Take this photograph down for good? It is removed from the bucket, so the address
-                    stops working for everybody who has it. This cannot be undone.
+                    Delete this photograph? It goes from the bucket, so the address stops working for
+                    everybody who has it. This cannot be undone.
                   </p>
                   <div className={styles.actions}>
                     <Button variant="line" size="sm" onClick={() => setConfirming(null)}>
@@ -318,7 +368,7 @@ function AlbumPage({
                       disabled={remove.isPending}
                       onClick={() => remove.mutate(item.id, { onSuccess: () => setConfirming(null) })}
                     >
-                      Take it down
+                      Delete
                     </Button>
                   </div>
                 </div>
@@ -327,6 +377,42 @@ function AlbumPage({
           ))}
         </ul>
       )}
+
+      <Lightbox
+        items={items}
+        index={open}
+        onChange={setOpen}
+        onClose={() => {
+          setOpen(null)
+          setConfirming(null)
+        }}
+        renderAction={(item) => {
+          const index = album.media.findIndex((m) => m.id === item.id)
+          if (confirming !== item.id) {
+            return (
+              <Button variant="line" size="sm" onClick={() => setConfirming(item.id)}>
+                <Icon name="trash" /> Delete this photograph
+              </Button>
+            )
+          }
+          return (
+            <span className={styles.actions}>
+              <span className={media.confirmText}>Delete for good? This cannot be undone.</span>
+              <Button variant="line" size="sm" onClick={() => setConfirming(null)}>
+                Keep it
+              </Button>
+              <Button
+                variant="gold"
+                size="sm"
+                disabled={remove.isPending}
+                onClick={() => deleteFromViewer(item.id, index)}
+              >
+                Delete
+              </Button>
+            </span>
+          )
+        }}
+      />
     </div>
   )
 }
