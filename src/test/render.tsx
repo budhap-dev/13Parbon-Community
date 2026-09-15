@@ -27,8 +27,9 @@ export function createEmptyApi(): ApiClient {
     festivals: { list: async () => [] },
     gallery: { listRecentMedia: async () => [], listAlbums: async () => [], getAlbum: async () => null },
     news: { listPosts: async () => [], getPost: async () => null, listAnnouncements: async () => [], listNewsletters: async () => [] },
-    contact: { send: async () => { throw new Error('not connected') }, listMessages: async () => [] },
+    contact: { send: async () => { throw new Error('not connected') }, listMessages: async () => [], markHandled: async () => { throw new Error('not connected') } },
     portal: {
+      identify: async () => null,
       getHousehold: async () => null,
       listHouseholds: async () => [],
       listDirectory: async () => [],
@@ -55,8 +56,9 @@ export function createFailingApi(): ApiClient {
     festivals: { list: down },
     gallery: { listRecentMedia: down, listAlbums: down, getAlbum: down },
     news: { listPosts: down, getPost: down, listAnnouncements: down, listNewsletters: down },
-    contact: { send: down, listMessages: down },
+    contact: { send: down, listMessages: down, markHandled: down },
     portal: {
+      identify: down,
       getHousehold: down,
       listHouseholds: down,
       listDirectory: down,

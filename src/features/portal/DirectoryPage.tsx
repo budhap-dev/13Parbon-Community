@@ -1,6 +1,5 @@
 import { Link } from 'react-router'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
-import { directoryEntry } from '@/domain/household'
 import { useDirectory, useHouseholds } from '@/lib/api'
 import { useSignedIn } from '@/lib/auth/session'
 import styles from './Portal.module.css'
@@ -11,7 +10,8 @@ export function DirectoryPage() {
   const { data: listed, isPending } = useDirectory()
   const { data: all } = useHouseholds()
 
-  const entries = (listed ?? []).map(directoryEntry).filter((e) => e !== null)
+  // Already reduced to what each household agreed to share, by the API. Not the page's call.
+  const entries = listed ?? []
   const total = all?.length
 
   return (

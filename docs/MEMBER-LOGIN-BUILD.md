@@ -6,7 +6,7 @@
 > **What this is:** the order of work from [MEMBER-LOGIN.md](MEMBER-LOGIN.md), broken into steps
 > that can be ticked off. That document says *what* and *why*; this one says *where we are*.
 >
-> **Last updated:** 2026-09-15 · **Current step:** 0 · **Ticked:** 0 of 69
+> **Last updated:** 2026-09-15 · **Current step:** 0.2 · **Ticked:** 22 of 82
 
 ## How this is kept
 
@@ -25,8 +25,8 @@
 | Step | | Days | Status |
 |---|---|---|---|
 | — | The story, checked and amended | — | ✅ done 2026-09-15 |
-| 0 | Foundations | 8–11 | **in progress** |
-| 1 | The smallest write, end to end | 0.5 | not started |
+| 0 | Foundations | 8–11 | **in progress** — 0.1 written (blocked on the project), 0.2 done on mocks |
+| 1 | The smallest write, end to end | 0.5 | **mostly done** — brought forward into 0.2 |
 | 2 | Households | ~5 | not started |
 | 3 | Events | ~4.5 | not started |
 | 4 | Media | ~4 | not started |
@@ -47,27 +47,85 @@ stored until this is right, and it is free to get right while the data is still 
 
 ### 0.1 Row level security · 5–7 days
 
-- [ ] Rewrite `supabase/portal.sql`: helpers no longer reference `households` before it exists
-- [ ] Replace `current_setting(...)::jsonb`, which can throw
-- [ ] Remove or make safe the `auth.users` triggers that could block sign-in outright
-- [ ] `households` table + policy: a member reads their own household and no other
-- [ ] `households` policy: an admin reads and writes all
-- [ ] Policy on every other table carrying member data
-- [ ] `contact_messages`: admins can read; it stays insert-only for everyone else
-- [ ] Verify by holding two sessions — a member and an admin — and trying to read what each should not
-- [ ] Commit `portal.sql` (it is deliberately uncommitted today)
+> **Written, not yet run.** There is no Postgres, Docker or Supabase CLI on this machine, and
+> [no Supabase project yet](SIGN-IN.md) — that is the committee's to create. So everything below
+> is reviewed SQL, not executed SQL, and the step does not close until it has been run.
+
+- [x] Rewrite `supabase/portal.sql`: tables now come before the functions that query them
+- [x] Replace `current_setting(...)::jsonb` with `auth.jwt()`, which folds the empty string to null
+- [x] Make the `auth.users` triggers unable to fail, so a note to the committee cannot take the door down
+- [x] `households` table + policy: a member reads their own household and no other
+- [x] `households` policy: an admin reads and writes all
+- [x] Policy on `people`, `registrations`, `documents`, `sign_in_attempts`
+- [x] `contact_messages`: admins can read and handle; it stays insert-only for everyone else
+- [x] Explicit grants, rather than trusting Supabase's default privileges *(found on the way)*
+- [x] Keep `service_role` executing the helpers after revoking them from `public` *(found on the way)*
+- [x] Rewrite `verify.sql` so it exercises the policies, not only the helper functions *(found on the way)*
+- [ ] **Run `portal.sql`, then `verify.sql`, in the project** — blocked on the project existing
+- [ ] Sign in as a member and an admin in the live site and try to read what each should not
+- [ ] Take `supabase/portal.sql` and `supabase/verify.sql` out of `.gitignore` and commit them
+      — both are ignored today, so this work is not even stageable until then
 
 **Done when:** a signed-in member, using the browser console and their own token, cannot read
 another household. Demonstrated, not assumed.
 
+**What changed, and why**
+
+| | |
+|---|---|
+| Order | A `language sql` body is parsed when the function is created, so a helper written above `households` failed on a table that did not exist. Tables first now |
+| `auth.jwt()` | `current_setting('request.jwt.claims', true)::jsonb` throws on an empty string, and an empty string is exactly what an unauthenticated request leaves behind |
+| Triggers that cannot fail | A trigger on `auth.users` runs inside the transaction that signs somebody in. If it raises, that sign-in fails — so a bug in *recording that a stranger knocked* would lock out every member and admin, including the one person who could fix it. The body now swallows its own failure |
+| `on conflict` | `set attempts = public.sign_in_attempts.attempts + 1` is not valid there: the target is in scope under its own name or an alias, never schema-qualified. Aliased now |
+| Grants | Policies were being written against tables that might hold no grant for `authenticated`. That fails closed and looks exactly like a policy bug. Said out loud now |
+| `service_role` | Revoking the helpers from `public` would have taken them from `service_role` too, breaking any later server-side function — the R2 presign endpoint among them |
+| The directory view | Kept as a definer view, and the reasoning written down. Supabase's linter flags it; the alternative leaks more, because a row-level policy admitting members to listed households exposes `phone` to anyone querying `households` directly, and the view's masking would then be decoration |
+
+**Still keyed on email, deliberately.** Matching a household by `google_email` rather than
+`auth.users.id` is what the invitation model requires: the committee records an address before
+that person has ever signed in, so there is no user id to record. The cost is that a changed
+Google address needs changing here too — for fifty households, a smaller problem than a linking
+step that can go wrong.
+
 ### 0.2 A contract that can write · 1–2 days
 
-- [ ] Mutation methods on `ApiClient` in `src/lib/api/types.ts` — it is entirely read-only today
-- [ ] Mock implementations for each, so tests and the parked site keep working
-- [ ] The Supabase adapter alongside, method for method
-- [ ] TanStack Query mutation pattern with cache invalidation, established once
+> Done on mocks, which covers all of it bar the Supabase half. Taken together with the first
+> half of step 1, because the smallest write was the thing worth proving the pattern on.
 
-**Done when:** one value can be changed from the UI and survives a reload.
+**The trap this closed first.** The mock was *more permissive than the database*.
+`listDirectory()` returned whole `Household` objects — `email`, `phone`, and `people[]` with
+children's names — and the masking happened afterwards, in the browser, at `DirectoryPage.tsx`.
+That is the allowlist mistake again: a decision about what to **show** standing in for a
+decision about what to **give out**. Harmless against fixtures; a leak the moment the obvious
+adapter (`select * from households where listed_in_directory`) is written to satisfy the
+interface. Building every screen against a mock that permits more than Postgres will is how an
+app gets written in the belief that it may ask for anything.
+
+- [x] `DirectoryEntry` type, and `listDirectory` narrowed to it — the API cannot hand over a
+      phone number it should not, because the type will not carry one
+- [x] Masking moved out of the page and into the API, where it cannot be refactored away
+- [x] `Viewer` threaded through every portal read, so each says in its own signature that the
+      answer depends on who is asking
+- [x] The mock refuses exactly what the policies refuse — not found and not allowed give the
+      same answer, because "it exists but is not yours" is itself a fact about a household
+- [x] The viewer is part of every query key: without it, signing out of an admin and into a
+      member serves the member whatever the admin already fetched
+- [x] `portal.identify()` for sign-in — which used to call `listHouseholds()`, *before anyone
+      is signed in*, and would otherwise have needed a hole in the rules to keep working
+- [x] `contact.markHandled()`, the first mutation, with the invalidate-after-write pattern
+- [x] Mock implementations, so the parked site and the suite keep working
+- [x] 27 new tests: `mock/rules.test.ts` mirrors `verify.sql` block for block
+- [x] A disabled style for `Button` — nothing had used `disabled` until this, and a button that
+      ignores a click while looking ready to take one reads as a broken page
+- [ ] The Supabase adapter alongside, method for method — blocked on the project
+- [ ] Per-resource mutations land with their own steps, not speculatively up front
+
+**Done when:** one value can be changed from the UI and survives a reload. *Changed from the UI
+and proven by test; surviving a reload needs somewhere to persist, so this closes with 0.1.*
+
+**Three enforcers, one set of rules:** `supabase/portal.sql` (the truth), the mock (what the app
+develops against), `can()` (what the UI draws). `mock/rules.test.ts` and `verify.sql` check the
+first two say the same thing. If they ever disagree, the database is right.
 
 ### 0.3 The audit table · 1 day
 
@@ -95,8 +153,9 @@ the mistakes were made.
 Marking a contact message handled. The point is not the feature; it is proving all four
 foundation pieces work together on something with nothing at stake.
 
-- [ ] Mark a message handled from `/admin/messages`
-- [ ] It persists, it audits, and a member cannot do it
+- [x] Mark a message handled from `/admin/messages` — done early, as 0.2's proof of the pattern
+- [x] A member cannot do it, and cannot read the inbox to try
+- [ ] It persists past a reload (needs 0.1) and it audits (needs 0.3)
 
 **Done when:** the committee can clear their inbox, and the audit table says who cleared what.
 
@@ -219,3 +278,5 @@ invitation, so nothing to approve and no passwords to reset.
 | Date | Step | |
 |---|---|---|
 | 2026-09-15 | — | The committee's eight-section list checked against the repo and amended. Branch opened. |
+| 2026-09-15 | 0.1 | `portal.sql` and `verify.sql` rewritten. Three known faults fixed, three more found. Not run: no Supabase project yet. |
+| 2026-09-15 | 0.2 | Contract narrowed and given a viewer; the mock now refuses what the policies refuse. Found the directory handing whole households to the browser. First write shipped. 228 → 255 tests. |

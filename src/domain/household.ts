@@ -61,10 +61,16 @@ export function describeSize(household: Pick<Household, 'people'>): string {
 }
 
 /**
- * What another member may see about this household. Returns null when the household
- * has chosen not to appear at all. Children's names never leave the household.
+ * All another member may ever see about a household: a name, a size, and whatever that
+ * household agreed to share. No address, no sign-in address, no membership status, and no
+ * name of any person in it — a child's name never leaves their own household.
+ *
+ * This is a type and not merely a mapping because it is the shape the API is allowed to
+ * return. `Household` carries things a member must never receive, so a method that promises
+ * `Household[]` to a member is a leak waiting for somebody to open devtools, however
+ * carefully the page that consumes it draws only part of it.
  */
-export function directoryEntry(household: Household): {
+export type DirectoryEntry = {
   id: string
   name: string
   contactName: string
@@ -72,7 +78,34 @@ export function directoryEntry(household: Household): {
   email?: string
   phone?: string
   interests: string[]
-} | null {
+}
+
+/**
+ * Who is making a request. The real client carries a signed token and Postgres reads the
+ * household and role out of it; this carries the same two facts, so that the mock can refuse
+ * exactly what row level security refuses. Null is a visitor.
+ *
+ * Passed per call rather than held on the client on purpose: it makes every read that depends
+ * on who is asking say so in its own signature, and there is no ambient state to get stale
+ * between signing out and the next query.
+ */
+export type Viewer = { householdId: string; role: Role } | null
+
+/** Whether this viewer acts for the committee. */
+export function isAdmin(viewer: Viewer): viewer is { householdId: string; role: 'admin' } {
+  return viewer?.role === 'admin'
+}
+
+/** Whether this viewer is signed in and matched to a household at all. */
+export function isMember(viewer: Viewer): viewer is NonNullable<Viewer> {
+  return viewer !== null
+}
+
+/**
+ * What another member may see about this household. Returns null when the household
+ * has chosen not to appear at all. Children's names never leave the household.
+ */
+export function directoryEntry(household: Household): DirectoryEntry | null {
   if (!household.listedInDirectory) return null
   return {
     id: household.id,

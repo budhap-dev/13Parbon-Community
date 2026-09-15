@@ -1,6 +1,29 @@
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { ContactInput } from '@/domain/contact'
+import type { Viewer } from '@/domain/household'
+import { useSignedIn } from '@/lib/auth/session'
 import { useApi } from './context'
+
+/**
+ * Who the current request is being made by. The real client will put this in a token; here it
+ * is read from the session and handed to the API explicitly, which keeps it visible.
+ */
+export function useViewer(): Viewer {
+  const who = useSignedIn()
+  return who ? { householdId: who.householdId, role: who.role } : null
+}
+
+/**
+ * The part of a query key that says who asked.
+ *
+ * Every query that depends on the viewer carries this, because React Query caches by key and
+ * nothing else: without it, signing out of an admin account and into a member one would serve
+ * the member whatever the admin had already fetched. The data would be wrong and — worse —
+ * would be wrong in the direction of showing somebody more than they should see.
+ */
+function asks(viewer: Viewer): string {
+  return viewer ? `${viewer.role}:${viewer.householdId}` : 'visitor'
+}
 
 export function useNextEvent() {
   const api = useApi()
@@ -58,54 +81,92 @@ export function useSendContact() {
 
 export function useHousehold(id: string | undefined) {
   const api = useApi()
+  const viewer = useViewer()
   return useQuery({
-    queryKey: ['portal', 'household', id],
-    queryFn: () => api.portal.getHousehold(id ?? ''),
+    queryKey: ['portal', 'household', id, asks(viewer)],
+    queryFn: () => api.portal.getHousehold(id ?? '', viewer),
     enabled: Boolean(id),
   })
 }
 
 export function useHouseholds() {
   const api = useApi()
-  return useQuery({ queryKey: ['portal', 'households'], queryFn: () => api.portal.listHouseholds() })
+  const viewer = useViewer()
+  return useQuery({
+    queryKey: ['portal', 'households', asks(viewer)],
+    queryFn: () => api.portal.listHouseholds(viewer),
+  })
 }
 
 export function useDirectory() {
   const api = useApi()
-  return useQuery({ queryKey: ['portal', 'directory'], queryFn: () => api.portal.listDirectory() })
+  const viewer = useViewer()
+  return useQuery({
+    queryKey: ['portal', 'directory', asks(viewer)],
+    queryFn: () => api.portal.listDirectory(viewer),
+  })
 }
 
 export function useDocuments() {
   const api = useApi()
-  return useQuery({ queryKey: ['portal', 'documents'], queryFn: () => api.portal.listDocuments() })
+  const viewer = useViewer()
+  return useQuery({
+    queryKey: ['portal', 'documents', asks(viewer)],
+    queryFn: () => api.portal.listDocuments(viewer),
+  })
 }
 
 export function useHouseholdRegistrations(householdId: string | undefined) {
   const api = useApi()
+  const viewer = useViewer()
   return useQuery({
-    queryKey: ['portal', 'registrations', 'household', householdId],
-    queryFn: () => api.portal.listRegistrationsForHousehold(householdId ?? ''),
+    queryKey: ['portal', 'registrations', 'household', householdId, asks(viewer)],
+    queryFn: () => api.portal.listRegistrationsForHousehold(householdId ?? '', viewer),
     enabled: Boolean(householdId),
   })
 }
 
 export function useEventRegistrations(eventId: string | undefined) {
   const api = useApi()
+  const viewer = useViewer()
   return useQuery({
-    queryKey: ['portal', 'registrations', 'event', eventId],
-    queryFn: () => api.portal.listRegistrationsForEvent(eventId ?? ''),
+    queryKey: ['portal', 'registrations', 'event', eventId, asks(viewer)],
+    queryFn: () => api.portal.listRegistrationsForEvent(eventId ?? '', viewer),
     enabled: Boolean(eventId),
   })
 }
 
 export function useSignInAttempts() {
   const api = useApi()
-  return useQuery({ queryKey: ['portal', 'sign-in-attempts'], queryFn: () => api.portal.listSignInAttempts() })
+  const viewer = useViewer()
+  return useQuery({
+    queryKey: ['portal', 'sign-in-attempts', asks(viewer)],
+    queryFn: () => api.portal.listSignInAttempts(viewer),
+  })
 }
 
 export function useContactMessages() {
   const api = useApi()
-  return useQuery({ queryKey: ['contact', 'messages'], queryFn: () => api.contact.listMessages() })
+  const viewer = useViewer()
+  return useQuery({
+    queryKey: ['contact', 'messages', asks(viewer)],
+    queryFn: () => api.contact.listMessages(viewer),
+  })
+}
+
+/**
+ * Marks a message dealt with. The first write in the app, and the pattern every later one
+ * follows: call through the client, then invalidate the queries whose answers just changed,
+ * so the screen reflects the database rather than what the mutation hoped it did.
+ */
+export function useMarkMessageHandled() {
+  const api = useApi()
+  const viewer = useViewer()
+  const queries = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => api.contact.markHandled(id, viewer),
+    onSuccess: () => queries.invalidateQueries({ queryKey: ['contact', 'messages'] }),
+  })
 }
 
 export function useFestivals() {

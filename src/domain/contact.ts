@@ -9,6 +9,8 @@ export type ContactMessage = ContactInput & {
   id: string
   /** ISO 8601 timestamp */
   createdAt: string
+  /** Who on the committee dealt with it. Absent means nobody has yet. */
+  handledBy?: string
 }
 
 export type ContactErrors = Partial<Record<keyof ContactInput, string>>

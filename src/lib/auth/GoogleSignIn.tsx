@@ -119,9 +119,7 @@ export function useGoogleSignIn(): Value {
 /** The household the committee recorded this address against, if there is one yet. */
 async function findHousehold(api: ReturnType<typeof useApi>, email: string) {
   try {
-    const households = await api.portal.listHouseholds()
-    const match = households.find((h) => h.googleEmail?.toLowerCase() === email.toLowerCase())
-    return match ? { id: match.id, name: match.name, role: match.role } : null
+    return await api.portal.identify(email)
   } catch {
     // The portal can say more about this than a sign-in can; getting in is the job here.
     return null

@@ -19,6 +19,20 @@
   transform: translateY(-1px);
 }
 
+/*
+ * A button that cannot be pressed has to look like one. Nothing used `disabled` until the
+ * first write landed, and a button that ignores a click while looking ready to take one
+ * reads as a broken page rather than a finished job.
+ */
+.button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.button:disabled:hover {
+  transform: none;
+}
+
 .md {
   min-height: 56px;
   padding: 0 30px;

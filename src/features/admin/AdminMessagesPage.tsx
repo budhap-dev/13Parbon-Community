@@ -3,12 +3,13 @@ import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { Button } from '@/components/Button'
 import { formatLongDate, formatTime } from '@/domain/dates'
 import { paragraphs } from '@/domain/news'
-import { useContactMessages } from '@/lib/api'
+import { useContactMessages, useMarkMessageHandled } from '@/lib/api'
 import styles from '@/features/portal/Portal.module.css'
 
 export function AdminMessagesPage() {
   useDocumentTitle('Messages')
   const { data: messages, isPending } = useContactMessages()
+  const markHandled = useMarkMessageHandled()
   const [openId, setOpenId] = useState<string | null>(null)
 
   const list = messages ?? []
@@ -85,10 +86,20 @@ export function AdminMessagesPage() {
                   <Button variant="gold" size="sm" href={`mailto:${open.email}`}>
                     Reply by email
                   </Button>
-                  <Button variant="line" size="sm" onClick={() => {}}>
-                    {open.handledBy ? 'Handled' : 'Mark handled'}
+                  <Button
+                    variant="line"
+                    size="sm"
+                    disabled={Boolean(open.handledBy) || markHandled.isPending}
+                    onClick={() => markHandled.mutate(open.id)}
+                  >
+                    {open.handledBy ? 'Handled' : markHandled.isPending ? 'Marking…' : 'Mark handled'}
                   </Button>
                 </div>
+                {markHandled.isError ? (
+                  <p className={`${styles.muted} ${styles.tiny}`} role="alert">
+                    That did not save. {markHandled.error.message}
+                  </p>
+                ) : null}
                 <p className={`${styles.muted} ${styles.tiny}`}>
                   Replies go from your own email, so the visitor sees a person rather than a no-reply address.
                 </p>

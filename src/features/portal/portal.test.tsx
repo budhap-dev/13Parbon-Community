@@ -174,6 +174,30 @@ describe('committee pages', () => {
     expect(screen.getByRole('heading', { level: 2, name: 'New to the area' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Reply by email' })).toHaveAttribute('href', 'mailto:ruma@example.com')
   })
+
+  // The first write in the app, end to end: contract, mock, mutation, cache invalidation,
+  // and a screen that shows what the data says afterwards rather than what the click hoped.
+  it('marks a message handled, and the inbox agrees afterwards', async () => {
+    renderAt('/admin/messages', admin)
+    const inbox = await screen.findByRole('region', { name: 'Inbox' })
+    // One fixture message is already dealt with, so count rather than assume an empty start.
+    const before = within(inbox).queryAllByText(/handled by/).length
+    const unreadBefore = within(inbox).getByText(/unread/).textContent
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Mark handled' }))
+
+    expect(await screen.findByRole('button', { name: 'Handled' })).toBeDisabled()
+    // Not just the open message: the list beside it is redrawn from the same refreshed data.
+    expect(within(inbox).queryAllByText(/handled by/).length).toBe(before + 1)
+    expect(within(inbox).getByText(/unread/).textContent).not.toBe(unreadBefore)
+  })
+
+  it('does not offer to handle a message twice', async () => {
+    renderAt('/admin/messages', admin)
+    await userEvent.click(await screen.findByRole('button', { name: 'Mark handled' }))
+    expect(await screen.findByRole('button', { name: 'Handled' })).toBeDisabled()
+    expect(screen.queryByRole('button', { name: 'Mark handled' })).not.toBeInTheDocument()
+  })
 })
 
 describe('preview sign-in', () => {

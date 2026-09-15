@@ -2,6 +2,7 @@ import { isUpcoming } from '@/domain/dates'
 import { isValidContact, type ContactMessage } from '@/domain/contact'
 import type { Event } from '@/domain/event'
 import type { AlbumWithMedia } from '@/domain/gallery'
+import { directoryEntry, isAdmin, isMember } from '@/domain/household'
 import type { ApiClient } from '../types'
 import { buildFixtures } from './fixtures'
 import { buildPortalFixtures } from './portal-fixtures'
@@ -21,6 +22,18 @@ export type MockApiOptions = {
 function delay<T>(value: T, ms: number): Promise<T> {
   if (ms <= 0) return Promise.resolve(value)
   return new Promise((resolve) => setTimeout(() => resolve(value), ms))
+}
+
+/**
+ * What the database says when somebody writes something they are not allowed to write.
+ * Postgres raises; this rejects. A read that is not allowed comes back empty instead, which
+ * is also what row level security does — a policy hides rows, it does not announce them.
+ */
+export class NotAllowed extends Error {
+  constructor(what: string) {
+    super(`Not allowed: ${what}`)
+    this.name = 'NotAllowed'
+  }
 }
 
 export function createMockApi({ now = () => new Date(), latencyMs = 0, events }: MockApiOptions = {}): ApiClient {
@@ -111,37 +124,85 @@ export function createMockApi({ now = () => new Date(), latencyMs = 0, events }:
         sentMessages.push(message)
         return delay(message, latencyMs)
       },
-      listMessages: () =>
+      listMessages: (viewer) =>
         delay(
-          [...portal.messages, ...sentMessages].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+          isAdmin(viewer)
+            ? [...portal.messages, ...sentMessages].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+            : [],
           latencyMs,
         ),
+      markHandled: (id, viewer) => {
+        if (!isAdmin(viewer)) return Promise.reject(new NotAllowed('only the committee can handle a message'))
+        const message = [...portal.messages, ...sentMessages].find((m) => m.id === id)
+        if (!message) return Promise.reject(new NotAllowed('no such message'))
+        message.handledBy = viewer.householdId
+        return delay(message, latencyMs)
+      },
     },
+    // Every rule below has a policy in supabase/portal.sql that says the same thing, and a
+    // block in supabase/verify.sql that proves the database agrees. Three enforcers, one set
+    // of rules: if these three ever disagree, the database is the one telling the truth.
     portal: {
-      getHousehold: (id) => delay(portal.households.find((h) => h.id === id) ?? null, latencyMs),
-      listHouseholds: () => delay([...portal.households].sort((a, b) => a.name.localeCompare(b.name)), latencyMs),
-      listDirectory: () =>
+      identify: (email) => {
+        const match = portal.households.find((h) => h.googleEmail?.toLowerCase() === email.toLowerCase())
+        return delay(match ? { id: match.id, name: match.name, role: match.role } : null, latencyMs)
+      },
+      // Not found and not allowed are the same answer on purpose. Telling somebody a
+      // household exists but is not theirs is itself a fact about a household.
+      getHousehold: (id, viewer) => {
+        const household = portal.households.find((h) => h.id === id) ?? null
+        if (!household) return delay(null, latencyMs)
+        const mine = viewer?.householdId === household.id
+        return delay(mine || isAdmin(viewer) ? household : null, latencyMs)
+      },
+      listHouseholds: (viewer) =>
         delay(
-          portal.households.filter((h) => h.listedInDirectory).sort((a, b) => a.name.localeCompare(b.name)),
+          isAdmin(viewer) ? [...portal.households].sort((a, b) => a.name.localeCompare(b.name)) : [],
           latencyMs,
         ),
-      listDocuments: () => delay([...portal.documents].sort((a, b) => b.addedOn.localeCompare(a.addedOn)), latencyMs),
-      listRegistrationsForHousehold: (householdId) =>
+      // Masked here rather than in the page. `directoryEntry` drops everything the household
+      // did not agree to share, and every name of every person in it.
+      listDirectory: (viewer) =>
         delay(
+          isMember(viewer)
+            ? portal.households
+                .filter((h) => h.membership.status === 'active')
+                .map(directoryEntry)
+                .filter((entry) => entry !== null)
+                .sort((a, b) => a.name.localeCompare(b.name))
+            : [],
+          latencyMs,
+        ),
+      listDocuments: (viewer) =>
+        delay(
+          isMember(viewer) ? [...portal.documents].sort((a, b) => b.addedOn.localeCompare(a.addedOn)) : [],
+          latencyMs,
+        ),
+      listRegistrationsForHousehold: (householdId, viewer) => {
+        if (viewer?.householdId !== householdId && !isAdmin(viewer)) return delay([], latencyMs)
+        return delay(
           portal.registrations
             .filter((r) => r.householdId === householdId)
             .sort((a, b) => b.registeredAt.localeCompare(a.registeredAt)),
           latencyMs,
-        ),
-      listRegistrationsForEvent: (eventId) =>
+        )
+      },
+      listRegistrationsForEvent: (eventId, viewer) =>
         delay(
-          portal.registrations
-            .filter((r) => r.eventId === eventId)
-            .sort((a, b) => b.registeredAt.localeCompare(a.registeredAt)),
+          isAdmin(viewer)
+            ? portal.registrations
+                .filter((r) => r.eventId === eventId)
+                .sort((a, b) => b.registeredAt.localeCompare(a.registeredAt))
+            : [],
           latencyMs,
         ),
-      listSignInAttempts: () =>
-        delay([...portal.signInAttempts].sort((a, b) => b.lastTriedAt.localeCompare(a.lastTriedAt)), latencyMs),
+      listSignInAttempts: (viewer) =>
+        delay(
+          isAdmin(viewer)
+            ? [...portal.signInAttempts].sort((a, b) => b.lastTriedAt.localeCompare(a.lastTriedAt))
+            : [],
+          latencyMs,
+        ),
     },
     volunteering: {
       listOpenRoles: () => delay(fixtures.volunteerRoles.filter((r) => r.filled < r.slots), latencyMs),
