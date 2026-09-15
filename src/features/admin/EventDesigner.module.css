@@ -1,7 +1,9 @@
 .split {
   display: grid;
   gap: 28px;
-  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 1fr);
+  /* Wide enough for a phone at its real width (360px) plus the frame around it, or the phone
+     preview would be a squeezed impression of one rather than the thing itself. */
+  grid-template-columns: minmax(0, 1fr) minmax(400px, 440px);
   align-items: start;
 }
 
@@ -14,11 +16,103 @@
   gap: 10px;
 }
 
+.previewHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 .previewLabel {
   margin: 0;
   font-size: 13px;
   font-weight: 600;
   opacity: 0.7;
+}
+
+.devices {
+  display: inline-flex;
+  border: 2px solid var(--line, rgba(0, 0, 0, 0.16));
+  border-radius: 999px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.device,
+.deviceOn {
+  border: 0;
+  border-radius: 999px;
+  padding: 5px 12px;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  background: transparent;
+  color: inherit;
+}
+
+.deviceOn {
+  background: var(--gold, #c9a227);
+  color: #241d0c;
+  font-weight: 600;
+}
+
+.device:focus-visible,
+.deviceOn:focus-visible {
+  outline: 3px solid var(--gold, #c9a227);
+  outline-offset: 2px;
+}
+
+/* The two widths. Classes rather than media queries: this box is not the window, and every
+   media query on a laptop would answer "desktop" however narrow the column is. */
+.desktop {
+  width: 100%;
+}
+
+.phone {
+  width: 360px;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 10px;
+  border: 2px solid var(--line, rgba(0, 0, 0, 0.3));
+  border-radius: 28px;
+  /* A hint of a handset, so the narrow column reads as a phone rather than as a broken layout. */
+  box-shadow: inset 0 0 0 6px var(--tint, rgba(0, 0, 0, 0.05));
+}
+
+.phone .title {
+  font-size: 19px;
+}
+
+.phone .cardBody {
+  padding: 12px;
+  gap: 6px;
+}
+
+.standIn {
+  margin: 0;
+  font-size: 12px;
+  opacity: 0.7;
+  line-height: 1.5;
+}
+
+.titleEmpty,
+.metaEmpty,
+.summaryEmpty {
+  opacity: 0.38;
+}
+
+.titleEmpty {
+  margin: 0;
+  font-size: 22px;
+  line-height: 1.2;
+}
+
+.metaEmpty,
+.summaryEmpty {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
 }
 
 .card {

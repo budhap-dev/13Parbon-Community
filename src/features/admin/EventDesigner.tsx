@@ -1,11 +1,14 @@
 import { useState, type FormEvent } from 'react'
 import { Button } from '@/components/Button'
 import { CoverImage } from '@/components/CoverImage'
+import { PhotoUpload } from '@/components/PhotoUpload'
 import { Icon } from '@/components/Icon'
 import { COVER_ANIMATIONS, type CoverAnimation } from '@/domain/cover'
 import { daysUntil, describeCountdown, formatLongDate, formatTime } from '@/domain/dates'
 import { blankEvent, tidyProgramme, validateEvent, type Event, type EventDraft, type EventErrors } from '@/domain/event'
 import { useNow } from '@/lib/clock'
+import { readUploadConfig, uploadPhoto, UploadNotConfigured } from '@/lib/api/uploads'
+import { slugFrom } from '@/domain/slug'
 import styles from './ContentForms.module.css'
 import design from './EventDesigner.module.css'
 
@@ -65,7 +68,10 @@ export function EventDesigner({
 }) {
   const [draft, setDraft] = useState<EventDraft>(() => (event ? draftOfEvent(event) : blankEvent()))
   const [errors, setErrors] = useState<EventErrors>({})
+  const [device, setDevice] = useState<'desktop' | 'phone'>('desktop')
   const now = useNow()
+  // Null where no bucket is configured, which the upload says out loud rather than failing.
+  const uploads = readUploadConfig(import.meta.env)
 
   const set = <K extends keyof EventDraft>(key: K, value: EventDraft[K]) => setDraft((d) => ({ ...d, [key]: value }))
 
@@ -161,7 +167,18 @@ export function EventDesigner({
           </div>
         </div>
 
-        {field('coverImageUrl', 'Cover photograph', {}, 'An address in the photo bucket. Never a file from this repository.')}
+        {field('coverImageUrl', 'Cover photograph', {}, 'The address it is served from. Choose a file below and this fills itself in.')}
+
+        <PhotoUpload
+          canSend={Boolean(uploads)}
+          label="Choose a cover photograph"
+          onSend={async (prepared, name) => {
+            if (!uploads) throw new UploadNotConfigured()
+            const key = `${slugFrom(draft.title) || 'event'}-cover-${slugFrom(name.replace(/\.[^.]+$/, '')) || 'photo'}`
+            return uploadPhoto(uploads, key, prepared)
+          }}
+          onDone={(url) => set('coverImageUrl', url)}
+        />
 
         <div className={styles.field}>
           <label className={styles.label} htmlFor="coverAnimation">
@@ -355,45 +372,85 @@ export function EventDesigner({
       {/* Drawn from the same draft as it is typed, because four text boxes are a poor way to
           picture a banner with a Bengali theme and a countdown in it. */}
       <aside className={design.preview} aria-label="How it will look">
-        <p className={design.previewLabel}>How it will look</p>
-        <div className={design.card}>
-          <CoverImage src={draft.coverImageUrl} animation={draft.coverAnimation} />
-          <div className={design.cardBody}>
-            <p className={design.kicker}>Next event</p>
-            <h3 className={design.title}>{draft.title || 'Untitled'}</h3>
-            {draft.theme.bengali ? (
-              <p className={design.theme}>
-                {draft.theme.bengali}
-                {draft.theme.bengaliSubtitle ? ` ${draft.theme.bengaliSubtitle}` : ''}
-                {draft.theme.english ? <span className={design.themeEnglish}> · {draft.theme.english}</span> : null}
-              </p>
-            ) : null}
-            <p className={design.meta}>
-              {draft.startsAt ? `${formatLongDate(draft.startsAt)}, ${formatTime(draft.startsAt)}` : 'No date yet'}
-              {draft.venue ? ` · ${draft.venue}` : ''}
-            </p>
-            <p className={design.summary}>{draft.summary || 'No description yet.'}</p>
-            {countdown ? (
-              <p className={design.countdown}>
-                <strong>{countdown.value}</strong> {countdown.label}
-              </p>
-            ) : null}
-            {programme.length > 0 ? (
-              <ul className={design.programme}>
-                {programme.map((line, i) => (
-                  <li key={i}>
-                    <strong>{line.time || '—'}</strong> {line.what}
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-            {draft.registrationOpen && draft.registrationUrl ? (
-              <p className={design.cta}>Book your places</p>
-            ) : (
-              <p className={design.ctaOff}>No booking button — {draft.registrationOpen ? 'no form address yet' : 'booking is closed'}</p>
-            )}
+        <div className={design.previewHead}>
+          <p className={design.previewLabel}>How it will look</p>
+          {/*
+            A choice rather than a window you resize, because the preview is a box inside a page
+            and a media query answers for the window, not for the box. On a laptop every media
+            query says "desktop" however narrow this column happens to be — so the phone view is
+            a class, and it is the real width of a phone rather than an impression of one.
+          */}
+          <div className={design.devices} role="group" aria-label="Preview width">
+            {(['desktop', 'phone'] as const).map((which) => (
+              <button
+                key={which}
+                type="button"
+                className={device === which ? design.deviceOn : design.device}
+                aria-pressed={device === which}
+                onClick={() => setDevice(which)}
+              >
+                {which === 'desktop' ? 'Desktop' : 'Phone'}
+              </button>
+            ))}
           </div>
         </div>
+
+        <div className={device === 'phone' ? design.phone : design.desktop}>
+          <div className={design.card}>
+            <CoverImage
+              src={draft.coverImageUrl}
+              animation={draft.coverAnimation}
+              ratio={device === 'phone' ? '4 / 3' : '16 / 9'}
+            />
+            <div className={design.cardBody}>
+              <p className={design.kicker}>Next event</p>
+              <h3 className={draft.title ? design.title : design.titleEmpty}>
+                {draft.title || 'Boishakhi 2027'}
+              </h3>
+              {draft.theme.bengali ? (
+                <p className={design.theme}>
+                  {draft.theme.bengali}
+                  {draft.theme.bengaliSubtitle ? ` ${draft.theme.bengaliSubtitle}` : ''}
+                  {draft.theme.english ? <span className={design.themeEnglish}> · {draft.theme.english}</span> : null}
+                </p>
+              ) : null}
+              <p className={draft.startsAt || draft.venue ? design.meta : design.metaEmpty}>
+                {draft.startsAt ? `${formatLongDate(draft.startsAt)}, ${formatTime(draft.startsAt)}` : 'Saturday 12 March, 7:00 pm'}
+                {draft.venue ? ` · ${draft.venue}` : ' · St Andrew’s Community Hall'}
+              </p>
+              <p className={draft.summary ? design.summary : design.summaryEmpty}>
+                {draft.summary || 'An evening of songs, dance and far too much food.'}
+              </p>
+              {countdown ? (
+                <p className={design.countdown}>
+                  <strong>{countdown.value}</strong> {countdown.label}
+                </p>
+              ) : null}
+              {programme.length > 0 ? (
+                <ul className={design.programme}>
+                  {programme.map((line, i) => (
+                    <li key={i}>
+                      <strong>{line.time || '—'}</strong> {line.what}
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+              {draft.registrationOpen && draft.registrationUrl ? (
+                <p className={design.cta}>Book your places</p>
+              ) : (
+                <p className={design.ctaOff}>
+                  No booking button — {draft.registrationOpen ? 'no form address yet' : 'booking is closed'}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Greyed text is a stand-in, not a value that will be saved. Saying so is cheaper than
+            somebody publishing an evening called Boishakhi 2027 that they never typed. */}
+        {!draft.title || !draft.summary || !draft.startsAt ? (
+          <p className={design.standIn}>Anything faded is a stand-in, to show the shape. It is not saved.</p>
+        ) : null}
       </aside>
     </div>
   )

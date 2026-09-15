@@ -230,6 +230,79 @@ describe('the preview', () => {
   })
 })
 
+describe('seeing it at both widths', () => {
+  it('offers a desktop and a phone, with desktop chosen', async () => {
+    renderEvents()
+    const preview = await design()
+    const group = within(preview).getByRole('group', { name: 'Preview width' })
+
+    expect(within(group).getByRole('button', { name: 'Desktop' })).toHaveAttribute('aria-pressed', 'true')
+    expect(within(group).getByRole('button', { name: 'Phone' })).toHaveAttribute('aria-pressed', 'false')
+  })
+
+  it('switches to the phone and stays there', async () => {
+    renderEvents()
+    const preview = await design()
+
+    await userEvent.click(within(preview).getByRole('button', { name: 'Phone' }))
+    expect(within(preview).getByRole('button', { name: 'Phone' })).toHaveAttribute('aria-pressed', 'true')
+    expect(within(preview).getByRole('button', { name: 'Desktop' })).toHaveAttribute('aria-pressed', 'false')
+  })
+
+  it('shows the same evening either way, so the two cannot disagree', async () => {
+    renderEvents()
+    const preview = await design()
+
+    const title = screen.getByLabelText('What it is called')
+    await userEvent.clear(title)
+    await userEvent.type(title, 'Holi 2027')
+    expect(within(preview).getByRole('heading', { name: 'Holi 2027' })).toBeInTheDocument()
+
+    await userEvent.click(within(preview).getByRole('button', { name: 'Phone' }))
+    expect(within(preview).getByRole('heading', { name: 'Holi 2027' })).toBeInTheDocument()
+  })
+
+  it('gives the cover a taller crop on a phone, as the page does', async () => {
+    renderEvents()
+    const preview = await design()
+    const frame = () => preview.querySelector('[style*="aspect-ratio"]') as HTMLElement
+
+    expect(frame().style.aspectRatio).toBe('16 / 9')
+    await userEvent.click(within(preview).getByRole('button', { name: 'Phone' }))
+    expect(frame().style.aspectRatio).toBe('4 / 3')
+  })
+})
+
+describe('a preview with nothing in it yet', () => {
+  it('shows the shape rather than a column of blanks', async () => {
+    renderEvents()
+    await userEvent.click(await screen.findByRole('button', { name: 'New event' }))
+    const preview = await screen.findByRole('complementary', { name: 'How it will look' })
+
+    // Five greyed "No …" lines read as something that failed to load, not as a preview.
+    expect(within(preview).getByRole('heading', { name: 'Boishakhi 2027' })).toBeInTheDocument()
+    expect(within(preview).getByText(/St Andrew’s Community Hall/)).toBeInTheDocument()
+  })
+
+  it('says the faded parts are a stand-in and will not be saved', async () => {
+    renderEvents()
+    await userEvent.click(await screen.findByRole('button', { name: 'New event' }))
+    const preview = await screen.findByRole('complementary', { name: 'How it will look' })
+    // Cheaper than somebody publishing an evening called Boishakhi 2027 they never typed.
+    expect(within(preview).getByText(/It is not saved/)).toBeInTheDocument()
+  })
+
+  it('drops the stand-in the moment something real is typed', async () => {
+    renderEvents()
+    await userEvent.click(await screen.findByRole('button', { name: 'New event' }))
+    const preview = await screen.findByRole('complementary', { name: 'How it will look' })
+
+    await userEvent.type(screen.getByLabelText('What it is called'), 'Holi 2027')
+    expect(within(preview).queryByRole('heading', { name: 'Boishakhi 2027' })).not.toBeInTheDocument()
+    expect(within(preview).getByRole('heading', { name: 'Holi 2027' })).toBeInTheDocument()
+  })
+})
+
 describe('the programme', () => {
   it('adds and removes a line', async () => {
     renderEvents()

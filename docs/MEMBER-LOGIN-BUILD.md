@@ -6,7 +6,7 @@
 > **What this is:** the order of work from [MEMBER-LOGIN.md](MEMBER-LOGIN.md), broken into steps
 > that can be ticked off. That document says *what* and *why*; this one says *where we are*.
 >
-> **Last updated:** 2026-09-15 · **Current step:** 4 · **Ticked:** 66 of 90
+> **Last updated:** 2026-09-15 · **Current step:** 4 · **Ticked:** 67 of 91
 
 ## How this is kept
 
@@ -433,7 +433,8 @@ is built, and worth a look at what the planner already stores.
 
 The takedown promise stops depending on a macOS script and a person remembering to run it.
 
-- [ ] Presign endpoint (Vercel function) — R2 credentials cannot go in the browser
+- [x] The browser half of uploading: choose, prepare, check, send
+- [ ] **Presign endpoint (Vercel function)** — the last piece, and it needs R2 credentials
 - [x] Client-side re-encode to 1600 and 600, which never writes metadata rather than stripping it
 - [x] Apply EXIF orientation before discarding it, or portrait photographs come out sideways
 - [x] HEIC: **decided 2026-09-15** — JPG, JPEG and PNG only, and the screen says so
@@ -492,6 +493,26 @@ PLAN's map and never built. Albums on one screen, the photographs of one album o
 caption, pin as the face, move earlier or later, take down. It says what the upload accepts
 before anybody tries, and it says the metadata never leaves the machine, because that is the
 promise and a promise nobody is told about is not much of one.
+
+**Uploading, from the screen** *(2026-09-15)*. The cover field used to say "an address in the
+photo bucket, never a file from this repository", which told the committee what not to do without
+giving them a way to do anything. There is a file picker now: choose a photograph, it is prepared
+in the browser, and the field fills itself in.
+
+What it says when it is ready is the point — *1600×1200, 214KB and 31KB for the grid. **No
+location, camera or date** — the picture was re-made here, so there was none to carry.* Not
+"stripped": there was never any to strip.
+
+**The last step is off until there is a bucket to talk to**, and it says so rather than offering
+a button that fails: *there is nowhere to put it yet — everything above is real, prepare the rest
+with `prepare-photos.mjs` and upload by hand for now.* The same shape as the contact form
+offering an email address when there is nowhere for a message to go. Two settings switch it on,
+`VITE_PHOTOS_SIGN_URL` and `VITE_PHOTOS_URL`, and then the endpoint behind the first one has to
+exist.
+
+**The file never passes through a server.** The browser asks a small endpoint for a one-off
+permission and puts the photograph in the bucket itself — R2 credentials cannot live in the
+bundle, and a server that relayed the file would be a server holding somebody's photograph.
 
 **What is not covered, honestly.** The canvas itself cannot be exercised in the test environment,
 so the three-line wrapper around `createImageBitmap` and `toBlob` has no test; everything it is
@@ -649,6 +670,7 @@ invitation, so nothing to approve and no passwords to reset.
 | 2026-09-15 | 5 | `/admin/content` wired — three buttons had done nothing. Caught a new post reading as "taken down". 525 → 533 tests. |
 | 2026-09-15 | — | Retention settled: the count is kept for good, the names for twelve months. `close_year()` counts before it deletes. 533 → 537 tests. |
 | 2026-09-15 | 3 | The committee types the headcount in. 537 → 551 tests. |
+| 2026-09-15 | 4 | The browser half of uploading a photograph, off until a bucket is configured. 607 → 619 tests. |
 | 2026-09-15 | 3 | A cancelled evening stops disappearing and starts saying so. 592 → 600 tests. |
 | 2026-09-15 | 3 | Cover animations, and the cover drawn on the public event page at last. 579 → 592 tests. |
 | 2026-09-15 | 3 | Events can be added here and archived; editing a live one says so. Found the mock sharing event objects between clients. 563 → 579 tests. |

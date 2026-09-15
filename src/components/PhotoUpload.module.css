@@ -1,0 +1,77 @@
+.upload {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Hidden, because a bare file input cannot be styled and reads badly. The button in front of
+   it is a real button, so the keyboard and a screen reader get the same door as the mouse. */
+.file {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.ready {
+  display: grid;
+  grid-template-columns: 140px minmax(0, 1fr);
+  gap: 14px;
+  padding: 12px;
+  border: 2px solid var(--line, rgba(0, 0, 0, 0.14));
+  border-radius: 12px;
+}
+
+.thumb {
+  border-radius: 8px;
+}
+
+.readyBody {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.name {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.note {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  opacity: 0.78;
+}
+
+.note code {
+  font-size: 12px;
+}
+
+.error {
+  margin: 0;
+  font-size: 13px;
+  color: var(--error, #b3261e);
+  line-height: 1.5;
+}
+
+@media (max-width: 520px) {
+  .ready {
+    grid-template-columns: 1fr;
+  }
+}
