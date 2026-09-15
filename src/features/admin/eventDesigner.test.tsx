@@ -3,11 +3,30 @@ import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { routes } from '@/app/router'
 import { previewAccounts } from '@/lib/auth/previewAccounts'
-import { TestDataProviders } from '@/test/render'
+import { TestDataProviders, TEST_NOW } from '@/test/render'
+import { createMockApi } from '@/lib/api'
+import { testEvents } from '@/test/events'
 
-function renderEvents(session = previewAccounts[1]) {
+/**
+ * An evening that has happened and that nobody has filed yet.
+ *
+ * Every past event in the fixtures is already marked past, which is the tidy state and so has
+ * no Archive button. This is the untidy one the button exists for: the night was last week and
+ * the committee has been busy.
+ */
+const unfiled = {
+  ...testEvents[0],
+  id: 'ev-last-week',
+  slug: 'last-week',
+  title: 'The evening nobody filed',
+  startsAt: '2026-08-20T18:00:00',
+  endsAt: '2026-08-20T22:00:00',
+  status: 'published' as const,
+}
+
+function renderEvents(session = previewAccounts[1], events = testEvents) {
   render(
-    <TestDataProviders session={session}>
+    <TestDataProviders session={session} api={createMockApi({ now: () => TEST_NOW, events })}>
       <RouterProvider router={createMemoryRouter(routes, { initialEntries: ['/admin/events'] })} />
     </TestDataProviders>,
   )
@@ -29,6 +48,102 @@ describe('getting into the designer', () => {
     renderEvents()
     await design()
     expect(screen.getByText(/The planner still\s+holds the logistics/)).toBeInTheDocument()
+  })
+})
+
+describe('adding an evening', () => {
+  it('opens a blank designer from the events page', async () => {
+    renderEvents()
+    await userEvent.click(await screen.findByRole('button', { name: 'New event' }))
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Add an event' })).toBeInTheDocument()
+    expect(screen.getByLabelText('What it is called')).toHaveValue('')
+    expect(screen.getByRole('button', { name: 'Add the event' })).toBeInTheDocument()
+  })
+
+  it('says a new evening is saved as a draft whatever the form says', async () => {
+    renderEvents()
+    await userEvent.click(await screen.findByRole('button', { name: 'New event' }))
+    // Nothing should reach the website because somebody opened a form and was called away.
+    expect(screen.getByText(/saved as a draft whatever you choose/)).toBeInTheDocument()
+  })
+
+  it('adds one, and it arrives in the list as a draft', async () => {
+    renderEvents()
+    await userEvent.click(await screen.findByRole('button', { name: 'New event' }))
+
+    await userEvent.type(screen.getByLabelText('What it is called'), 'Holi 2027')
+    await userEvent.type(screen.getByLabelText('One line about it'), 'Colours in the park, and a late lunch.')
+    await userEvent.type(screen.getByLabelText('Starts'), '2027-03-12T11:00')
+    await userEvent.type(screen.getByLabelText('Venue'), 'Morley Park')
+    // Chosen as published, and it should still arrive as a draft.
+    await userEvent.selectOptions(screen.getByLabelText('Status'), 'published')
+    await userEvent.click(screen.getByRole('button', { name: 'Add the event' }))
+
+    const row = await screen.findByRole('row', { name: /Holi 2027/ })
+    expect(within(row).getByText('Draft')).toBeInTheDocument()
+  })
+
+  it('will not add one with nothing in it', async () => {
+    renderEvents()
+    await userEvent.click(await screen.findByRole('button', { name: 'New event' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Add the event' }))
+
+    expect(screen.getByText(/Give the evening a name/)).toBeInTheDocument()
+  })
+})
+
+describe('an event the public can already see', () => {
+  it('says so before anything is changed', async () => {
+    renderEvents()
+    const rows = await screen.findAllByRole('row', { name: /Published/ })
+    await userEvent.click(within(rows[0]).getByRole('button', { name: /^Design / }))
+
+    expect(await screen.findByText(/This event is on the website/)).toBeInTheDocument()
+    expect(screen.getByText(/changes what\s+visitors see straight away/)).toBeInTheDocument()
+  })
+
+  it('does not say it about a draft', async () => {
+    renderEvents()
+    const rows = await screen.findAllByRole('row', { name: /Draft/ })
+    await userEvent.click(within(rows[0]).getByRole('button', { name: /^Design / }))
+
+    await screen.findByLabelText('What it is called')
+    expect(screen.queryByText(/This event is on the website/)).not.toBeInTheDocument()
+  })
+})
+
+describe('archiving', () => {
+  it('is offered only for an evening that has been and gone', async () => {
+    renderEvents(previewAccounts[1], [...testEvents, unfiled])
+    await screen.findAllByRole('button', { name: /^Design / })
+
+    const archives = screen.queryAllByRole('button', { name: /^Archive / })
+    const designs = screen.getAllByRole('button', { name: /^Design / })
+    // Some events, not all of them: a date in the future is not something to file away.
+    expect(archives.length).toBeGreaterThan(0)
+    expect(archives.length).toBeLessThan(designs.length)
+  })
+
+  it('files it as past', async () => {
+    renderEvents(previewAccounts[1], [...testEvents, unfiled])
+    const archive = (await screen.findAllByRole('button', { name: /^Archive / }))[0]
+    const name = archive.getAttribute('aria-label')!.replace('Archive ', '')
+
+    await userEvent.click(archive)
+
+    await waitFor(() => {
+      const row = screen.getByRole('row', { name: new RegExp(name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')) })
+      expect(within(row).getByText('Past')).toBeInTheDocument()
+    })
+  })
+
+  it('is not offered twice for the same evening', async () => {
+    renderEvents(previewAccounts[1], [...testEvents, unfiled])
+    const before = (await screen.findAllByRole('button', { name: /^Archive / })).length
+    await userEvent.click((await screen.findAllByRole('button', { name: /^Archive / }))[0])
+
+    await waitFor(() => expect(screen.queryAllByRole('button', { name: /^Archive / })).toHaveLength(before - 1))
   })
 })
 

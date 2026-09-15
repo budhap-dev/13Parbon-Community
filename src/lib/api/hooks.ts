@@ -268,6 +268,26 @@ export function useAllEvents() {
   return useQuery({ queryKey: ['events', 'all', asks(viewer)], queryFn: () => api.events.listAll(viewer) })
 }
 
+export function useCreateEvent() {
+  const api = useApi()
+  const viewer = useViewer()
+  const queries = useQueryClient()
+  return useMutation({
+    mutationFn: (draft: EventDraft) => api.events.create(draft, viewer),
+    onSuccess: () => queries.invalidateQueries({ queryKey: ['events'] }),
+  })
+}
+
+export function useArchiveEvent() {
+  const api = useApi()
+  const viewer = useViewer()
+  const queries = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => api.events.archive(id, viewer),
+    onSuccess: () => queries.invalidateQueries({ queryKey: ['events'] }),
+  })
+}
+
 export function useSaveEvent() {
   const api = useApi()
   const viewer = useViewer()

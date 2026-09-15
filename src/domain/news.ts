@@ -1,3 +1,4 @@
+export { slugFrom } from './slug'
 export type Audience = 'public' | 'members'
 
 export type Announcement = {
@@ -107,13 +108,6 @@ export function isLive(announcement: Announcement, at: string): boolean {
   return announcement.publishAt <= at && (!announcement.expiresAt || announcement.expiresAt > at)
 }
 
-/** A readable address from a title, for a post that has not got one yet. */
-export function slugFrom(title: string): string {
-  return title
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '')
-}
 
 export type Newsletter = {
   id: string

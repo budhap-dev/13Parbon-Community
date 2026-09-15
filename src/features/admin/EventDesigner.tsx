@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Button } from '@/components/Button'
 import { Icon } from '@/components/Icon'
 import { daysUntil, describeCountdown, formatLongDate, formatTime } from '@/domain/dates'
-import { tidyProgramme, validateEvent, type Event, type EventDraft, type EventErrors } from '@/domain/event'
+import { blankEvent, tidyProgramme, validateEvent, type Event, type EventDraft, type EventErrors } from '@/domain/event'
 import { useNow } from '@/lib/clock'
 import styles from './ContentForms.module.css'
 import design from './EventDesigner.module.css'
@@ -53,13 +53,14 @@ export function EventDesigner({
   saving,
   error,
 }: {
-  event: Event
+  /** The evening being designed, or nothing at all when one is being added. */
+  event?: Event
   onSave: (draft: EventDraft) => void
   onCancel: () => void
   saving?: boolean
   error?: string
 }) {
-  const [draft, setDraft] = useState<EventDraft>(() => draftOfEvent(event))
+  const [draft, setDraft] = useState<EventDraft>(() => (event ? draftOfEvent(event) : blankEvent()))
   const [errors, setErrors] = useState<EventErrors>({})
   const now = useNow()
 
@@ -103,9 +104,25 @@ export function EventDesigner({
   const programme = tidyProgramme(draft.programme)
   const countdown = draft.startsAt ? describeCountdown(daysUntil(draft.startsAt, now)) : null
 
+  // Editing something the public can already see is a different act from writing a draft, and
+  // the screen should say so before somebody changes a venue on the morning of the event.
+  const live = event?.status === 'published' && event.isPublic
+
   return (
     <div className={design.split}>
       <form className={styles.form} onSubmit={submit} noValidate>
+        {live ? (
+          <p className={design.live} role="status">
+            <strong>This event is on the website.</strong> Anything you save here changes what
+            visitors see straight away.
+          </p>
+        ) : null}
+        {!event ? (
+          <p className={styles.hint}>
+            A new evening is saved as a draft whatever you choose below, so nothing reaches the
+            website until you come back and publish it.
+          </p>
+        ) : null}
         {field('title', 'What it is called')}
         {field('summary', 'One line about it', {}, 'What somebody reads while deciding whether to come.')}
 
@@ -293,7 +310,7 @@ export function EventDesigner({
 
         <div className={styles.actions}>
           <Button variant="gold" type="submit" size="sm" disabled={saving}>
-            {saving ? 'Saving…' : 'Save the event'}
+            {saving ? 'Saving…' : event ? 'Save the event' : 'Add the event'}
           </Button>
           <Button variant="line" size="sm" onClick={onCancel}>
             Cancel

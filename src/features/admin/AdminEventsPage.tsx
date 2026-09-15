@@ -3,8 +3,19 @@ import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { Button } from '@/components/Button'
 import { Icon } from '@/components/Icon'
 import { formatDateWithYear, formatLongDate, formatTime } from '@/domain/dates'
-import { useAllEvents, useAttendance, useNextEvent, usePastEvents, useRecordAttendance, useSaveEvent, useUpcomingEvents } from '@/lib/api'
-import type { Event } from '@/domain/event'
+import {
+  useAllEvents,
+  useArchiveEvent,
+  useAttendance,
+  useCreateEvent,
+  useNextEvent,
+  usePastEvents,
+  useRecordAttendance,
+  useSaveEvent,
+  useUpcomingEvents,
+} from '@/lib/api'
+import { readyToArchive, type Event } from '@/domain/event'
+import { useNow } from '@/lib/clock'
 import { useState } from 'react'
 import { peopleAt } from '@/domain/attendance'
 import { AttendanceForm } from './AttendanceForm'
@@ -22,18 +33,23 @@ export function AdminEventsPage() {
   const eventsToCount = [...(past ?? []), ...(upcoming ?? [])]
   const { data: allEvents } = useAllEvents()
   const saveEvent = useSaveEvent()
-  const [designing, setDesigning] = useState<Event | null>(null)
+  const createEvent = useCreateEvent()
+  const archive = useArchiveEvent()
+  const now = useNow()
+  // null is closed, 'new' is a blank evening, an event is that one being designed.
+  const [designing, setDesigning] = useState<Event | 'new' | null>(null)
   const tool0 = site.tools[0].href
 
 
   if (designing) {
+    const adding = designing === 'new'
     return (
       <div className={styles.page}>
         <div className={styles.top}>
           <div>
-            <p className={styles.eyebrow}>Designing</p>
+            <p className={styles.eyebrow}>{adding ? 'A new evening' : 'Designing'}</p>
             <h1 className={styles.title} style={{ marginTop: 6 }}>
-              {designing.title}
+              {adding ? 'Add an event' : designing.title}
             </h1>
             <p className={styles.sub}>
               How this evening looks to somebody arriving to find out what is on. The planner still
@@ -44,11 +60,21 @@ export function AdminEventsPage() {
         <section className={styles.panel}>
           <div className={styles.pad}>
             <EventDesigner
-              event={designing}
-              saving={saveEvent.isPending}
-              error={saveEvent.isError ? saveEvent.error.message : undefined}
+              event={adding ? undefined : designing}
+              saving={saveEvent.isPending || createEvent.isPending}
+              error={
+                saveEvent.isError
+                  ? saveEvent.error.message
+                  : createEvent.isError
+                    ? createEvent.error.message
+                    : undefined
+              }
               onCancel={() => setDesigning(null)}
-              onSave={(draft) => saveEvent.mutate({ id: designing.id, draft }, { onSuccess: () => setDesigning(null) })}
+              onSave={(draft) =>
+                adding
+                  ? createEvent.mutate(draft, { onSuccess: () => setDesigning(null) })
+                  : saveEvent.mutate({ id: designing.id, draft }, { onSuccess: () => setDesigning(null) })
+              }
             />
           </div>
         </section>
@@ -108,9 +134,14 @@ export function AdminEventsPage() {
           <h2 id="all-events-title" className={styles.panelTitle}>
             All events
           </h2>
-          <Button href={tool0} variant="line" size="sm">
-            New event in the planner
-          </Button>
+          <span className={styles.actions}>
+            <Button href={tool0} variant="line" size="sm">
+              The planner
+            </Button>
+            <Button variant="gold" size="sm" onClick={() => setDesigning('new')}>
+              New event
+            </Button>
+          </span>
         </div>
         <div className={styles.scroll}>
           <table className={styles.table}>
@@ -140,9 +171,22 @@ export function AdminEventsPage() {
                     </span>
                   </td>
                   <td>
-                    <Button variant="line" size="sm" aria-label={`Design ${e.title}`} onClick={() => setDesigning(e)}>
-                      Design
-                    </Button>
+                    <span className={styles.actions}>
+                      <Button variant="line" size="sm" aria-label={`Design ${e.title}`} onClick={() => setDesigning(e)}>
+                        Design
+                      </Button>
+                      {readyToArchive(e, now) ? (
+                        <Button
+                          variant="line"
+                          size="sm"
+                          aria-label={`Archive ${e.title}`}
+                          disabled={archive.isPending}
+                          onClick={() => archive.mutate(e.id)}
+                        >
+                          Archive
+                        </Button>
+                      ) : null}
+                    </span>
                   </td>
                 </tr>
               ))}

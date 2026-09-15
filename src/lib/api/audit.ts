@@ -86,6 +86,20 @@ export function withAuditTrail(base: ApiClient, now: () => Date = () => new Date
     },
     events: {
       ...base.events,
+      create: async (draft, viewer) => {
+        const event = await base.events.create(draft, viewer)
+        record(viewer, 'event:create', { kind: 'events', id: event.id }, {}, { title: event.title, startsAt: event.startsAt })
+        return event
+      },
+      archive: async (id, viewer) => {
+        const was = snapshot(
+          await base.events.listAll(viewer).then((all) => all.find((e) => e.id === id)),
+          'status',
+        )
+        const event = await base.events.archive(id, viewer)
+        record(viewer, 'event:archive', { kind: 'events', id }, was, { status: event.status })
+        return event
+      },
       save: async (id, draft, viewer) => {
         const was = snapshot(
           await base.events.listAll(viewer).then((all) => all.find((e) => e.id === id)),

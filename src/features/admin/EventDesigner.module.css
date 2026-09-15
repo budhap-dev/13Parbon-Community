@@ -123,6 +123,15 @@
   opacity: 0.72;
 }
 
+.live {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 2px solid var(--gold, #c9a227);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
 .line {
   display: grid;
   grid-template-columns: 130px minmax(0, 1fr) auto;
@@ -142,7 +151,16 @@
 }
 
 @media (max-width: 520px) {
-  .line {
+  .live {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 2px solid var(--gold, #c9a227);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.line {
     grid-template-columns: 1fr;
   }
 }

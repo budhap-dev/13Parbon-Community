@@ -3,6 +3,7 @@ import { isValidAttendance, type EventAttendance } from '@/domain/attendance'
 import { isValidContact, type ContactMessage } from '@/domain/contact'
 import { isLive, isValid, slugFrom, validateAnnouncement, validateNews, type Announcement, type AnnouncementDraft, type NewsDraft, type NewsPost } from '@/domain/news'
 import { isValidEvent, tidyProgramme, type Event, type EventDraft } from '@/domain/event'
+import { uniqueSlug } from '@/domain/slug'
 import { inOrder, pinnedCover, type AlbumDraft, type AlbumWithMedia } from '@/domain/gallery'
 import { validateSettings, type SiteSettings } from '@/domain/settings'
 import { defaultSettings } from '@/app/site'
@@ -162,7 +163,16 @@ function checkDraft(draft: HouseholdDraft, viewer: Viewer, existing?: Household)
 
 export function createMockApi({ now = () => new Date(), latencyMs = 0, events }: MockApiOptions = {}): ApiClient {
   const fixtures = buildFixtures()
-  const allEvents = events ?? fixtures.events
+  /**
+   * Each client gets its own events, not the caller's.
+   *
+   * Copying the array alone was not enough: the objects in it were shared, so archiving an
+   * event through one client changed the fixture every other client was handed. Harmless in the
+   * app, which builds one client — and a puzzle in a test suite, where the second test inherits
+   * what the first one did. Nested values (theme, programme) are replaced wholesale rather than
+   * edited in place, so a copy one deep is all this needs.
+   */
+  const allEvents = (events ?? fixtures.events).map((event) => ({ ...event }))
   const portal = buildPortalFixtures()
   /** What the committee has chosen, starting from what the code says. */
   let saved: SiteSettings = { ...defaultSettings, home: { ...defaultSettings.home } }
@@ -224,6 +234,28 @@ export function createMockApi({ now = () => new Date(), latencyMs = 0, events }:
 
       listAll: (viewer) =>
         delay(isAdmin(viewer) ? [...allEvents].sort((a, b) => b.startsAt.localeCompare(a.startsAt)) : [], latencyMs),
+
+      create: (draft, viewer) => {
+        if (!isAdmin(viewer)) return Promise.reject(new NotAllowed('only the committee can do that'))
+        if (!isValidEvent(draft)) return Promise.reject(new NotAllowed('that event is not ready'))
+        const event: Event = {
+          id: `ev-${allEvents.length + 1}-${Date.now()}`,
+          slug: uniqueSlug(draft.title, allEvents.map((e) => e.slug), 'event'),
+          ...shapeOfEvent(draft),
+          // Whatever the form said. A new evening is nobody's business until it is finished.
+          status: 'draft',
+        }
+        allEvents.push(event)
+        return delay(event, latencyMs)
+      },
+
+      archive: (id, viewer) => {
+        if (!isAdmin(viewer)) return Promise.reject(new NotAllowed('only the committee can do that'))
+        const event = allEvents.find((e) => e.id === id)
+        if (!event) return Promise.reject(new NotAllowed('no such event'))
+        event.status = 'past'
+        return delay(event, latencyMs)
+      },
 
       save: (id, draft, viewer) => {
         if (!isAdmin(viewer)) return Promise.reject(new NotAllowed('only the committee can do that'))

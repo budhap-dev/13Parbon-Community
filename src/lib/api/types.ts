@@ -38,6 +38,22 @@ export interface ApiClient {
      * the title, the date and the venue and nowhere else.
      */
     save(id: string, draft: EventDraft, viewer: Viewer): Promise<Event>
+    /**
+     * Adds an evening. Admin only, and it arrives as a draft whatever the form says.
+     *
+     * Front of house is created here because front of house is what this site owns. The planner
+     * holds the logistics, and when it grows a way to hand over a title, a date and a venue it
+     * will fill the same three fields somebody types now.
+     */
+    create(draft: EventDraft, viewer: Viewer): Promise<Event>
+    /**
+     * Files an evening as past.
+     *
+     * Not automatic on the date: a date passing is not the same as the committee being finished
+     * with it, and an event that tidied itself away while somebody was writing the round-up
+     * would be its own small annoyance. The screen offers; a person decides.
+     */
+    archive(id: string, viewer: Viewer): Promise<Event>
   }
   festivals: {
     list(): Promise<Festival[]>

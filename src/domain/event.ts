@@ -133,3 +133,44 @@ export function tidyProgramme(programme: { time: string; what: string }[]): { ti
     .map((line) => ({ time: line.time.trim(), what: line.what.trim() }))
     .sort((a, b) => a.time.localeCompare(b.time))
 }
+
+/**
+ * A blank evening.
+ *
+ * It starts as a draft and not public. Nothing should reach the website because somebody opened
+ * a form and was called away — the committee says when it goes up, and has to mean it.
+ */
+export function blankEvent(): EventDraft {
+  return {
+    title: '',
+    summary: '',
+    startsAt: '',
+    endsAt: '',
+    venue: '',
+    venueAddress: '',
+    coordinates: null,
+    coverImageUrl: '',
+    theme: { bengali: '', bengaliSubtitle: '', english: '' },
+    programme: [],
+    registrationUrl: '',
+    performerFormUrl: '',
+    registrationOpen: false,
+    volunteerCall: '',
+    performerCall: '',
+    householdsRegistered: 0,
+    status: 'draft',
+    isPublic: true,
+  }
+}
+
+/**
+ * Whether an evening has been and gone but is still filed as though it were coming.
+ *
+ * Not archived automatically: a date passing is not the same as the committee being finished
+ * with it, and an event that tidied itself away while somebody was still writing the round-up
+ * would be its own small annoyance. The screen offers, and a person decides.
+ */
+export function readyToArchive(event: Pick<Event, 'startsAt' | 'endsAt' | 'status'>, now: Date): boolean {
+  if (event.status === 'past' || event.status === 'draft') return false
+  return new Date(event.endsAt ?? event.startsAt) < now
+}
