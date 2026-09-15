@@ -1,5 +1,8 @@
 # Turning member sign-in on
 
+> What sign-in is *for* — the committee's back office, checked and amended — is in
+> [MEMBER-LOGIN.md](MEMBER-LOGIN.md). This page is only the switches.
+
 Sign-in is Google through Supabase, and it is off until three things are set. Nothing in the
 repository can switch it on by itself: the project and the Google credentials are yours to
 create.

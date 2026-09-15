@@ -2,7 +2,7 @@
 
 > *Baro mase tero parbon* — twelve months, thirteen festivals. A community app for people who always have something to gather around.
 
-Read the [project story](docs/STORY.md) for the vision and the [portal plan](docs/PLAN.md) for structure, architecture and delivery phases. [Photographs](docs/PHOTOS.md) covers how pictures from an event reach the gallery, and why they are not kept in this repository.
+Read the [project story](docs/STORY.md) for the vision and the [portal plan](docs/PLAN.md) for structure, architecture and delivery phases. [Photographs](docs/PHOTOS.md) covers how pictures from an event reach the gallery, and why they are not kept in this repository. [Member login](docs/MEMBER-LOGIN.md) is the parked story for sign-in and the committee's back office.
 
 ## Stack
 
