@@ -64,3 +64,20 @@ describe('withSupabaseWrites', () => {
     await expect(offline.contact.send(contact)).rejects.toThrow(/could not reach the server/)
   })
 })
+
+describe('which schema it writes to', () => {
+  it('names the portal schema on every request', async () => {
+    // The project is shared with the committee's event planner, which owns a `people` table of
+    // its own. Without this header PostgREST looks in `public` and finds theirs.
+    const calls: { headers: Record<string, string> }[] = []
+    const doFetch = async (_url: string, options: { method: string; headers: Record<string, string>; body: string }) => {
+      calls.push(options)
+      return { ok: true, json: async () => [{ id: '1', name: 'A', email: 'a@b.co', subject: 's', message: 'm', created_at: '2026-01-01' }] }
+    }
+    const api = withSupabaseWrites(createMockApi(), { url: 'https://x.supabase.co', anonKey: 'k' }, doFetch)
+    await api.contact.send({ name: 'A Visitor', email: 'a@b.co', subject: 'Hello', message: 'Long enough to pass.' })
+
+    expect(calls[0].headers['Content-Profile']).toBe('portal')
+    expect(calls[0].headers['Accept-Profile']).toBe('portal')
+  })
+})

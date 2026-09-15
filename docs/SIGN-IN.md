@@ -13,24 +13,45 @@ expensive to get wrong.
 
 ---
 
-## Before the real thing: a scratch project *(optional, ten minutes, recommended)*
+## Before anything: what sharing a project does and does not mean
 
-`supabase/portal.sql` is about six hundred lines that have never been executed. Every week of
-work adds screens resting on it, and a mistake in row level security is a leak rather than a
-glitch.
+`supabase/portal.sql` is about six hundred lines that have never been executed, and it is going
+into a database the planner is using. Two things make that safe, and one is worth watching.
 
-So: make a free Supabase project called something like `13parbon-scratch`, do steps **2** and
-**3** in it, read what `verify.sql` says, then delete the project. No Google, no domain, nothing
-committed to. If it passes there, it will pass in the real one.
+**Its own schema.** Everything is created in `portal`. Nothing touches `public`, so nothing can
+collide with the planner's tables, and `drop schema portal cascade` removes every trace of this
+app in one line if it ever comes to that.
+
+**Its own tables.** The planner's rows are never read or written by anything here.
+
+**Shared sign-in, and this is the one to watch.** `auth.users` belongs to the project, not to a
+schema, so anybody who signs into the planner has a session valid here too. They will not see
+anything — the policies key on a Google address matching a household, and a planner user has
+none — but the sign-in-attempts trigger will record each of them as somebody knocking. Expect
+the People screen to list the committee the first time they use the planner after this goes in.
+Mark them resolved, or give them households.
 
 ---
 
 ## 1. The project
 
-1. **supabase.com** → sign in → **New project**.
-2. Name it `13parbon`, choose the **London (eu-west-2)** region, and set a database password —
-   keep it somewhere; you will not be shown it again.
-3. Wait for it to finish building, a minute or two.
+**This shares the committee's existing event-planner project**, decided 2026-09-15 — the free
+tier allows two projects per account and both were already spoken for.
+
+Everything this app owns therefore lives in a schema called `portal`, not in `public`. That is
+not tidiness. The planner owns `diary`, `diary_log`, `events`, `history` and **`people`** — and
+`create table if not exists public.people` would have quietly done nothing, then switched row
+level security on for *the planner's* table and left a policy on it referring to a column that
+does not exist. The planner would have stopped being able to read its own people, with no error
+anywhere to explain it.
+
+So there is nothing to create here. If you ever do want a project of its own, everything still
+works: it is the same SQL, into an empty database.
+
+**One setting is required before anything in the browser can reach it.**
+
+**Settings → API → Exposed schemas** — add `portal` alongside `public`. Miss it and every request
+fails as though the tables were not there.
 
 > The free tier **pauses a project after a week with no traffic**. It wakes on the next request,
 > but the first one after a pause is slow. Worth knowing before somebody reports the site as

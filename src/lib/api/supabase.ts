@@ -23,6 +23,16 @@ export type PostJson = (
   options: { method: string; headers: Record<string, string>; body: string },
 ) => Promise<{ ok: boolean; json: () => Promise<unknown> }>
 
+/**
+ * The schema everything this app owns lives in.
+ *
+ * Not `public`, because the Supabase project is shared with the committee's event planner and
+ * that already owns a table called `people`. PostgREST is told which schema per request with
+ * `Content-Profile` on a write and `Accept-Profile` on a read — and the schema has to be listed
+ * under Settings → API → Exposed schemas or it refuses to look at all.
+ */
+export const SCHEMA = 'portal'
+
 /** Inserts one row through PostgREST and returns it. Throws a message fit to show a visitor. */
 async function insert<T>(config: SupabaseConfig, table: string, row: object, doFetch: PostJson): Promise<T> {
   let response: Awaited<ReturnType<PostJson>>
@@ -33,6 +43,8 @@ async function insert<T>(config: SupabaseConfig, table: string, row: object, doF
         apikey: config.anonKey,
         Authorization: `Bearer ${config.anonKey}`,
         'Content-Type': 'application/json',
+        'Content-Profile': SCHEMA,
+        'Accept-Profile': SCHEMA,
         Prefer: 'return=representation',
       },
       body: JSON.stringify(row),
