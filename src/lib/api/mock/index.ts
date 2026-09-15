@@ -3,6 +3,7 @@ import { isValidContact, type ContactMessage } from '@/domain/contact'
 import type { Event } from '@/domain/event'
 import type { AlbumWithMedia } from '@/domain/gallery'
 import { directoryEntry, isAdmin, isMember, isValidHousehold, type Household, type HouseholdDraft, type Person, type Viewer } from '@/domain/household'
+import { CONTACT_NOTE, PHOTOGRAPH_NOTE, type HouseholdExport } from '@/domain/subjectAccess'
 import type { ApiClient } from '../types'
 import { buildFixtures } from './fixtures'
 import { buildPortalFixtures } from './portal-fixtures'
@@ -273,6 +274,38 @@ export function createMockApi({ now = () => new Date(), latencyMs = 0, events }:
         }
         portal.households.push(household)
         return delay(household, latencyMs)
+      },
+
+      exportHousehold: async (id, viewer) => {
+        const household = portal.households.find((h) => h.id === id)
+        if (!household || (viewer?.householdId !== id && !isAdmin(viewer))) {
+          return Promise.reject(new NotAllowed('no such household'))
+        }
+
+        // Every address we know for them, because contact_messages is keyed by whatever was
+        // typed into the form and not by a household.
+        const addresses = new Set(
+          [household.email, household.googleEmail].filter(Boolean).map((a) => a!.toLowerCase()),
+        )
+
+        const result: HouseholdExport = {
+          takenAt: now().toISOString(),
+          household,
+          registrations: portal.registrations
+            .filter((r) => r.householdId === id)
+            .sort((a, b) => b.registeredAt.localeCompare(a.registeredAt)),
+          messages: [...portal.messages, ...sentMessages]
+            .filter((m) => addresses.has(m.email.toLowerCase()))
+            .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+          signInAttempts: portal.signInAttempts
+            .filter((a) => addresses.has(a.email.toLowerCase()))
+            .map(({ email, lastTriedAt, attempts }) => ({ email, lastTriedAt, attempts })),
+          // Filled in by withAuditTrail, which is the only thing that holds the trail. The
+          // same wrapper writes it, so the same wrapper is what can read it back out.
+          changes: [],
+          notes: [PHOTOGRAPH_NOTE, CONTACT_NOTE],
+        }
+        return delay(result, latencyMs)
       },
 
       updateHousehold: (id, draft, viewer) => {

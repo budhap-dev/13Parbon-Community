@@ -6,7 +6,7 @@
 > **What this is:** the order of work from [MEMBER-LOGIN.md](MEMBER-LOGIN.md), broken into steps
 > that can be ticked off. That document says *what* and *why*; this one says *where we are*.
 >
-> **Last updated:** 2026-09-15 · **Current step:** 2 · **Ticked:** 41 of 83
+> **Last updated:** 2026-09-15 · **Current step:** 2 · **Ticked:** 42 of 83
 
 ## How this is kept
 
@@ -218,7 +218,8 @@ The data everything else hangs off.
 - [ ] Sign-in attempts: add them, or mark resolved — the list is already on the page, read-only
 - [x] A member editing their own household: same form, different permissions
 - [x] A member's own privacy choices: `listedInDirectory`, `shareEmail`, `sharePhone`
-- [ ] Export a household as the GDPR subject-access answer
+- [x] Export a household as the GDPR subject-access answer — readable on the page, and savable
+      as a file
 - [ ] Delete a household — erasure, once it is decided what happens to their registrations
 
 **Done when:** a committee member adds a household that is not their own, that household signs in
@@ -238,6 +239,32 @@ the page — so a member who reaches the committee's route still cannot see the 
 contact form was hand-rolled against a `validate…()` helper in the domain. This follows that,
 rather than adding two dependencies to a mobile-first site that scores 100 on Lighthouse. Worth
 revisiting only if the forms get much harder than this one.
+
+**Two exports, not one.** The box said "export" and was hiding two different jobs. *Subject
+access* answers a household asking what we hold: it errs towards completeness and goes to them.
+The *committee's working export* — the caterer's list, the spreadsheet — wants the opposite, and
+carries no notes, no children's names and no sign-in addresses, because that file gets emailed
+about. Only the first is built; the second is still open.
+
+**Three things the obvious version would have missed:**
+
+| | |
+|---|---|
+| `contact_messages` holds no household | It is keyed by whatever address was typed into the form, so an export built by joining on `household_id` silently omits every message they ever sent. Matched on address instead — and the export says so, or an empty list reads as "you sent none" |
+| The notes on each person | "Vegetarian", "Dance group" — free text about a person is data about that person, and it is the part that gets forgotten |
+| `sign_in_attempts` | Their address and the name Google gave, from before the committee had recorded them |
+
+**And one it cannot answer: photographs.** The privacy page promises to take down any photograph
+somebody appears in, but nothing records who is in which picture — so no export can say which
+show them. It says that out loud, because a silence there would read as "there are none of you".
+
+**Whose data is in it.** The trail names the committee member who made each change. A household
+is entitled to know its membership was marked lapsed; which admin did it is a fact about that
+admin. So the export lists the date and which fields moved, and never the actor.
+
+**Export before erasure.** `on delete set null` leaves a deleted household's trail anonymous —
+right for privacy, but the account of what they did goes with it. So the delete flow should offer
+this as its first step rather than leave it as a separate feature somewhere else.
 
 **The rule a form cannot keep.** A draft is whatever the browser chose to send. The form does not
 draw the committee's fields for a member — but that is a fact about the form, not about the
@@ -371,3 +398,4 @@ invitation, so nothing to approve and no passwords to reset.
 | 2026-09-15 | 2 | Household validation and the shared add/edit form, with the nested people list. Caught the checkbox notes being read as part of each box's name. 346 → 378 tests. |
 | 2026-09-15 | 2 | `addHousehold` / `updateHousehold`, audited, with the committee's columns refused from a member at the API. Wired into both pages. 378 → 397 tests. |
 | 2026-09-15 | 3 | Event management dropped: the committee already runs a separate planner app. Step 3 cut from ~4.5 days to ~1. |
+| 2026-09-15 | 2 | Subject-access export: readable on the page, savable as a file. Matched messages by address because they carry no household, and said out loud what it cannot answer about photographs. 397 → 414 tests. |

@@ -250,6 +250,34 @@ describe('a household editing itself', () => {
   })
 })
 
+describe('asking what we hold', () => {
+  it('shows it on the page, in something a person can read', async () => {
+    renderAt('/portal/household', member)
+    await userEvent.click(await screen.findByRole('button', { name: /Show me everything you hold/ }))
+
+    // Scoped: the page already lists the household's people above, so "Dance group" is on
+    // screen twice once the copy is gathered.
+    const panel = screen.getByRole('region', { name: 'Everything we hold about you' })
+    expect(await within(panel).findByText(/People \(3\)/)).toBeInTheDocument()
+    // The notes written about people are data about those people, so they are in it.
+    expect(within(panel).getByText(/Dance group/)).toBeInTheDocument()
+    expect(within(panel).getByRole('button', { name: 'Save it as a file' })).toBeInTheDocument()
+  })
+
+  it('does not gather it until somebody asks', async () => {
+    renderAt('/portal/household', member)
+    await screen.findByRole('heading', { level: 1, name: 'My household' })
+    // Reaching across most of the tables is not something to do because a page was opened.
+    expect(screen.queryByText(/People \(3\)/)).not.toBeInTheDocument()
+  })
+
+  it('says what it cannot tell them, rather than leaving a silence', async () => {
+    renderAt('/portal/household', member)
+    await userEvent.click(await screen.findByRole('button', { name: /Show me everything you hold/ }))
+    expect(await screen.findByText(/we hold no record of who appears in which one/)).toBeInTheDocument()
+  })
+})
+
 describe('the committee managing households', () => {
   it('invites a household, and it joins the list', async () => {
     renderAt('/admin/people', admin)

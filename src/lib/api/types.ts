@@ -6,6 +6,7 @@ import type { CommunityDocument, SignInAttempt } from '@/domain/document'
 import type { DirectoryEntry, Household, HouseholdDraft, Viewer } from '@/domain/household'
 import type { Registration } from '@/domain/registration'
 import type { AuditEntry } from '@/domain/audit'
+import type { HouseholdExport } from '@/domain/subjectAccess'
 import type { Announcement, NewsPost, Newsletter } from '@/domain/news'
 import type { VolunteerRole } from '@/domain/volunteer'
 
@@ -112,6 +113,14 @@ export interface ApiClient {
      * guarantee that nobody sent one.
      */
     updateHousehold(id: string, draft: HouseholdDraft, viewer: Viewer): Promise<Household>
+    /**
+     * Everything held about one household, for handing to them when they ask.
+     *
+     * A household may take its own; the committee may take any — and should, before deleting
+     * anybody, because erasure leaves the audit trail anonymous and the account of what that
+     * household did goes with it.
+     */
+    exportHousehold(id: string, viewer: Viewer): Promise<HouseholdExport>
   }
   /**
    * What has been changed, and by whom. Written by `withAuditTrail` here and by a trigger in

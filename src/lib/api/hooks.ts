@@ -196,6 +196,24 @@ export function useUpdateHousehold() {
   })
 }
 
+/**
+ * Everything held about one household, fetched only when somebody asks for it.
+ *
+ * `enabled: false` and called through `refetch`, because this is an answer to a question, not
+ * something to have on hand: assembling it reaches across most of the tables, and a household
+ * opening their own page has not asked for it.
+ */
+export function useHouseholdExport(id: string | undefined) {
+  const api = useApi()
+  const viewer = useViewer()
+  return useQuery({
+    queryKey: ['portal', 'export', id, asks(viewer)],
+    queryFn: () => api.portal.exportHousehold(id ?? '', viewer),
+    enabled: false,
+    gcTime: 0,
+  })
+}
+
 export function useFestivals() {
   const api = useApi()
   return useQuery({ queryKey: ['festivals'], queryFn: () => api.festivals.list() })

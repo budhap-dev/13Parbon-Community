@@ -26,7 +26,7 @@ const READS = [
   'contact.listMessages',
   'portal.identify', 'portal.getHousehold', 'portal.listHouseholds', 'portal.listDirectory',
   'portal.listDocuments', 'portal.listRegistrationsForHousehold', 'portal.listRegistrationsForEvent',
-  'portal.listSignInAttempts',
+  'portal.listSignInAttempts', 'portal.exportHousehold',
   'audit.list',
   'volunteering.listOpenRoles', 'volunteering.listRolesForEvent',
 ]

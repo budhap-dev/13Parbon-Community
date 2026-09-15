@@ -78,6 +78,18 @@ export function withAuditTrail(base: ApiClient, now: () => Date = () => new Date
         record(viewer, 'household:add', { kind: 'households', id: household.id }, {}, flatten(household))
         return household
       },
+      // The trail lives here, so the part of an export that comes from it is filled in here
+      // too. Which fields moved, never who moved them: a household is entitled to know its
+      // membership was marked lapsed; which committee member did it is a fact about them.
+      exportHousehold: async (id, viewer) => {
+        const result = await base.portal.exportHousehold(id, viewer)
+        return {
+          ...result,
+          changes: entries
+            .filter((e) => e.subject.kind === 'households' && e.subject.id === id)
+            .map((e) => ({ action: e.action, at: e.at, fields: Object.keys(e.changes) })),
+        }
+      },
       updateHousehold: async (id, draft, viewer) => {
         // Flattened now, before the write: the mock changes rows in place, so holding the row
         // and reading it afterwards gives the new values twice and a diff of nothing.

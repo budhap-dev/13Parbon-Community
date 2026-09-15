@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { Button } from '@/components/Button'
+import { DownloadExport } from '@/components/DownloadExport'
 import { HouseholdForm } from '@/components/HouseholdForm'
 import { adults, children } from '@/domain/household'
 import { formatDateWithYear } from '@/domain/dates'
-import { useHousehold, useUpdateHousehold, useViewer } from '@/lib/api'
+import { useHousehold, useHouseholdExport, useUpdateHousehold, useViewer } from '@/lib/api'
 import { can } from '@/lib/auth/permissions'
 import { useSignedIn } from '@/lib/auth/session'
 import styles from './Portal.module.css'
@@ -39,6 +40,7 @@ export function HouseholdPage() {
   const viewer = useViewer()
   const { data: household, isPending } = useHousehold(who?.householdId)
   const save = useUpdateHousehold()
+  const held = useHouseholdExport(who?.householdId)
   const [editing, setEditing] = useState(false)
 
   if (isPending) return <p aria-busy="true">Loading…</p>
@@ -172,6 +174,26 @@ export function HouseholdPage() {
               <Toggle on={household.shareEmail} title="Show our email" note="So members can reach you directly." />
               <Toggle on={household.sharePhone} title="Show our phone" note="Off by default." />
               <p className={styles.note}>Nothing here is ever public. The directory is only visible after signing in.</p>
+            </div>
+          </section>
+
+          <section className={styles.panel} aria-labelledby="held-title">
+            <div className={styles.panelHead}>
+              <h2 id="held-title" className={styles.panelTitle}>
+                Everything we hold about you
+              </h2>
+            </div>
+            <div className={styles.pad} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <p className={`${styles.muted} ${styles.tiny}`}>
+                You can ask us at any time for everything this site holds about your household, and
+                take a copy away with you. You do not have to give a reason.
+              </p>
+              <DownloadExport
+                data={held.data}
+                loading={held.isFetching}
+                error={held.isError ? held.error.message : undefined}
+                onAsk={() => void held.refetch()}
+              />
             </div>
           </section>
 
