@@ -13,10 +13,13 @@ import {
   useRemoveAnnouncement,
   useUpdateAnnouncement,
   useUpdatePost,
+  useSaveSettings,
 } from '@/lib/api'
 import { useNow } from '@/lib/clock'
+import { useSettings } from '@/app/SettingsContext'
 import styles from '@/features/portal/Portal.module.css'
 import { AnnouncementForm, NewsForm } from './ContentForms'
+import { SiteSwitches } from './SiteSwitches'
 
 /** Gaps the committee still has to fill, counted from the content files. */
 const gaps = [
@@ -38,6 +41,8 @@ export function AdminContentPage() {
   const createNotice = useCreateAnnouncement()
   const updateNotice = useUpdateAnnouncement()
   const removeNotice = useRemoveAnnouncement()
+  const settings = useSettings()
+  const saveSettings = useSaveSettings()
   // Read once per render: the same instant should decide every row, or a notice could read as
   // both waiting and finished in one table.
   const at = useNow().toISOString()
@@ -159,6 +164,27 @@ export function AdminContentPage() {
               ))}
             </tbody>
           </table>
+        </div>
+      </section>
+
+      <section className={styles.panel} aria-labelledby="switches-title">
+        <div className={styles.panelHead}>
+          <h2 id="switches-title" className={styles.panelTitle}>
+            What the site shows
+          </h2>
+        </div>
+        <div className={styles.pad}>
+          <p className={`${styles.muted} ${styles.tiny}`} style={{ marginBottom: 16 }}>
+            These were a code change until now — a pull request and a deploy to turn the gallery
+            off. They are yours.
+          </p>
+          <SiteSwitches
+            settings={settings}
+            saving={saveSettings.isPending}
+            saved={saveSettings.isSuccess}
+            error={saveSettings.isError ? saveSettings.error.message : undefined}
+            onSave={(draft) => saveSettings.mutate(draft)}
+          />
         </div>
       </section>
 

@@ -6,6 +6,7 @@ import type { CommunityDocument, SignInAttempt } from '@/domain/document'
 import type { DirectoryEntry, Household, HouseholdDraft, Viewer } from '@/domain/household'
 import type { AttendanceDraft, EventAttendance } from '@/domain/attendance'
 import type { AuditEntry } from '@/domain/audit'
+import type { SettingsDraft, SiteSettings } from '@/domain/settings'
 import type { HouseholdExport } from '@/domain/subjectAccess'
 import type { Announcement, AnnouncementDraft, NewsDraft, NewsPost, Newsletter } from '@/domain/news'
 import type { VolunteerRole } from '@/domain/volunteer'
@@ -193,6 +194,16 @@ export interface ApiClient {
      * away once. The list on the People screen shows what is still waiting.
      */
     resolveSignInAttempt(id: string, viewer: Viewer): Promise<SignInAttempt>
+  }
+  /**
+   * The switches the committee can throw without a developer.
+   *
+   * Readable by anybody, including a visitor: they decide what the public site shows, so the
+   * public site has to be able to ask. Writable by the committee alone.
+   */
+  settings: {
+    get(): Promise<SiteSettings>
+    save(draft: SettingsDraft, viewer: Viewer): Promise<SiteSettings>
   }
   /**
    * What has been changed, and by whom. Written by `withAuditTrail` here and by a trigger in

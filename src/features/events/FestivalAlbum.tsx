@@ -1,5 +1,5 @@
 import { Link } from 'react-router'
-import { site } from '@/app/site'
+import { useSettings } from '@/app/SettingsContext'
 import type { Festival } from '@/domain/festival'
 import { useAlbums } from '@/lib/api'
 import styles from './Events.module.css'
@@ -11,10 +11,11 @@ import styles from './Events.module.css'
  * like. Nothing is shown when there is no album, or while the gallery is switched off.
  */
 export function FestivalAlbum({ festival }: { festival: Festival }) {
+  const settings = useSettings()
   const { data: albums } = useAlbums()
   // Albums arrive newest first, so the first match is the most recent time we held this.
   const album = albums?.find((a) => a.festivalId === festival.id)
-  if (!site.showPhotos || !album) return null
+  if (!settings.showPhotos || !album) return null
 
   return (
     <Link to={`/gallery/${album.slug}`} className={styles.albumLink}>

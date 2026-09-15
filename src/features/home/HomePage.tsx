@@ -1,4 +1,5 @@
-import { site } from '@/app/site'
+import { useSettings } from '@/app/SettingsContext'
+import type { HomeSection } from '@/domain/settings'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { canSee, useSession } from '@/lib/auth/session'
 import styles from './Home.module.css'
@@ -14,14 +15,15 @@ import { YearStrip } from './sections/YearStrip'
 export function HomePage() {
   useDocumentTitle()
   const { session } = useSession()
-  const show = (section: keyof typeof site.home) => canSee(site.home[section], session.role)
+  const settings = useSettings()
+  const show = (section: HomeSection) => canSee(settings.home[section], session.role)
 
   return (
     <div className={styles.page}>
       <Hero />
       {show('nextEvent') ? <NextEvent /> : null}
       <WhoWeAre />
-      {site.showPhotos && show('photos') ? <PhotoStrip /> : null}
+      {settings.showPhotos && show('photos') ? <PhotoStrip /> : null}
       {show('yearStrip') ? <YearStrip /> : null}
       {show('upcoming') ? <UpcomingEvents /> : null}
       {show('volunteer') ? <VolunteerStrip /> : null}

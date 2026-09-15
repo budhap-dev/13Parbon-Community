@@ -4,6 +4,8 @@ import { isValidContact, type ContactMessage } from '@/domain/contact'
 import { isLive, isValid, slugFrom, validateAnnouncement, validateNews, type Announcement, type AnnouncementDraft, type NewsDraft, type NewsPost } from '@/domain/news'
 import type { Event } from '@/domain/event'
 import { inOrder, pinnedCover, type AlbumDraft, type AlbumWithMedia } from '@/domain/gallery'
+import { validateSettings, type SiteSettings } from '@/domain/settings'
+import { defaultSettings } from '@/app/site'
 import { directoryEntry, isAdmin, isMember, isValidHousehold, type Household, type HouseholdDraft, type Person, type Viewer } from '@/domain/household'
 import { ATTENDANCE_NOTE, CONTACT_NOTE, PHOTOGRAPH_NOTE, type HouseholdExport } from '@/domain/subjectAccess'
 import type { ApiClient } from '../types'
@@ -129,6 +131,8 @@ export function createMockApi({ now = () => new Date(), latencyMs = 0, events }:
   const fixtures = buildFixtures()
   const allEvents = events ?? fixtures.events
   const portal = buildPortalFixtures()
+  /** What the committee has chosen, starting from what the code says. */
+  let saved: SiteSettings = { ...defaultSettings, home: { ...defaultSettings.home } }
 
   const visible = (event: Event) => event.isPublic && event.status !== 'draft' && event.status !== 'cancelled'
 
@@ -555,6 +559,15 @@ export function createMockApi({ now = () => new Date(), latencyMs = 0, events }:
           }
         }
         return delay(existing, latencyMs)
+      },
+    },
+    settings: {
+      get: () => delay({ ...saved, home: { ...saved.home } }, latencyMs),
+      save: (draft, viewer) => {
+        if (!isAdmin(viewer)) return Promise.reject(new NotAllowed('only the committee can change that'))
+        if (!validateSettings(draft)) return Promise.reject(new NotAllowed('those settings do not look right'))
+        saved = { ...draft, home: { ...draft.home } }
+        return delay({ ...saved, home: { ...saved.home } }, latencyMs)
       },
     },
     // Empty here on purpose: recording is withAuditTrail's job, wrapped around the outside.

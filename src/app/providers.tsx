@@ -4,6 +4,7 @@ import { ApiProvider, type ApiClient } from '@/lib/api'
 import { ClockProvider, type Clock } from '@/lib/clock'
 import { GoogleSignInProvider } from '@/lib/auth/GoogleSignIn'
 import { SessionProvider, type Session } from '@/lib/auth/session'
+import { SettingsProvider } from './SettingsContext'
 import { ThemeProvider } from './theme/ThemeContext'
 import { defaultTheme, type ThemeName } from './theme/themes'
 
@@ -28,7 +29,9 @@ export function AppProviders({ api, theme = defaultTheme, now = () => new Date()
         <ClockProvider now={now}>
           <SessionProvider initial={session}>
             <GoogleSignInProvider>
-              <ThemeProvider initialTheme={theme}>{children}</ThemeProvider>
+              <SettingsProvider>
+                <ThemeProvider initialTheme={theme}>{children}</ThemeProvider>
+              </SettingsProvider>
             </GoogleSignInProvider>
           </SessionProvider>
         </ClockProvider>

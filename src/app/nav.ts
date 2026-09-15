@@ -1,3 +1,5 @@
+import type { SiteSettings } from '@/domain/settings'
+
 export type NavItem = {
   label: string
   to: string
@@ -5,20 +7,30 @@ export type NavItem = {
   end?: boolean
 }
 
-export const publicNav: NavItem[] = [
-  { label: 'Home', to: '/', end: true },
-  { label: 'Events', to: '/events' },
-  ...(site.showPhotos ? [{ label: 'Gallery', to: '/gallery' }] : []),
-  ...(site.showNews ? [{ label: 'News', to: '/news' }] : []),
-  { label: 'About', to: '/about' },
-  { label: 'Contact', to: '/contact' },
-]
+/**
+ * Functions rather than constants, because the navigation now depends on switches the committee
+ * can throw while the site is running.
+ *
+ * As arrays they were built once, when the module was first imported — which was fine while the
+ * answer lived in a file that only changed with a deploy. Turning the gallery off would have
+ * left Gallery in the header until somebody reloaded the page, or longer.
+ */
+export function publicNav(settings: SiteSettings): NavItem[] {
+  return [
+    { label: 'Home', to: '/', end: true },
+    { label: 'Events', to: '/events' },
+    ...(settings.showPhotos ? [{ label: 'Gallery', to: '/gallery' }] : []),
+    ...(settings.showNews ? [{ label: 'News', to: '/news' }] : []),
+    { label: 'About', to: '/about' },
+    { label: 'Contact', to: '/contact' },
+  ]
+}
 
-import { site } from './site'
-
-export const footerNav: NavItem[] = [
-  { label: 'Contact', to: '/contact' },
-  { label: 'Privacy', to: '/privacy' },
-  { label: 'Committee', to: '/about' },
-  ...(site.showMemberSignIn ? [{ label: 'Member sign-in', to: '/login' }] : []),
-]
+export function footerNav(settings: SiteSettings): NavItem[] {
+  return [
+    { label: 'Contact', to: '/contact' },
+    { label: 'Privacy', to: '/privacy' },
+    { label: 'Committee', to: '/about' },
+    ...(settings.showMemberSignIn ? [{ label: 'Member sign-in', to: '/login' }] : []),
+  ]
+}

@@ -6,7 +6,7 @@
 > **What this is:** the order of work from [MEMBER-LOGIN.md](MEMBER-LOGIN.md), broken into steps
 > that can be ticked off. That document says *what* and *why*; this one says *where we are*.
 >
-> **Last updated:** 2026-09-15 · **Current step:** 4 · **Ticked:** 58 of 85
+> **Last updated:** 2026-09-15 · **Current step:** 4 · **Ticked:** 60 of 85
 
 ## How this is kept
 
@@ -61,7 +61,7 @@ twenty screens.
 | 2 | Households | ~5 | ✅ **done** |
 | 3 | Events | ~1 | **mostly dropped** — the planner app owns it |
 | 4 | Media | ~4 | **in progress** — the screen is built; only the bucket is unwired |
-| 5 | Content | ~4.5 | **in progress** — news and notices done; the `site.ts` switches left |
+| 5 | Content | ~4.5 | **done bar the pending strings in `site.ts`** |
 | 6 | Ready to merge | ~2 | not started |
 | | **Total** | **~32–36** *(incl. tests, adapters, states)* | |
 
@@ -438,11 +438,31 @@ Last, because a page of placeholders reads worse than no page.
 - [x] Unpublish rather than delete, with the change recorded as its own kind of change
 - [ ] Edit the FAQ entries in `src/app/about.ts`
 - [ ] Edit the pending strings in `src/app/site.ts` — mission statement, gallery note
-- [ ] Move the `site.home` section switches into the admin
-- [ ] Move `showNextEventStrip` into the admin, so the banner is not a code change
+- [x] Move the `site.home` section switches into the admin
+- [x] Move `showNextEventStrip` into the admin — and `showPhotos`, `showNews` and `showMemberSignIn` with it
 - [ ] Write the first real news before turning `showNews` on
 
 **Done when:** the committee publishes something without a developer.
+
+**The switches are the committee's now.** `showPhotos`, `showNews`, `showNextEventStrip`,
+`showMemberSignIn` and the five home page audiences were a typed const in `site.ts` — turning the
+news section on meant a pull request and a deploy, for a decision that is entirely theirs and
+that they may want to reverse on the night. `site.ts` still holds what each one falls back to, so
+a project with nothing saved behaves exactly as the code says, and a database that cannot be
+reached does not suddenly publish what was switched off.
+
+It is a fixed shape, not a bag of key–value pairs: a settings table anybody can put anything in
+drifts, and a row driving a key that no longer exists fails silently. A switch not in the type
+does not exist.
+
+**`nav.ts` had to stop being a constant.** Its arrays were built once, when the module was first
+imported — fine while the answer lived in a file that only changed with a deploy. Turning the
+gallery off would have left *Gallery* in the header until somebody reloaded.
+
+**Found while doing it:** the sitemap test only ever checked pages that are currently navigable,
+so nothing had accounted for `/news`. The day the committee switches news on it becomes a page in
+the header that crawlers have never been told about — and nobody will think of the sitemap at
+that moment, because they will be thinking about the news. There is a test naming it now.
 
 **The screen** is `/admin/content`, where three buttons had been wired to nothing. A noticeboard
 panel that says whether each notice is waiting, showing or finished; the news list with its real
@@ -557,4 +577,5 @@ invitation, so nothing to approve and no passwords to reset.
 | 2026-09-15 | 5 | `/admin/content` wired — three buttons had done nothing. Caught a new post reading as "taken down". 525 → 533 tests. |
 | 2026-09-15 | — | Retention settled: the count is kept for good, the names for twelve months. `close_year()` counts before it deletes. 533 → 537 tests. |
 | 2026-09-15 | 3 | The committee types the headcount in. 537 → 551 tests. |
+| 2026-09-15 | 5 | The switches moved out of `site.ts` into the admin. `nav.ts` stopped being a constant. Found `/news` missing from the sitemap. 546 → 552 tests. |
 | 2026-09-15 | 3 | `Registration` removed everywhere — no personal booking data enters the app at all, so the retention machinery went with it. 551 → 545 tests, and six fewer is the point. |

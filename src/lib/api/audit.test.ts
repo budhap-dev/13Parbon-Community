@@ -28,7 +28,7 @@ const READS = [
   'portal.identify', 'portal.getHousehold', 'portal.listHouseholds', 'portal.listDirectory',
   'portal.listDocuments',
   'portal.listSignInAttempts', 'portal.exportHousehold', 'portal.listAttendance',
-  'audit.list',
+  'audit.list', 'settings.get',
   'volunteering.listOpenRoles', 'volunteering.listRolesForEvent',
 ]
 
@@ -38,6 +38,7 @@ const AUDITED = [
   'portal.addHousehold', 'portal.updateHousehold', 'portal.deleteHousehold', 'portal.resolveSignInAttempt', 'portal.recordAttendance',
   'gallery.createAlbum', 'gallery.updateAlbum', 'gallery.setCover', 'gallery.setCaption',
   'gallery.reorder', 'gallery.deleteMedia',
+  'settings.save',
   'news.createPost', 'news.updatePost',
   'news.createAnnouncement', 'news.updateAnnouncement', 'news.removeAnnouncement',
 ]

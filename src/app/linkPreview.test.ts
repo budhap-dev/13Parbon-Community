@@ -4,6 +4,7 @@ import html from '../../index.html?raw'
 import sitemap from '../../public/sitemap.xml?raw'
 import robots from '../../public/robots.txt?raw'
 import { publicNav } from './nav'
+import { defaultSettings } from './site'
 
 /**
  * The one address the site calls its own. Everything a crawler is handed has to agree with
@@ -92,10 +93,13 @@ describe('the navigation and what crawlers are told', () => {
   const listed = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1].replace(origin, '') || '/')
   const disallowed = [...robots.matchAll(/^Disallow:\s*(\S+)/gm)].map((m) => m[1])
   const blocked = (path: string) => disallowed.some((rule) => path === rule || path.startsWith(`${rule}/`))
+  const accountedFor = (path: string) => listed.includes(path) || blocked(path)
 
   it('accounts for every page in the navigation, by listing it or by keeping it out on purpose', () => {
-    for (const item of publicNav) {
-      const accounted = listed.includes(item.to) || blocked(item.to)
+    // What is navigable *today*. A page behind a switch that is off is not in the sitemap and
+    // does not need to be — see the test below, which is about the day it goes on.
+    for (const item of publicNav(defaultSettings)) {
+      const accounted = accountedFor(item.to)
       expect(accounted, `${item.to} is in the navigation but neither in the sitemap nor disallowed in robots.txt`).toBe(true)
     }
   })
@@ -106,6 +110,22 @@ describe('the navigation and what crawlers are told', () => {
     expect(listed).not.toContain('/gallery')
     expect(blocked('/')).toBe(false)
     expect(blocked('/events')).toBe(false)
+  })
+
+  /**
+   * The switches can put a page into the navigation without anybody touching the sitemap.
+   *
+   * News is off today, so nothing has had to account for /news. The day the committee turns it
+   * on it becomes a page in the header that crawlers have never been told about — and nobody
+   * will think of the sitemap at that moment, because they will be thinking about the news.
+   */
+  it('names the pages a switch could reveal that the sitemap has not accounted for', () => {
+    const everything = publicNav({ ...defaultSettings, showPhotos: true, showNews: true })
+    const unaccounted = everything.map((item) => item.to).filter((to) => !accountedFor(to))
+
+    // Change this list only by adding the page to public/sitemap.xml, or by deciding out loud
+    // that crawlers should not have it and saying so in robots.txt.
+    expect(unaccounted).toEqual(['/news'])
   })
 })
 
@@ -120,4 +140,5 @@ describe('the sitemap', () => {
       expect(listed).not.toContain(gone)
     }
   })
+
 })

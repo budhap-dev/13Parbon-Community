@@ -84,6 +84,22 @@ export function withAuditTrail(base: ApiClient, now: () => Date = () => new Date
         return after
       },
     },
+    settings: {
+      ...base.settings,
+      save: async (draft, viewer) => {
+        const was = await base.settings.get()
+        const saved = await base.settings.save(draft, viewer)
+        // Flattened, because a nested object compared with Object.is is always a change.
+        record(
+          viewer,
+          'settings:save',
+          { kind: 'settings', id: 'site' },
+          { ...was, home: JSON.stringify(was.home) },
+          { ...saved, home: JSON.stringify(saved.home) },
+        )
+        return saved
+      },
+    },
     news: {
       ...base.news,
       createPost: async (draft, viewer) => {

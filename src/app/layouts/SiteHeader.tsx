@@ -8,11 +8,13 @@ import { useTheme } from '../theme/ThemeContext'
 import { NextEventStrip } from '@/components/NextEventStrip'
 import { publicNav } from '../nav'
 import { site } from '../site'
+import { useSettings } from '../SettingsContext'
 import { ThemeSwitcher } from './ThemeSwitcher'
 import { useScrollHeader } from './useScrollHeader'
 import styles from './PublicLayout.module.css'
 
 export function SiteHeader() {
+  const settings = useSettings()
   const [open, setOpen] = useState(false)
   const { pathname } = useLocation()
   const menuId = useId()
@@ -102,7 +104,7 @@ export function SiteHeader() {
           </div>
 
           <ul className={styles.links}>
-            {publicNav.map((item) => (
+            {publicNav(settings).map((item) => (
               <li key={item.to}>
                 <NavLink
                   to={item.to}
@@ -116,7 +118,7 @@ export function SiteHeader() {
           </ul>
           <div className={styles.actions}>
             <ThemeSwitcher />
-            {site.showMemberSignIn ? (
+            {settings.showMemberSignIn ? (
               <Button to="/login" size="sm">
                 Member sign-in
               </Button>
@@ -132,7 +134,7 @@ export function SiteHeader() {
           </p>
         </nav>
       </Container>
-      {site.showNextEventStrip && isHome ? <NextEventStrip /> : null}
+      {settings.showNextEventStrip && isHome ? <NextEventStrip /> : null}
     </header>
   )
 }

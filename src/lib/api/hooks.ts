@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { ContactInput } from '@/domain/contact'
 import type { AttendanceDraft } from '@/domain/attendance'
+import type { SettingsDraft } from '@/domain/settings'
 import type { AlbumDraft } from '@/domain/gallery'
 import type { AnnouncementDraft, NewsDraft } from '@/domain/news'
 import type { HouseholdDraft, Viewer } from '@/domain/household'
@@ -260,6 +261,17 @@ export function useAlbum(slug: string) {
 /**
  * Every album, published or not. The committee's view of the gallery.
  */
+export function useSaveSettings() {
+  const api = useApi()
+  const viewer = useViewer()
+  const queries = useQueryClient()
+  return useMutation({
+    mutationFn: (draft: SettingsDraft) => api.settings.save(draft, viewer),
+    // Everything is downstream of these: the navigation, the home page, the header.
+    onSuccess: () => queries.invalidateQueries({ queryKey: ['settings'] }),
+  })
+}
+
 export function useAllPosts() {
   const api = useApi()
   const viewer = useViewer()

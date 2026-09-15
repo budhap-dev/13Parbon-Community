@@ -4,7 +4,9 @@ import type { ReactElement, ReactNode } from 'react'
 import { MemoryRouter } from 'react-router'
 import { ApiProvider, createMockApi, withAuditTrail, type ApiClient } from '@/lib/api'
 import { testEvents } from './events'
+import { defaultSettings } from '@/app/site'
 import { ClockProvider } from '@/lib/clock'
+import { SettingsProvider } from '@/app/SettingsContext'
 import { ThemeProvider } from '@/app/theme/ThemeContext'
 import { GoogleSignInProvider } from '@/lib/auth/GoogleSignIn'
 import { SessionProvider, type Session } from '@/lib/auth/session'
@@ -62,6 +64,7 @@ export function createEmptyApi(): ApiClient {
       deleteHousehold: async () => { throw new Error('not connected') },
       resolveSignInAttempt: async () => { throw new Error('not connected') },
     },
+    settings: { get: async () => defaultSettings, save: async () => { throw new Error('not connected') } },
     audit: { list: async () => [] },
     volunteering: { listOpenRoles: async () => [], listRolesForEvent: async () => [] },
   }
@@ -104,6 +107,7 @@ export function createFailingApi(): ApiClient {
       deleteHousehold: down,
       resolveSignInAttempt: down,
     },
+    settings: { get: down, save: down },
     audit: { list: down },
     volunteering: { listOpenRoles: down, listRolesForEvent: down },
   }
@@ -136,7 +140,9 @@ export function TestDataProviders({
         <ClockProvider now={() => TEST_NOW}>
           <SessionProvider initial={session}>
             <GoogleSignInProvider env={env}>
-              <ThemeProvider>{children}</ThemeProvider>
+              <SettingsProvider>
+                <ThemeProvider>{children}</ThemeProvider>
+              </SettingsProvider>
             </GoogleSignInProvider>
           </SessionProvider>
         </ClockProvider>

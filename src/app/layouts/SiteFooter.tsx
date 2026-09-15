@@ -3,9 +3,11 @@ import { Container } from '@/components/Container'
 import { Icon } from '@/components/Icon'
 import { footerNav } from '../nav'
 import { activeSocial, site } from '../site'
+import { useSettings } from '../SettingsContext'
 import styles from './PublicLayout.module.css'
 
 export function SiteFooter() {
+  const settings = useSettings()
   return (
     <footer className={styles.footer}>
       <Container className={styles.footerGrid}>
@@ -13,7 +15,7 @@ export function SiteFooter() {
           {site.name} · {site.town}
         </p>
         <ul className={styles.footerLinks}>
-          {footerNav.map((item) => (
+          {footerNav(settings).map((item) => (
             <li key={item.label}>
               <Link to={item.to}>{item.label}</Link>
             </li>
