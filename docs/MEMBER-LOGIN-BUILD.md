@@ -6,7 +6,7 @@
 > **What this is:** the order of work from [MEMBER-LOGIN.md](MEMBER-LOGIN.md), broken into steps
 > that can be ticked off. That document says *what* and *why*; this one says *where we are*.
 >
-> **Last updated:** 2026-09-15 · **Current step:** 0.3 · **Ticked:** 30 of 86
+> **Last updated:** 2026-09-15 · **Current step:** 2 · **Ticked:** 35 of 89
 
 ## How this is kept
 
@@ -27,7 +27,7 @@
 | — | The story, checked and amended | — | ✅ done 2026-09-15 |
 | 0 | Foundations | 8–11 | **done on mocks** — 0.2, 0.3, 0.4 complete; 0.1 and the running of it blocked on the project |
 | 1 | The smallest write, end to end | 0.5 | **mostly done** — brought forward into 0.2 |
-| 2 | Households | ~5 | not started |
+| 2 | Households | ~5 | **in progress** — validation and the form done; wiring next |
 | 3 | Events | ~4.5 | not started |
 | 4 | Media | ~4 | not started |
 | 5 | Content | ~4.5 | not started |
@@ -205,21 +205,40 @@ foundation pieces work together on something with nothing at stake.
 
 The data everything else hangs off.
 
-- [ ] Import the committee's existing spreadsheet (one-off script; budget for the data being messier than promised)
-- [ ] Add a household — the button on `/admin/people` exists and is wired to `() => {}`
-- [ ] The nested `people[]` form: adults and children added and removed inline, with ages and notes
-- [ ] Edit a household, committee-side
+- [ ] Import the committee's existing spreadsheet — **blocked: I do not have the spreadsheet.**
+      A sample of it, or its column headings, is enough to start
+- [x] `validateHousehold()` in the domain, every rule matching a `check` constraint in `portal.sql`
+- [x] The nested `people[]` form: adults and children added and removed inline, with ages and notes
+- [x] One form for adding and editing, and for the committee and the household — which fields
+      appear is decided by `can()`, not by which page rendered it
+- [ ] Wire it to `/admin/people` (add, and edit any household)
+- [ ] Wire it to `/portal/household` (a household editing its own)
+- [ ] The mutations behind it: `households.add`, `households.update`
 - [ ] Record and change `googleEmail` — this is what "reset password" actually means here
 - [ ] Set membership status (`active` / `lapsed`) and `paidTo`
 - [ ] Assign the `admin` role, **and refuse to remove the last admin** — `canStopBeingAdmin()` is written and tested; it still needs a constraint behind it
 - [ ] Sign-in attempts: add them, or mark resolved — the list is already on the page, read-only
-- [ ] A member editing their own household: same form, different permissions
-- [ ] A member's own privacy choices: `listedInDirectory`, `shareEmail`, `sharePhone`
+- [x] A member editing their own household: same form, different permissions
+- [x] A member's own privacy choices: `listedInDirectory`, `shareEmail`, `sharePhone`
 - [ ] Export a household as the GDPR subject-access answer
 - [ ] Delete a household — erasure, once it is decided what happens to their registrations
 
 **Done when:** a committee member adds a household that is not their own, that household signs in
 with Google, sees their dashboard, and edits their own details. *(PLAN phase 2 exit criterion.)*
+
+**One form, not two.** Adding and editing are the same form, and so are the committee's version
+and the household's. Two forms agree about what a household is right up until the day somebody
+changes one of them. What differs is which fields appear, and `can()` decides that rather than
+the page — so a member who reaches the committee's route still cannot see the committee's fields.
+
+**No form library.** PLAN §5 proposed React Hook Form and Zod; neither is installed, and the
+contact form was hand-rolled against a `validate…()` helper in the domain. This follows that,
+rather than adding two dependencies to a mobile-first site that scores 100 on Lighthouse. Worth
+revisiting only if the forms get much harder than this one.
+
+**Found while writing it:** every privacy checkbox had its explanatory sentence *inside* its
+`<label>`, so the accessible name of each box was the choice plus the whole sentence — read out
+in full every time focus landed there. The notes are tied on with `aria-describedby` now.
 
 ---
 
@@ -322,3 +341,4 @@ invitation, so nothing to approve and no passwords to reset.
 | 2026-09-15 | 0.2 | Contract narrowed and given a viewer; the mock now refuses what the policies refuse. Found the directory handing whole households to the browser. First write shipped. 228 → 255 tests. |
 | 2026-09-15 | 0.4 | `can()` written, every rule naming the policy it mirrors. Route guard, navigation and the first button all ask it. 255 → 337 tests, coverage 90%. |
 | 2026-09-15 | 0.3 | Audit trail: trigger in SQL, wrapper around the client, contract guard. Caught the wrapper diffing a row against itself. 337 → 346 tests. Foundations done bar the running. |
+| 2026-09-15 | 2 | Household validation and the shared add/edit form, with the nested people list. Caught the checkbox notes being read as part of each box's name. 346 → 378 tests. |

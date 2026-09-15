@@ -117,3 +117,103 @@ export function directoryEntry(household: Household): DirectoryEntry | null {
     interests: household.interests,
   }
 }
+
+/** A person as the form holds them, before they have an id. */
+export type PersonInput = {
+  name: string
+  ageGroup: 'adult' | 'child'
+  /** Children only. Organisers plan the programme around who is coming. */
+  age?: number
+  note?: string
+}
+
+/**
+ * A household as the form holds it. The committee edits all of this; a household edits the
+ * part of it that is theirs — which is everything here except `googleEmail`, and except the
+ * membership and role fields, which are not in this type at all.
+ *
+ * Those three live outside it on purpose. Row level security decides rows and not columns, so
+ * in the database a member is stopped from changing them by a trigger; keeping them out of the
+ * shape the form edits is the same rule said a second time, in the place where the mistake
+ * would otherwise be easy to make.
+ */
+export type HouseholdInput = {
+  name: string
+  contactName: string
+  email: string
+  phone?: string
+  people: PersonInput[]
+  interests: string[]
+  listedInDirectory: boolean
+  shareEmail: boolean
+  sharePhone: boolean
+}
+
+export type HouseholdErrors = {
+  name?: string
+  contactName?: string
+  email?: string
+  googleEmail?: string
+  /** About the list of people as a whole, rather than any one of them. */
+  people?: string
+  /** Keyed by position in the list. */
+  person?: Record<number, { name?: string; age?: string }>
+}
+
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+/**
+ * Field-level validation, shared by the form and the API boundary.
+ *
+ * Every rule here has a `check` constraint saying the same thing in `supabase/portal.sql`.
+ * This one exists to tell somebody what is wrong while they are typing; that one exists
+ * because this one runs in a browser and can be skipped.
+ */
+export function validateHousehold(input: HouseholdInput): HouseholdErrors {
+  const errors: HouseholdErrors = {}
+
+  if (input.name.trim().length < 2) errors.name = 'Give the household a name, such as “The Sens”.'
+  if (input.contactName.trim().length < 2) errors.contactName = 'Who should the committee speak to?'
+  if (!EMAIL.test(input.email.trim())) errors.email = 'Enter an email address that reaches them.'
+
+  const people = input.people
+  if (people.length === 0) {
+    errors.people = 'Add at least the one person.'
+  } else if (!people.some((p) => p.ageGroup === 'adult')) {
+    // Children are counted and catered for, but somebody has to be the grown-up.
+    errors.people = 'A household needs at least one adult.'
+  }
+
+  const perPerson: Record<number, { name?: string; age?: string }> = {}
+  people.forEach((person, i) => {
+    const found: { name?: string; age?: string } = {}
+    if (person.name.trim().length === 0) found.name = 'Add a name.'
+    if (person.ageGroup === 'child') {
+      if (person.age === undefined) found.age = 'How old are they?'
+      else if (!Number.isInteger(person.age) || person.age < 0 || person.age > 120) found.age = 'Enter an age in years.'
+    }
+    if (Object.keys(found).length > 0) perPerson[i] = found
+  })
+  if (Object.keys(perPerson).length > 0) errors.person = perPerson
+
+  return errors
+}
+
+export function isValidHousehold(input: HouseholdInput): boolean {
+  const { person, ...rest } = validateHousehold({ ...input })
+  return Object.keys(rest).length === 0 && person === undefined
+}
+
+/**
+ * The sign-in address, tidied and checked. Only the committee ever sets one.
+ *
+ * Lowercased because Google returns whatever case the person typed when they made the
+ * account, and the database matches on it exactly — a capital letter here is somebody
+ * locked out for a reason nobody will guess.
+ */
+export function normaliseGoogleEmail(value: string): { email: string | null; error?: string } {
+  const trimmed = value.trim()
+  if (trimmed.length === 0) return { email: null }
+  if (!EMAIL.test(trimmed)) return { email: null, error: 'Enter the Google address they will sign in with.' }
+  return { email: trimmed.toLowerCase() }
+}

@@ -1,0 +1,162 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.legend {
+  font-family: var(--font-display, inherit);
+  font-size: 20px;
+  font-weight: 600;
+  padding: 0;
+  margin-bottom: 4px;
+}
+
+.hint {
+  font-size: 14px;
+  opacity: 0.75;
+  max-width: 60ch;
+  line-height: 1.55;
+}
+
+.row {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.input,
+.select {
+  min-height: 46px;
+  padding: 0 12px;
+  border: 2px solid var(--line, rgba(0, 0, 0, 0.2));
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+
+.input:focus-visible,
+.select:focus-visible {
+  outline: 3px solid var(--gold, #c9a227);
+  outline-offset: 1px;
+}
+
+.input[aria-invalid='true'] {
+  border-color: var(--error, #b3261e);
+}
+
+.error {
+  font-size: 13px;
+  color: var(--error, #b3261e);
+}
+
+/* A person is a card rather than a row: on a phone the fields stack, and a boxed group makes
+   it obvious which name the age underneath belongs to. */
+.person {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border: 2px solid var(--line, rgba(0, 0, 0, 0.14));
+  border-radius: 14px;
+}
+
+.personTop {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.personWho {
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0.7;
+}
+
+.checks {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.check {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  line-height: 1.5;
+}
+
+.check label {
+  cursor: pointer;
+  font-size: 15px;
+}
+
+.check input {
+  margin-top: 3px;
+  width: 20px;
+  height: 20px;
+  flex: none;
+}
+
+.checkText {
+  font-size: 15px;
+}
+
+.checkNote {
+  display: block;
+  font-size: 13px;
+  opacity: 0.7;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+/* Kept out of the flow of the household's own details, because these are the committee's to
+   set and a member never sees them at all. */
+.committee {
+  padding: 16px;
+  border: 2px dashed var(--line, rgba(0, 0, 0, 0.2));
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.saved {
+  font-size: 14px;
+  color: var(--success, #1b5e20);
+}
+
+@media (max-width: 520px) {
+  .personTop {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}
