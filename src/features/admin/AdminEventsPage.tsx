@@ -38,7 +38,6 @@ export function AdminEventsPage() {
   const now = useNow()
   // null is closed, 'new' is a blank evening, an event is that one being designed.
   const [designing, setDesigning] = useState<Event | 'new' | null>(null)
-  const tool0 = site.tools[0].href
 
 
   if (designing) {
@@ -96,18 +95,8 @@ export function AdminEventsPage() {
             </p>
           ) : null}
         </div>
-        <span className={styles.actions}>
-          <Button variant="line" size="sm" href={site.tools[0].href}>
-            Open the planner
-          </Button>
-        </span>
-      </div>
 
-      <p className={styles.note}>
-        Events are put together in the planner, and people book through the form on the event page.
-        Neither of those lives here — what this page keeps is the number who came, once the night is
-        over.
-      </p>
+      </div>
 
       {site.tools.map((tool) => (
         <section key={tool.href} className={styles.panel} aria-labelledby="planning-title">
@@ -122,8 +111,28 @@ export function AdminEventsPage() {
           </div>
           <div className={styles.pad}>
             <p className={styles.muted} style={{ maxWidth: '62ch' }}>
-              {tool.description} This page keeps the number who came; the planner tracks what has to happen before
-              they arrive. It is a separate app with its own sign-in, and it opens in a new tab.
+              {tool.description} It is a separate app with its own sign-in, and it opens in a new tab.
+            </p>
+            {/* The question this answers is "which one do I use?", which is the only reason the
+                panel is here rather than just the link in the sidebar. */}
+            <dl className={styles.grid2} style={{ marginTop: 14, maxWidth: '62ch' }}>
+              <div className={styles.field}>
+                <dt className={styles.label}>Here</dt>
+                <dd className={`${styles.value} ${styles.tiny}`} style={{ margin: 0 }}>
+                  What the public sees. Add an evening, write what it is, choose the cover, put the
+                  booking link on it — and afterwards, how many came.
+                </dd>
+              </div>
+              <div className={styles.field}>
+                <dt className={styles.label}>In the planner</dt>
+                <dd className={`${styles.value} ${styles.tiny}`} style={{ margin: 0 }}>
+                  Getting it to happen. Tasks, who is doing what, deadlines, who is bringing the urn.
+                </dd>
+              </div>
+            </dl>
+            <p className={`${styles.muted} ${styles.tiny}`} style={{ marginTop: 12, maxWidth: '62ch' }}>
+              An evening added here does not appear in the planner, and one planned there does not
+              appear here. The title, the date and the venue are worth keeping the same in both.
             </p>
           </div>
         </section>
@@ -134,14 +143,9 @@ export function AdminEventsPage() {
           <h2 id="all-events-title" className={styles.panelTitle}>
             All events
           </h2>
-          <span className={styles.actions}>
-            <Button href={tool0} variant="line" size="sm">
-              The planner
-            </Button>
-            <Button variant="gold" size="sm" onClick={() => setDesigning('new')}>
-              New event
-            </Button>
-          </span>
+          <Button variant="gold" size="sm" onClick={() => setDesigning('new')}>
+            New event
+          </Button>
         </div>
         <div className={styles.scroll}>
           <table className={styles.table}>

@@ -125,12 +125,12 @@ describe('committee pages', () => {
     renderAt('/admin/events', admin)
     expect(await screen.findByRole('heading', { level: 1, name: 'Events' })).toBeInTheDocument()
     // No household is named anywhere on this page any more, and the page says why.
-    expect(screen.getByText(/people book through the form on the event page/)).toBeInTheDocument()
+    expect(screen.getByText(/how many came/)).toBeInTheDocument()
     expect(screen.queryByText('The Roys')).not.toBeInTheDocument()
     expect(screen.queryByText('Wheelchair access needed')).not.toBeInTheDocument()
   })
 
-  it('links the separate event planner, and says what each tool is for', async () => {
+  it('links the separate event planner once on the page, and says which does what', async () => {
     renderAt('/admin/events', admin)
     const sidebar = await screen.findByRole('navigation', { name: 'Other tools' })
     const link = within(sidebar).getByRole('link', { name: /Event planning/ })
@@ -138,11 +138,28 @@ describe('committee pages', () => {
     expect(link).toHaveAttribute('target', '_blank')
     expect(link).toHaveAttribute('rel', 'noreferrer')
     const panel = screen.getByRole('heading', { level: 2, name: 'Event planning' }).closest('section')!
-    expect(within(panel).getByText(/keeps the number who came; the planner tracks/)).toBeInTheDocument()
-    expect(within(panel).getByRole('link', { name: /Open the planner/ })).toHaveAttribute(
-      'href',
-      'https://13parbon-event-management.vercel.app/',
-    )
+    // It answers "which one do I use?", which is the only reason it is here and not just in
+    // the sidebar — the link used to be on this page four times over.
+    expect(within(panel).getByText('Here')).toBeInTheDocument()
+    expect(within(panel).getByText('In the planner')).toBeInTheDocument()
+    expect(within(panel).getByText(/who is bringing the urn/)).toBeInTheDocument()
+  })
+
+  it('does not offer the planner four times over on one screen', async () => {
+    renderAt('/admin/events', admin)
+    await screen.findAllByRole('table')
+
+    // It was in the header, in a panel, beside "New event", and in the sidebar. Beside
+    // "New event" was the worst of them: two buttons together read as two ways to do one job.
+    const planner = screen
+      .getAllByRole('link')
+      .filter((a) => a.getAttribute('href') === 'https://13parbon-event-management.vercel.app/')
+    expect(planner).toHaveLength(2)
+
+    // And in particular, not beside "New event" any more.
+    const table = screen.getByRole('heading', { name: 'All events' }).closest('section')!
+    expect(within(table).queryByRole('link', { name: /planner/i })).not.toBeInTheDocument()
+    expect(within(table).getByRole('button', { name: 'New event' })).toBeInTheDocument()
   })
 
   it('keeps the planner in reach on every committee page', async () => {
