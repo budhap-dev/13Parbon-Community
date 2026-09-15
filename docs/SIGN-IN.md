@@ -1,87 +1,149 @@
 # Turning member sign-in on
 
 > What sign-in is *for* — the committee's back office, checked and amended — is in
-> [MEMBER-LOGIN.md](MEMBER-LOGIN.md). This page is only the switches.
+> [MEMBER-LOGIN.md](MEMBER-LOGIN.md), and where the building has got to is in
+> [MEMBER-LOGIN-BUILD.md](MEMBER-LOGIN-BUILD.md). This page is the setup, in order.
 
-Sign-in is Google through Supabase, and it is off until three things are set. Nothing in the
-repository can switch it on by itself: the project and the Google credentials are yours to
-create.
+Sign-in is Google through Supabase, and it is off until this is done. Nothing in the repository
+can switch it on by itself: the project and the Google credentials are yours to create.
 
-## 1. The Supabase project
+Allow about an hour. Steps 1–3 are worth doing on their own first, even if you are not ready to
+open sign-in to anybody — they prove the database rules work, which is the part that would be
+expensive to get wrong.
 
-Project Settings → API gives you two values:
+---
+
+## Before the real thing: a scratch project *(optional, ten minutes, recommended)*
+
+`supabase/portal.sql` is about six hundred lines that have never been executed. Every week of
+work adds screens resting on it, and a mistake in row level security is a leak rather than a
+glitch.
+
+So: make a free Supabase project called something like `13parbon-scratch`, do steps **2** and
+**3** in it, read what `verify.sql` says, then delete the project. No Google, no domain, nothing
+committed to. If it passes there, it will pass in the real one.
+
+---
+
+## 1. The project
+
+1. **supabase.com** → sign in → **New project**.
+2. Name it `13parbon`, choose the **London (eu-west-2)** region, and set a database password —
+   keep it somewhere; you will not be shown it again.
+3. Wait for it to finish building, a minute or two.
+
+> The free tier **pauses a project after a week with no traffic**. It wakes on the next request,
+> but the first one after a pause is slow. Worth knowing before somebody reports the site as
+> broken.
+
+## 2. The two settings the app needs
+
+**Project Settings → API**. Copy:
 
 ```
-VITE_SUPABASE_URL=https://<project>.supabase.co
-VITE_SUPABASE_ANON_KEY=<the anon key>
+Project URL   →  VITE_SUPABASE_URL
+anon public   →  VITE_SUPABASE_ANON_KEY
 ```
 
-Put them in `.env.local` for local work, and in Vercel → Settings → Environment Variables for
-the live site. The anon key is meant to be public — it ends up in the built JavaScript either
-way — and it is safe **only** because row level security decides what it can reach. See the
-warning at the bottom.
+Put them in `.env.local` for local work (copy `.env.example` first), and in
+**Vercel → Settings → Environment Variables** for the live site.
 
-## 2. Google as a provider
+The anon key is meant to be public — it ends up in the built JavaScript either way — and it is
+safe **only** because row level security decides what it can reach. Which is step 3.
 
-In Supabase: Authentication → Providers → Google.
+The `service_role` key on that page is the opposite: it bypasses every rule. It belongs in
+nothing that runs in a browser, and this app never needs it.
 
-It asks for a client ID and secret, which come from the Google Cloud console: APIs & Services →
-Credentials → Create credentials → OAuth client ID → Web application. Google needs one
-authorised redirect URI, and it is Supabase's, not ours:
+## 3. The tables and the rules
+
+**Database → SQL Editor → New query**. Run these three, in this order, one at a time:
+
+| | What it does |
+|---|---|
+| `supabase/schema.sql` | The contact form's table. Insert-only for visitors |
+| `supabase/portal.sql` | Households, people, documents, sign-in attempts, the audit trail, attendance — and every policy |
+| `supabase/verify.sql` | Proves the rules hold. Runs in a transaction and rolls back, so it leaves nothing behind |
+
+`verify.sql` should end with a single notice: **All portal rules hold.** Anything beginning
+`FAIL:` names exactly what is wrong — send me the line and I will fix it.
+
+Those last two are not in git yet, on purpose: policies nobody has run read as promises the
+database has not made. They come out of `.gitignore` once this step has passed.
+
+## 4. Google as a provider
+
+Two consoles, and the order matters because each needs something from the other.
+
+**In Supabase:** Authentication → Providers → **Google**. Leave it open; it shows you a callback
+URL, which looks like:
 
 ```
 https://<project>.supabase.co/auth/v1/callback
 ```
 
-Then, back in Supabase under Authentication → URL Configuration, add the addresses people are
-allowed to land back on:
+**In Google Cloud** (console.cloud.google.com):
+
+1. Create a project, or pick one.
+2. **APIs & Services → OAuth consent screen**: External, app name `13Parbon Community`, your
+   email as support and developer contact. Save. It can stay in Testing — add the committee's
+   addresses under Test users and nobody has to review anything.
+3. **APIs & Services → Credentials → Create credentials → OAuth client ID → Web application**.
+4. Under **Authorised redirect URIs**, paste the Supabase callback from above. Google needs
+   Supabase's address here, not ours.
+5. Copy the **Client ID** and **Client secret**.
+
+**Back in Supabase:** paste both into the Google provider, and enable it.
+
+## 5. Where people are allowed to land
+
+**Authentication → URL Configuration → Redirect URLs.** Add both:
 
 ```
 http://localhost:5173/portal
 https://13parbon.org.uk/portal
 ```
 
-Miss those and Google will sign someone in and then refuse to return them.
+Miss these and Google will sign somebody in and then refuse to return them, which looks like a
+broken site rather than a missing setting.
 
-## 3. Who is allowed in
+## 6. Who is allowed in
 
 ```
 VITE_MEMBER_ALLOWLIST=you@gmail.com
 ```
 
-While sign-in is being built this is the whole gate. Only addresses on this list get a session;
-anyone else is signed straight back out of Google, and told they are not on the list yet.
+While this is being built it is the whole gate. Only addresses on the list get a session;
+anyone else is signed straight back out and listed for the committee on the People screen.
 
 Two behaviours worth knowing:
 
-- **An empty list admits nobody.** A project configured with no list leaves sign-in switched
-  off, rather than opening the door to the first stranger with a Google account.
+- **An empty list admits nobody.** A project configured with no list leaves sign-in switched off,
+  rather than opening the door to the first stranger with a Google account.
 - **An allowed address with no household still gets in**, as an admin with "No household yet".
-  That is deliberate: your own address will not have a household until there is data to put it
-  in.
+  That is deliberate: your own address will not have a household until you add one.
 
-## Opening it to everyone
+## 7. Check it
+
+1. `npm run dev`, go to `/login`, sign in with Google.
+2. You should land on `/portal`.
+3. Add a household on `/admin/people` with somebody else's Google address.
+4. Ask them to sign in. They should see their own household and nothing else.
+5. While signed in as them, open the browser console and try to read another household. You
+   should get nothing back. That is the whole point of step 3, and it is the one thing worth
+   testing by hand.
+
+## Opening it to everybody
 
 Membership is by invitation, and the long-term gate is the `googleEmail` the committee records
-against a household — the code already looks a household up by it and takes the role from
-there. When you are ready, add the addresses to the households and widen or drop
-`VITE_MEMBER_ALLOWLIST`.
+against a household — the code already looks a household up by it and takes the role from there.
+When you are ready, add the addresses to the households and drop `VITE_MEMBER_ALLOWLIST`.
 
-Then set `showMemberSignIn: true` in `src/app/site.ts` to put the sign-in link back in the
-header and footer. Until then the page still works for anyone who knows `/login`, which is how
-you will test it.
+Then turn the sign-in link on from **Content → What the site shows → Member sign-in**, which is a
+switch in the admin now rather than a code change. Until then the page still works for anybody
+who knows `/login`, which is how you will test it.
 
-## The part that is not done
+## What is still not done after all this
 
-**The allowlist is not a security boundary.** It runs in the browser, so it decides what the app
-*shows*, not what the database *gives out*. Anyone who can run JavaScript can hold a session for
-an address that is not on the list.
-
-That is acceptable now, because the portal reads from fixtures and there is nothing real behind
-it. It stops being acceptable the moment one household's details go into Supabase. Before that:
-
-- Row level security on every table, so a signed-in person can read their own household and
-  nothing else.
-- `supabase/portal.sql` was drafted for this and is **not correct yet** — its helper functions
-  reference `households` before it is created, `current_setting(...)::jsonb` can throw, and its
-  `auth.users` triggers could block sign-in altogether. It is deliberately not committed.
+Photograph uploading needs a Cloudflare R2 token and a small endpoint to sign with it — separate
+from Supabase, and covered in [PHOTOS.md](PHOTOS.md). Everything up to the sending is built; the
+screen says so where it stops.
