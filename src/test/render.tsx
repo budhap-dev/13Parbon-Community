@@ -27,7 +27,16 @@ export function createEmptyApi(): ApiClient {
     delivers: false,
     events: { listUpcoming: async () => [], listPast: async () => [], getNext: async () => null, getBySlug: async () => null },
     festivals: { list: async () => [] },
-    gallery: { listRecentMedia: async () => [], listAlbums: async () => [], getAlbum: async () => null },
+    gallery: {
+      listRecentMedia: async () => [], listAlbums: async () => [], getAlbum: async () => null,
+      listAllAlbums: async () => [],
+      createAlbum: async () => { throw new Error('not connected') },
+      updateAlbum: async () => { throw new Error('not connected') },
+      setCover: async () => { throw new Error('not connected') },
+      setCaption: async () => { throw new Error('not connected') },
+      reorder: async () => { throw new Error('not connected') },
+      deleteMedia: async () => { throw new Error('not connected') },
+    },
     news: { listPosts: async () => [], getPost: async () => null, listAnnouncements: async () => [], listNewsletters: async () => [] },
     contact: { send: async () => { throw new Error('not connected') }, listMessages: async () => [], markHandled: async () => { throw new Error('not connected') } },
     portal: {
@@ -62,7 +71,10 @@ export function createFailingApi(): ApiClient {
     delivers: false,
     events: { listUpcoming: down, listPast: down, getNext: down, getBySlug: down },
     festivals: { list: down },
-    gallery: { listRecentMedia: down, listAlbums: down, getAlbum: down },
+    gallery: {
+      listRecentMedia: down, listAlbums: down, getAlbum: down, listAllAlbums: down,
+      createAlbum: down, updateAlbum: down, setCover: down, setCaption: down, reorder: down, deleteMedia: down,
+    },
     news: { listPosts: down, getPost: down, listAnnouncements: down, listNewsletters: down },
     contact: { send: down, listMessages: down, markHandled: down },
     portal: {

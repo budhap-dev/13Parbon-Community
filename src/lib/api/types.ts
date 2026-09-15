@@ -1,6 +1,6 @@
 import type { Event } from '@/domain/event'
 import type { Festival } from '@/domain/festival'
-import type { AlbumWithMedia, Media } from '@/domain/gallery'
+import type { Album, AlbumDraft, AlbumWithMedia, Media } from '@/domain/gallery'
 import type { ContactInput, ContactMessage } from '@/domain/contact'
 import type { CommunityDocument, SignInAttempt } from '@/domain/document'
 import type { DirectoryEntry, Household, HouseholdDraft, Viewer } from '@/domain/household'
@@ -38,6 +38,33 @@ export interface ApiClient {
     /** Public albums with their approved media, newest first. */
     listAlbums(): Promise<AlbumWithMedia[]>
     getAlbum(slug: string): Promise<AlbumWithMedia | null>
+    /** Every album, published or not, for the committee. Empty for anybody else. */
+    listAllAlbums(viewer: Viewer): Promise<AlbumWithMedia[]>
+    createAlbum(draft: AlbumDraft, viewer: Viewer): Promise<Album>
+    updateAlbum(id: string, draft: AlbumDraft, viewer: Viewer): Promise<Album>
+    /**
+     * Chooses the photograph that stands for an album. Admin only.
+     *
+     * Deliberately a decision somebody makes, rather than the first or a random one: the
+     * picture that represents a night is a judgement, and an album that changes its face on
+     * every reload cannot be pointed at.
+     */
+    setCover(albumId: string, mediaId: string, viewer: Viewer): Promise<Album>
+    setCaption(mediaId: string, caption: string, viewer: Viewer): Promise<Media>
+    /** The photographs of one album, in the order they should appear. Admin only. */
+    reorder(albumId: string, mediaIds: string[], viewer: Viewer): Promise<Media[]>
+    /**
+     * Removes a photograph for good.
+     *
+     * **This has to delete the object in the bucket, not only the row.** The privacy page
+     * promises to take down any photograph a member or their child appears in, on request and
+     * without a reason — and a photograph that is merely unlisted has not been taken down. Any
+     * adapter that hides a row and leaves the file at `photos.13parbon.org.uk` has broken the
+     * promise while appearing to keep it, because the URL still works for anyone who has it.
+     *
+     * To hide a picture without destroying it, set its album to `members` instead.
+     */
+    deleteMedia(id: string, viewer: Viewer): Promise<void>
   }
   news: {
     /** Published posts, newest first. */

@@ -1,7 +1,7 @@
 import { isUpcoming } from '@/domain/dates'
 import { isValidContact, type ContactMessage } from '@/domain/contact'
 import type { Event } from '@/domain/event'
-import type { AlbumWithMedia } from '@/domain/gallery'
+import { inOrder, pinnedCover, type AlbumDraft, type AlbumWithMedia } from '@/domain/gallery'
 import { directoryEntry, isAdmin, isMember, isValidHousehold, type Household, type HouseholdDraft, type Person, type Viewer } from '@/domain/household'
 import { CONTACT_NOTE, PHOTOGRAPH_NOTE, type HouseholdExport } from '@/domain/subjectAccess'
 import type { ApiClient } from '../types'
@@ -58,6 +58,12 @@ function shapeOf(draft: HouseholdDraft) {
     shareEmail: draft.shareEmail,
     sharePhone: draft.sharePhone,
   }
+}
+
+/** An album needs a name people can read, and nothing else the form does not already give it. */
+function checkAlbum(draft: AlbumDraft): NotAllowed | null {
+  if (draft.title.trim().length < 2) return new NotAllowed('an album needs a name')
+  return null
 }
 
 /**
@@ -124,14 +130,15 @@ export function createMockApi({ now = () => new Date(), latencyMs = 0, events }:
   }
 
   const withMedia = (album: (typeof fixtures.albums)[number]): AlbumWithMedia => {
-    const media = fixtures.media.filter((m) => m.albumId === album.id && m.approved)
+    const media = inOrder(fixtures.media.filter((m) => m.albumId === album.id && m.approved))
     /**
-     * A different photograph fronts the album each time the gallery is fetched, so one face
-     * is not the whole of an evening every time somebody visits. It is picked per fetch
-     * rather than per render: React Query holds the answer, so the cover stays put while a
-     * page is being read and is different on the next visit.
+     * A pinned cover wins. Where none is pinned — which is most albums — a different
+     * photograph fronts it on each fetch, so one face is not the whole of an evening every
+     * time somebody visits. Picked per fetch rather than per render: React Query holds the
+     * answer, so it stays put while a page is being read and differs on the next visit.
      */
-    const cover = media.length > 0 ? media[Math.floor(Math.random() * media.length)] : undefined
+    const cover =
+      pinnedCover(album, media) ?? (media.length > 0 ? media[Math.floor(Math.random() * media.length)] : undefined)
     return { ...album, media, cover }
   }
   const publicAlbums = () =>
@@ -155,6 +162,87 @@ export function createMockApi({ now = () => new Date(), latencyMs = 0, events }:
       listRecentMedia: (limit = 6) => delay(someOf(publicAlbums().flatMap((a) => a.media), limit), latencyMs),
       listAlbums: () => delay(publicAlbums(), latencyMs),
       getAlbum: (slug) => delay(publicAlbums().find((a) => a.slug === slug) ?? null, latencyMs),
+
+      listAllAlbums: (viewer) =>
+        delay(
+          isAdmin(viewer)
+            ? [...fixtures.albums].sort((a, b) => b.publishedAt.localeCompare(a.publishedAt)).map(withMedia)
+            : [],
+          latencyMs,
+        ),
+
+      createAlbum: (draft, viewer) => {
+        if (!isAdmin(viewer)) return Promise.reject(new NotAllowed('only the committee can make an album'))
+        const refusal = checkAlbum(draft)
+        if (refusal) return Promise.reject(refusal)
+        const slug = draft.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+        if (fixtures.albums.some((a) => a.slug === slug)) {
+          return Promise.reject(new NotAllowed('there is already an album with that name'))
+        }
+        const album = {
+          id: `al-${fixtures.albums.length + 1}`,
+          slug,
+          publishedAt: now().toISOString(),
+          ...draft,
+          title: draft.title.trim(),
+        }
+        fixtures.albums.push(album)
+        return delay(album, latencyMs)
+      },
+
+      updateAlbum: (id, draft, viewer) => {
+        if (!isAdmin(viewer)) return Promise.reject(new NotAllowed('only the committee can change an album'))
+        const album = fixtures.albums.find((a) => a.id === id)
+        if (!album) return Promise.reject(new NotAllowed('no such album'))
+        const refusal = checkAlbum(draft)
+        if (refusal) return Promise.reject(refusal)
+        Object.assign(album, { ...draft, title: draft.title.trim() })
+        return delay(album, latencyMs)
+      },
+
+      setCover: (albumId, mediaId, viewer) => {
+        if (!isAdmin(viewer)) return Promise.reject(new NotAllowed('only the committee can do that'))
+        const album = fixtures.albums.find((a) => a.id === albumId)
+        if (!album) return Promise.reject(new NotAllowed('no such album'))
+        // A photograph from another album would front one evening with another's picture.
+        if (!fixtures.media.some((x) => x.id === mediaId && x.albumId === albumId)) {
+          return Promise.reject(new NotAllowed('that photograph is not in this album'))
+        }
+        album.coverMediaId = mediaId
+        return delay(album, latencyMs)
+      },
+
+      setCaption: (mediaId, caption, viewer) => {
+        if (!isAdmin(viewer)) return Promise.reject(new NotAllowed('only the committee can do that'))
+        const media = fixtures.media.find((x) => x.id === mediaId)
+        if (!media) return Promise.reject(new NotAllowed('no such photograph'))
+        media.caption = caption.trim() || undefined
+        return delay(media, latencyMs)
+      },
+
+      reorder: (albumId, mediaIds, viewer) => {
+        if (!isAdmin(viewer)) return Promise.reject(new NotAllowed('only the committee can do that'))
+        const inAlbum = fixtures.media.filter((x) => x.albumId === albumId)
+        // Every photograph, once each: a partial list would silently drop the rest to the end.
+        const same =
+          inAlbum.length === mediaIds.length && inAlbum.every((x) => mediaIds.includes(x.id)) && new Set(mediaIds).size === mediaIds.length
+        if (!same) return Promise.reject(new NotAllowed('that is not this album, in one piece'))
+        mediaIds.forEach((id, i) => {
+          const media = fixtures.media.find((x) => x.id === id)
+          if (media) media.position = i
+        })
+        return delay(inOrder(inAlbum), latencyMs)
+      },
+
+      deleteMedia: (id, viewer) => {
+        if (!isAdmin(viewer)) return Promise.reject(new NotAllowed('only the committee can do that'))
+        const index = fixtures.media.findIndex((x) => x.id === id)
+        if (index === -1) return Promise.reject(new NotAllowed('no such photograph'))
+        const [gone] = fixtures.media.splice(index, 1)
+        // An album must not go on pointing at a photograph that is not there.
+        for (const album of fixtures.albums) if (album.coverMediaId === gone.id) album.coverMediaId = undefined
+        return delay(undefined, latencyMs)
+      },
     },
     news: {
       listPosts: (limit = 20) =>

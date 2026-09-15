@@ -71,6 +71,52 @@ export function withAuditTrail(base: ApiClient, now: () => Date = () => new Date
         return after
       },
     },
+    gallery: {
+      ...base.gallery,
+      createAlbum: async (draft, viewer) => {
+        const album = await base.gallery.createAlbum(draft, viewer)
+        record(viewer, 'album:create', { kind: 'albums', id: album.id }, {}, { ...album })
+        return album
+      },
+      updateAlbum: async (id, draft, viewer) => {
+        const before = await base.gallery.listAllAlbums(viewer).then((all) => all.find((a) => a.id === id))
+        const was = before ? { title: before.title, description: before.description, visibility: before.visibility } : {}
+        const album = await base.gallery.updateAlbum(id, draft, viewer)
+        record(viewer, 'album:edit', { kind: 'albums', id }, was, {
+          title: album.title,
+          description: album.description,
+          visibility: album.visibility,
+        })
+        return album
+      },
+      setCover: async (albumId, mediaId, viewer) => {
+        const before = await base.gallery.listAllAlbums(viewer).then((all) => all.find((a) => a.id === albumId))
+        const album = await base.gallery.setCover(albumId, mediaId, viewer)
+        record(viewer, 'album:setCover', { kind: 'albums', id: albumId }, { coverMediaId: before?.coverMediaId }, { coverMediaId: mediaId })
+        return album
+      },
+      setCaption: async (mediaId, caption, viewer) => {
+        const was = await base.gallery
+          .listAllAlbums(viewer)
+          .then((all) => all.flatMap((a) => a.media).find((m) => m.id === mediaId)?.caption)
+        const media = await base.gallery.setCaption(mediaId, caption, viewer)
+        record(viewer, 'media:caption', { kind: 'media', id: mediaId }, { caption: was }, { caption: media.caption })
+        return media
+      },
+      reorder: async (albumId, mediaIds, viewer) => {
+        const media = await base.gallery.reorder(albumId, mediaIds, viewer)
+        record(viewer, 'album:reorder', { kind: 'albums', id: albumId }, {}, { order: mediaIds.join(',') })
+        return media
+      },
+      deleteMedia: async (id, viewer) => {
+        // Read before it goes: a takedown is the one thing somebody will ask about afterwards.
+        const was = await base.gallery
+          .listAllAlbums(viewer)
+          .then((all) => all.flatMap((a) => a.media).find((m) => m.id === id))
+        await base.gallery.deleteMedia(id, viewer)
+        record(viewer, 'media:remove', { kind: 'media', id }, was ? { url: was.url, albumId: was.albumId } : {}, {})
+      },
+    },
     portal: {
       ...base.portal,
       addHousehold: async (draft, viewer) => {

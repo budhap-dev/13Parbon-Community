@@ -21,7 +21,7 @@ const api = () => withAuditTrail(createMockApi())
 const READS = [
   'events.listUpcoming', 'events.listPast', 'events.getNext', 'events.getBySlug',
   'festivals.list',
-  'gallery.listRecentMedia', 'gallery.listAlbums', 'gallery.getAlbum',
+  'gallery.listRecentMedia', 'gallery.listAlbums', 'gallery.getAlbum', 'gallery.listAllAlbums',
   'news.listPosts', 'news.getPost', 'news.listAnnouncements', 'news.listNewsletters',
   'contact.listMessages',
   'portal.identify', 'portal.getHousehold', 'portal.listHouseholds', 'portal.listDirectory',
@@ -32,7 +32,12 @@ const READS = [
 ]
 
 /** Writes that leave a line in the trail. */
-const AUDITED = ['contact.markHandled', 'portal.addHousehold', 'portal.updateHousehold', 'portal.deleteHousehold', 'portal.resolveSignInAttempt']
+const AUDITED = [
+  'contact.markHandled',
+  'portal.addHousehold', 'portal.updateHousehold', 'portal.deleteHousehold', 'portal.resolveSignInAttempt',
+  'gallery.createAlbum', 'gallery.updateAlbum', 'gallery.setCover', 'gallery.setCaption',
+  'gallery.reorder', 'gallery.deleteMedia',
+]
 
 /**
  * Writes that deliberately do not. `send` matches the trigger, which is attached to

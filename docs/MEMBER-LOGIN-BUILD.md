@@ -6,7 +6,7 @@
 > **What this is:** the order of work from [MEMBER-LOGIN.md](MEMBER-LOGIN.md), broken into steps
 > that can be ticked off. That document says *what* and *why*; this one says *where we are*.
 >
-> **Last updated:** 2026-09-15 · **Current step:** 4 · **Ticked:** 49 of 85
+> **Last updated:** 2026-09-15 · **Current step:** 4 · **Ticked:** 54 of 85
 
 ## How this is kept
 
@@ -60,7 +60,7 @@ twenty screens.
 | 1 | The smallest write, end to end | 0.5 | **mostly done** — brought forward into 0.2 |
 | 2 | Households | ~5 | ✅ **done** |
 | 3 | Events | ~1 | **mostly dropped** — the planner app owns it |
-| 4 | Media | ~4 | **in progress** — the metadata guarantee is in |
+| 4 | Media | ~4 | **in progress** — albums and photographs are managed; the bucket is not wired |
 | 5 | Content | ~4.5 | not started |
 | 6 | Ready to merge | ~2 | not started |
 | | **Total** | **~32–36** *(incl. tests, adapters, states)* | |
@@ -368,11 +368,13 @@ The takedown promise stops depending on a macOS script and a person remembering 
 - [x] Verify in the browser before anything is sent — the script's refusal, carried over
 - [ ] Verify the object again server-side, once there is a server side to verify it on
 - [ ] Compare quality against `sips` at q70/q68 before switching over
-- [ ] Create and edit albums
-- [ ] Choose an album cover — the mock currently picks one **at random**
-- [ ] Edit captions
-- [ ] Order photographs explicitly, or keep filename order and say so
-- [ ] Delete a photograph: **the object in R2, not just the row**
+- [x] Create and edit albums
+- [x] Pin an album cover — and the rotation stays the default, because it was deliberate
+- [x] Edit captions
+- [x] Order photographs explicitly — an explicit `position`, because reordering a page by
+      renaming objects in a bucket is not a thing to ask of anybody
+- [x] Delete a photograph — the contract says in as many words that an adapter hiding the row
+      and leaving the file has broken the promise while appearing to keep it
 - [ ] Somewhere for a takedown request to land, with a promised turnaround
 
 **Done when:** a committee member on a laptop, with no terminal, puts an album up — and a
@@ -392,6 +394,16 @@ is the whole fix.
 **It checks its own work.** The output is read back byte by byte and refused if anything survived,
 so the promise rests on the bytes rather than on the canvas having behaved. That refusal — *"do
 not upload"* and a non-zero exit — is the best line in `prepare-photos.mjs`.
+
+**The cover rotation was not a bug.** It looked like one — a random pick on every fetch — but
+there is a comment saying why: one photograph is not the whole of an evening, and a different
+face each visit says so. So pinning *overrides* rotation rather than replacing it. Most albums
+keep rotating; the one with the picture that actually says what the night was gets pinned.
+
+**Two refusals worth keeping.** A cover has to be a photograph from that album, or one evening
+fronts with another's picture. And a reorder has to be the whole album, once each — a partial
+list would quietly drop everything missing to the end, which is the kind of thing nobody notices
+until an album is in the wrong order for a year.
 
 **What is not covered, honestly.** The canvas itself cannot be exercised in the test environment,
 so the three-line wrapper around `createImageBitmap` and `toBlob` has no test; everything it is
@@ -494,3 +506,4 @@ invitation, so nothing to approve and no passwords to reset.
 | 2026-09-15 | 2 | Sign-in attempts answered from the screen; "add them" carries the address across. **Step 2 done.** 437 → 443 tests. |
 | 2026-09-15 | — | Order settled: interface first, database at the end — but the SQL gets run against a throwaway project early, rather than accumulating screens on top of SQL nobody has executed. |
 | 2026-09-15 | 4 | Photograph preparation: re-encode rather than strip, orientation applied first, output checked byte by byte before anything is sent. 443 → 472 tests. |
+| 2026-09-15 | 4 | Albums, covers, captions, order and takedown — all audited. Found the random cover was deliberate, so pinning overrides it rather than replacing it. 472 → 489 tests. |
