@@ -775,6 +775,57 @@ begin
   end;
 end $$;
 
+/*
+ * The committee locking itself out — the one change with no way back through the app.
+ *
+ * Promoting somebody is admin-only, so the last admin demoting or deleting themselves takes the
+ * key with them and leaves the SQL editor as the only door. Run last, because it ends with the
+ * test admins gone and nothing after it could count on them.
+ */
+do $$
+declare
+  admins integer;
+begin
+  select count(*) into admins from portal.households where role = 'admin';
+  if admins < 2 then
+    raise exception 'FAIL: this check needs two admins to be meaningful, and found %', admins;
+  end if;
+end $$;
+
+-- With somebody else holding the role, standing down is allowed.
+update portal.households set role = 'member'
+  where id = '11111111-1111-1111-1111-111111111111';
+
+do $$
+begin
+  if (select role from portal.households where id = '11111111-1111-1111-1111-111111111111') <> 'member' then
+    raise exception 'FAIL: an admin could not stand down while another one remained';
+  end if;
+end $$;
+
+-- The last one cannot, by either route.
+do $$
+begin
+  begin
+    update portal.households set role = 'member'
+      where id = '22222222-2222-2222-2222-222222222222';
+    raise exception 'FAIL: the last admin could demote themselves, leaving nobody able to administer the site';
+  exception when sqlstate '45001' then
+    null;
+  end;
+
+  begin
+    delete from portal.households where id = '22222222-2222-2222-2222-222222222222';
+    raise exception 'FAIL: the last admin could delete their own household, leaving nobody able to administer the site';
+  exception when sqlstate '45001' then
+    null;
+  end;
+
+  if (select role from portal.households where id = '22222222-2222-2222-2222-222222222222') <> 'admin' then
+    raise exception 'FAIL: the last admin lost the role after all';
+  end if;
+end $$;
+
 reset role;
 
 do $$

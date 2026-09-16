@@ -34,6 +34,9 @@ const table = (client: SupabaseClient, name: string) => client.schema(SCHEMA).fr
  * that it is hiding them.
  */
 function refuse(message: string, error: { code?: string; message: string } | null): never {
+  // 45001 is the last-admin guard, which raises a sentence already fit to show somebody. Every
+  // other refusal comes back saying a policy was violated, which is not.
+  if (error?.code === '45001') throw new NotAllowed(error.message)
   if (error?.code === '42501') throw new NotAllowed(message)
   throw new Error(error?.message ?? message)
 }

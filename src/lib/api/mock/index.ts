@@ -658,9 +658,8 @@ export function createMockApi({ now = () => new Date(), latencyMs = 0, events }:
         const refusal = checkDraft(draft, viewer, existing)
         if (refusal) return Promise.reject(refusal)
 
-        // The committee must not be able to lock itself out. There is no constraint behind
-        // this in Postgres yet, so for now the mock is the only thing enforcing it besides the
-        // button, and neither of those is a guarantee.
+        // The committee must not be able to lock itself out. Mirrors the trigger
+        // portal.guard_last_admin, which refuses the same change in the same words.
         const losingAdmin = existing.role === 'admin' && (draft.role ?? existing.role) !== 'admin'
         if (losingAdmin && portal.households.filter((h) => h.role === 'admin').length <= 1) {
           return Promise.reject(new NotAllowed('that is the last admin — make somebody else one first'))

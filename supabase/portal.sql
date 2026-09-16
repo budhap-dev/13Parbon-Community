@@ -565,6 +565,62 @@ create trigger households_guard_protected_columns
   for each row execute function portal.households_guard_protected_columns();
 
 
+-- ---------------------------------------------------------------------------
+-- The committee may not lock itself out
+-- ---------------------------------------------------------------------------
+-- Demoting the last admin, or deleting their household, leaves a site nobody can administer.
+-- There is no way back from it through the app: promoting somebody is an admin-only action, so
+-- the last person out takes the key with them and the only door left is the SQL editor.
+--
+-- The app has refused this for a while and so has the button, and neither is a guarantee — a
+-- browser is not the thing deciding. Said here, where it cannot be got around.
+--
+-- Deliberately *not* the app's other rule. The screen also refuses to let an admin demote
+-- themselves while other admins exist, which is a courtesy — a second pair of hands does the
+-- demoting, and somebody who has resigned is not stuck. There is nothing irrecoverable about
+-- it, so it stays a courtesy rather than becoming something the committee cannot undo.
+create or replace function portal.guard_last_admin()
+  returns trigger
+  language plpgsql
+  security definer
+  set search_path = ''
+as $$
+declare
+  losing_the_role boolean;
+begin
+  losing_the_role := tg_op = 'DELETE' or new.role is distinct from 'admin';
+
+  if old.role = 'admin' and losing_the_role then
+    -- Counted excluding this row, so it answers "would any be left?" rather than "are there
+    -- any now?". `for update` because two admins resigning at once would otherwise each see
+    -- the other and both succeed.
+    if not exists (
+      select 1 from portal.households
+       where role = 'admin' and id <> old.id
+       for update
+    ) then
+      -- Its own SQLSTATE, from an unassigned class, rather than 42501. A refusal by a policy
+      -- says nothing worth showing a person and the adapter replaces it with a sentence of its
+      -- own; this one already is that sentence, and the code is how the adapter tells them
+      -- apart. All three layers then refuse in the same words.
+      raise exception 'That is the last admin. Make somebody else one first.'
+        using errcode = '45001';
+    end if;
+  end if;
+
+  return case when tg_op = 'DELETE' then old else new end;
+end;
+$$;
+
+comment on function portal.guard_last_admin() is
+  'Refuses the change that would leave the site with no administrator at all.';
+
+drop trigger if exists guard_last_admin on portal.households;
+create trigger guard_last_admin
+  before update or delete on portal.households
+  for each row execute function portal.guard_last_admin();
+
+
 -- ===========================================================================
 -- 5. The directory — removed
 -- ===========================================================================

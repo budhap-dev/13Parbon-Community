@@ -229,7 +229,7 @@ deleting anybody, or lose the account of what that household did.
 - [x] Table-driven tests for every role × action — 82 of them
 - [x] `RequireSession`, the portal navigation and the first button all ask `can()`
 - [x] `canStopBeingAdmin()`, so the committee cannot lock itself out
-- [ ] A database guard for the last admin — `canStopBeingAdmin` is a courtesy until there is one
+- [x] A database guard for the last admin — `portal.guard_last_admin`, refusing in the same words as the mock
 
 **Done when:** the permission tests fail if a rule changes. *Better than that in the end: the
 table is typed `Record<Action, …>`, so adding an action without deciding who may do it fails to
@@ -748,6 +748,7 @@ invitation, so nothing to approve and no passwords to reset.
 | 2026-09-15 | 5 | `/admin/content` wired — three buttons had done nothing. Caught a new post reading as "taken down". 525 → 533 tests. |
 | 2026-09-15 | — | Retention settled: the count is kept for good, the names for twelve months. `close_year()` counts before it deletes. 533 → 537 tests. |
 | 2026-09-15 | 3 | The committee types the headcount in. 537 → 551 tests. |
+| 2026-09-16 | 0.2 | The last admin cannot be demoted or deleted — a trigger now, not a courtesy. Its own SQLSTATE so the sentence the database raises is the one the person reads. |
 | 2026-09-16 | 0.3 | **The member directory removed** — the committee decided against having one. The page, the route, `listDirectory`, `DirectoryEntry`, the view and the three sharing columns are gone rather than switched off: a column nothing reads is one somebody later assumes means something. 732 → 712 tests, and twenty fewer is the point. |
 | 2026-09-16 | 0.2 | Messages can be deleted — asked for first, and audited, because a message is the only record the committee holds of what somebody asked and the subject-access export finds them by address. 724 → 732 tests. |
 | 2026-09-16 | 0.4 | News made real: posts, notices and newsletters. The read policies do the work, so a query that forgot to filter still cannot leak a draft, and a notice's dates are applied by Postgres rather than by the browser. Found the announcement audience had no `admins` — the check constraint said otherwise. 715 → 724 tests. |

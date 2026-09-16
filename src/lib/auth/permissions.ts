@@ -118,9 +118,15 @@ export function can(viewer: Viewer, action: Action, resource?: Resource): boolea
  * Not a `can()` rule, because it does not depend on who is asking — it is true of the
  * committee as a whole. Kept here so the one place that answers "may they?" answers this too.
  *
- * There is no policy mirroring this yet: it wants a constraint or a trigger of its own, and
- * until there is one, this is a courtesy rather than a guarantee. A committee that locks
- * itself out has no way back in that does not involve the SQL editor.
+ * Half of this is a guarantee and half is a courtesy, which is worth keeping straight.
+ *
+ * Leaving the site with no admin at all is refused by portal.guard_last_admin, a trigger, in
+ * the same words the mock uses — there is no way back from it through the app, so nothing that
+ * runs in a browser should be the only thing standing in front of it.
+ *
+ * Refusing to let an admin demote *themselves* while others remain is the courtesy. A second
+ * pair of hands does the demoting and nobody is stuck, so it stays a rule of the screen rather
+ * than something the committee cannot undo without the SQL editor.
  */
 export function canStopBeingAdmin(viewer: Viewer, householdId: string, adminCount: number): boolean {
   if (!isAdmin(viewer)) return false
