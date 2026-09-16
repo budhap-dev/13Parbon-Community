@@ -55,9 +55,11 @@ describe('createMockApi', () => {
   })
 
   it('accepts a valid contact message and rejects an invalid one', async () => {
+    // A receipt, not the stored row — the same narrow answer the real adapter can give.
     const sent = await api.contact.send({ name: 'Rina Sen', email: 'rina@example.com', subject: 'Parking', message: 'Where do we park on the night?' })
-    expect(sent.id).toBe('cm-1')
-    expect(sent.createdAt).toBe(now().toISOString())
+    expect(sent).toEqual({ name: 'Rina Sen', email: 'rina@example.com' })
+    // The message itself is kept, so the committee's inbox still has it.
+    expect((await api.contact.listMessages({ householdId: 'hh-chatterjee', role: 'admin' })).some((x) => x.subject === 'Parking')).toBe(true)
     await expect(api.contact.send({ name: '', email: '', subject: '', message: '' })).rejects.toThrow(/check the form/)
   })
 

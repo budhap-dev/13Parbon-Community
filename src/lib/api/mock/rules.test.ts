@@ -137,11 +137,13 @@ describe('marking a message handled', () => {
     const first = (await a.contact.listMessages(admin)).find((m) => m.kind !== 'photo')!
     expect(first.handledBy).toBeUndefined()
 
+    // The household's name, because the inbox prints this column straight out and "handled by
+    // hh-chatterjee" tells a reader nothing.
     const updated = await a.contact.markHandled(first.id, admin)
-    expect(updated.handledBy).toBe('hh-chatterjee')
+    expect(updated.handledBy).toBe('The Chatterjees')
 
     const after = await a.contact.listMessages(admin)
-    expect(after.find((m) => m.id === first.id)?.handledBy).toBe('hh-chatterjee')
+    expect(after.find((m) => m.id === first.id)?.handledBy).toBe('The Chatterjees')
   })
 
   it('refuses a message that is not there', async () => {
@@ -194,6 +196,28 @@ describe('a member saving their own household', () => {
     await expect(
       a.portal.updateHousehold('hh-sen', draftOf({ membershipPaidTo: '2099-01-01' }), member),
     ).rejects.toThrow(/membership/i)
+  })
+
+  /*
+   * The other side of the rule above, and the one that bites in practice.
+   *
+   * Every household the committee writes down has a null renewal date — the status column
+   * defaults to active and the date column has no default — while the form hands back an
+   * empty string for a date nobody set. Compared without normalising, "I changed nothing" reads
+   * as an attempted change and an ordinary member is refused for saving their own address.
+   */
+  it('may still save its own details when nobody has set a renewal date', async () => {
+    const a = api()
+    const admin = { householdId: 'hh-chatterjee', role: 'admin' } as const
+    await a.portal.updateHousehold('hh-sen', draftOf({ membershipPaidTo: '' }), admin)
+
+    const saved = await a.portal.updateHousehold(
+      'hh-sen',
+      draftOf({ contactName: 'Rina Sen-Gupta', membershipPaidTo: '' }),
+      member,
+    )
+    expect(saved.contactName).toBe('Rina Sen-Gupta')
+    expect(saved.membership.paidTo).toBeNull()
   })
 
   it('cannot save somebody else\'s, and is told nothing about whether it exists', async () => {

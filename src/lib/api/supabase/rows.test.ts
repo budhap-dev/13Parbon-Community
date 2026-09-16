@@ -53,8 +53,17 @@ describe('reading a household back', () => {
     expect(toHousehold({ ...row, interests: null }).interests).toEqual([])
   })
 
-  it('reads an unpaid membership as empty rather than null', () => {
-    expect(toHousehold({ ...row, membership_paid_to: null }).membership.paidTo).toBe('')
+  /*
+   * This used to assert the opposite, and the opposite is what crashed the portal.
+   *
+   * `membership_status` defaults to `active` and `membership_paid_to` has no default, so every
+   * household the committee writes down is active with no renewal date. Mapped to an empty
+   * string it satisfied `paidTo: string`, passed every type check, and reached
+   * `formatDateWithYear`, where `new Date('')` is an Invalid Date and Intl throws
+   * `RangeError: Invalid time value` — taking the whole route down on the first real sign-in.
+   */
+  it('reads a membership nobody has paid as null, not as a string that looks like a date', () => {
+    expect(toHousehold({ ...row, membership_paid_to: null }).membership.paidTo).toBeNull()
   })
 })
 

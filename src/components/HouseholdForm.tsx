@@ -105,7 +105,8 @@ function draftFrom(household?: Household, prefill?: Partial<HouseholdDraft>): Ho
     googleEmail: household.googleEmail,
     role: household.role,
     membershipStatus: household.membership.status,
-    membershipPaidTo: household.membership.paidTo,
+    // A date input takes a string; there being no date is the empty one.
+    membershipPaidTo: household.membership.paidTo ?? '',
   }
 }
 

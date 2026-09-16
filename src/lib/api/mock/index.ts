@@ -152,9 +152,18 @@ function checkDraft(draft: HouseholdDraft, viewer: Viewer, existing?: Household)
     if (draft.googleEmail !== undefined && draft.googleEmail !== (current?.googleEmail ?? null)) {
       return new NotAllowed('only the committee can change the sign-in address')
     }
+    /*
+     * Normalised on both sides before comparing. The form hands back an empty string for a date
+     * nobody has set and the household holds null, so a straight `!==` reads "changed nothing"
+     * as an attempted change — and every household the committee has just written down has a
+     * null date, so a member saving their own details would be refused for touching nothing.
+     * The database's trigger compares with `is distinct from`, which is this in one word.
+     */
+    const offered = draft.membershipPaidTo || null
+    const held = current?.membership.paidTo ?? null
     if (
       (draft.membershipStatus !== undefined && draft.membershipStatus !== current?.membership.status) ||
-      (draft.membershipPaidTo !== undefined && draft.membershipPaidTo !== current?.membership.paidTo)
+      (draft.membershipPaidTo !== undefined && offered !== held)
     ) {
       return new NotAllowed('only the committee can change membership')
     }
@@ -466,7 +475,11 @@ export function createMockApi({ now = () => new Date(), latencyMs = 0, events }:
         if (!isValidContact(input)) return Promise.reject(new Error('Please check the form and try again.'))
         const message: ContactMessage = { ...input, id: `cm-${sentMessages.length + 1}`, createdAt: now().toISOString() }
         sentMessages.push(message)
-        return delay(message, latencyMs)
+        // The row is kept, so the committee's inbox can show it — but only the receipt goes
+        // back to the sender, because that is all the real adapter is able to return. The mock
+        // giving out more than the database can is how the contract came to promise a stored
+        // row that the public website has no way to read.
+        return delay({ name: message.name, email: message.email }, latencyMs)
       },
       listMessages: (viewer) =>
         delay(
@@ -490,7 +503,9 @@ export function createMockApi({ now = () => new Date(), latencyMs = 0, events }:
         if (message.kind === 'photo' && !note?.trim()) {
           return Promise.reject(new NotAllowed('say what happened to the photograph'))
         }
-        message.handledBy = viewer.householdId
+        // The name, not the id: the screen prints this column straight out, and an id there
+        // shows a reader "handled by h-3". The database adapter looks the same name up.
+        message.handledBy = portal.households.find((h) => h.id === viewer.householdId)?.name ?? 'The committee'
         if (note?.trim()) message.handledNote = note.trim()
         return delay(message, latencyMs)
       },
@@ -571,7 +586,7 @@ export function createMockApi({ now = () => new Date(), latencyMs = 0, events }:
           ...shapeOf(draft),
           googleEmail: draft.googleEmail ?? null,
           memberSince: now().toISOString().slice(0, 10),
-          membership: { status: draft.membershipStatus ?? 'active', paidTo: draft.membershipPaidTo ?? '' },
+          membership: { status: draft.membershipStatus ?? 'active', paidTo: draft.membershipPaidTo || null },
           role: draft.role ?? 'member',
         }
         portal.households.push(household)
@@ -659,7 +674,9 @@ export function createMockApi({ now = () => new Date(), latencyMs = 0, events }:
           existing.role = draft.role ?? existing.role
           existing.membership = {
             status: draft.membershipStatus ?? existing.membership.status,
-            paidTo: draft.membershipPaidTo ?? existing.membership.paidTo,
+            // Absent leaves it alone; empty clears it. `fromDraft` sends the same two answers
+            // to Postgres, and the two have to agree or the mock is teaching the wrong thing.
+            paidTo: draft.membershipPaidTo === undefined ? existing.membership.paidTo : draft.membershipPaidTo || null,
           }
         }
         return delay(existing, latencyMs)

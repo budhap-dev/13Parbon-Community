@@ -363,6 +363,65 @@ begin
   end;
 end $$;
 
+/*
+ * And the same insert the way the app makes it.
+ *
+ * This block is why `withSupabaseWrites` sends `Prefer: return=minimal`. With
+ * `return=representation` PostgREST writes INSERT ... RETURNING, and RETURNING is a read: it
+ * answers to the SELECT policies, of which a visitor deliberately has none. So every submission
+ * failed, the contact form did not work against the real database at all, and nothing on any
+ * screen said so — this file is what found it.
+ *
+ * Both halves are asserted, because the fix has to keep the property rather than trade it away:
+ * the insert goes in, and asking for it back is still refused.
+ */
+do $$
+declare
+  echoed uuid;
+begin
+  begin
+    insert into portal.contact_messages (name, email, subject, message)
+    values ('A Third Visitor', 'third@example.com', 'Asking for it back', 'Long enough to pass the check.')
+    returning id into echoed;
+
+    raise exception 'FAIL: a visitor can read a contact message back. The app relies on not being able to — if this is now allowed, something has granted anon select on the inbox';
+  exception
+    when insufficient_privilege then null;
+    when others then
+      -- Postgres words this differently depending on whether the grant or the policy is what
+      -- stops it. Either is the inbox staying shut; a row coming back is not.
+      if sqlstate not in ('42501', '44000') then raise; end if;
+  end;
+end $$;
+
+-- And the insert the app actually sends — no RETURNING — still goes in. That it arrived is
+-- asserted further down, from the committee's side, where there is a role that can see it.
+--
+-- Everything written to this table is written here, as a visitor: the contact form posts under
+-- the anon key whether or not somebody is signed in, so `authenticated` holds no insert grant
+-- on it at all. A block further down that inserts as the committee fails on the grant, not on
+-- anything it was trying to prove.
+insert into portal.contact_messages (name, email, subject, message, kind)
+values ('A Fourth Visitor', 'fourth@example.com', 'Just asking', 'Long enough to pass the check.', 'general');
+
+-- And a takedown, sent the way a parent sends one: through the public form, as a visitor.
+-- Whether it can then be marked dealt with is asserted from the committee's side, below.
+insert into portal.contact_messages (name, email, subject, message, kind)
+values ('A Parent', 'parent@example.com', 'Please take a photograph down', 'The one of my daughter on the Boishakhi page.', 'photo');
+
+-- A visitor may say what a message is about. A visitor may not say it has been dealt with:
+-- a message arriving pre-marked handled is one that leaves the unread count and is never read.
+do $$
+begin
+  begin
+    insert into portal.contact_messages (name, email, subject, message, handled_by)
+    values ('A Sneaky Visitor', 'sneak@example.com', 'Already done', 'Long enough to pass the check.', 'The Committee');
+    raise exception 'FAIL: a visitor can post a message already marked as handled';
+  exception when insufficient_privilege then
+    null;
+  end;
+end $$;
+
 
 -- ---------------------------------------------------------------------------
 -- The committee
@@ -393,6 +452,13 @@ begin
   select count(*) into visible from portal.contact_messages;
   if visible < 1 then
     raise exception 'FAIL: an admin cannot read the committee''s inbox';
+  end if;
+
+  -- The message a visitor sent the way the app sends it, read from the side that is meant to
+  -- read it. This is the whole round trip the live site depends on, in two halves.
+  select count(*) into visible from portal.contact_messages where email = 'fourth@example.com';
+  if visible <> 1 then
+    raise exception 'FAIL: a message a visitor sent never reached the committee';
   end if;
 
   select count(*) into visible from portal.sign_in_attempts;
@@ -458,11 +524,49 @@ reset role;
 set local role authenticated;
 set local request.jwt.claims = '{"email": "admin@example.com"}';
 
--- The committee may do the things a member may not.-- The committee may do the things a member may not.
+-- The committee may do the things a member may not.
 update portal.households set role = 'admin', membership_paid_to = '2027-03-31'
   where id = '11111111-1111-1111-1111-111111111111';
 
-update portal.contact_messages set handled_by = 'An Admin' where handled_by is null;
+-- Takedowns left out: those cannot be marked dealt with without saying what happened to the
+-- photograph, which is the next block's business. A blanket update here would trip that
+-- constraint and fail the script on the very rule it is about to prove.
+update portal.contact_messages set handled_by = 'An Admin'
+  where handled_by is null and kind <> 'photo';
+
+/*
+ * The takedown promise, enforced where it cannot be argued with.
+ *
+ * The app refuses to mark a photograph request done without saying what happened to the
+ * picture, but the app is a browser and the browser is not the thing deciding. "Handled" on its
+ * own does not say whether the photograph actually left the bucket, and this is the one promise
+ * on the site with a person waiting behind it.
+ */
+do $$
+begin
+  begin
+    update portal.contact_messages set handled_by = 'An Admin'
+      where kind = 'photo' and handled_by is null;
+    raise exception 'FAIL: a takedown can be marked dealt with without saying what happened to the photograph';
+  exception when check_violation then
+    null;
+  end;
+end $$;
+
+-- And with a note, it goes through.
+update portal.contact_messages
+  set handled_by = 'An Admin', handled_note = 'Deleted boishakhi-2026-14 from the album'
+  where kind = 'photo' and handled_by is null;
+
+do $$
+declare
+  unfinished integer;
+begin
+  select count(*) into unfinished from portal.contact_messages where kind = 'photo' and handled_by is null;
+  if unfinished <> 0 then
+    raise exception 'FAIL: a takedown with a note could not be marked dealt with';
+  end if;
+end $$;
 
 update portal.sign_in_attempts set resolved = true where email = 'stranger@example.com';
 

@@ -36,16 +36,45 @@ describe('withSupabaseWrites', () => {
     expect(await api.festivals.list()).toHaveLength(4)
   })
 
-  it('posts a contact message to PostgREST and maps the row back', async () => {
-    const doFetch = respondWith([
-      { id: 'row-1', name: 'Rina Sen', email: 'rina@example.com', subject: 'Parking', message: 'Where do we park on the night?', created_at: '2026-09-03T10:00:00Z' },
-    ])
+  it('posts a contact message to PostgREST and gives back a receipt', async () => {
+    const doFetch = respondWith([])
     const sent = await withSupabaseWrites(createMockApi(), config, doFetch).contact.send(contact)
-    expect(sent).toEqual({ id: 'row-1', ...contact, createdAt: '2026-09-03T10:00:00Z' })
+
+    // What the thank-you screen shows, and nothing more: the row itself is not readable by the
+    // public website, so there is nothing else honest to hand back.
+    expect(sent).toEqual({ name: contact.name, email: contact.email })
+
     const call = callAt(doFetch)
     expect(call.url).toBe('https://project.supabase.co/rest/v1/contact_messages')
     expect(call.headers.apikey).toBe('anon-key')
-    expect(call.body).toEqual(contact)
+    expect(call.body).toEqual({ ...contact, kind: 'general' })
+  })
+
+  /*
+   * The bug this catches broke the contact form completely against the real database, and no
+   * test or screen showed it: `return=representation` makes PostgREST write INSERT ... RETURNING,
+   * RETURNING is a read, and a visitor has no select policy on this table by design. Every
+   * submission failed. `supabase/verify.sql` is what finally said so.
+   */
+  it('does not ask for the row back, because a visitor may not read this table', async () => {
+    const doFetch = respondWith([])
+    await withSupabaseWrites(createMockApi(), config, doFetch).contact.send(contact)
+    expect(callAt(doFetch).headers.Prefer).toBe('return=minimal')
+  })
+
+  /*
+   * The flag used to be dropped on the way out: the form set it, the insert did not send it,
+   * and a request to take down a photograph of somebody's child arrived in the committee's
+   * inbox indistinguishable from a question about parking. Nothing on any screen showed it —
+   * the takedown notice looked sent, and the promise behind it was three days.
+   */
+  it('carries the takedown flag through to the row, rather than dropping it', async () => {
+    const takedown = { ...contact, kind: 'photo' as const, subject: 'Please take down a photograph' }
+    const doFetch = respondWith([])
+
+    await withSupabaseWrites(createMockApi(), config, doFetch).contact.send(takedown)
+
+    expect(callAt(doFetch).body.kind).toBe('photo')
   })
 
   it('validates before posting and explains failures in plain words', async () => {

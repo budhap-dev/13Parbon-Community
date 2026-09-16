@@ -70,8 +70,17 @@ export function DashboardPage() {
                   </span>
                 </div>
                 <p className={`${styles.muted} ${styles.tiny}`} style={{ marginTop: 8 }}>
-                  {household.membership.status === 'active' ? 'Runs to ' : 'Ran out '}
-                  {formatDateWithYear(household.membership.paidTo)}.
+                  {household.membership.paidTo ? (
+                    <>
+                      {household.membership.status === 'active' ? 'Runs to ' : 'Ran out '}
+                      {formatDateWithYear(household.membership.paidTo)}.
+                    </>
+                  ) : (
+                    // The status column defaults to active and the date column has no default,
+                    // so every household the committee writes down arrives in exactly this
+                    // state. Saying so beats a date nobody set, and beats taking the page down.
+                    'No renewal date recorded yet.'
+                  )}
                 </p>
               </div>
             </section>

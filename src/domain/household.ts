@@ -4,8 +4,17 @@ export type MembershipStatus = 'active' | 'lapsed'
 
 export type Membership = {
   status: MembershipStatus
-  /** ISO 8601 date the current year runs to. */
-  paidTo: string
+  /**
+   * ISO 8601 date the current year runs to, or null when nobody has recorded one.
+   *
+   * Null rather than an empty string, which is what this was. The column is nullable and the
+   * status column defaults to `active`, so a household the committee has just written down is
+   * genuinely active with no renewal date — and an empty string is a value that satisfies
+   * `string`, passes every type check, and throws `RangeError: Invalid time value` the moment
+   * something formats it. Two of the three places that read this remembered to guard; the
+   * dashboard did not, and took the whole portal down with it.
+   */
+  paidTo: string | null
 }
 
 export type Person = {

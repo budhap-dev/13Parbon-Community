@@ -1,15 +1,22 @@
 import { withAuditTrail } from './audit'
 import { createMockApi } from './mock'
 import { readSupabaseConfig, withSupabaseWrites } from './supabase'
+import { withSupabasePortal } from './supabase/portal'
 import type { ApiClient } from './types'
 
 /**
- * The client the app runs on. Content comes from fixtures until the admin portal
- * exists; submissions go to Supabase as soon as the two environment variables are set,
- * and until then `delivers` is false so the forms offer email instead.
+ * The client the app runs on.
+ *
+ * With no project configured it is fixtures throughout, and `delivers` is false so the contact
+ * form offers an email address rather than pretending a message was sent. With one, the portal
+ * and the contact form are real and the rest — events, news, the gallery — is still fixtures,
+ * because those have no tables yet.
+ *
+ * The audit wrapper goes outermost, so a write is recorded whichever layer ends up handling it.
  */
 export function createApi(env: Record<string, string | undefined> = import.meta.env): ApiClient {
   const base = createMockApi()
   const config = readSupabaseConfig(env)
-  return withAuditTrail(config ? withSupabaseWrites(base, config) : base)
+  if (!config) return withAuditTrail(base)
+  return withAuditTrail(withSupabasePortal(withSupabaseWrites(base, config), config))
 }

@@ -1,7 +1,7 @@
 import type { Event, EventDraft } from '@/domain/event'
 import type { Festival } from '@/domain/festival'
 import type { Album, AlbumDraft, AlbumWithMedia, Media } from '@/domain/gallery'
-import type { ContactInput, ContactMessage } from '@/domain/contact'
+import type { ContactInput, ContactMessage, ContactReceipt } from '@/domain/contact'
 import type { CommunityDocument, SignInAttempt } from '@/domain/document'
 import type { DirectoryEntry, Household, HouseholdDraft, Viewer } from '@/domain/household'
 import type { AttendanceDraft, EventAttendance } from '@/domain/attendance'
@@ -121,8 +121,13 @@ export interface ApiClient {
     removeAnnouncement(id: string, viewer: Viewer): Promise<void>
   }
   contact: {
-    /** Sends a message to the committee. Rejects with an Error when the input is invalid. */
-    send(input: ContactInput): Promise<ContactMessage>
+    /**
+     * Sends a message to the committee. Rejects with an Error when the input is invalid.
+     *
+     * Returns a receipt, not the stored row: the public website cannot read this table back,
+     * so there is no row to return. See `ContactReceipt`.
+     */
+    send(input: ContactInput): Promise<ContactReceipt>
     /** The committee's inbox, newest first. Empty for anybody who is not an admin. */
     listMessages(viewer: Viewer): Promise<ContactMessage[]>
     /**

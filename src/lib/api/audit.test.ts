@@ -131,7 +131,9 @@ describe('the audit trail', () => {
     await a.contact.markHandled(message.id, admin)
 
     const [entry] = await a.audit.list(admin)
-    expect(entry.changes.handledBy).toEqual({ from: undefined, to: 'hh-chatterjee' })
+    // The name rather than the id: this is what the inbox prints, and the trail should record
+    // what a reader would have seen. Who did it is kept separately, as `actorHouseholdId`.
+    expect(entry.changes.handledBy).toEqual({ from: undefined, to: 'The Chatterjees' })
   })
 
   it('names who did it', async () => {

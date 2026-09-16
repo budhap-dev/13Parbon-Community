@@ -299,12 +299,38 @@ create policy "admins resolve sign-in attempts"
 -- nobody can read it back. The committee has been reading it in the Supabase table editor.
 -- Now that there are admins, they can read it in their own back office.
 
+-- schema.sql built this table before there was an inbox screen to read it, so it records
+-- neither what a message is about nor what was done about it. The columns are added here
+-- rather than there because `create table if not exists` does nothing to a table that
+-- already exists, and this file is the one that gets re-run.
+alter table portal.contact_messages
+  add column if not exists kind text not null default 'general',
+  add column if not exists handled_note text;
+
+alter table portal.contact_messages drop constraint if exists contact_messages_kind_check;
+alter table portal.contact_messages
+  add constraint contact_messages_kind_check check (kind in ('general', 'photo'));
+
+-- The one promise on this site with a person waiting behind it, enforced where it cannot be
+-- argued with. A takedown cannot be marked dealt with unless somebody wrote down what happened
+-- to the photograph: "handled" on its own does not say whether the picture left the bucket.
+alter table portal.contact_messages drop constraint if exists contact_messages_takedown_note_check;
+alter table portal.contact_messages
+  add constraint contact_messages_takedown_note_check
+  check (handled_by is null or kind <> 'photo' or coalesce(trim(handled_note), '') <> '');
+
 grant select, update on portal.contact_messages to authenticated;
 
 -- And the visitor keeps the one thing they had: schema.sql relies on Supabase's default
 -- privileges for this, which is the fragility described above. Said out loud, the public
 -- website cannot lose its only way of reaching the committee to a settings change.
-grant insert on portal.contact_messages to anon;
+--
+-- Named columns rather than the whole table. With a blanket grant, and an insert policy that
+-- has to stay `with check (true)` because a visitor is anonymous by definition, nothing stopped
+-- a stranger posting a message with `handled_by` already filled in — which is a message that
+-- arrives in the inbox looking like one the committee had dealt with, and is never read.
+revoke insert on portal.contact_messages from anon;
+grant insert (name, email, subject, message, kind) on portal.contact_messages to anon;
 
 drop policy if exists "admins read contact messages" on portal.contact_messages;
 create policy "admins read contact messages"
