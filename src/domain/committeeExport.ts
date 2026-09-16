@@ -21,7 +21,6 @@ export const COMMITTEE_COLUMNS = [
   'Membership',
   'Paid to',
   'Role',
-  'In directory',
 ] as const
 
 /**
@@ -56,7 +55,6 @@ export function committeeCsv(households: Household[]): string {
         h.membership.status === 'active' ? 'Active' : 'Lapsed',
         h.membership.paidTo || '',
         h.role === 'admin' ? 'Committee' : 'Member',
-        h.listedInDirectory ? 'Yes' : 'No',
       ]
         .map(field)
         .join(','),

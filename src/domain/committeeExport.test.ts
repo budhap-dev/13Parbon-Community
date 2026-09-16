@@ -18,9 +18,6 @@ const base: Household = {
   memberSince: '2024-04-01',
   membership: { status: 'active', paidTo: '2027-03-31' },
   role: 'member',
-  listedInDirectory: true,
-  shareEmail: true,
-  sharePhone: false,
 }
 
 describe('the committee list', () => {

@@ -104,15 +104,6 @@ export function useHouseholds() {
   })
 }
 
-export function useDirectory() {
-  const api = useApi()
-  const viewer = useViewer()
-  return useQuery({
-    queryKey: ['portal', 'directory', asks(viewer)],
-    queryFn: () => api.portal.listDirectory(viewer),
-  })
-}
-
 export function useDocuments() {
   const api = useApi()
   const viewer = useViewer()
@@ -155,9 +146,19 @@ export function useMarkMessageHandled() {
   })
 }
 
+export function useDeleteMessage() {
+  const api = useApi()
+  const viewer = useViewer()
+  const queries = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => api.contact.deleteMessage(id, viewer),
+    onSuccess: () => queries.invalidateQueries({ queryKey: ['contact', 'messages'] }),
+  })
+}
+
 /**
  * Inviting a household, and saving one. Both invalidate the whole portal tree rather than one
- * key: a household appears in the directory, in the committee's list, in its own page and in
+ * key: a household appears in the committee's list, in its own page and in
  * the counts on the overview, and a write that refreshed only the screen it was made from
  * would leave the others quietly stale.
  */

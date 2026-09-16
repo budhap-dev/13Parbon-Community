@@ -69,14 +69,6 @@ export function DownloadExport({
           }`}
         />
         <Line label="Role" value={household.role === 'admin' ? 'Committee' : 'Member'} />
-        <Line
-          label="In the directory"
-          value={
-            household.listedInDirectory
-              ? `Yes — showing ${[household.shareEmail && 'email', household.sharePhone && 'phone'].filter(Boolean).join(' and ') || 'name only'}`
-              : 'No'
-          }
-        />
       </dl>
 
       <Group title={`People (${household.people.length})`}>

@@ -17,7 +17,6 @@ import { createMockApi } from './index'
 
 const visitor: Viewer = null
 const member: Viewer = { householdId: 'hh-sen', role: 'member' }
-const otherMember: Viewer = { householdId: 'hh-ghosh', role: 'member' }
 const admin: Viewer = { householdId: 'hh-chatterjee', role: 'admin' }
 
 const api = () => createMockApi()
@@ -26,7 +25,6 @@ describe('a visitor', () => {
   it('reaches nothing behind the sign-in', async () => {
     const a = api()
     expect(await a.portal.listHouseholds(visitor)).toEqual([])
-    expect(await a.portal.listDirectory(visitor)).toEqual([])
     expect(await a.portal.listDocuments(visitor)).toEqual([])
     expect(await a.portal.listSignInAttempts(visitor)).toEqual([])
     expect(await a.contact.listMessages(visitor)).toEqual([])
@@ -74,42 +72,6 @@ describe('a member', () => {
 
   it('reads the documents library', async () => {
     expect((await api().portal.listDocuments(member)).length).toBeGreaterThan(0)
-  })
-})
-
-describe('the directory', () => {
-  it('carries no name of any person, ever', async () => {
-    const entries = await api().portal.listDirectory(member)
-    const text = JSON.stringify(entries)
-    expect(text).not.toMatch(/Mira Sen/)
-    expect(entries.every((e) => !('people' in e))).toBe(true)
-  })
-
-  it('leaves out a household that chose not to appear', async () => {
-    const entries = await api().portal.listDirectory(member)
-    expect(entries.some((e) => e.id === 'hh-mitra')).toBe(false)
-  })
-
-  it('leaves out a household whose membership has lapsed', async () => {
-    const entries = await api().portal.listDirectory(member)
-    expect(entries.some((e) => e.id === 'hh-palit')).toBe(false)
-  })
-
-  it('shares only what each household agreed to share', async () => {
-    const entries = await api().portal.listDirectory(member)
-    const sens = entries.find((e) => e.id === 'hh-sen')
-    // The Sens share an address and withhold a number, and that is what arrives.
-    expect(sens?.email).toBeTruthy()
-    expect(sens?.phone).toBeUndefined()
-  })
-
-  it('is closed to anybody not signed in', async () => {
-    expect(await api().portal.listDirectory(visitor)).toEqual([])
-  })
-
-  it('looks the same to every member, so nothing leaks through whose turn it is', async () => {
-    const a = api()
-    expect(await a.portal.listDirectory(member)).toEqual(await a.portal.listDirectory(otherMember))
   })
 })
 
@@ -165,17 +127,13 @@ describe('a member saving their own household', () => {
     email: 'rina@example.com',
     people: [{ name: 'Rina Sen', ageGroup: 'adult' }],
     interests: [],
-    listedInDirectory: true,
-    shareEmail: true,
-    sharePhone: false,
     ...over,
   })
 
   it('saves what is theirs to save', async () => {
     const a = api()
-    const saved = await a.portal.updateHousehold('hh-sen', draftOf({ sharePhone: true }), member)
-    expect(saved.sharePhone).toBe(true)
-    expect(saved.contactName).toBe('Rina Sen')
+    const saved = await a.portal.updateHousehold('hh-sen', draftOf({ contactName: 'Rina Sen-Gupta' }), member)
+    expect(saved.contactName).toBe('Rina Sen-Gupta')
   })
 
   it('cannot promote itself, however the draft was put together', async () => {
@@ -244,9 +202,6 @@ describe('the committee managing households', () => {
     email: 'new@example.com',
     people: [{ name: 'A Newcomer', ageGroup: 'adult' }],
     interests: [],
-    listedInDirectory: false,
-    shareEmail: false,
-    sharePhone: false,
     googleEmail: 'newcomer@gmail.com',
     role: 'member',
     membershipStatus: 'active',
@@ -335,13 +290,6 @@ describe('erasing a household', () => {
     await a.portal.deleteHousehold('hh-sen', admin)
     // Erasing a household does not thin out the history: the counts name nobody.
     expect(await a.portal.listAttendance(admin)).toEqual(before)
-  })
-
-  it('takes them out of the directory as well', async () => {
-    const a = api()
-    await a.portal.deleteHousehold('hh-sen', admin)
-    const entries = await a.portal.listDirectory(otherMember)
-    expect(entries.some((e) => e.id === 'hh-sen')).toBe(false)
   })
 
   it('frees the Google address, so they can be invited back', async () => {

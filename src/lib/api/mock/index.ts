@@ -7,7 +7,7 @@ import { uniqueSlug } from '@/domain/slug'
 import { inOrder, pinnedCover, type AlbumDraft, type AlbumWithMedia } from '@/domain/gallery'
 import { validateSettings, type SiteSettings } from '@/domain/settings'
 import { defaultSettings } from '@/app/defaults'
-import { directoryEntry, isAdmin, isMember, isValidHousehold, type Household, type HouseholdDraft, type Person, type Viewer } from '@/domain/household'
+import { isAdmin, isMember, isValidHousehold, type Household, type HouseholdDraft, type Person, type Viewer } from '@/domain/household'
 import { ATTENDANCE_NOTE, CONTACT_NOTE, PHOTOGRAPH_NOTE, type HouseholdExport } from '@/domain/subjectAccess'
 import type { ApiClient } from '../types'
 import { buildFixtures } from './fixtures'
@@ -59,9 +59,6 @@ function shapeOf(draft: HouseholdDraft) {
     ...(draft.phone?.trim() ? { phone: draft.phone.trim() } : { phone: undefined }),
     people,
     interests: draft.interests,
-    listedInDirectory: draft.listedInDirectory,
-    shareEmail: draft.shareEmail,
-    sharePhone: draft.sharePhone,
   }
 }
 
@@ -509,6 +506,20 @@ export function createMockApi({ now = () => new Date(), latencyMs = 0, events }:
         if (note?.trim()) message.handledNote = note.trim()
         return delay(message, latencyMs)
       },
+      deleteMessage: (id, viewer) => {
+        if (!isAdmin(viewer)) return Promise.reject(new NotAllowed('only the committee can do that'))
+        // Both lists, because a message sent while the app has been open is in `sentMessages`
+        // and one that was always there is in the fixtures. Missing from both is the same
+        // answer as never having existed.
+        for (const list of [portal.messages, sentMessages]) {
+          const at = list.findIndex((m) => m.id === id)
+          if (at !== -1) {
+            list.splice(at, 1)
+            return delay(undefined, latencyMs)
+          }
+        }
+        return Promise.reject(new NotAllowed('no such message'))
+      },
     },
     // Every rule below has a policy in supabase/portal.sql that says the same thing, and a
     // block in supabase/verify.sql that proves the database agrees. Three enforcers, one set
@@ -529,19 +540,6 @@ export function createMockApi({ now = () => new Date(), latencyMs = 0, events }:
       listHouseholds: (viewer) =>
         delay(
           isAdmin(viewer) ? [...portal.households].sort((a, b) => a.name.localeCompare(b.name)) : [],
-          latencyMs,
-        ),
-      // Masked here rather than in the page. `directoryEntry` drops everything the household
-      // did not agree to share, and every name of every person in it.
-      listDirectory: (viewer) =>
-        delay(
-          isMember(viewer)
-            ? portal.households
-                .filter((h) => h.membership.status === 'active')
-                .map(directoryEntry)
-                .filter((entry) => entry !== null)
-                .sort((a, b) => a.name.localeCompare(b.name))
-            : [],
           latencyMs,
         ),
       listDocuments: (viewer) =>

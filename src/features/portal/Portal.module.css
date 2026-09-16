@@ -450,3 +450,14 @@
     gap: 10px;
   }
 }
+
+/* A link inside a table cell or a paragraph: underlined, because colour alone is not a signal. */
+.inlineLink {
+  color: var(--color-fg);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.inlineLink:hover {
+  color: var(--color-accent);
+}

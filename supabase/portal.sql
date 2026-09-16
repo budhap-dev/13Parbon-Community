@@ -15,7 +15,7 @@
 --
 -- Three rules are worth reading twice, because they are the ones that would hurt:
 --   1. A child's name never leaves their own household. `people` is readable only by the
---      household itself, and the directory is a view that cannot reach it.
+--      household itself, and no other member can reach it at all.
 --   2. A member cannot make themselves an admin. A trigger rejects it rather than a policy,
 --      because row level security sees rows, not which column changed.
 --   3. `anon` reaches none of this. Only a signed-in account matched to a household does.
@@ -62,9 +62,6 @@ create table if not exists portal.households (
   membership_paid_to date,
   role text not null default 'member' check (role in ('member', 'admin')),
   -- Three separate choices, because agreeing to be listed is not agreeing to share a phone number.
-  listed_in_directory boolean not null default false,
-  share_email boolean not null default false,
-  share_phone boolean not null default false,
   created_at timestamptz not null default now()
 );
 
@@ -79,8 +76,7 @@ create unique index if not exists households_google_email_idx
 -- ---------------------------------------------------------------------------
 -- People in a household
 -- ---------------------------------------------------------------------------
--- Never readable by another member, at any sharing setting. The directory shows a count,
--- never a name, so a child's name stays inside their own household.
+-- Never readable by another member. A child's name stays inside their own household.
 
 create table if not exists portal.people (
   id uuid primary key default gen_random_uuid(),
@@ -293,6 +289,138 @@ create policy "admins resolve sign-in attempts"
 
 
 -- ---------------------------------------------------------------------------
+-- What the committee writes: news, notices and newsletters
+-- ---------------------------------------------------------------------------
+-- Public content, so the read policies are the unusual ones here: a visitor with no session has
+-- to see what has been published, and only that. Drafts and notices that have expired or have
+-- not started are the committee's business, and RLS is what keeps them so — not the query the
+-- browser happens to send.
+
+create table if not exists portal.news_posts (
+  id uuid primary key default gen_random_uuid(),
+  slug text not null unique,
+  title text not null check (char_length(trim(title)) between 1 and 200),
+  excerpt text not null,
+  body text not null,
+  tags text[] not null default '{}'::text[],
+  author text not null,
+  -- When it first went up. Null means it has never been published: a draft.
+  --
+  -- Kept when a piece is taken down rather than cleared, because clearing it loses the only
+  -- record of when the piece belongs to — a round-up of April that came down for a week would
+  -- come back dated today and sit at the top of the list as though it were new.
+  published_at timestamptz,
+  -- Taken down, but still written, so it can go back up and so there is an answer to who took
+  -- it down and when.
+  hidden boolean not null default false,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists news_posts_published_idx on portal.news_posts (published_at desc);
+
+alter table portal.news_posts enable row level security;
+
+grant select on portal.news_posts to anon, authenticated;
+grant insert, update on portal.news_posts to authenticated;
+
+-- Two select policies, which RLS ORs together: everybody sees what is up, and the committee
+-- sees everything. Written as two rather than one `or` so that removing the second cannot
+-- quietly take the public site down with it.
+drop policy if exists "anybody reads a published post" on portal.news_posts;
+create policy "anybody reads a published post"
+  on portal.news_posts for select to anon, authenticated
+  using (published_at is not null and not hidden);
+
+drop policy if exists "admins read every post" on portal.news_posts;
+create policy "admins read every post"
+  on portal.news_posts for select to authenticated using (portal.is_admin());
+
+drop policy if exists "admins write posts" on portal.news_posts;
+create policy "admins write posts"
+  on portal.news_posts for insert to authenticated with check (portal.is_admin());
+
+drop policy if exists "admins edit posts" on portal.news_posts;
+create policy "admins edit posts"
+  on portal.news_posts for update to authenticated
+  using (portal.is_admin()) with check (portal.is_admin());
+
+
+-- A notice on a noticeboard: short, dated, and gone once it stops being true.
+create table if not exists portal.announcements (
+  id uuid primary key default gen_random_uuid(),
+  title text not null check (char_length(trim(title)) between 1 and 200),
+  -- The app refuses an essay at 500 characters, because the story is firm that this does not
+  -- compete with WhatsApp for attention. Said here too, so nothing else can fill it with one.
+  body text not null check (char_length(trim(body)) between 1 and 500),
+  pinned boolean not null default false,
+  -- 'public' or 'members', and no third option: a notice is a thing on a noticeboard, and there
+  -- is no such thing as an announcement only the committee can read. The home page has sections
+  -- that can be committee-only while something is got ready; this is not one of them.
+  audience text not null default 'public' check (audience in ('public', 'members')),
+  publish_at timestamptz not null default now(),
+  expires_at timestamptz,
+  link_label text,
+  link_to text,
+  created_at timestamptz not null default now()
+);
+
+alter table portal.announcements enable row level security;
+
+grant select on portal.announcements to anon, authenticated;
+grant insert, update, delete on portal.announcements to authenticated;
+
+drop policy if exists "anybody reads a live public notice" on portal.announcements;
+create policy "anybody reads a live public notice"
+  on portal.announcements for select to anon, authenticated
+  using (
+    audience = 'public'
+    and publish_at <= now()
+    and (expires_at is null or expires_at > now())
+  );
+
+drop policy if exists "admins read every notice" on portal.announcements;
+create policy "admins read every notice"
+  on portal.announcements for select to authenticated using (portal.is_admin());
+
+drop policy if exists "admins post notices" on portal.announcements;
+create policy "admins post notices"
+  on portal.announcements for insert to authenticated with check (portal.is_admin());
+
+drop policy if exists "admins edit notices" on portal.announcements;
+create policy "admins edit notices"
+  on portal.announcements for update to authenticated
+  using (portal.is_admin()) with check (portal.is_admin());
+
+-- Really gone, unlike a post. A notice has no version worth keeping once it stops being true.
+drop policy if exists "admins take notices down" on portal.announcements;
+create policy "admins take notices down"
+  on portal.announcements for delete to authenticated using (portal.is_admin());
+
+
+create table if not exists portal.newsletters (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  file_url text not null,
+  issued_on date not null,
+  created_at timestamptz not null default now()
+);
+
+alter table portal.newsletters enable row level security;
+
+grant select on portal.newsletters to anon, authenticated;
+grant insert, update, delete on portal.newsletters to authenticated;
+
+drop policy if exists "anybody reads the newsletters" on portal.newsletters;
+create policy "anybody reads the newsletters"
+  on portal.newsletters for select to anon, authenticated using (true);
+
+drop policy if exists "admins manage the newsletters" on portal.newsletters;
+create policy "admins manage the newsletters"
+  on portal.newsletters for all to authenticated
+  using (portal.is_admin()) with check (portal.is_admin());
+
+
+-- ---------------------------------------------------------------------------
 -- The site's own switches
 -- ---------------------------------------------------------------------------
 -- What the committee can change about the public site without a developer: which sections are
@@ -363,7 +491,7 @@ alter table portal.contact_messages
   add constraint contact_messages_takedown_note_check
   check (handled_by is null or kind <> 'photo' or coalesce(trim(handled_note), '') <> '');
 
-grant select, update on portal.contact_messages to authenticated;
+grant select, update, delete on portal.contact_messages to authenticated;
 
 -- And the visitor keeps the one thing they had: schema.sql relies on Supabase's default
 -- privileges for this, which is the fragility described above. Said out loud, the public
@@ -384,6 +512,13 @@ drop policy if exists "admins handle contact messages" on portal.contact_message
 create policy "admins handle contact messages"
   on portal.contact_messages for update to authenticated
   using (portal.is_admin()) with check (portal.is_admin());
+
+-- Really gone, and the trail is the only thing left of it. A message is the sole record of
+-- something somebody asked for, so the row that says who deleted it and when is not a nicety:
+-- the trigger below is attached for delete as well as update for exactly this.
+drop policy if exists "admins delete contact messages" on portal.contact_messages;
+create policy "admins delete contact messages"
+  on portal.contact_messages for delete to authenticated using (portal.is_admin());
 
 
 -- ===========================================================================
@@ -431,43 +566,22 @@ create trigger households_guard_protected_columns
 
 
 -- ===========================================================================
--- 5. The directory
+-- 5. The directory — removed
 -- ===========================================================================
--- A view rather than a policy, because the choices are per column: a household may agree to
--- be listed while keeping its phone number to itself, and row level security cannot express
--- that. The view runs with the owner's rights and so reaches past the household policies to
--- assemble the listing; every restriction it needs is therefore written into the query,
--- including the check that the caller is a member at all.
+-- There was a `portal.directory` view here: households that had opted in, with only the
+-- columns each agreed to share. The committee decided against having one at all, so the view
+-- and the three columns that fed it are dropped rather than left behind switched off. A column
+-- nothing reads is a column somebody later assumes means something.
 --
--- Supabase's linter flags a view like this, and it is right to: a definer view is a hole in
--- the shape of whatever its author forgot. What makes it the correct tool anyway is that the
--- alternative leaks more. A policy admitting members to listed households would expose the
--- whole row — every column, `phone` included — to anyone querying `households` directly,
--- and this view's masking would then be decoration. So: rights held here, conditions written
--- out, granted to signed-in accounts only, and exercised by verify.sql.
+-- Written as drops rather than simply deleted from this file, because this file is re-run
+-- against a database that already has them.
 
-create or replace view portal.directory
-  with (security_invoker = false)
-as
-  select
-    h.id,
-    h.name,
-    h.contact_name,
-    (select count(*) from portal.people p where p.household_id = h.id and p.age_group = 'adult') as adults,
-    (select count(*) from portal.people p where p.household_id = h.id and p.age_group = 'child') as children,
-    case when h.share_email then h.email end as email,
-    case when h.share_phone then h.phone end as phone,
-    h.interests
-  from portal.households h
-  where h.listed_in_directory
-    and h.membership_status = 'active'
-    and portal.current_household_id() is not null;
+drop view if exists portal.directory;
 
-comment on view portal.directory is
-  'Households that chose to appear, with only the details each agreed to share. No names of people, ever.';
-
-revoke all on portal.directory from anon, public;
-grant select on portal.directory to authenticated;
+alter table portal.households
+  drop column if exists listed_in_directory,
+  drop column if exists share_email,
+  drop column if exists share_phone;
 
 
 -- ===========================================================================
@@ -638,6 +752,14 @@ create trigger record_change after insert or update or delete on portal.document
 -- saying a visitor submitted the contact form, which the table already says.
 drop trigger if exists record_change on portal.contact_messages;
 create trigger record_change after update or delete on portal.contact_messages
+  for each row execute function portal.record_change();
+
+drop trigger if exists record_change on portal.news_posts;
+create trigger record_change after insert or update on portal.news_posts
+  for each row execute function portal.record_change();
+
+drop trigger if exists record_change on portal.announcements;
+create trigger record_change after insert or update or delete on portal.announcements
   for each row execute function portal.record_change();
 
 -- Turning the gallery off takes every photograph off the public site at once, and changing the

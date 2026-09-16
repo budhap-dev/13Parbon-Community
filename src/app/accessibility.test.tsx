@@ -36,7 +36,7 @@ describe('the public pages', () => {
 })
 
 describe('the member portal', () => {
-  for (const path of ['/portal', '/portal/household', '/portal/directory', '/portal/documents']) {
+  for (const path of ['/portal', '/portal/household', '/portal/documents']) {
     it(`${path} has no automatic violations`, () => check(path, member))
   }
 })

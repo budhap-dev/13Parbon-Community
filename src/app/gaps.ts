@@ -1,6 +1,7 @@
 import { about } from './about'
 import { privacy } from './privacy'
 import { isPlaceholder, site } from './site'
+import type { SiteSettings } from '@/domain/settings'
 
 /**
  * What the committee has not filled in yet, counted from the content itself.
@@ -26,9 +27,19 @@ function findGaps(value: unknown, path: string[] = []): string[] {
   return []
 }
 
-export function gapsNow(): Gap[] {
+/**
+ * Pass the live settings, or the count is wrong in the direction that matters.
+ *
+ * Seven of these strings are the committee's to edit from /admin/content, and what a visitor
+ * reads is the saved value, not the one in `site.ts`. Scanning only the file meant a line the
+ * committee had filled in and saved was still counted as a gap — the screen announcing work
+ * that was already done, which is the same stale number this file was written to get rid of,
+ * pointing the other way.
+ */
+export function gapsNow(settings?: Pick<SiteSettings, 'text'>): Gap[] {
+  const homePage = settings ? { ...site, ...settings.text } : site
   return [
-    { page: 'Home page', where: findGaps(site) },
+    { page: 'Home page', where: findGaps(homePage) },
     { page: 'About us', where: findGaps(about) },
     { page: 'Privacy', where: findGaps(privacy) },
   ]

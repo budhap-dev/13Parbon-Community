@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import type { Household, HouseholdDraft, Viewer } from '@/domain/household'
@@ -19,9 +19,6 @@ const household: Household = {
   memberSince: '2024-04-01',
   membership: { status: 'active', paidTo: '2027-03-31' },
   role: 'member',
-  listedInDirectory: true,
-  shareEmail: true,
-  sharePhone: false,
 }
 
 const member: Viewer = { householdId: 'hh-sen', role: 'member' }
@@ -54,8 +51,6 @@ describe('what each person is shown', () => {
   it('still lets a member edit what is theirs', () => {
     setup(member)
     expect(screen.getByLabelText('Household name')).toHaveValue('The Sens')
-    expect(screen.getByLabelText('Appear in the member directory')).toBeChecked()
-    expect(screen.getByLabelText('Show our phone number')).not.toBeChecked()
   })
 })
 
@@ -181,26 +176,9 @@ describe('saving', () => {
     expect(onSave.mock.calls[0][0].googleEmail).toBeNull()
   })
 
-  it('carries the privacy choices back as they were left', async () => {
-    const { onSave } = setup(member)
-    await userEvent.click(screen.getByLabelText('Show our phone number'))
-    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }))
-
-    const draft = onSave.mock.calls[0][0]
-    expect(draft.sharePhone).toBe(true)
-    expect(draft.listedInDirectory).toBe(true)
-  })
-
   it('says "Add the household" when there is not one yet', () => {
     setup(admin, true)
     expect(screen.getByRole('button', { name: 'Add the household' })).toBeInTheDocument()
   })
 })
 
-describe('the privacy choices', () => {
-  it('say plainly that they belong to the household and not the committee', () => {
-    setup(member)
-    const section = screen.getByRole('group', { name: 'What other members can see' })
-    expect(within(section).getByText(/the household’s to make/)).toBeInTheDocument()
-  })
-})

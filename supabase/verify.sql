@@ -27,11 +27,11 @@ begin;
 -- Seed, as the owner
 -- ---------------------------------------------------------------------------
 
-insert into portal.households (id, name, contact_name, email, google_email, role, listed_in_directory, share_email, share_phone, phone)
+insert into portal.households (id, name, contact_name, email, google_email, role, phone)
 values
-  ('11111111-1111-1111-1111-111111111111', 'The Test Members', 'A Member', 'member@example.com', 'member@example.com', 'member', true, true, false, '07700 900001'),
-  ('22222222-2222-2222-2222-222222222222', 'The Test Admins', 'An Admin', 'admin@example.com', 'admin@example.com', 'admin', false, false, false, '07700 900002'),
-  ('33333333-3333-3333-3333-333333333333', 'The Test Quiet', 'A Quiet One', 'quiet@example.com', 'quiet@example.com', 'member', false, true, true, '07700 900003');
+  ('11111111-1111-1111-1111-111111111111', 'The Test Members', 'A Member', 'member@example.com', 'member@example.com', 'member', '07700 900001'),
+  ('22222222-2222-2222-2222-222222222222', 'The Test Admins', 'An Admin', 'admin@example.com', 'admin@example.com', 'admin', '07700 900002'),
+  ('33333333-3333-3333-3333-333333333333', 'The Test Quiet', 'A Quiet One', 'quiet@example.com', 'quiet@example.com', 'member', '07700 900003');
 
 insert into portal.people (household_id, name, age_group, age)
 values
@@ -40,6 +40,22 @@ values
 
 insert into portal.documents (id, title, category, file_url)
 values ('44444444-4444-4444-4444-444444444444', 'Test Minutes', 'minutes', 'https://example.com/m.pdf');
+
+-- Public content, seeded as the owner: one of each thing a visitor should see and one of each
+-- they should not.
+insert into portal.news_posts (slug, title, excerpt, body, author, published_at, hidden)
+values
+  ('a-published-piece', 'A published piece', 'Up on the website.', 'The body of it.', 'Someone', now() - interval '1 day', false),
+  ('a-draft', 'A draft', 'Not finished.', 'Half a thought.', 'Someone', null, false),
+  ('taken-down', 'Taken down', 'Was up, is not.', 'The body of it.', 'Someone', now() - interval '30 days', true)
+on conflict (slug) do nothing;
+
+insert into portal.announcements (title, body, pinned, audience, publish_at, expires_at)
+values
+  ('Doors at six', 'The hall opens at six on Saturday.', false, 'public', now() - interval '1 hour', null),
+  ('Not yet', 'This one has not started.', false, 'public', now() + interval '7 days', null),
+  ('Long over', 'This one has expired.', false, 'public', now() - interval '30 days', now() - interval '7 days'),
+  ('Members only', 'For the members, not the public.', false, 'members', now() - interval '1 hour', null);
 
 insert into portal.site_settings (id, value)
 values (true, '{"showNews": true}'::jsonb)
@@ -141,7 +157,7 @@ begin
 end $$;
 
 -- But they may still edit what is theirs to edit.
-update portal.households set contact_name = 'A Renamed Member', share_phone = true
+update portal.households set contact_name = 'A Renamed Member'
   where id = '11111111-1111-1111-1111-111111111111';
 
 -- Writes aimed at somebody else's row do not raise. They quietly match nothing, and that is
@@ -203,39 +219,6 @@ begin
   end;
 end $$;
 
--- The directory shows what was agreed, and nothing else.
-do $$
-declare
-  listed integer;
-  shared_email text;
-  shared_phone text;
-begin
-  select count(*) into listed from portal.directory;
-  if listed <> 1 then
-    raise exception 'FAIL: directory showed % households, expected only the one that opted in', listed;
-  end if;
-
-  select email, phone into shared_email, shared_phone
-    from portal.directory where id = '11111111-1111-1111-1111-111111111111';
-  if shared_email is null then
-    raise exception 'FAIL: an address the household agreed to share was hidden';
-  end if;
-
-  if exists (select 1 from portal.directory where id = '33333333-3333-3333-3333-333333333333') then
-    raise exception 'FAIL: a household that opted out appeared in the directory';
-  end if;
-end $$;
-
--- No name of any person is reachable through the directory.
-do $$
-begin
-  if exists (
-    select 1 from portal.directory d
-    where d.name like '%Test Child%' or d.contact_name like '%Test Child%'
-  ) then
-    raise exception 'FAIL: a child''s name is reachable through the directory';
-  end if;
-end $$;
 
 
 -- ---------------------------------------------------------------------------
@@ -257,7 +240,7 @@ begin
   end if;
   if not exists (select 1 from portal.households
                  where id = '11111111-1111-1111-1111-111111111111'
-                   and contact_name = 'A Renamed Member' and share_phone) then
+                   and contact_name = 'A Renamed Member') then
     raise exception 'FAIL: a member could not edit what is theirs to edit';
   end if;
 end $$;
@@ -291,11 +274,6 @@ begin
     raise exception 'FAIL: an unknown account can see % people', visible;
   end if;
 
-  select count(*) into visible from portal.directory;
-  if visible <> 0 then
-    raise exception 'FAIL: an unknown account could read the directory';
-  end if;
-
   select count(*) into visible from portal.documents;
   if visible <> 0 then
     raise exception 'FAIL: an unknown account could read the documents library';
@@ -326,13 +304,6 @@ begin
   begin
     select count(*) into visible from portal.people;
     raise exception 'FAIL: an unauthenticated request read the people table';
-  exception when insufficient_privilege then
-    null;
-  end;
-
-  begin
-    select count(*) into visible from portal.directory;
-    raise exception 'FAIL: an unauthenticated request read the directory';
   exception when insufficient_privilege then
     null;
   end;
@@ -413,6 +384,44 @@ values ('A Fourth Visitor', 'fourth@example.com', 'Just asking', 'Long enough to
 insert into portal.contact_messages (name, email, subject, message, kind)
 values ('A Parent', 'parent@example.com', 'Please take a photograph down', 'The one of my daughter on the Boishakhi page.', 'photo');
 
+-- What a visitor may read of the committee's writing: what is up, and nothing else. This is
+-- the policy doing the work, not the query — the app asks for every row and is given the
+-- published ones, so a `select` that forgot to filter still cannot leak a draft.
+do $$
+declare
+  visible integer;
+begin
+  select count(*) into visible from portal.news_posts;
+  if visible <> 1 then
+    raise exception 'FAIL: a visitor can see % news posts; only the published one should be readable', visible;
+  end if;
+
+  if not exists (select 1 from portal.news_posts where slug = 'a-published-piece') then
+    raise exception 'FAIL: a visitor cannot read a published piece';
+  end if;
+
+  select count(*) into visible from portal.announcements;
+  if visible <> 1 then
+    raise exception 'FAIL: a visitor can see % notices; only the live public one should be readable', visible;
+  end if;
+
+  if not exists (select 1 from portal.announcements where title = 'Doors at six') then
+    raise exception 'FAIL: a visitor cannot read a live public notice';
+  end if;
+end $$;
+
+-- And may write none of it.
+do $$
+begin
+  begin
+    insert into portal.news_posts (slug, title, excerpt, body, author)
+    values ('a-visitors-piece', 'A visitor''s piece', 'Nope.', 'Nope.', 'A Visitor');
+    raise exception 'FAIL: a visitor can publish on the website';
+  exception when insufficient_privilege then
+    null;
+  end;
+end $$;
+
 -- The public site asks this table whether the gallery and the news pages exist at all, so a
 -- visitor with no session has to be able to read it. If this ever fails, the live site loses
 -- every switch the committee has thrown and silently falls back to what the code says.
@@ -479,7 +488,13 @@ begin
 
   select count(*) into visible from portal.contact_messages;
   if visible < 1 then
-    raise exception 'FAIL: an admin cannot read the committee''s inbox';
+    raise exception 'FAIL: an admin cannot read the committee''s inbox, or a member just emptied it';
+  end if;
+
+  -- The member's `delete from portal.contact_messages` above, seen from the only side that can
+  -- see it. Four were seeded and one of those was the member's own attempt at a fifth.
+  if visible < 3 then
+    raise exception 'FAIL: a member deleted % of the committee''s messages', 4 - visible;
   end if;
 
   -- The message a visitor sent the way the app sends it, read from the side that is meant to
@@ -548,6 +563,23 @@ begin
   end if;
 end $$;
 
+-- A member emptying the committee's inbox. A blocked delete raises nothing — the policy simply
+-- matches no rows — and a member cannot read this table either, so counting the survivors here
+-- would count zero whether the delete worked or not. It is checked from the committee's side,
+-- below, where there is a role that can see what is left.
+delete from portal.contact_messages;
+
+-- A member sees what the public sees of the writing, and no drafts.
+do $$
+declare
+  visible integer;
+begin
+  select count(*) into visible from portal.news_posts;
+  if visible <> 1 then
+    raise exception 'FAIL: a member can see % news posts; a draft is the committee''s business', visible;
+  end if;
+end $$;
+
 -- An ordinary member reads the settings like anybody else and changes nothing. A blocked update
 -- raises nothing, so this is checked by looking afterwards rather than by catching.
 update portal.site_settings set value = '{"showPhotos": false}'::jsonb where id;
@@ -604,6 +636,55 @@ begin
   select count(*) into unfinished from portal.contact_messages where kind = 'photo' and handled_by is null;
   if unfinished <> 0 then
     raise exception 'FAIL: a takedown with a note could not be marked dealt with';
+  end if;
+end $$;
+
+-- The committee can delete a message, and the trail is what is left of it.
+do $$
+declare
+  doomed uuid;
+  trail integer;
+begin
+  select id into doomed from portal.contact_messages limit 1;
+  delete from portal.contact_messages where id = doomed;
+
+  if exists (select 1 from portal.contact_messages where id = doomed) then
+    raise exception 'FAIL: the committee cannot delete a message';
+  end if;
+
+  select count(*) into trail from portal.audit_log
+   where subject_kind = 'contact_messages' and action = 'delete' and subject_id = doomed::text;
+  if trail <> 1 then
+    raise exception 'FAIL: deleting a message left no line in the audit trail, and the message was the only other record of it';
+  end if;
+end $$;
+
+-- The committee sees everything it has written, drafts and taken-down pieces included, and can
+-- take a notice off the board for good.
+do $$
+declare
+  visible integer;
+begin
+  select count(*) into visible from portal.news_posts;
+  if visible < 3 then
+    raise exception 'FAIL: the committee can see only % of its own news posts', visible;
+  end if;
+
+  select count(*) into visible from portal.announcements;
+  if visible < 4 then
+    raise exception 'FAIL: the committee cannot see the notices that are not live';
+  end if;
+end $$;
+
+insert into portal.news_posts (slug, title, excerpt, body, author, published_at)
+values ('the-committee-writes', 'The committee writes', 'A piece.', 'The body of it.', 'An Admin', now());
+
+delete from portal.announcements where title = 'Long over';
+
+do $$
+begin
+  if exists (select 1 from portal.announcements where title = 'Long over') then
+    raise exception 'FAIL: the committee cannot take a notice off the board';
   end if;
 end $$;
 

@@ -7,13 +7,11 @@ import {
   peopleRows,
   toAttempt,
   toAttendance,
-  toDirectoryEntry,
   toDocument,
   toHousehold,
   toMessage,
   type AttemptRow,
   type AttendanceRow,
-  type DirectoryRow,
   type DocumentRow,
   type HouseholdRow,
   type MessageRow,
@@ -109,14 +107,6 @@ export function householdMethods(getClient: () => Promise<SupabaseClient>) {
       if (error) refuse('that household could not be removed', error)
       // The policy matched nothing, so there was nothing here to remove — as far as you know.
       if (!data) throw new NotAllowed('no such household')
-    },
-
-    listDirectory: async () => {
-      const client = await rowsOf()
-      // The view has already decided what each household agreed to share. Nothing is re-checked
-      // here: doing so would suggest the browser were the thing deciding.
-      const { data } = await table(client, 'directory').select('*').order('name')
-      return ((data ?? []) as DirectoryRow[]).map(toDirectoryEntry)
     },
 
     listDocuments: async () => {
@@ -296,6 +286,14 @@ export function inboxMethods(getClient: () => Promise<SupabaseClient>) {
       if (error) refuse('that could not be marked done', error)
       if (!data) throw new NotAllowed('no such message')
       return toMessage(data as MessageRow)
+    },
+
+    deleteMessage: async (id: string): Promise<void> => {
+      const client = await getClient()
+      const { data, error } = await table(client, 'contact_messages').delete().eq('id', id).select('id').maybeSingle()
+      if (error) refuse('only the committee can do that', error)
+      // The policy matched nothing, so there was nothing there to delete — as far as you know.
+      if (!data) throw new NotAllowed('no such message')
     },
   }
 }

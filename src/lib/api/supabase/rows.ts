@@ -22,9 +22,6 @@ export type HouseholdRow = {
   membership_status: 'active' | 'lapsed'
   membership_paid_to: string | null
   role: 'member' | 'admin'
-  listed_in_directory: boolean
-  share_email: boolean
-  share_phone: boolean
   /** From PostgREST's embedded select: `select=*,people(*)`. */
   people?: PersonRow[] | null
 }
@@ -65,9 +62,6 @@ export function toHousehold(row: HouseholdRow): Household {
     memberSince: row.member_since,
     membership: { status: row.membership_status, paidTo: row.membership_paid_to },
     role: row.role,
-    listedInDirectory: row.listed_in_directory,
-    shareEmail: row.share_email,
-    sharePhone: row.share_phone,
   }
 }
 
@@ -87,9 +81,6 @@ export function fromDraft(draft: HouseholdDraft, committee: boolean): Record<str
     email: text(draft.email),
     phone: text(draft.phone),
     interests: draft.interests,
-    listed_in_directory: draft.listedInDirectory,
-    share_email: draft.shareEmail,
-    share_phone: draft.sharePhone,
     ...(committee
       ? {
           google_email: draft.googleEmail ?? null,
@@ -115,39 +106,6 @@ export function peopleRows(householdId: string, draft: HouseholdDraft): Omit<Per
 export type DocumentRow = { id: string; title: string; category: 'minutes' | 'guidelines' | 'resources'; file_url: string; added_on: string }
 export type AttemptRow = { id: string; email: string; name: string | null; last_tried_at: string; attempts: number; resolved: boolean }
 export type AttendanceRow = { event_slug: string; held_on: string; households: number; adults: number; children: number; recorded_at: string }
-export type DirectoryRow = {
-  id: string
-  name: string
-  contact_name: string
-  adults: number
-  children: number
-  email: string | null
-  phone: string | null
-  interests: string[] | null
-}
-
-/**
- * A directory entry, as the view hands it over.
- *
- * The masking is already done — the view decides what each household agreed to share, and a
- * column it withheld arrives as null. Nothing here re-checks that, because re-checking it in
- * the browser would suggest the browser were the thing deciding.
- */
-export function toDirectoryEntry(row: DirectoryRow) {
-  const a = row.adults
-  const c = row.children
-  const size = [`${a} ${a === 1 ? 'adult' : 'adults'}`, ...(c > 0 ? [`${c} ${c === 1 ? 'child' : 'children'}`] : [])].join(', ')
-  return {
-    id: row.id,
-    name: row.name,
-    contactName: row.contact_name,
-    size,
-    ...(row.email === null ? {} : { email: row.email }),
-    ...(row.phone === null ? {} : { phone: row.phone }),
-    interests: row.interests ?? [],
-  }
-}
-
 export const toDocument = (row: DocumentRow) => ({
   id: row.id,
   title: row.title,

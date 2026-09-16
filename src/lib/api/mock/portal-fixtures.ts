@@ -6,7 +6,7 @@ import type { ContactMessage } from '@/domain/contact'
 /**
  * Sample households, registrations and documents for the portal. Enough variety to show
  * every state the screens have to handle: an admin, a lapsed household, one that has
- * never signed in, and one that keeps itself out of the directory.
+ * never signed in, and one whose membership has lapsed.
  */
 export function buildPortalFixtures() {
   const households: Household[] = [
@@ -26,9 +26,6 @@ export function buildPortalFixtures() {
       memberSince: '2024-04-01',
       membership: { status: 'active', paidTo: '2027-03-31' },
       role: 'member',
-      listedInDirectory: true,
-      shareEmail: true,
-      sharePhone: false,
     },
     {
       id: 'hh-chatterjee',
@@ -41,9 +38,6 @@ export function buildPortalFixtures() {
       memberSince: '2021-01-10',
       membership: { status: 'active', paidTo: '2027-03-31' },
       role: 'admin',
-      listedInDirectory: true,
-      shareEmail: true,
-      sharePhone: false,
     },
     {
       id: 'hh-banerjee',
@@ -61,9 +55,6 @@ export function buildPortalFixtures() {
       memberSince: '2022-03-14',
       membership: { status: 'active', paidTo: '2027-03-31' },
       role: 'admin',
-      listedInDirectory: true,
-      shareEmail: true,
-      sharePhone: false,
     },
     {
       id: 'hh-ghosh',
@@ -80,9 +71,6 @@ export function buildPortalFixtures() {
       memberSince: '2026-09-01',
       membership: { status: 'active', paidTo: '2027-03-31' },
       role: 'member',
-      listedInDirectory: true,
-      shareEmail: true,
-      sharePhone: false,
     },
     {
       id: 'hh-roy',
@@ -98,9 +86,6 @@ export function buildPortalFixtures() {
       memberSince: '2023-11-02',
       membership: { status: 'active', paidTo: '2027-03-31' },
       role: 'member',
-      listedInDirectory: true,
-      shareEmail: true,
-      sharePhone: false,
     },
     {
       id: 'hh-mitra',
@@ -117,9 +102,6 @@ export function buildPortalFixtures() {
       memberSince: '2025-02-20',
       membership: { status: 'active', paidTo: '2027-03-31' },
       role: 'member',
-      listedInDirectory: false,
-      shareEmail: false,
-      sharePhone: false,
     },
     {
       id: 'hh-palit',
@@ -136,9 +118,6 @@ export function buildPortalFixtures() {
       memberSince: '2020-02-11',
       membership: { status: 'lapsed', paidTo: '2026-03-31' },
       role: 'member',
-      listedInDirectory: false,
-      shareEmail: false,
-      sharePhone: false,
     },
     {
       id: 'hh-das',
@@ -154,9 +133,6 @@ export function buildPortalFixtures() {
       memberSince: '2026-08-25',
       membership: { status: 'active', paidTo: '2027-03-31' },
       role: 'member',
-      listedInDirectory: false,
-      shareEmail: false,
-      sharePhone: false,
     },
   ]
 

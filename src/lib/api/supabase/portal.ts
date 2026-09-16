@@ -7,7 +7,7 @@ import { householdMethods, inboxMethods } from './portalData'
  * Swaps the back office over to the real database, leaving everything else on fixtures.
  *
  * The whole `portal` section at once, not half of it. A screen where the households are real
- * and the directory is sample data is a screen nobody can reason about — and the first thing
+ * and the documents are sample data is a screen nobody can reason about — and the first thing
  * anybody would do with it is doubt the half that was right.
  *
  * The committee's inbox comes with it, for the same reason. `withSupabaseWrites` already posts
@@ -29,13 +29,13 @@ export function withSupabasePortal(base: ApiClient, config: SupabaseConfig): Api
       ...base.contact,
       listMessages: () => inbox.listMessages(),
       markHandled: (id, viewer, note) => inbox.markHandled(id, viewer, note),
+      deleteMessage: (id) => inbox.deleteMessage(id),
     },
     portal: {
       ...base.portal,
       identify: methods.identify,
       getHousehold: (id) => methods.getHousehold(id),
       listHouseholds: () => methods.listHouseholds(),
-      listDirectory: () => methods.listDirectory(),
       listDocuments: () => methods.listDocuments(),
       listSignInAttempts: () => methods.listSignInAttempts(),
       listAttendance: () => methods.listAttendance(),

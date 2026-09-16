@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { createApi } from '../create'
 import { createMockApi } from '../mock'
 import { withSupabasePortal } from './portal'
+import { withSupabaseNews } from './news'
 import { withSupabaseSettings } from './settings'
 
 /**
@@ -46,7 +47,7 @@ describe('with a project configured', () => {
     const names = Object.keys(base.portal) as (keyof typeof base.portal)[]
     expect(names.length).toBeGreaterThan(0)
 
-    // Half is worse than none: a screen with real households and a sample directory is one
+    // Half is worse than none: a screen with real households and sample documents is one
     // nobody can reason about, and the first thing anybody does is doubt the half that is right.
     const stillFixtures = names.filter((name) => wired.portal[name] === base.portal[name])
     expect(stillFixtures).toEqual([])
@@ -77,11 +78,30 @@ describe('with a project configured', () => {
     expect(wired.settings.save).not.toBe(base.settings.save)
   })
 
-  it('leaves events, news and the gallery on fixtures, because they have no tables yet', async () => {
-    // Honest rather than aspirational: this line moves as each one gets a table.
+  it('writes what the committee writes to the database', () => {
+    // News posts, notices and newsletters. On fixtures these lived in memory, so an admin
+    // publishing a piece on the live site watched it save and lost it on the next reload.
+    const base = createMockApi()
+    const wired = withSupabaseNews(base, { url: configured.VITE_SUPABASE_URL, anonKey: configured.VITE_SUPABASE_ANON_KEY })
+    const names = Object.keys(base.news) as (keyof typeof base.news)[]
+    expect(names.filter((name) => wired.news[name] === base.news[name])).toEqual([])
+  })
+
+  it('leaves events and the gallery on fixtures, and says why', async () => {
+    /*
+     * Not an oversight in either case, and both are waiting on somebody rather than on code.
+     *
+     * The gallery needs the bucket: adding a photograph needs the presign endpoint, and
+     * `deleteMedia` has to remove the object as well as the row — the privacy page promises a
+     * photograph comes down on request, and one that is merely unlisted is still at its URL for
+     * anybody who has it. A delete that dropped the row would break that promise while looking
+     * like it kept it.
+     *
+     * Events belong to the committee's separate planner app, and how one crosses to this site
+     * has not been decided.
+     */
     const api = createApi(configured)
     expect((await api.events.listUpcoming()).length).toBeGreaterThan(0)
     expect((await api.gallery.listAlbums()).length).toBeGreaterThan(0)
-    expect((await api.news.listAnnouncements()).length).toBeGreaterThan(0)
   })
 })

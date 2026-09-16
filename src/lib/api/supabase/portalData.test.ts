@@ -41,9 +41,6 @@ const draft: HouseholdDraft = {
   email: 'rina@example.com',
   people: [{ name: 'Rina Sen', ageGroup: 'adult' }],
   interests: [],
-  listedInDirectory: false,
-  shareEmail: false,
-  sharePhone: false,
 }
 
 describe('which database it talks to', () => {

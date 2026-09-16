@@ -31,46 +31,6 @@ type Props = {
   error?: string
 }
 
-
-/**
- * A checkbox with a line of explanation under it.
- *
- * The explanation is tied on with `aria-describedby` rather than left inside the `<label>`.
- * Inside it, the accessible name of the box becomes the choice *and* the whole sentence after
- * it, which is what a screen reader then reads out every time focus lands there.
- */
-function Check({
-  id,
-  label,
-  note,
-  checked,
-  onChange,
-}: {
-  id: string
-  label: string
-  note: string
-  checked: boolean
-  onChange: (value: boolean) => void
-}) {
-  return (
-    <div className={styles.check}>
-      <input
-        id={id}
-        type="checkbox"
-        checked={checked}
-        aria-describedby={`${id}-note`}
-        onChange={(e) => onChange(e.target.checked)}
-      />
-      <span className={styles.checkText}>
-        <label htmlFor={id}>{label}</label>
-        <span id={`${id}-note`} className={styles.checkNote}>
-          {note}
-        </span>
-      </span>
-    </div>
-  )
-}
-
 const emptyPerson: PersonInput = { name: '', ageGroup: 'adult' }
 
 function draftFrom(household?: Household, prefill?: Partial<HouseholdDraft>): HouseholdDraft {
@@ -82,9 +42,6 @@ function draftFrom(household?: Household, prefill?: Partial<HouseholdDraft>): Ho
       phone: '',
       people: [{ ...emptyPerson }],
       interests: [],
-      listedInDirectory: false,
-      shareEmail: false,
-      sharePhone: false,
       googleEmail: null,
       role: 'member',
       membershipStatus: 'active',
@@ -99,9 +56,6 @@ function draftFrom(household?: Household, prefill?: Partial<HouseholdDraft>): Ho
     phone: household.phone ?? '',
     people: household.people.map(({ name, ageGroup, age, note }) => ({ name, ageGroup, age, note })),
     interests: [...household.interests],
-    listedInDirectory: household.listedInDirectory,
-    shareEmail: household.shareEmail,
-    sharePhone: household.sharePhone,
     googleEmail: household.googleEmail,
     role: household.role,
     membershipStatus: household.membership.status,
@@ -359,38 +313,6 @@ export function HouseholdForm({ household, prefill, viewer, onSave, saving, save
           <Button variant="line" size="sm" onClick={addPerson}>
             Add someone
           </Button>
-        </div>
-      </fieldset>
-
-      <fieldset className={styles.section}>
-        <legend className={styles.legend}>What other members can see</legend>
-        <p className={styles.hint}>
-          Nothing here is public. These choices decide what other signed-in members see in the
-          directory, and they are the household’s to make — not the committee’s.
-        </p>
-
-        <div className={styles.checks}>
-          <Check
-            id={`${ids}-listed`}
-            label="Appear in the member directory"
-            note="Leave this off and no other member can find you at all."
-            checked={draft.listedInDirectory}
-            onChange={(v) => set('listedInDirectory', v)}
-          />
-          <Check
-            id={`${ids}-shareEmail`}
-            label="Show our email address"
-            note="Only to members, and only if listed above."
-            checked={draft.shareEmail}
-            onChange={(v) => set('shareEmail', v)}
-          />
-          <Check
-            id={`${ids}-sharePhone`}
-            label="Show our phone number"
-            note="Same again. Off by default, and easy to turn back off."
-            checked={draft.sharePhone}
-            onChange={(v) => set('sharePhone', v)}
-          />
         </div>
       </fieldset>
 

@@ -53,10 +53,6 @@ export type Household = {
   memberSince: string
   membership: Membership
   role: Role
-  /** Whether other signed-in members can find this household at all. */
-  listedInDirectory: boolean
-  shareEmail: boolean
-  sharePhone: boolean
 }
 
 export function adults(household: Pick<Household, 'people'>): number {
@@ -74,26 +70,6 @@ export function describeSize(household: Pick<Household, 'people'>): string {
   const parts = [`${a} ${a === 1 ? 'adult' : 'adults'}`]
   if (c > 0) parts.push(`${c} ${c === 1 ? 'child' : 'children'}`)
   return parts.join(', ')
-}
-
-/**
- * All another member may ever see about a household: a name, a size, and whatever that
- * household agreed to share. No address, no sign-in address, no membership status, and no
- * name of any person in it — a child's name never leaves their own household.
- *
- * This is a type and not merely a mapping because it is the shape the API is allowed to
- * return. `Household` carries things a member must never receive, so a method that promises
- * `Household[]` to a member is a leak waiting for somebody to open devtools, however
- * carefully the page that consumes it draws only part of it.
- */
-export type DirectoryEntry = {
-  id: string
-  name: string
-  contactName: string
-  size: string
-  email?: string
-  phone?: string
-  interests: string[]
 }
 
 /**
@@ -117,22 +93,6 @@ export function isMember(viewer: Viewer): viewer is NonNullable<Viewer> {
   return viewer !== null
 }
 
-/**
- * What another member may see about this household. Returns null when the household
- * has chosen not to appear at all. Children's names never leave the household.
- */
-export function directoryEntry(household: Household): DirectoryEntry | null {
-  if (!household.listedInDirectory) return null
-  return {
-    id: household.id,
-    name: household.name,
-    contactName: household.contactName,
-    size: describeSize(household),
-    email: household.shareEmail && household.email ? household.email : undefined,
-    phone: household.sharePhone ? household.phone : undefined,
-    interests: household.interests,
-  }
-}
 
 /** A person as the form holds them, before they have an id. */
 export type PersonInput = {
@@ -167,9 +127,6 @@ export type HouseholdInput = {
   phone?: string
   people: PersonInput[]
   interests: string[]
-  listedInDirectory: boolean
-  shareEmail: boolean
-  sharePhone: boolean
 }
 
 /**

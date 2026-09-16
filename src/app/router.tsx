@@ -17,7 +17,7 @@ import {
   AdminOverviewPage,
   AdminPeoplePage,
 } from '@/features/admin'
-import { DashboardPage, DirectoryPage, DocumentsPage, HouseholdPage } from '@/features/portal'
+import { DashboardPage, DocumentsPage, HouseholdPage } from '@/features/portal'
 import { PortalLayout } from './layouts/PortalLayout'
 import { PublicLayout } from './layouts/PublicLayout'
 import { RequireSession } from './layouts/RequireSession'
@@ -50,7 +50,6 @@ export const routes: RouteObject[] = [
         children: [
           { path: '/portal', Component: DashboardPage },
           { path: '/portal/household', Component: HouseholdPage },
-          { path: '/portal/directory', Component: DirectoryPage },
           { path: '/portal/documents', Component: DocumentsPage },
         ],
       },

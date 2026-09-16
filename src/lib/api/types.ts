@@ -3,7 +3,7 @@ import type { Festival } from '@/domain/festival'
 import type { Album, AlbumDraft, AlbumWithMedia, Media } from '@/domain/gallery'
 import type { ContactInput, ContactMessage, ContactReceipt } from '@/domain/contact'
 import type { CommunityDocument, SignInAttempt } from '@/domain/document'
-import type { DirectoryEntry, Household, HouseholdDraft, Viewer } from '@/domain/household'
+import type { Household, HouseholdDraft, Viewer } from '@/domain/household'
 import type { AttendanceDraft, EventAttendance } from '@/domain/attendance'
 import type { AuditEntry } from '@/domain/audit'
 import type { SettingsDraft, SiteSettings } from '@/domain/settings'
@@ -137,6 +137,19 @@ export interface ApiClient {
      * contract, mock, mutation, cache invalidation — on something with nothing at stake.
      */
     markHandled(id: string, viewer: Viewer, note?: string): Promise<ContactMessage>
+    /**
+     * Removes a message for good. Admin only.
+     *
+     * Really gone, and worth pausing over: a message is the only record the committee holds of
+     * something somebody asked for. A takedown request is evidence of a promise made and kept,
+     * and the subject-access export finds a household's messages by matching the address they
+     * wrote from — so a message deleted today is one that cannot be handed back tomorrow.
+     *
+     * Kept anyway, because the alternative is an inbox that fills with spam and stops being
+     * read, and an inbox nobody reads is worse for the person waiting in it. Marking a message
+     * handled is what to do with one that mattered; this is for the ones that never did.
+     */
+    deleteMessage(id: string, viewer: Viewer): Promise<void>
   }
   /**
    * Everything behind the sign-in.
@@ -161,13 +174,6 @@ export interface ApiClient {
     getHousehold(id: string, viewer: Viewer): Promise<Household | null>
     /** Every household. Empty for anybody who is not an admin. */
     listHouseholds(viewer: Viewer): Promise<Household[]>
-    /**
-     * Households that chose to appear, already reduced to what each agreed to share.
-     *
-     * Returns `DirectoryEntry`, never `Household`: the masking is the API's job, not the
-     * page's. A page that filters is a page one refactor away from not filtering.
-     */
-    listDirectory(viewer: Viewer): Promise<DirectoryEntry[]>
     /** The documents library. Empty for anybody who is not a member. */
     listDocuments(viewer: Viewer): Promise<CommunityDocument[]>
     /**

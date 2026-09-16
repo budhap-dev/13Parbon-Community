@@ -2,7 +2,6 @@ import {
   adults,
   children,
   describeSize,
-  directoryEntry,
   isValidHousehold,
   normaliseGoogleEmail,
   validateHousehold,
@@ -26,9 +25,6 @@ const base: Household = {
   memberSince: '2024-04-01',
   membership: { status: 'active', paidTo: '2027-03-31' },
   role: 'member',
-  listedInDirectory: true,
-  shareEmail: true,
-  sharePhone: false,
 }
 
 describe('household', () => {
@@ -40,21 +36,7 @@ describe('household', () => {
     expect(describeSize({ people: [...base.people, { id: 'p4', name: 'B', ageGroup: 'child' }] })).toBe('2 adults, 2 children')
   })
 
-  it('honours each sharing choice in the directory entry', () => {
-    const entry = directoryEntry(base)
-    expect(entry).toMatchObject({ name: 'The Sens', size: '2 adults, 1 child', email: 'rina@example.com' })
-    expect(entry?.phone).toBeUndefined()
-    expect(directoryEntry({ ...base, shareEmail: false })?.email).toBeUndefined()
-    expect(directoryEntry({ ...base, sharePhone: true })?.phone).toBe('07700 900001')
-  })
 
-  it('leaves a household out entirely when it has not opted in', () => {
-    expect(directoryEntry({ ...base, listedInDirectory: false })).toBeNull()
-  })
-
-  it('never puts a person name in the directory entry', () => {
-    expect(JSON.stringify(directoryEntry(base))).not.toContain('Mira')
-  })
 })
 
 describe('validateHousehold', () => {
@@ -67,9 +49,6 @@ describe('validateHousehold', () => {
       { name: 'Mira Sen', ageGroup: 'child', age: 7 },
     ],
     interests: [],
-    listedInDirectory: false,
-    shareEmail: false,
-    sharePhone: false,
   }
 
   it('accepts a household with a name, a contact and an adult in it', () => {
@@ -134,12 +113,6 @@ describe('validateHousehold', () => {
   })
 })
 
-describe('the directory, for a household with no email', () => {
-  it('shares nothing it has not got, even when sharing is on', () => {
-    const entry = directoryEntry({ ...base, listedInDirectory: true, shareEmail: true, email: undefined })
-    expect(entry?.email).toBeUndefined()
-  })
-})
 
 describe('normaliseGoogleEmail', () => {
   it('lowercases, because Google returns whatever case was typed and the database matches exactly', () => {

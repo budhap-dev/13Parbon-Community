@@ -41,7 +41,6 @@ export type Action =
   | 'household:setRole'
   | 'household:setSignInAddress'
   | 'household:setMembership'
-  | 'directory:read'
   | 'documents:read'
   | 'documents:manage'
   /** Read how many came to each event. Numbers only; there is nobody in them. */
@@ -52,6 +51,8 @@ export type Action =
   | 'signInAttempts:resolve'
   | 'messages:read'
   | 'messages:handle'
+  /** Separate from handling one: taking a message away is not the same as dealing with it. */
+  | 'messages:delete'
 
 /** What the action is about, where the answer depends on which one. */
 export type Resource = { householdId?: string }
@@ -83,10 +84,8 @@ export function can(viewer: Viewer, action: Action, resource?: Resource): boolea
     case 'household:edit':
       return isOwn(viewer, resource)
 
-    // Mirrors: the directory view's `current_household_id() is not null`, and policy
-    // "members read documents".
+    // Mirrors: policy "members read documents".
     case 'portal:enter':
-    case 'directory:read':
     case 'documents:read':
     // Mirrors: policy "members read attendance". A count has nobody in it.
     case 'attendance:read':
@@ -108,6 +107,7 @@ export function can(viewer: Viewer, action: Action, resource?: Resource): boolea
     case 'signInAttempts:resolve':
     case 'messages:read':
     case 'messages:handle':
+    case 'messages:delete':
       return false
   }
 }

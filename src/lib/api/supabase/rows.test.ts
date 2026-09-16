@@ -14,9 +14,6 @@ const row: HouseholdRow = {
   membership_status: 'active',
   membership_paid_to: '2027-03-31',
   role: 'member',
-  listed_in_directory: true,
-  share_email: true,
-  share_phone: false,
   people: [
     { id: 'p1', household_id: 'hh-1', name: 'Rina Sen', age_group: 'adult', age: null, note: 'Sings' },
     { id: 'p2', household_id: 'hh-1', name: 'Mira Sen', age_group: 'child', age: 7, note: null },
@@ -30,9 +27,6 @@ describe('reading a household back', () => {
       contactName: 'Rina Sen',
       googleEmail: 'rina.sen@gmail.com',
       memberSince: '2024-04-01',
-      listedInDirectory: true,
-      shareEmail: true,
-      sharePhone: false,
     })
   })
 
@@ -78,9 +72,6 @@ describe('writing a household', () => {
       { name: 'Mira Sen', ageGroup: 'child', age: 7, note: '  Dance group ' },
     ],
     interests: ['Cooking'],
-    listedInDirectory: true,
-    shareEmail: true,
-    sharePhone: false,
     googleEmail: 'rina.sen@gmail.com',
     role: 'admin',
     membershipStatus: 'lapsed',

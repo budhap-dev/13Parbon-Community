@@ -149,27 +149,14 @@ describe('member pages', () => {
     expect(await screen.findByRole('heading', { name: 'Active' })).toBeInTheDocument()
   })
 
-  it('shows the household, its people and the sharing choices', async () => {
+  it('shows the household and its people', async () => {
     renderAt('/portal/household', member)
     expect(await screen.findByRole('heading', { level: 1, name: 'My household' })).toBeInTheDocument()
     expect(screen.getByText('Mira Sen')).toBeInTheDocument()
     expect(screen.getByText('Child, 7')).toBeInTheDocument()
-    expect(screen.getByLabelText('List us in the directory: on')).toBeInTheDocument()
-    expect(screen.getByLabelText('Show our phone: off')).toBeInTheDocument()
     expect(screen.getByText('rina.sen@gmail.com')).toBeInTheDocument()
   })
 
-  it('lists only households that opted in, and never a child by name', async () => {
-    renderAt('/portal/directory', member)
-    const az = (await screen.findByRole('heading', { name: 'A to Z' })).closest('section')!
-    const names = within(az)
-      .getAllByRole('listitem')
-      .map((li) => li.textContent ?? '')
-    expect(names.some((n) => n.includes('The Sens'))).toBe(true)
-    expect(names.some((n) => n.includes('The Mitras'))).toBe(false)
-    expect(names.join(' ')).not.toContain('Mira')
-    expect(screen.getByText('You')).toBeInTheDocument()
-  })
 
   it('lists the documents newest first', async () => {
     renderAt('/portal/documents', member)
@@ -272,12 +259,40 @@ describe('committee pages', () => {
     expect(screen.getByText('Home page')).toBeInTheDocument()
   })
 
-  it('names which ones, rather than sending somebody looking through a file', async () => {
+  it('names which ones, and links each to the box that fills it', async () => {
     renderAt('/admin/content', admin)
     await screen.findByText('Home page')
-    expect(screen.getByText('missionStatement')).toBeInTheDocument()
+
+    /*
+     * Under the name the form uses, not the key in the code. The table said
+     * `missionStatement` while the box below it said "Mission and vision", and nothing on the
+     * screen connected the two — so the answer to "where do I fill this in?" was nowhere.
+     */
+    const link = screen.getByRole('link', { name: 'Mission and vision' })
+    expect(link).toHaveAttribute('href', '#text-missionStatement')
+    // And it points at something really on this page.
+    expect(document.getElementById('text-missionStatement')).toBeInTheDocument()
+
     // And says so plainly where a page is finished.
     expect(screen.getAllByText('Nothing in brackets').length).toBeGreaterThan(0)
+  })
+
+  it('stops counting a gap once the committee has filled it in', async () => {
+    /*
+     * The count is scanned from the content, which used to mean only the files — so a line the
+     * committee had already written and saved went on being announced as unfinished. What a
+     * visitor reads is the saved value, so that is what has to be counted.
+     */
+    const api = createMockApi()
+    const settings = await api.settings.get()
+    await api.settings.save(
+      { ...settings, text: { ...settings.text, missionStatement: 'We put on the pujas that keep us together.' } },
+      { householdId: 'hh-chatterjee', role: 'admin' },
+    )
+
+    renderAt('/admin/content', admin, api)
+    await screen.findByText('Home page')
+    await waitFor(() => expect(screen.queryByRole('link', { name: 'Mission and vision' })).not.toBeInTheDocument())
   })
 
   it('opens a message from the inbox', async () => {
@@ -335,14 +350,6 @@ describe('a household editing itself', () => {
     expect(await screen.findByText('Rina S Sen')).toBeInTheDocument()
   })
 
-  it('turns a privacy choice on and keeps it', async () => {
-    renderAt('/portal/household', member)
-    await userEvent.click(await screen.findByRole('button', { name: 'Edit' }))
-    await userEvent.click(await screen.findByLabelText('Show our phone number'))
-    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }))
-
-    expect(await screen.findByRole('img', { name: 'Show our phone: on' })).toBeInTheDocument()
-  })
 
   it('is not offered the committee\'s fields on its own household', async () => {
     renderAt('/portal/household', member)
@@ -370,33 +377,6 @@ describe('a household editing itself', () => {
   })
 })
 
-describe('asking what we hold', () => {
-  it('shows it on the page, in something a person can read', async () => {
-    renderAt('/portal/household', member)
-    await userEvent.click(await screen.findByRole('button', { name: /Show me everything you hold/ }))
-
-    // Scoped: the page already lists the household's people above, so "Dance group" is on
-    // screen twice once the copy is gathered.
-    const panel = screen.getByRole('region', { name: 'Everything we hold about you' })
-    expect(await within(panel).findByText(/People \(3\)/)).toBeInTheDocument()
-    // The notes written about people are data about those people, so they are in it.
-    expect(within(panel).getByText(/Dance group/)).toBeInTheDocument()
-    expect(within(panel).getByRole('button', { name: 'Save it as a file' })).toBeInTheDocument()
-  })
-
-  it('does not gather it until somebody asks', async () => {
-    renderAt('/portal/household', member)
-    await screen.findByRole('heading', { level: 1, name: 'My household' })
-    // Reaching across most of the tables is not something to do because a page was opened.
-    expect(screen.queryByText(/People \(3\)/)).not.toBeInTheDocument()
-  })
-
-  it('says what it cannot tell them, rather than leaving a silence', async () => {
-    renderAt('/portal/household', member)
-    await userEvent.click(await screen.findByRole('button', { name: /Show me everything you hold/ }))
-    expect(await screen.findByText(/we hold no record of who appears in which one/)).toBeInTheDocument()
-  })
-})
 
 describe('the committee managing households', () => {
   it('invites a household, and it joins the list', async () => {

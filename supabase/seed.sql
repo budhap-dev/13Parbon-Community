@@ -19,10 +19,9 @@
 -- with one is somebody who can sign in. Nobody here can, which is the right default for people
 -- who have not been asked.
 --
--- NOBODY IN THE DIRECTORY. Appearing in one is a choice, and none of them has made it.
 
-insert into portal.households (name, contact_name, role, member_since, listed_in_directory, share_email, share_phone)
-select v.name, v.name, 'member', current_date, false, false, false
+insert into portal.households (name, contact_name, role, member_since)
+select v.name, v.name, 'member', current_date
 from (values
   ('Mr. Dalim Ghosh'),
   ('Mr. Subhendu Roy'),
@@ -118,7 +117,7 @@ where not exists (select 1 from portal.people p where p.household_id = h.id);
 -- Sohini Dutta. Several pairs share no surname, which is ordinary, so the order says more than
 -- the names do.
 --
--- That is a strong hint and still a guess, and getting a family wrong in a members' directory
+-- That is a strong hint and still a guess, and getting a family wrong in the committee's records
 -- is its own kind of wrong. So nothing here acts on it. If the pairs are right, merging them is
 -- a rename and a drag of one person into the other household, thirty-odd times, by somebody who
 -- knows. If they are not, it is thirty-odd corrections nobody can see are needed.

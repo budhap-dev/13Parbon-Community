@@ -25,7 +25,7 @@ const READS = [
   'news.listPosts', 'news.getPost', 'news.listAnnouncements', 'news.listNewsletters',
   'news.listAllPosts', 'news.listAllAnnouncements',
   'contact.listMessages',
-  'portal.identify', 'portal.getHousehold', 'portal.listHouseholds', 'portal.listDirectory',
+  'portal.identify', 'portal.getHousehold', 'portal.listHouseholds',
   'portal.listDocuments',
   'portal.listSignInAttempts', 'portal.exportHousehold', 'portal.listAttendance',
   'audit.list', 'settings.get',
@@ -34,7 +34,7 @@ const READS = [
 
 /** Writes that leave a line in the trail. */
 const AUDITED = [
-  'contact.markHandled',
+  'contact.markHandled', 'contact.deleteMessage',
   'portal.addHousehold', 'portal.updateHousehold', 'portal.deleteHousehold', 'portal.resolveSignInAttempt', 'portal.recordAttendance',
   'gallery.createAlbum', 'gallery.updateAlbum', 'gallery.setCover', 'gallery.setCaption',
   'gallery.reorder', 'gallery.deleteMedia',
@@ -93,6 +93,11 @@ describe('every audited write', () => {
       ['contact.markHandled', async () => {
         const message = (await a.contact.listMessages(admin)).find((m) => !m.handledBy && m.kind !== 'photo')!
         return a.contact.markHandled(message.id, admin)
+      }],
+      ['contact.deleteMessage', async () => {
+        // The last one, so it cannot take a message another write below still needs.
+        const messages = await a.contact.listMessages(admin)
+        return a.contact.deleteMessage(messages[messages.length - 1].id, admin)
       }],
       ['gallery.updateAlbum', () => a.gallery.updateAlbum(album.id, { title: 'A different name', visibility: 'public' }, admin)],
       ['gallery.setCover', () => a.gallery.setCover(album.id, album.media[1].id, admin)],

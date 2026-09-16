@@ -175,7 +175,9 @@ app gets written in the belief that it may ask for anything.
       ignores a click while looking ready to take one reads as a broken page
 - [x] The Supabase adapter for the whole `portal` section — reads and writes, against the real database
 - [x] The site's own switches — `site_settings`, read by everybody, written by the committee
-- [ ] The rest: events, news, the gallery. They have no tables yet
+- [x] News: posts, notices and newsletters — published content readable by everybody, drafts by the committee
+- [ ] The gallery — **blocked on R2**: adding a photograph needs the presign endpoint, and a takedown has to remove the object, not the row
+- [ ] Events — **blocked on a decision**: they belong to the planner app, and how one crosses here is unsettled
 - [ ] Per-resource mutations land with their own steps, not speculatively up front
 
 **Done when:** one value can be changed from the UI and survives a reload. *Changed from the UI
@@ -746,6 +748,9 @@ invitation, so nothing to approve and no passwords to reset.
 | 2026-09-15 | 5 | `/admin/content` wired — three buttons had done nothing. Caught a new post reading as "taken down". 525 → 533 tests. |
 | 2026-09-15 | — | Retention settled: the count is kept for good, the names for twelve months. `close_year()` counts before it deletes. 533 → 537 tests. |
 | 2026-09-15 | 3 | The committee types the headcount in. 537 → 551 tests. |
+| 2026-09-16 | 0.3 | **The member directory removed** — the committee decided against having one. The page, the route, `listDirectory`, `DirectoryEntry`, the view and the three sharing columns are gone rather than switched off: a column nothing reads is one somebody later assumes means something. 732 → 712 tests, and twenty fewer is the point. |
+| 2026-09-16 | 0.2 | Messages can be deleted — asked for first, and audited, because a message is the only record the committee holds of what somebody asked and the subject-access export finds them by address. 724 → 732 tests. |
+| 2026-09-16 | 0.4 | News made real: posts, notices and newsletters. The read policies do the work, so a query that forgot to filter still cannot leak a draft, and a notice's dates are applied by Postgres rather than by the browser. Found the announcement audience had no `admins` — the check constraint said otherwise. 715 → 724 tests. |
 | 2026-09-16 | 0.3 | `site_settings` is real: the switches, the words, the committee and the roll now survive a reload. Until today an admin could throw a switch on the live site and lose it — three of the five admin screens still work that way. |
 | 2026-09-16 | 0.3 | Preview became a committee tool. `?preview` let any visitor into the back office of the live site; it is now offered inside the portal, to admins. The bigger half: a preview had to stop using the real client, because a sample household is not a row the database has — `hh-sen` is not even a uuid, so the walkthrough would have shown an error rather than fixtures. 705 → 708 tests. |
 | 2026-09-16 | 0.3 | **First real sign-in, three bugs no mock could show.** A household with no renewal date crashed the portal outright — the mapper turned a null date into `''` to satisfy `paidTo: string`, and Intl threw on it. The Preview banner was unconditional, so a real admin was told their edits were make-believe. And an unmatched address is treated as an admin by the app and a stranger by the database, so every screen loaded empty with nothing saying why. 700 → 705 tests. |

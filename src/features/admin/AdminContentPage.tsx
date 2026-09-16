@@ -18,17 +18,24 @@ import {
 import { useNow } from '@/lib/clock'
 import { useSettings } from '@/app/SettingsContext'
 import { countGaps, gapsNow } from '@/app/gaps'
+import { SITE_TEXT_FIELDS, SITE_TEXT_KEYS, type SiteTextKey } from '@/domain/settings'
 import styles from '@/features/portal/Portal.module.css'
 import { AnnouncementForm, NewsForm } from './ContentForms'
 import { SiteSwitches } from './SiteSwitches'
 
+/** Whether a gap names one of the lines the committee can edit from this very page. */
+function editable(where: string): where is SiteTextKey {
+  return (SITE_TEXT_KEYS as readonly string[]).includes(where)
+}
+
 export function AdminContentPage() {
   useDocumentTitle('Content')
+  const settings = useSettings()
   const { data: posts } = useAllPosts()
   const { data: announcements } = useAllAnnouncements()
   const { data: albums } = useAlbums()
   const { data: newsletters } = useNewsletters()
-  const gaps = gapsNow()
+  const gaps = gapsNow(settings)
   const totalGaps = countGaps(gaps)
 
   const createPost = useCreatePost()
@@ -36,7 +43,6 @@ export function AdminContentPage() {
   const createNotice = useCreateAnnouncement()
   const updateNotice = useUpdateAnnouncement()
   const removeNotice = useRemoveAnnouncement()
-  const settings = useSettings()
   const saveSettings = useSaveSettings()
   // Read once per render: the same instant should decide every row, or a notice could read as
   // both waiting and finished in one table.
@@ -162,8 +168,26 @@ export function AdminContentPage() {
                   </td>
                   <td className={`${styles.muted} ${styles.tiny}`}>
                     {/* Which ones, not just how many. "13 to fill in" sends somebody looking
-                        through a file; naming them sends them to the line. */}
-                    {gap.where.length > 0 ? gap.where.join(', ') : 'Nothing in brackets'}
+                        through a file; naming them sends them to the line.
+
+                        And where one of them is a line the committee can edit, it is a link to
+                        the box that edits it, under the name that box uses. `missionStatement`
+                        is the key in the code; "Mission and vision" is what the form calls it,
+                        and somebody reading this table had no way to connect the two. */}
+                    {gap.where.length === 0
+                      ? 'Nothing in brackets'
+                      : gap.where.map((where, i) => (
+                          <span key={where}>
+                            {i > 0 ? ', ' : ''}
+                            {editable(where) ? (
+                              <a href={`#text-${where}`} className={styles.inlineLink}>
+                                {SITE_TEXT_FIELDS[where].label}
+                              </a>
+                            ) : (
+                              where
+                            )}
+                          </span>
+                        ))}
                   </td>
                   <td>
                     <span className={gap.where.length > 0 ? styles.pillWait : styles.pillLive}>

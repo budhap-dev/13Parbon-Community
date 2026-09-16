@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { Button } from '@/components/Button'
+import { Icon } from '@/components/Icon'
 import { formatLongDate, formatTime } from '@/domain/dates'
 import { paragraphs } from '@/domain/news'
 import { TAKEDOWN_PROMISE } from '@/domain/contact'
-import { useContactMessages, useMarkMessageHandled, useViewer } from '@/lib/api'
+import { useContactMessages, useDeleteMessage, useMarkMessageHandled, useViewer } from '@/lib/api'
 import { can } from '@/lib/auth/permissions'
 import styles from '@/features/portal/Portal.module.css'
 
@@ -12,9 +13,13 @@ export function AdminMessagesPage() {
   useDocumentTitle('Messages')
   const { data: messages, isPending } = useContactMessages()
   const markHandled = useMarkMessageHandled()
-  const mayHandle = can(useViewer(), 'messages:handle')
+  const removeMessage = useDeleteMessage()
+  const viewer = useViewer()
+  const mayHandle = can(viewer, 'messages:handle')
+  const mayDelete = can(viewer, 'messages:delete')
   const [openId, setOpenId] = useState<string | null>(null)
   const [note, setNote] = useState('')
+  const [confirming, setConfirming] = useState(false)
 
   const list = messages ?? []
   const open = list.find((m) => m.id === openId) ?? list[0]
@@ -57,7 +62,10 @@ export function AdminMessagesPage() {
                     type="button"
                     className={styles.listItem}
                     style={{ width: '100%', background: 'transparent', border: 0, color: 'inherit', textAlign: 'left', cursor: 'pointer' }}
-                    onClick={() => setOpenId(message.id)}
+                    onClick={() => {
+                      setOpenId(message.id)
+                      setConfirming(false)
+                    }}
                     aria-current={message.id === open?.id ? 'true' : undefined}
                   >
                     {message.handledBy ? null : <span className={styles.dot} />}
@@ -121,6 +129,17 @@ export function AdminMessagesPage() {
                   <Button variant="gold" size="sm" href={`mailto:${open.email}`}>
                     Reply by email
                   </Button>
+                  {mayDelete ? (
+                    <Button
+                      variant="line"
+                      size="sm"
+                      disabled={removeMessage.isPending}
+                      onClick={() => setConfirming(true)}
+                    >
+                      <Icon name="trash" size={15} />
+                      Delete
+                    </Button>
+                  ) : null}
                   <Button
                     variant="line"
                     size="sm"
@@ -136,6 +155,43 @@ export function AdminMessagesPage() {
                     {open.handledBy ? 'Handled' : markHandled.isPending ? 'Marking…' : 'Mark handled'}
                   </Button>
                 </div>
+                {confirming ? (
+                  <div className={styles.note} role="alert">
+                    <p>
+                      <strong>Delete this message?</strong> It goes for good, and it is the only
+                      record the committee holds of what was asked
+                      {open.kind === 'photo' ? ', including that a photograph was asked about' : ''}. A
+                      line stays in the audit trail saying you deleted it. To keep it and clear the
+                      unread count, mark it handled instead.
+                    </p>
+                    <div className={styles.actions}>
+                      <Button
+                        variant="gold"
+                        size="sm"
+                        disabled={removeMessage.isPending}
+                        onClick={() =>
+                          removeMessage.mutate(open.id, {
+                            onSuccess: () => {
+                              setConfirming(false)
+                              // Whatever is left is the next thing to read, chosen by the list.
+                              setOpenId(null)
+                            },
+                          })
+                        }
+                      >
+                        {removeMessage.isPending ? 'Deleting…' : 'Delete for good'}
+                      </Button>
+                      <Button variant="line" size="sm" onClick={() => setConfirming(false)}>
+                        Keep it
+                      </Button>
+                    </div>
+                  </div>
+                ) : null}
+                {removeMessage.isError ? (
+                  <p className={`${styles.muted} ${styles.tiny}`} role="alert">
+                    That did not delete. {removeMessage.error.message}
+                  </p>
+                ) : null}
                 {markHandled.isError ? (
                   <p className={`${styles.muted} ${styles.tiny}`} role="alert">
                     That did not save. {markHandled.error.message}

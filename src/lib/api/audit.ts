@@ -89,6 +89,23 @@ export function withAuditTrail(base: ApiClient, now: () => Date = () => new Date
         )
         return after
       },
+      deleteMessage: async (id, viewer) => {
+        /*
+         * Read before the delete, because afterwards there is nothing to read. This line is all
+         * that is left of the message: who it was from, what it was about, and whether anybody
+         * had dealt with it — enough to answer "what happened to the note I sent you?" when the
+         * row itself is gone.
+         */
+        const was = (await base.contact.listMessages(viewer)).find((m) => m.id === id)
+        await base.contact.deleteMessage(id, viewer)
+        record(
+          viewer,
+          'messages:delete',
+          { kind: 'contact_messages', id },
+          { subject: was?.subject, from: was?.email, kind: was?.kind, handledBy: was?.handledBy },
+          {},
+        )
+      },
     },
     events: {
       ...base.events,
