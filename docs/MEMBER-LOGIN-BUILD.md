@@ -673,6 +673,7 @@ because jsdom does not paint — that one belongs in a browser.
 
 | Still open | Blocks |
 |---|---|
+| Should committee titles live on households, so the About page's list is derived rather than typed twice? *Left for now, 2026-09-16* | Nothing — it works as two lists |
 | Does `setCover` get a way back onto a screen? Kept 2026-09-15, and unreachable meanwhile | Step 4 |
 | Event summaries: written, or drafted for editing? | Step 5 |
 | How an event reaches this site from the planner app | Step 3 |

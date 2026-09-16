@@ -83,7 +83,14 @@ describe('validateHousehold', () => {
     expect(errors.contactName).toBeTruthy()
   })
 
-  it('asks for an address that reaches them', () => {
+  it('takes a household with no email at all', () => {
+    // A required field the committee cannot always fill is one somebody invents a value for.
+    expect(validateHousehold({ ...valid, email: undefined })).toEqual({})
+    expect(validateHousehold({ ...valid, email: '  ' })).toEqual({})
+  })
+
+  it('still refuses one that is there and wrong', () => {
+    // Missing is honest. Mistyped looks like a working address and is not.
     expect(validateHousehold({ ...valid, email: 'not-an-address' }).email).toBeTruthy()
   })
 
@@ -124,6 +131,13 @@ describe('validateHousehold', () => {
       people: [{ name: 'Rina Sen', ageGroup: 'adult' }, { name: 'Mira Sen', ageGroup: 'child', age: 7.5 }],
     })
     expect(errors.person?.[1]?.age).toBeTruthy()
+  })
+})
+
+describe('the directory, for a household with no email', () => {
+  it('shares nothing it has not got, even when sharing is on', () => {
+    const entry = directoryEntry({ ...base, listedInDirectory: true, shareEmail: true, email: undefined })
+    expect(entry?.email).toBeUndefined()
   })
 })
 

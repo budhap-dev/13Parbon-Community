@@ -95,7 +95,7 @@ function draftFrom(household?: Household, prefill?: Partial<HouseholdDraft>): Ho
   return {
     name: household.name,
     contactName: household.contactName,
-    email: household.email,
+    email: household.email ?? '',
     phone: household.phone ?? '',
     people: household.people.map(({ name, ageGroup, age, note }) => ({ name, ageGroup, age, note })),
     interests: [...household.interests],
@@ -224,9 +224,15 @@ export function HouseholdForm({ household, prefill, viewer, onSave, saving, save
             <input
               {...fieldProps('email')}
               type="email"
-              value={draft.email}
+              value={draft.email ?? ''}
+              aria-describedby={`${ids}-email-hint`}
               onChange={(e) => set('email', e.target.value)}
             />
+            {/* Beside the field rather than inside the label: text inside a <label> becomes
+                part of the field's name, so this would be read as "Email if you have it". */}
+            <p id={`${ids}-email-hint`} className={styles.hint}>
+              If you have it. A household with no address is still a household.
+            </p>
             {errorFor('email')}
           </div>
 

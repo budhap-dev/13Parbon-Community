@@ -55,7 +55,7 @@ function shapeOf(draft: HouseholdDraft) {
   return {
     name: draft.name.trim(),
     contactName: draft.contactName.trim(),
-    email: draft.email.trim(),
+    ...(draft.email?.trim() ? { email: draft.email.trim() } : { email: undefined }),
     ...(draft.phone?.trim() ? { phone: draft.phone.trim() } : { phone: undefined }),
     people,
     interests: draft.interests,

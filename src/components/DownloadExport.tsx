@@ -58,7 +58,7 @@ export function DownloadExport({
       <dl className={styles.lines}>
         <Line label="Household" value={household.name} />
         <Line label="Main contact" value={household.contactName} />
-        <Line label="Email" value={household.email} />
+        <Line label="Email" value={household.email ?? 'None recorded'} />
         <Line label="Phone" value={household.phone ?? 'Not given'} />
         <Line label="Signs in with" value={household.googleEmail ?? 'No address recorded'} />
         <Line label="Member since" value={household.memberSince} />

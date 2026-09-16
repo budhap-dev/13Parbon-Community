@@ -23,7 +23,14 @@ export type Household = {
   id: string
   name: string
   contactName: string
-  email: string
+  /**
+   * How the committee reaches them. Absent where nobody has it yet.
+   *
+   * Optional on purpose. A required field you cannot always fill is a field somebody types
+   * `unknown@example.com` into, and then the database holds a fact that is not true. Recording
+   * what is known beats inventing what is not.
+   */
+  email?: string
   phone?: string
   /**
    * The Google address that signs in. Null until the committee records one, or until
@@ -112,7 +119,7 @@ export function directoryEntry(household: Household): DirectoryEntry | null {
     name: household.name,
     contactName: household.contactName,
     size: describeSize(household),
-    email: household.shareEmail ? household.email : undefined,
+    email: household.shareEmail && household.email ? household.email : undefined,
     phone: household.sharePhone ? household.phone : undefined,
     interests: household.interests,
   }
@@ -140,7 +147,14 @@ export type PersonInput = {
 export type HouseholdInput = {
   name: string
   contactName: string
-  email: string
+  /**
+   * How the committee reaches them. Absent where nobody has it yet.
+   *
+   * Optional on purpose. A required field you cannot always fill is a field somebody types
+   * `unknown@example.com` into, and then the database holds a fact that is not true. Recording
+   * what is known beats inventing what is not.
+   */
+  email?: string
   phone?: string
   people: PersonInput[]
   interests: string[]
@@ -193,7 +207,10 @@ export function validateHousehold(input: HouseholdInput): HouseholdErrors {
 
   if (input.name.trim().length < 2) errors.name = 'Give the household a name, such as “The Sens”.'
   if (input.contactName.trim().length < 2) errors.contactName = 'Who should the committee speak to?'
-  if (!EMAIL.test(input.email.trim())) errors.email = 'Enter an email address that reaches them.'
+  // Optional, but wrong is worse than missing: a mistyped address looks like a working one.
+  if (input.email?.trim() && !EMAIL.test(input.email.trim())) {
+    errors.email = 'That does not look like an email address.'
+  }
 
   const people = input.people
   if (people.length === 0) {

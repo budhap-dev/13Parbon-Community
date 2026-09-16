@@ -35,7 +35,7 @@ export const COMMITTEE_COLUMNS = [
  * runs as soon as somebody opens the list, which is a way of attacking the committee through
  * their own membership record. Prefixing an apostrophe makes it text again.
  */
-function field(value: string | number): string {
+function field(value: string | number | undefined): string {
   const text = String(value ?? '')
   const safe = /^[=+\-@\t\r]/.test(text) ? `'${text}` : text
   return `"${safe.replace(/"/g, '""')}"`

@@ -42,7 +42,11 @@ create table if not exists portal.households (
   id uuid primary key default gen_random_uuid(),
   name text not null check (char_length(trim(name)) between 2 and 120),
   contact_name text not null check (char_length(trim(contact_name)) between 2 and 120),
-  email text not null check (email ~ '^[^\s@]+@[^\s@]+\.[^\s@]+$'),
+  -- Nullable on purpose. A required field the committee cannot always fill is a field
+  -- somebody types unknown@example.com into, and then this holds a fact that is not true.
+  -- Recording what is known beats inventing what is not. Wrong is still refused: an address
+  -- that is there has to look like one.
+  email text check (email is null or email ~ '^[^\s@]+@[^\s@]+\.[^\s@]+$'),
   phone text,
   -- The address they use with Google. Null while invited but never signed in.
   -- Lowercased on write so a capital letter cannot lock somebody out.

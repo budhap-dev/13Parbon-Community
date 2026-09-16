@@ -13,7 +13,7 @@ export type HouseholdRow = {
   id: string
   name: string
   contact_name: string
-  email: string
+  email: string | null
   phone: string | null
   google_email: string | null
   interests: string[] | null
@@ -56,7 +56,7 @@ export function toHousehold(row: HouseholdRow): Household {
     id: row.id,
     name: row.name,
     contactName: row.contact_name,
-    email: row.email,
+    ...(row.email === null ? {} : { email: row.email }),
     ...(row.phone === null ? {} : { phone: row.phone }),
     googleEmail: row.google_email,
     people: (row.people ?? []).map(toPerson),
@@ -83,7 +83,7 @@ export function fromDraft(draft: HouseholdDraft, committee: boolean): Record<str
   return {
     name: draft.name.trim(),
     contact_name: draft.contactName.trim(),
-    email: draft.email.trim(),
+    email: text(draft.email),
     phone: text(draft.phone),
     interests: draft.interests,
     listed_in_directory: draft.listedInDirectory,
