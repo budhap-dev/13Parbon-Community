@@ -6,6 +6,7 @@ import type { SignedIn } from './session'
  */
 export const previewAccounts: (SignedIn & { blurb: string })[] = [
   {
+    preview: true,
     role: 'member',
     householdId: 'hh-sen',
     householdName: 'The Sens',
@@ -14,6 +15,7 @@ export const previewAccounts: (SignedIn & { blurb: string })[] = [
     blurb: 'An ordinary household. Has not registered for the next event yet.',
   },
   {
+    preview: true,
     role: 'admin',
     householdId: 'hh-chatterjee',
     householdName: 'The Chatterjees',

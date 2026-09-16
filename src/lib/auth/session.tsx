@@ -9,6 +9,14 @@ export type SignedIn = {
   householdName: string
   name: string
   email: string
+  /**
+   * Set only by the preview sign-in, so the portal can say which one you are in.
+   *
+   * Without it the banner saying "nothing you change is saved yet" was drawn for everybody,
+   * including somebody signed in with Google against the real database — who is told their
+   * real edits are make-believe, which is the one thing a back office must never get wrong.
+   */
+  preview?: true
 }
 
 export type Session = { role: 'visitor' } | ({ role: Role } & SignedIn)

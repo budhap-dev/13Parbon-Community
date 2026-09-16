@@ -120,13 +120,34 @@ export function PortalLayout() {
         </div>
       </aside>
       <main id="portal-main" ref={mainRef} tabIndex={-1} className={styles.main}>
-        <p className={styles.preview}>
-          <span className={styles.previewStrong}>Preview</span>
-          <span>
-            You are signed in as a sample household. Everything here is made-up data, and nothing you change is
-            saved yet.
-          </span>
-        </p>
+        {/*
+          * Three states, and they used to be told as one.
+          *
+          * The banner was unconditional, so somebody signed in with Google against the real
+          * database was told their changes were not saved — and somebody the committee has not
+          * recorded yet was told nothing at all, which is worse: the app falls back to treating
+          * an unmatched address as an admin, so every screen loads, looks fine, and is empty,
+          * because the database has no household for them and its policies answer accordingly.
+          * An empty inbox is indistinguishable from a working one with no messages.
+          */}
+        {who.preview ? (
+          <p className={styles.preview}>
+            <span className={styles.previewStrong}>Preview</span>
+            <span>
+              You are signed in as a sample household. Everything here is made-up data, and nothing you change is
+              saved yet.
+            </span>
+          </p>
+        ) : who.householdId === '' ? (
+          <p className={styles.preview} role="status">
+            <span className={styles.previewStrong}>No household yet</span>
+            <span>
+              You are signed in as {who.email}, but the committee has not recorded a household against that
+              address — so the database has nothing to show you and these screens will stay empty. Set
+              `google_email` on your household in Supabase, then reload.
+            </span>
+          </p>
+        ) : null}
         <div className={styles.content}>
           <Outlet />
         </div>

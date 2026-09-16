@@ -5,6 +5,7 @@ import { routes } from '@/app/router'
 import { previewAccounts } from '@/lib/auth/previewAccounts'
 import type { Session } from '@/lib/auth/session'
 import { createEmptyApi, TestDataProviders } from '@/test/render'
+import { createMockApi } from '@/lib/api/mock'
 import type { ApiClient } from '@/lib/api'
 
 const member: Session = previewAccounts[0]
@@ -19,6 +20,89 @@ function renderAt(path: string, session?: Session, api?: ApiClient) {
   )
   return router
 }
+
+/**
+ * Which of the three the banner is telling you.
+ *
+ * It used to be drawn unconditionally, which made it a lie in two of them — and the expensive
+ * one was silence: an address the committee has not recorded is treated as an admin by the app
+ * and as a stranger by the database, so every screen loads, looks right, and is empty. A real
+ * message sent through the live contact form did not appear in the inbox, and nothing anywhere
+ * said why.
+ */
+describe('what the portal says about which sign-in you are in', () => {
+  const unmatched: Session = {
+    role: 'admin',
+    householdId: '',
+    householdName: 'No household yet',
+    name: 'Budhaditya Pandit',
+    email: 'panditbudhaditya@gmail.com',
+  }
+
+  const recorded: Session = {
+    role: 'admin',
+    householdId: 'hh-chatterjee',
+    householdName: 'The Chatterjees',
+    name: 'Debashis Chatterjee',
+    email: 'd.chatterjee@gmail.com',
+  }
+
+  it('says it is a preview when it is one', async () => {
+    renderAt('/portal', admin)
+    await screen.findByRole('heading', { level: 1, name: 'Dashboard' })
+    expect(screen.getByText(/made-up data/)).toBeInTheDocument()
+  })
+
+  it('says nothing of the sort to somebody signed in for real', async () => {
+    renderAt('/portal', recorded)
+    await screen.findByRole('heading', { level: 1, name: 'Dashboard' })
+    // Telling somebody their real edits are make-believe is the one thing a back office
+    // must not get wrong.
+    expect(screen.queryByText(/made-up data/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/No household yet/)).not.toBeInTheDocument()
+  })
+
+  it('explains the empty screens when the committee has not recorded your address', async () => {
+    renderAt('/portal', unmatched)
+    await screen.findByRole('heading', { level: 1, name: 'Dashboard' })
+    // Scoped to the banner: the address is in the sidebar too, and it is the banner naming
+    // which address the database found nothing for that makes the empty screens legible.
+    const banner = screen.getByRole('status')
+    expect(within(banner).getByText(/has not recorded a household/)).toBeInTheDocument()
+    expect(within(banner).getByText(/panditbudhaditya@gmail.com/)).toBeInTheDocument()
+    expect(screen.queryByText(/made-up data/)).not.toBeInTheDocument()
+  })
+})
+
+/**
+ * A household with no renewal date, which is what the database actually hands back.
+ *
+ * `membership_status` defaults to `active` and `membership_paid_to` has no default, so this is
+ * the state of every household the committee writes down — and it took the whole portal out
+ * with `RangeError: Invalid time value` on the first real sign-in, because the mapper turned
+ * the missing date into an empty string and the dashboard formatted it.
+ */
+describe('a household nobody has recorded a renewal date for', () => {
+  function apiWithUnpaidHousehold(): ApiClient {
+    const api = createMockApi()
+    return {
+      ...api,
+      portal: {
+        ...api.portal,
+        getHousehold: async (id, viewer) => {
+          const household = await api.portal.getHousehold(id, viewer)
+          return household ? { ...household, membership: { status: 'active', paidTo: null } } : null
+        },
+      },
+    }
+  }
+
+  it('says so, instead of taking the page down', async () => {
+    renderAt('/portal', member, apiWithUnpaidHousehold())
+    await screen.findByRole('heading', { level: 1, name: 'Dashboard' })
+    expect(await screen.findByText(/No renewal date recorded yet/)).toBeInTheDocument()
+  })
+})
 
 describe('portal access', () => {
   it('sends a visitor to sign in', async () => {
