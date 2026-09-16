@@ -6,7 +6,7 @@
 > **What this is:** the order of work from [MEMBER-LOGIN.md](MEMBER-LOGIN.md), broken into steps
 > that can be ticked off. That document says *what* and *why*; this one says *where we are*.
 >
-> **Last updated:** 2026-09-15 · **Current step:** 4 · **Ticked:** 74 of 91
+> **Last updated:** 2026-09-15 · **Current step:** 4 · **Ticked:** 75 of 92
 
 ## How this is kept
 
@@ -83,8 +83,15 @@ stored until this is right, and it is free to get right while the data is still 
 > every check in it fails by raising. Eight tables, sixteen policies, six functions, two triggers,
 > and the planner's five tables untouched beside them.
 >
-> What is still unproven is the part only a browser can show: signing in as a member and finding
-> that another household is not there. That waits on Google.
+> **The round trip works** *(2026-09-16)*. Google → Supabase → PostgREST → the policies → the
+> dashboard. Doing it found three things no mock could have: the guard treated "still working out
+> who is here" as "nobody", and sent somebody who had just signed in back to the sign-in page; the
+> sign-in page had no idea what to do with somebody already signed in; and the Google button wore
+> its disabled styling in every state, so the only way to learn it was live was to click something
+> that looked dead.
+>
+> What is still unproven is the part that needs two accounts: signing in as an ordinary member
+> with a household, and finding that another household simply is not there.
 
 - [x] Rewrite `supabase/portal.sql`: tables now come before the functions that query them
 - [x] Replace `current_setting(...)::jsonb` with `auth.jwt()`, which folds the empty string to null
@@ -97,7 +104,8 @@ stored until this is right, and it is free to get right while the data is still 
 - [x] Keep `service_role` executing the helpers after revoking them from `public` *(found on the way)*
 - [x] Rewrite `verify.sql` so it exercises the policies, not only the helper functions *(found on the way)*
 - [x] **Run `portal.sql`, then `verify.sql`, in the project** — passed 2026-09-15, first time
-- [ ] Sign in as a member and an admin in the live site and try to read what each should not
+- [x] Sign in with Google against the real project — works end to end, 2026-09-16
+- [ ] Sign in as a *member* with a household and confirm another household is not there
 - [x] Take `supabase/portal.sql` and `supabase/verify.sql` out of `.gitignore` and commit them
 
 **Done when:** a signed-in member, using the browser console and their own token, cannot read
@@ -728,6 +736,7 @@ invitation, so nothing to approve and no passwords to reset.
 | 2026-09-15 | 5 | `/admin/content` wired — three buttons had done nothing. Caught a new post reading as "taken down". 525 → 533 tests. |
 | 2026-09-15 | — | Retention settled: the count is kept for good, the names for twelve months. `close_year()` counts before it deletes. 533 → 537 tests. |
 | 2026-09-15 | 3 | The committee types the headcount in. 537 → 551 tests. |
+| 2026-09-16 | 0.1 | **Google sign-in works end to end against the real project.** Three bugs found that only a live round trip could show. |
 | 2026-09-15 | 0.1 | **`portal.sql` and `verify.sql` run against a real database, and passed first time.** Into a `portal` schema in the committee's planner project. Out of `.gitignore` at last. |
 | 2026-09-15 | 4 | The takedown promise got a route, a turnaround and a record of what was done. 651 → 660 tests. |
 | 2026-09-15 | 6 | Accessibility audited on every page and coverage enforced in CI — both had been stated standards nobody checked. Found the home page's loading placeholder announcing nothing. 634 → 651 tests. |
