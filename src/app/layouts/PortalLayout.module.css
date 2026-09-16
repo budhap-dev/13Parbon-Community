@@ -3,6 +3,21 @@
  * tables, and it tells the viewer they have moved from the noticeboard into the back office.
  */
 .shell {
+  /*
+   * The portal paints itself on ink, which is dark in every theme — so it brings its own
+   * foreground. `--color-fg` is the *page* foreground and flips with the theme: cream on the
+   * three dark ones, near-black on Poila Boishakh and Saraswati. Left alone, the whole sidebar
+   * and every heading went dark-on-dark on those two.
+   *
+   * Anything inside that paints itself light again puts the page's values back from `--page-*`,
+   * which tokens.css keeps for exactly this. See the reset at the top of Portal.module.css.
+   */
+  --color-fg: #fff3e3;
+  --color-fg-muted: rgba(255, 243, 227, 0.78);
+  --color-fg-faint: rgba(255, 243, 227, 0.45);
+  --color-border: rgba(255, 243, 227, 0.3);
+  --color-border-faint: rgba(255, 243, 227, 0.16);
+  --color-hover-wash: rgba(255, 243, 227, 0.08);
   display: grid;
   grid-template-columns: 250px minmax(0, 1fr);
   min-height: 100vh;
@@ -103,7 +118,7 @@
 
 .linkOn .count {
   background: var(--color-ink);
-  color: var(--color-accent);
+  color: var(--color-on-ink);
 }
 
 .externalMark {
@@ -156,7 +171,8 @@
 .rolePillAdmin {
   composes: rolePill;
   background: color-mix(in srgb, var(--color-accent) 22%, transparent);
-  color: var(--color-accent);
+  /* Same reason as the Preview banner: this pill sits in the sidebar, which is ink. */
+  color: var(--color-on-ink);
 }
 
 .signOut {
@@ -196,7 +212,9 @@
 
 .previewStrong {
   font-weight: 600;
-  color: var(--color-accent);
+  /* on-ink rather than the accent: the accent is a red chosen to sit on a pale page, and this
+     banner sits on ink. Red on dark red is the word "Preview" being almost invisible. */
+  color: var(--color-on-ink);
 }
 
 .content {

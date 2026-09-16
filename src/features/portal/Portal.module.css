@@ -1,3 +1,26 @@
+/*
+ * Anything in the portal that paints itself light puts the page's colours back.
+ *
+ * The shell runs on ink and brings its own foreground — cream — because `--color-fg` is the
+ * page's and turns near-black on Poila Boishakh and Saraswati. That cream then follows the
+ * text everywhere, including onto these cream cards, where it is invisible.
+ *
+ * `--page-*` is the page's own foreground under a second name, kept by tokens.css. One rule
+ * rather than one per class, so a new light card is added here and nowhere else.
+ */
+.panel,
+.stat,
+.feature,
+.cardYou {
+  --color-fg: var(--page-fg);
+  --color-fg-muted: var(--page-fg-muted);
+  --color-fg-faint: var(--page-fg-faint);
+  --color-border: var(--page-border);
+  --color-border-faint: var(--page-border-faint);
+  --color-hover-wash: var(--page-hover-wash);
+  color: var(--color-fg);
+}
+
 .page {
   display: flex;
   flex-direction: column;

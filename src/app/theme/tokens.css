@@ -179,3 +179,26 @@
   --color-photo-c: #6b64c4;
   --color-photo-d: #ff9a3c;
 }
+
+/*
+ * The page's own foreground, kept under a second name.
+ *
+ * Two of the five themes — Poila Boishakh and Saraswati — are light pages with a near-black
+ * `--color-fg`. The portal paints itself on `--color-ink`, which is dark in all five, so it
+ * has to override `--color-fg` with a cream of its own or half the themes go dark-on-dark.
+ * Anything inside the portal that paints itself light again needs the page's values back, and
+ * by then `--color-fg` is gone.
+ *
+ * Declared here, last and at the same specificity as the theme blocks, so it wins over them and
+ * resolves against whichever theme is on the element. Declared on :root rather than in the
+ * portal's own stylesheet so it exists everywhere: a card that puts these back keeps working if
+ * it is ever used outside the portal.
+ */
+:root {
+  --page-fg: var(--color-fg);
+  --page-fg-muted: var(--color-fg-muted);
+  --page-fg-faint: var(--color-fg-faint);
+  --page-border: var(--color-border);
+  --page-border-faint: var(--color-border-faint);
+  --page-hover-wash: var(--color-hover-wash);
+}
