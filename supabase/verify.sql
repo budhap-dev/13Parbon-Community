@@ -41,6 +41,10 @@ values
 insert into portal.documents (id, title, category, file_url)
 values ('44444444-4444-4444-4444-444444444444', 'Test Minutes', 'minutes', 'https://example.com/m.pdf');
 
+insert into portal.site_settings (id, value)
+values (true, '{"showNews": true}'::jsonb)
+on conflict (id) do update set value = excluded.value;
+
 insert into portal.contact_messages (name, email, subject, message)
 values ('A Visitor', 'visitor@example.com', 'Hello', 'A message long enough to pass the check.');
 
@@ -409,6 +413,30 @@ values ('A Fourth Visitor', 'fourth@example.com', 'Just asking', 'Long enough to
 insert into portal.contact_messages (name, email, subject, message, kind)
 values ('A Parent', 'parent@example.com', 'Please take a photograph down', 'The one of my daughter on the Boishakhi page.', 'photo');
 
+-- The public site asks this table whether the gallery and the news pages exist at all, so a
+-- visitor with no session has to be able to read it. If this ever fails, the live site loses
+-- every switch the committee has thrown and silently falls back to what the code says.
+do $$
+declare
+  readable integer;
+begin
+  select count(*) into readable from portal.site_settings;
+  if readable < 1 then
+    raise exception 'FAIL: a visitor cannot read the site settings, so the public site cannot tell which sections are on';
+  end if;
+end $$;
+
+-- Reading them is not changing them.
+do $$
+begin
+  begin
+    update portal.site_settings set value = '{"showPhotos": false}'::jsonb where id;
+    raise exception 'FAIL: a visitor can turn the gallery off';
+  exception when insufficient_privilege then
+    null;
+  end;
+end $$;
+
 -- A visitor may say what a message is about. A visitor may not say it has been dealt with:
 -- a message arriving pre-marked handled is one that leaves the unread count and is never read.
 do $$
@@ -520,6 +548,17 @@ begin
   end if;
 end $$;
 
+-- An ordinary member reads the settings like anybody else and changes nothing. A blocked update
+-- raises nothing, so this is checked by looking afterwards rather than by catching.
+update portal.site_settings set value = '{"showPhotos": false}'::jsonb where id;
+
+do $$
+begin
+  if (select value from portal.site_settings where id) <> '{"showNews": true}'::jsonb then
+    raise exception 'FAIL: a member can change what the public site shows';
+  end if;
+end $$;
+
 reset role;
 set local role authenticated;
 set local request.jwt.claims = '{"email": "admin@example.com"}';
@@ -565,6 +604,26 @@ begin
   select count(*) into unfinished from portal.contact_messages where kind = 'photo' and handled_by is null;
   if unfinished <> 0 then
     raise exception 'FAIL: a takedown with a note could not be marked dealt with';
+  end if;
+end $$;
+
+-- And the committee can, which is the whole point of the table.
+update portal.site_settings set value = '{"showNews": false, "showPhotos": true}'::jsonb where id;
+
+do $$
+begin
+  if (select value ->> 'showPhotos' from portal.site_settings where id) <> 'true' then
+    raise exception 'FAIL: the committee cannot change what the public site shows';
+  end if;
+
+  -- And it left a line. Worth its own check because this is the only audited table whose key is
+  -- not a uuid — `subject_id` is text and takes 'true', but the trigger swallows its own
+  -- failures by design, so a type that did not fit would lose the line and say nothing.
+  if not exists (
+    select 1 from portal.audit_log
+     where subject_kind = 'site_settings' and changes ? 'value'
+  ) then
+    raise exception 'FAIL: changing what the public site shows left no line in the audit trail';
   end if;
 end $$;
 

@@ -293,6 +293,50 @@ create policy "admins resolve sign-in attempts"
 
 
 -- ---------------------------------------------------------------------------
+-- The site's own switches
+-- ---------------------------------------------------------------------------
+-- What the committee can change about the public site without a developer: which sections are
+-- on, the words on the public pages, who is on the committee this year, and the members' roll.
+-- These lived in src/app/site.ts, where turning the news section on was a pull request.
+--
+-- One row, enforced by the primary key: `id` may only ever be true, so there is exactly one set
+-- of settings and no question about which of two rows is live.
+--
+-- One jsonb column rather than a column per switch. The shape belongs to the app, which lays
+-- the stored object over its own defaults key by key and drops anything it does not recognise —
+-- so a switch renamed in the code cannot leave a stale value driving the live site. A column
+-- per switch would mean a migration every time the committee wants a new toggle, which is the
+-- developer this table exists to remove.
+create table if not exists portal.site_settings (
+  id boolean primary key default true check (id),
+  value jsonb not null,
+  updated_at timestamptz not null default now()
+);
+
+alter table portal.site_settings enable row level security;
+
+-- Readable by everybody, including a visitor who is not signed in, because the public site asks
+-- this table whether the gallery and the news pages exist at all. Nothing in here is private:
+-- the switches, the words already printed on the pages, and the same names the About page has
+-- always carried in public.
+grant select on portal.site_settings to anon, authenticated;
+grant insert, update on portal.site_settings to authenticated;
+
+drop policy if exists "anybody may read the site settings" on portal.site_settings;
+create policy "anybody may read the site settings"
+  on portal.site_settings for select to anon, authenticated using (true);
+
+drop policy if exists "admins change the site settings" on portal.site_settings;
+create policy "admins change the site settings"
+  on portal.site_settings for insert to authenticated with check (portal.is_admin());
+
+drop policy if exists "admins save the site settings" on portal.site_settings;
+create policy "admins save the site settings"
+  on portal.site_settings for update to authenticated
+  using (portal.is_admin()) with check (portal.is_admin());
+
+
+-- ---------------------------------------------------------------------------
 -- The committee's inbox
 -- ---------------------------------------------------------------------------
 -- schema.sql makes contact_messages insert-only so the public website can post to it and
@@ -594,6 +638,13 @@ create trigger record_change after insert or update or delete on portal.document
 -- saying a visitor submitted the contact form, which the table already says.
 drop trigger if exists record_change on portal.contact_messages;
 create trigger record_change after update or delete on portal.contact_messages
+  for each row execute function portal.record_change();
+
+-- Turning the gallery off takes every photograph off the public site at once, and changing the
+-- roll takes somebody's name off the About page. Both are one click and neither leaves a mark
+-- anywhere else, so who did it and when is worth keeping.
+drop trigger if exists record_change on portal.site_settings;
+create trigger record_change after insert or update on portal.site_settings
   for each row execute function portal.record_change();
 
 

@@ -172,3 +172,65 @@ export function rollFromText(text: string): string[] {
 export function rollToText(names: string[]): string {
   return names.join('\n')
 }
+
+/**
+ * Saved settings laid over what the code says, key by key.
+ *
+ * The row is one JSON object, which is the shape this file warns about: a column anybody can
+ * put anything in. What keeps it honest is that nothing is trusted on the way out. A key that
+ * is missing, the wrong type, or no longer part of `SiteSettings` falls back to the default
+ * rather than reaching a page — so a switch renamed in the code cannot leave a stale value
+ * quietly driving the live site, and a half-written row cannot blank the home page.
+ */
+export function mergeSettings(stored: unknown, defaults: SiteSettings): SiteSettings {
+  if (!stored || typeof stored !== 'object' || Array.isArray(stored)) return defaults
+  const row = stored as Partial<Record<keyof SiteSettings, unknown>>
+
+  const bool = (key: keyof SiteSettings) =>
+    typeof row[key] === 'boolean' ? (row[key] as boolean) : (defaults[key] as boolean)
+
+  const home = { ...defaults.home }
+  const storedHome = row.home
+  if (storedHome && typeof storedHome === 'object') {
+    for (const section of HOME_SECTIONS) {
+      const value = (storedHome as Record<string, unknown>)[section]
+      if (value === 'public' || value === 'members' || value === 'admins') home[section] = value
+    }
+  }
+
+  const text = { ...defaults.text }
+  const storedText = row.text
+  if (storedText && typeof storedText === 'object') {
+    for (const key of SITE_TEXT_KEYS) {
+      const value = (storedText as Record<string, unknown>)[key]
+      if (typeof value === 'string') text[key] = value
+    }
+  }
+
+  const committee = Array.isArray(row.committee)
+    ? tidyCommittee(
+        (row.committee as unknown[]).filter(
+          (entry): entry is CommitteeMember =>
+            !!entry &&
+            typeof entry === 'object' &&
+            typeof (entry as CommitteeMember).role === 'string' &&
+            typeof (entry as CommitteeMember).name === 'string',
+        ),
+      )
+    : defaults.committee
+
+  const members = Array.isArray(row.members)
+    ? (row.members as unknown[]).filter((name): name is string => typeof name === 'string')
+    : defaults.members
+
+  return {
+    showMemberSignIn: bool('showMemberSignIn'),
+    showNews: bool('showNews'),
+    showNextEventStrip: bool('showNextEventStrip'),
+    showPhotos: bool('showPhotos'),
+    home,
+    text,
+    committee,
+    members,
+  }
+}

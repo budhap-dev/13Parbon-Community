@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { createApi } from '../create'
 import { createMockApi } from '../mock'
 import { withSupabasePortal } from './portal'
+import { withSupabaseSettings } from './settings'
 
 /**
  * Which parts of the app talk to the database, and which are still fixtures.
@@ -65,6 +66,15 @@ describe('with a project configured', () => {
     expect(wired.contact.markHandled).not.toBe(base.contact.markHandled)
     // `send` belongs to the public website, which has no session and posts under the anon key.
     expect(wired.contact.send).toBe(base.contact.send)
+  })
+
+  it('reads the site\'s own switches from the database', () => {
+    // What the committee can change about the public site without a developer. On fixtures these
+    // were an in-memory object: a switch thrown on the live site survived until the next reload.
+    const base = createMockApi()
+    const wired = withSupabaseSettings(base, { url: configured.VITE_SUPABASE_URL, anonKey: configured.VITE_SUPABASE_ANON_KEY })
+    expect(wired.settings.get).not.toBe(base.settings.get)
+    expect(wired.settings.save).not.toBe(base.settings.save)
   })
 
   it('leaves events, news and the gallery on fixtures, because they have no tables yet', async () => {
