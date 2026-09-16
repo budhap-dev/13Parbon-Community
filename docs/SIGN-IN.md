@@ -84,6 +84,7 @@ nothing that runs in a browser, and this app never needs it.
 | `supabase/schema.sql` | The contact form's table. Insert-only for visitors |
 | `supabase/portal.sql` | Households, people, documents, sign-in attempts, the audit trail, attendance — and every policy |
 | `supabase/verify.sql` | Proves the rules hold. Runs in a transaction and rolls back, so it leaves nothing behind |
+| `supabase/seed.sql` | *Optional.* Eight invented households, so the committee screens have something to show |
 
 `verify.sql` should end with a single notice: **All portal rules hold.** Anything beginning
 `FAIL:` names exactly what is wrong — send me the line and I will fix it.
@@ -143,7 +144,20 @@ Two behaviours worth knowing:
 - **An allowed address with no household still gets in**, as an admin with "No household yet".
   That is deliberate: your own address will not have a household until you add one.
 
-## 7. Check it
+## 7. Give yourself a household
+
+Until you do, you sign in as an admin with *"No household yet"* — the fallback for an allowed
+address the committee has not recorded. It works, and it exercises none of the interesting
+rules: you see everything because you are an admin, not because a policy let you.
+
+Run `supabase/seed.sql`, then uncomment **one** line at the bottom of it with your own Google
+address. The member one is the one worth doing.
+
+Every seeded sign-in address is deliberately null. The fixtures carried invented ones like
+`rina.sen@gmail.com` — but an invented Gmail address is not necessarily an unused one, and
+whoever owns it would be matched to a household and shown its contents.
+
+## 8. Check it
 
 1. `npm run dev`, go to `/login`, sign in with Google.
 2. You should land on `/portal`.
