@@ -4,8 +4,14 @@ import { useTheme } from '../theme/ThemeContext'
 import { themes, type ThemeName } from '../theme/themes'
 import styles from './ThemeSwitcher.module.css'
 
-/** Lets the viewer pick one of the community's colour schemes. The choice is remembered. */
-export function ThemeSwitcher() {
+/**
+ * Lets the viewer pick one of the community's colour schemes. The choice is remembered.
+ *
+ * `align` says which edge the list hangs from. The header puts the switcher at its right edge,
+ * so the list hangs right and opens leftwards over the page; the portal's sidebar is narrower
+ * than the list, so from there it has to hang left and open over the content instead.
+ */
+export function ThemeSwitcher({ align = 'end' }: { align?: 'end' | 'start' } = {}) {
   const { theme, setTheme } = useTheme()
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
@@ -52,7 +58,13 @@ export function ThemeSwitcher() {
         <span className={styles.srOnly}>, currently {current.name}</span>
       </button>
 
-      <div id={panelId} className={styles.panel} hidden={!open} role="radiogroup" aria-label="Theme">
+      <div
+        id={panelId}
+        className={align === 'start' ? `${styles.panel} ${styles.panelStart}` : styles.panel}
+        hidden={!open}
+        role="radiogroup"
+        aria-label="Theme"
+      >
         {themes.map((option) => {
           const selected = option.id === theme
           return (

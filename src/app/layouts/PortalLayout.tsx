@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router'
 import { site } from '@/app/site'
 import { Icon, type IconName } from '@/components/Icon'
+import { ThemeSwitcher } from './ThemeSwitcher'
 import { useGoogleSignIn } from '@/lib/auth/GoogleSignIn'
 import { useSession, useSignedIn } from '@/lib/auth/session'
 import { previewAccounts } from '@/lib/auth/previewAccounts'
@@ -78,6 +79,15 @@ export function PortalLayout() {
           <img src={site.emblem} alt="" className={styles.emblem} width={34} height={34} />
           <span>{site.wordmark}</span>
         </Link>
+        {/*
+          * The same switcher as the public header, because the portal now paints with the same
+          * tokens — it used to sit on ink whatever the theme, so there was nothing here to switch.
+          * Under the brand rather than at the bottom: the list is wider than this sidebar and
+          * opens downward, and up here it has the whole page to open into on every width.
+          */}
+        <div className={styles.themeRow}>
+          <ThemeSwitcher align="start" />
+        </div>
         <nav aria-label="Your household">{renderGroup('Your household', memberNav)}</nav>
         {onTheCommittee ? (
           <>

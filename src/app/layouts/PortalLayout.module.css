@@ -1,27 +1,18 @@
 /*
- * The portal sits on the ink token rather than the site's sindoor ground: calmer behind
- * tables, and it tells the viewer they have moved from the noticeboard into the back office.
+ * The portal follows the theme the person chose, the same as every public page.
+ *
+ * It used to sit on ink whatever the theme — calmer behind tables, and a signal that you had
+ * left the noticeboard for the back office. That cost more than it bought: ink is dark in all
+ * five themes, so the shell had to carry its own cream foreground, every card that painted
+ * itself light had to put the page's colours back, and two themes still came out wrong the
+ * first time anyone looked. Now it is the page's background and the page's text, and the
+ * cards are raised the way they are everywhere else. The sidebar is what says "back office".
  */
 .shell {
-  /*
-   * The portal paints itself on ink, which is dark in every theme — so it brings its own
-   * foreground. `--color-fg` is the *page* foreground and flips with the theme: cream on the
-   * three dark ones, near-black on Poila Boishakh and Saraswati. Left alone, the whole sidebar
-   * and every heading went dark-on-dark on those two.
-   *
-   * Anything inside that paints itself light again puts the page's values back from `--page-*`,
-   * which tokens.css keeps for exactly this. See the reset at the top of Portal.module.css.
-   */
-  --color-fg: #fff3e3;
-  --color-fg-muted: rgba(255, 243, 227, 0.78);
-  --color-fg-faint: rgba(255, 243, 227, 0.45);
-  --color-border: rgba(255, 243, 227, 0.3);
-  --color-border-faint: rgba(255, 243, 227, 0.16);
-  --color-hover-wash: rgba(255, 243, 227, 0.08);
   display: grid;
   grid-template-columns: 250px minmax(0, 1fr);
   min-height: 100vh;
-  background: var(--color-ink);
+  background: var(--color-bg);
   color: var(--color-fg);
 }
 
@@ -30,7 +21,7 @@
   flex-direction: column;
   gap: 26px;
   padding: 22px 16px;
-  background: var(--color-ink-hover);
+  background: var(--color-bg-raised);
   border-right: 1px solid var(--color-border-faint);
 }
 
@@ -136,8 +127,12 @@
   white-space: nowrap;
 }
 
+/* Under the brand, where a list that opens downward has the whole page to open into. */
+.themeRow {
+  padding: 0 4px;
+}
+
 .who {
-  margin-top: auto;
   display: flex;
   flex-direction: column;
   gap: 3px;
@@ -171,8 +166,9 @@
 .rolePillAdmin {
   composes: rolePill;
   background: color-mix(in srgb, var(--color-accent) 22%, transparent);
-  /* Same reason as the Preview banner: this pill sits in the sidebar, which is ink. */
-  color: var(--color-on-ink);
+  /* The accent reads on every theme's raised surface: marigold on the dark ones, red on the
+     pale ones. On-ink would not — it is chosen against ink, which this no longer sits on. */
+  color: var(--color-accent);
 }
 
 .signOut {
@@ -212,9 +208,7 @@
 
 .previewStrong {
   font-weight: 600;
-  /* on-ink rather than the accent: the accent is a red chosen to sit on a pale page, and this
-     banner sits on ink. Red on dark red is the word "Preview" being almost invisible. */
-  color: var(--color-on-ink);
+  color: var(--color-accent);
 }
 
 .content {
@@ -323,7 +317,6 @@
   line-height: 1.5;
 }
 
-/* On the banner, which sits on ink — so it takes the same on-ink treatment as "Preview". */
 .leavePreview {
   margin-left: auto;
   min-height: 36px;
@@ -331,7 +324,7 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-pill);
   background: transparent;
-  color: var(--color-on-ink);
+  color: var(--color-fg);
   font-weight: 600;
   font-size: 13px;
   cursor: pointer;

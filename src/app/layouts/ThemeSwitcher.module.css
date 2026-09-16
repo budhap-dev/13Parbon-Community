@@ -138,3 +138,9 @@
     box-shadow: none;
   }
 }
+
+/* Hangs from the left edge instead: for a home narrower than the list, like the portal's sidebar. */
+.panelStart {
+  left: 0;
+  right: auto;
+}
