@@ -6,7 +6,7 @@
 > **What this is:** the order of work from [MEMBER-LOGIN.md](MEMBER-LOGIN.md), broken into steps
 > that can be ticked off. That document says *what* and *why*; this one says *where we are*.
 >
-> **Last updated:** 2026-09-15 · **Current step:** 4 · **Ticked:** 75 of 92
+> **Last updated:** 2026-09-15 · **Current step:** 4 · **Ticked:** 76 of 93
 
 ## How this is kept
 
@@ -98,8 +98,14 @@ stored until this is right, and it is free to get right while the data is still 
 - [x] Make the `auth.users` triggers unable to fail, so a note to the committee cannot take the door down
 - [x] `households` table + policy: a member reads their own household and no other
 - [x] `households` policy: an admin reads and writes all
-- [x] Policy on `people`, `registrations`, `documents`, `sign_in_attempts`
+- [x] Policy on `people`, `documents`, `sign_in_attempts` *(`registrations` went with the booking data)*
 - [x] `contact_messages`: admins can read and handle; it stays insert-only for everyone else
+- [x] And the inbox *screen* actually reads it *(the policy was written; nothing used it — found 2026-09-16)*
+- [x] `kind` and `handled_note` columns, so a takedown is still a takedown once it reaches the table
+- [x] A visitor may insert only the five columns the form sends, not `handled_by`
+- [x] **`verify.sql` caught the contact form failing against the real database** — 2026-09-16
+- [x] `return=minimal`: the app stops asking for a row a visitor is not allowed to read back
+- [x] **`portal.sql` and `verify.sql` run again, amended** — passed 2026-09-16
 - [x] Explicit grants, rather than trusting Supabase's default privileges *(found on the way)*
 - [x] Keep `service_role` executing the helpers after revoking them from `public` *(found on the way)*
 - [x] Rewrite `verify.sql` so it exercises the policies, not only the helper functions *(found on the way)*
@@ -167,7 +173,8 @@ app gets written in the belief that it may ask for anything.
 - [x] 27 new tests: `mock/rules.test.ts` mirrors `verify.sql` block for block
 - [x] A disabled style for `Button` — nothing had used `disabled` until this, and a button that
       ignores a click while looking ready to take one reads as a broken page
-- [ ] The Supabase adapter alongside, method for method — blocked on the project
+- [x] The Supabase adapter for the whole `portal` section — reads and writes, against the real database
+- [ ] The rest: events, news, the gallery. They have no tables yet
 - [ ] Per-resource mutations land with their own steps, not speculatively up front
 
 **Done when:** one value can be changed from the UI and survives a reload. *Changed from the UI
@@ -737,6 +744,11 @@ invitation, so nothing to approve and no passwords to reset.
 | 2026-09-15 | 5 | `/admin/content` wired — three buttons had done nothing. Caught a new post reading as "taken down". 525 → 533 tests. |
 | 2026-09-15 | — | Retention settled: the count is kept for good, the names for twelve months. `close_year()` counts before it deletes. 533 → 537 tests. |
 | 2026-09-15 | 3 | The committee types the headcount in. 537 → 551 tests. |
+| 2026-09-16 | 0.3 | **First real sign-in, three bugs no mock could show.** A household with no renewal date crashed the portal outright — the mapper turned a null date into `''` to satisfy `paidTo: string`, and Intl threw on it. The Preview banner was unconditional, so a real admin was told their edits were make-believe. And an unmatched address is treated as an admin by the app and a stranger by the database, so every screen loaded empty with nothing saying why. 700 → 705 tests. |
+| 2026-09-16 | 0.1 | `verify.sql` passed with the amended schema: the takedown rule holds in the database, a visitor can reach the committee and still cannot read the inbox. |
+| 2026-09-16 | 0.2 | **The contact form never worked against the real database.** `Prefer: return=representation` makes the insert an `INSERT ... RETURNING`, RETURNING is a read, and a visitor has no select policy on the inbox by design — so every submission on the live site failed. Narrowed to `return=minimal`; `send` now returns a receipt rather than a stored row it was never going to get. |
+| 2026-09-16 | 0.5 | **Revalidation pass.** Seven findings, all fixed. The contact form was writing real messages to a table no screen in the app could read; `kind` was dropped on the way out, so a takedown arrived looking like a parking question. The wiring test written to catch exactly that could not fail. 691 → 700 tests. |
+| 2026-09-16 | 0.2 | The portal reads and writes the real database — all thirteen methods, not half. Events, news and the gallery stay on fixtures, which is honest: they have no tables. 686 → 691 tests. |
 | 2026-09-16 | 0.1 | **Google sign-in works end to end against the real project.** Three bugs found that only a live round trip could show. |
 | 2026-09-15 | 0.1 | **`portal.sql` and `verify.sql` run against a real database, and passed first time.** Into a `portal` schema in the committee's planner project. Out of `.gitignore` at last. |
 | 2026-09-15 | 4 | The takedown promise got a route, a turnaround and a record of what was done. 651 → 660 tests. |
