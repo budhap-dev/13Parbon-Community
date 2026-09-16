@@ -95,14 +95,29 @@ describe('inside an album', () => {
     const cards = document.querySelectorAll('li[draggable="true"]')
     expect(cards.length).toBeGreaterThan(2)
 
-    fireEvent.dragStart(cards[0])
-    fireEvent.dragOver(cards[2])
-    fireEvent.drop(cards[2])
+    /*
+     * jsdom does not put a `dataTransfer` on a synthetic drag event, and a real browser always
+     * does. Without this stub both handlers threw on their first line — the test still passed,
+     * because the one state change it asserted happened before the throw, and the drop-target
+     * highlight it never looked at was silently dead.
+     */
+    const dataTransfer = { effectAllowed: '', dropEffect: '', setData: vi.fn(), getData: vi.fn() }
+
+    fireEvent.dragStart(cards[0], { dataTransfer })
+    expect(cards[0].className).toContain('dragging')
+    expect(dataTransfer.setData).toHaveBeenCalled()
+
+    fireEvent.dragOver(cards[2], { dataTransfer })
+    expect(cards[2].className).toContain('over')
+
+    fireEvent.drop(cards[2], { dataTransfer })
 
     await waitFor(() => {
       const after = screen.getAllByRole('button', { name: /^Open / }).map((b) => b.getAttribute('aria-label'))
       expect(after[2]).toBe(before[0])
     })
+    // The drag is over: neither mark should be left behind on any card.
+    expect(document.querySelector('.dragging, .over')).toBeNull()
   })
 
   it('reorders from the keyboard too, because dragging cannot be done without a mouse', async () => {
