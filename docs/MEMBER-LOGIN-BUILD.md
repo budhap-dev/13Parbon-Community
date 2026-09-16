@@ -174,6 +174,7 @@ app gets written in the belief that it may ask for anything.
 - [x] A disabled style for `Button` — nothing had used `disabled` until this, and a button that
       ignores a click while looking ready to take one reads as a broken page
 - [x] The Supabase adapter for the whole `portal` section — reads and writes, against the real database
+- [x] The site's own switches — `site_settings`, read by everybody, written by the committee
 - [ ] The rest: events, news, the gallery. They have no tables yet
 - [ ] Per-resource mutations land with their own steps, not speculatively up front
 
@@ -669,6 +670,7 @@ because jsdom does not paint — that one belongs in a browser.
 - [ ] RLS verified once more, from a browser, as a member
 - [ ] The audit table has rows in it from real use, not tests
 - [ ] `main` merged in, conflicts resolved
+- [x] **Preview belongs to the committee** — `?preview` no longer opens the back office to anybody who knows the trick; an admin opens the walkthrough from inside the portal, and it runs on fixtures — chosen 2026-09-16
 - [ ] Decide the release gate: does `showMemberSignIn` go `true` on merge, or does this land dark?
 - [ ] Ask before pushing, before the PR, and before the merge
 
@@ -744,6 +746,8 @@ invitation, so nothing to approve and no passwords to reset.
 | 2026-09-15 | 5 | `/admin/content` wired — three buttons had done nothing. Caught a new post reading as "taken down". 525 → 533 tests. |
 | 2026-09-15 | — | Retention settled: the count is kept for good, the names for twelve months. `close_year()` counts before it deletes. 533 → 537 tests. |
 | 2026-09-15 | 3 | The committee types the headcount in. 537 → 551 tests. |
+| 2026-09-16 | 0.3 | `site_settings` is real: the switches, the words, the committee and the roll now survive a reload. Until today an admin could throw a switch on the live site and lose it — three of the five admin screens still work that way. |
+| 2026-09-16 | 0.3 | Preview became a committee tool. `?preview` let any visitor into the back office of the live site; it is now offered inside the portal, to admins. The bigger half: a preview had to stop using the real client, because a sample household is not a row the database has — `hh-sen` is not even a uuid, so the walkthrough would have shown an error rather than fixtures. 705 → 708 tests. |
 | 2026-09-16 | 0.3 | **First real sign-in, three bugs no mock could show.** A household with no renewal date crashed the portal outright — the mapper turned a null date into `''` to satisfy `paidTo: string`, and Intl threw on it. The Preview banner was unconditional, so a real admin was told their edits were make-believe. And an unmatched address is treated as an admin by the app and a stranger by the database, so every screen loaded empty with nothing saying why. 700 → 705 tests. |
 | 2026-09-16 | 0.1 | `verify.sql` passed with the amended schema: the takedown rule holds in the database, a visitor can reach the committee and still cannot read the inbox. |
 | 2026-09-16 | 0.2 | **The contact form never worked against the real database.** `Prefer: return=representation` makes the insert an `INSERT ... RETURNING`, RETURNING is a read, and a visitor has no select policy on the inbox by design — so every submission on the live site failed. Narrowed to `return=minimal`; `send` now returns a receipt rather than a stored row it was never going to get. |
