@@ -15,6 +15,14 @@ import {
 export type SignInState =
   /** No Supabase project, or nobody on the allowlist: the button says so and does nothing. */
   | { status: 'off' }
+  /**
+   * Configured, and we do not yet know who is here.
+   *
+   * There is a moment after the return from Google where the client is still reading the code
+   * out of the address bar. Treating that as "a visitor" is what sent somebody who had just
+   * signed in back to the sign-in page.
+   */
+  | { status: 'checking' }
   | { status: 'ready' }
   | { status: 'working' }
   | { status: 'signedIn' }
@@ -43,7 +51,7 @@ export function GoogleSignInProvider({
   const config = useMemo(() => readAuthConfig(env), [env])
   const { session, signIn: putSession, signOut: dropSession } = useSession()
   const api = useApi()
-  const [state, setState] = useState<SignInState>(config ? { status: 'ready' } : { status: 'off' })
+  const [state, setState] = useState<SignInState>(config ? { status: 'checking' } : { status: 'off' })
 
   useEffect(() => {
     if (!config) return
@@ -74,6 +82,11 @@ export function GoogleSignInProvider({
       if (!live) return
       const { data } = supabase.auth.onAuthStateChange((_event, supabaseSession) => {
         void settle(supabaseSession?.user ?? null)
+      })
+      // If nothing is stored and nothing is in the address bar, the listener may never fire.
+      // Ask once, so "checking" cannot become a state the page never leaves.
+      void supabase.auth.getSession().then(({ data: current }) => {
+        if (live && !current.session) setState((s) => (s.status === 'checking' ? { status: 'ready' } : s))
       })
       stop = () => data.subscription.unsubscribe()
     })
@@ -127,3 +140,13 @@ async function findHousehold(api: ReturnType<typeof useApi>, email: string) {
 }
 
 export type { AuthConfig }
+
+/**
+ * Whether the app is still working out who is here.
+ *
+ * A guard that asks "is somebody signed in?" during this moment gets "no" and acts on it. It
+ * should wait instead: the answer is coming, and it is often yes.
+ */
+export function useAuthSettling(): boolean {
+  return useGoogleSignIn().state.status === 'checking'
+}

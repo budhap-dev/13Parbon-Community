@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { site } from '@/app/site'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
@@ -28,9 +29,23 @@ export function LoginPage() {
   useDocumentTitle('Member sign-in')
   const { signIn } = useSession()
   const navigate = useNavigate()
-  const { search } = useLocation()
+  const { search, state: locationState } = useLocation()
   const showPreview = previewEnabled(import.meta.env.MODE === 'development', search)
   const { state, signIn: withGoogle } = useGoogleSignIn()
+  const { session } = useSession()
+
+  /*
+   * Somebody who is already signed in has no business on this page.
+   *
+   * It happens on the way back from Google — the return lands on /portal, the guard sent them
+   * here while the session was still being read, and without this they stayed, looking at a
+   * sign-in button having just signed in.
+   */
+  useEffect(() => {
+    if (session.role === 'visitor') return
+    const from = (locationState as { from?: string } | null)?.from
+    navigate(from ?? (session.role === 'admin' ? '/admin' : '/portal'), { replace: true })
+  }, [session, navigate, locationState])
 
   return (
     <Container className={styles.single}>
