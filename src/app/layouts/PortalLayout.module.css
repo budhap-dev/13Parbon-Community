@@ -268,3 +268,75 @@
     padding-right: 20px;
   }
 }
+
+/*
+ * The walkthrough, tucked into the sidebar under the person's own details.
+ *
+ * A disclosure rather than two buttons on show: it is a rare, deliberate thing to do, and the
+ * sidebar is where somebody looks to find out who they are, not to be offered a costume.
+ */
+.walkthrough {
+  margin-top: 4px;
+}
+
+.walkthroughToggle {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  color: var(--color-fg-muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+
+.walkthroughToggle::-webkit-details-marker {
+  display: none;
+}
+
+.walkthroughToggle::before {
+  content: '▸';
+  margin-right: 8px;
+  font-size: 11px;
+}
+
+.walkthrough[open] .walkthroughToggle::before {
+  content: '▾';
+}
+
+.walkthroughToggle:hover {
+  color: var(--color-fg);
+}
+
+.walkthroughAccount {
+  composes: signOut;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.walkthroughNote {
+  padding: 0 12px 6px;
+  margin: 0;
+  color: var(--color-fg-faint);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* On the banner, which sits on ink — so it takes the same on-ink treatment as "Preview". */
+.leavePreview {
+  margin-left: auto;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-on-ink);
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.leavePreview:hover {
+  background: var(--color-hover-wash);
+}

@@ -3,7 +3,8 @@ import { Link, NavLink, Outlet, useLocation } from 'react-router'
 import { site } from '@/app/site'
 import { Icon, type IconName } from '@/components/Icon'
 import { useGoogleSignIn } from '@/lib/auth/GoogleSignIn'
-import { useSignedIn } from '@/lib/auth/session'
+import { useSession, useSignedIn } from '@/lib/auth/session'
+import { previewAccounts } from '@/lib/auth/previewAccounts'
 import { useSignInAttempts, useViewer } from '@/lib/api'
 import { can } from '@/lib/auth/permissions'
 import styles from './PortalLayout.module.css'
@@ -22,6 +23,7 @@ export function PortalLayout() {
   // The same answer that guards the routes, so the navigation cannot offer a door that shuts.
   const onTheCommittee = can(useViewer(), 'admin:enter')
   const { signOut } = useGoogleSignIn()
+  const { enterPreview, leavePreview } = useSession()
   const { pathname } = useLocation()
   const mainRef = useRef<HTMLElement>(null)
   const first = useRef(true)
@@ -110,6 +112,32 @@ export function PortalLayout() {
           <span className={who.role === 'admin' ? styles.rolePillAdmin : styles.rolePill}>
             {who.role === 'admin' ? 'Admin' : 'Member'}
           </span>
+          {/*
+            * The walkthrough, and only for the committee.
+            *
+            * It used to be reachable by putting `?preview` on the sign-in page, which meant
+            * anybody who knew the trick could let themselves into the back office of the live
+            * site. Not a way to anybody's data — the database answers to a token and a preview
+            * carries none — but the committee's screens are not a public exhibit either.
+            */}
+          {onTheCommittee ? (
+            <details className={styles.walkthrough}>
+              <summary className={styles.walkthroughToggle}>Walk through sample data</summary>
+              <p className={styles.walkthroughNote}>
+                Made-up households, so you can look around without touching anything real.
+              </p>
+              {previewAccounts.map((account) => (
+                <button
+                  key={account.householdId}
+                  type="button"
+                  className={styles.walkthroughAccount}
+                  onClick={() => enterPreview(account)}
+                >
+                  As {account.householdName} ({account.role})
+                </button>
+              ))}
+            </details>
+          ) : null}
           <button
             type="button"
             className={styles.signOut}
@@ -131,12 +159,15 @@ export function PortalLayout() {
           * An empty inbox is indistinguishable from a working one with no messages.
           */}
         {who.preview ? (
-          <p className={styles.preview}>
+          <p className={styles.preview} role="status">
             <span className={styles.previewStrong}>Preview</span>
             <span>
-              You are signed in as a sample household. Everything here is made-up data, and nothing you change is
-              saved yet.
+              You are looking at {who.householdName}, a sample household. Everything here is made-up data and
+              nothing you change is saved.
             </span>
+            <button type="button" className={styles.leavePreview} onClick={leavePreview}>
+              Leave preview
+            </button>
           </p>
         ) : who.householdId === '' ? (
           <p className={styles.preview} role="status">

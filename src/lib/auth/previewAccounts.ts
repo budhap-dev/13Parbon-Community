@@ -26,12 +26,20 @@ export const previewAccounts: (SignedIn & { blurb: string })[] = [
 ]
 
 /**
- * Whether the preview sign-in should be offered. Always while developing; on the live site
- * only when asked for by name, so visitors never stumble into it.
+ * Whether the sign-in page should offer the sample households.
+ *
+ * Development only. It used to honour `?preview` anywhere, which meant any visitor who knew the
+ * trick could walk into the committee's back office on the live site — not a way to anybody's
+ * data, since the database answers to the token and a preview holds none, but the committee's
+ * screens are not a public exhibit either.
+ *
+ * On the live site the walkthrough belongs to whoever is already signed in as an admin, and it
+ * is offered from inside the portal instead. Kept here for development because a machine with
+ * no project configured and no Google sign-in has no other way into the portal at all.
  *
  * Callers pass `import.meta.env.MODE === 'development'` rather than `DEV`, because the test
  * runner reports DEV as true and the preview would then appear in every test.
  */
-export function previewEnabled(isDevelopment: boolean, search: string): boolean {
-  return isDevelopment || new URLSearchParams(search).has('preview')
+export function previewEnabled(isDevelopment: boolean): boolean {
+  return isDevelopment
 }

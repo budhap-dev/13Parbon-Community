@@ -524,12 +524,16 @@ describe('somebody knocking', () => {
 })
 
 describe('preview sign-in', () => {
-  it('is offered when asked for by name, and gets you in', async () => {
-    const router = renderAt('/login?preview')
-    const account = await screen.findByRole('button', { name: /Debashis Chatterjee/ })
-    await userEvent.click(account)
-    expect(router.state.location.pathname).toBe('/admin')
-    expect(await screen.findByRole('heading', { level: 1, name: 'Committee overview' })).toBeInTheDocument()
+  /*
+   * `?preview` used to let anybody who knew the trick into the committee's back office on the
+   * live site. Never a way to anybody's data — the database answers to a token and a preview
+   * carries none — but the committee's screens are not a public exhibit, and an empty back
+   * office is still a map of one.
+   */
+  it('is not on the sign-in page, even when asked for by name', async () => {
+    renderAt('/login?preview')
+    await screen.findByRole('heading', { level: 1, name: 'Member sign-in' })
+    expect(screen.queryByRole('heading', { name: 'Walk through the portal' })).not.toBeInTheDocument()
   })
 
   it('is not offered to an ordinary visitor', async () => {
@@ -537,5 +541,81 @@ describe('preview sign-in', () => {
     await screen.findByRole('heading', { level: 1, name: 'Member sign-in' })
     expect(screen.queryByRole('heading', { name: 'Walk through the portal' })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Continue with Google/ })).toBeDisabled()
+  })
+})
+
+/**
+ * The walkthrough now belongs to whoever is already signed in as an admin, and is opened from
+ * inside the portal.
+ */
+describe('walking through the sample data', () => {
+  const realAdmin: Session = {
+    role: 'admin',
+    householdId: 'hh-chatterjee',
+    householdName: 'The Chatterjees',
+    name: 'Debashis Chatterjee',
+    email: 'd.chatterjee@gmail.com',
+  }
+
+  it('is offered to the committee and to nobody else', async () => {
+    renderAt('/portal', member)
+    await screen.findByRole('heading', { level: 1, name: 'Dashboard' })
+    expect(screen.queryByText('Walk through sample data')).not.toBeInTheDocument()
+
+    cleanup()
+    renderAt('/portal', realAdmin)
+    await screen.findByRole('heading', { level: 1, name: 'Dashboard' })
+    expect(screen.getByText('Walk through sample data')).toBeInTheDocument()
+  })
+
+  /*
+   * The reason a preview cannot simply swap the session and leave the client alone.
+   *
+   * Against a real project the app talks to Postgres, and `hh-sen` is not a household there —
+   * it is not even a uuid, so the walkthrough would not show fixtures, it would show an error.
+   * A preview has to bring its own data, and the real client must go untouched while it is open.
+   */
+  it('runs on fixtures, and leaves the real client alone while it is open', async () => {
+    const real = createMockApi()
+    const preview = createMockApi()
+    const asksTheDatabase = vi.spyOn(real.portal, 'getHousehold')
+    const asksTheFixtures = vi.spyOn(preview.portal, 'getHousehold')
+
+    const router = createMemoryRouter(routes, { initialEntries: ['/portal'] })
+    render(
+      <TestDataProviders session={realAdmin} api={real} previewApi={preview}>
+        <RouterProvider router={router} />
+      </TestDataProviders>,
+    )
+    await screen.findByRole('heading', { level: 1, name: 'Dashboard' })
+    await waitFor(() => expect(asksTheDatabase).toHaveBeenCalled())
+    expect(asksTheFixtures).not.toHaveBeenCalled()
+
+    const answeredSoFar = asksTheDatabase.mock.calls.length
+    await userEvent.click(screen.getByText('Walk through sample data'))
+    await userEvent.click(screen.getByRole('button', { name: /As The Sens/ }))
+
+    await waitFor(() => expect(asksTheFixtures).toHaveBeenCalled())
+    expect(asksTheDatabase.mock.calls.length).toBe(answeredSoFar)
+  })
+
+  it('steps into a sample household and back out to your own account', async () => {
+    renderAt('/portal', realAdmin)
+    await screen.findByRole('heading', { level: 1, name: 'Dashboard' })
+    // Their own account, so no banner of any kind.
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+
+    await userEvent.click(screen.getByText('Walk through sample data'))
+    await userEvent.click(screen.getByRole('button', { name: /As The Sens/ }))
+
+    const banner = await screen.findByRole('status')
+    expect(within(banner).getByText(/sample household/)).toBeInTheDocument()
+    expect(within(banner).getByText(/The Sens/)).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Leave preview' }))
+
+    // Back to their own, with nothing to say about it.
+    await waitFor(() => expect(screen.queryByRole('status')).not.toBeInTheDocument())
+    expect(screen.getByText('Debashis Chatterjee')).toBeInTheDocument()
   })
 })

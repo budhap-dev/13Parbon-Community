@@ -29,8 +29,8 @@ export function LoginPage() {
   useDocumentTitle('Member sign-in')
   const { signIn } = useSession()
   const navigate = useNavigate()
-  const { search, state: locationState } = useLocation()
-  const showPreview = previewEnabled(import.meta.env.MODE === 'development', search)
+  const { state: locationState } = useLocation()
+  const showPreview = previewEnabled(import.meta.env.MODE === 'development')
   const { state, signIn: withGoogle } = useGoogleSignIn()
   const { session } = useSession()
 

@@ -2,7 +2,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, type RenderOptions } from '@testing-library/react'
 import type { ReactElement, ReactNode } from 'react'
 import { MemoryRouter } from 'react-router'
-import { ApiProvider, createMockApi, withAuditTrail, type ApiClient } from '@/lib/api'
+import { createMockApi, withAuditTrail, type ApiClient } from '@/lib/api'
+import { ApiForSession } from '@/app/providers'
 import { testEvents } from './events'
 import { defaultSettings } from '@/app/defaults'
 import { ClockProvider } from '@/lib/clock'
@@ -128,29 +129,36 @@ type DataProps = {
   session?: Session
   /** Sign-in settings. Empty by default, so no test reaches for a real Supabase project. */
   env?: Record<string, string | undefined>
+  /**
+   * What a preview runs on. Defaults to the same client, which is what nearly every test wants:
+   * the sample accounts carry `preview: true`, so a separate fixtures client here would quietly
+   * ignore the api a test had just handed in. Pass one only to prove the swap itself.
+   */
+  previewApi?: ApiClient
 }
 
 /** Query client, API and clock, without a router. Use with createMemoryRouter. */
 export function TestDataProviders({
   children,
   api = createTestApi(),
+  previewApi,
   session = { role: 'visitor' },
   env = {},
 }: DataProps) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return (
     <QueryClientProvider client={client}>
-      <ApiProvider api={api}>
-        <ClockProvider now={() => TEST_NOW}>
-          <SessionProvider initial={session}>
+      <ClockProvider now={() => TEST_NOW}>
+        <SessionProvider initial={session}>
+          <ApiForSession real={api} fixtures={previewApi ?? api}>
             <GoogleSignInProvider env={env}>
               <SettingsProvider>
                 <ThemeProvider>{children}</ThemeProvider>
               </SettingsProvider>
             </GoogleSignInProvider>
-          </SessionProvider>
-        </ClockProvider>
-      </ApiProvider>
+          </ApiForSession>
+        </SessionProvider>
+      </ClockProvider>
     </QueryClientProvider>
   )
 }
@@ -171,6 +179,12 @@ type Options = Omit<RenderOptions, 'wrapper'> & {
   api?: ApiClient
   session?: Session
   env?: Record<string, string | undefined>
+  /**
+   * What a preview runs on. Defaults to the same client, which is what nearly every test wants:
+   * the sample accounts carry `preview: true`, so a separate fixtures client here would quietly
+   * ignore the api a test had just handed in. Pass one only to prove the swap itself.
+   */
+  previewApi?: ApiClient
 }
 
 export function renderWithProviders(ui: ReactElement, { route, api, session, env, ...options }: Options = {}) {

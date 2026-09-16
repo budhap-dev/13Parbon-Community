@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useApi } from '@/lib/api'
 import { useSession } from './session'
 import {
@@ -53,11 +53,29 @@ export function GoogleSignInProvider({
   const api = useApi()
   const [state, setState] = useState<SignInState>(config ? { status: 'checking' } : { status: 'off' })
 
+  /*
+   * Read through a ref rather than closed over, because the listener below is subscribed once
+   * and would otherwise go on seeing whatever the session was when it was set up.
+   */
+  const sessionRef = useRef(session)
+  sessionRef.current = session
+
   useEffect(() => {
     if (!config) return
     let live = true
 
     const settle = async (user: Parameters<typeof identityOf>[0]) => {
+      /*
+       * An admin walking through the sample households has deliberately stepped out of their
+       * own account. This listener fires for the session already in storage — on load, and
+       * again whenever it is re-subscribed — so without this it would put the real session
+       * straight back and throw them out of the preview they had just opened.
+       */
+      const current = sessionRef.current
+      if (current.role !== 'visitor' && current.preview) {
+        if (live) setState({ status: 'signedIn' })
+        return
+      }
       const identity = identityOf(user)
       if (!identity) {
         if (live) setState({ status: 'ready' })
