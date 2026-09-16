@@ -255,7 +255,7 @@ foundation pieces work together on something with nothing at stake.
 
 - [x] Mark a message handled from `/admin/messages` — done early, as 0.2's proof of the pattern
 - [x] A member cannot do it, and cannot read the inbox to try
-- [ ] It persists past a reload (needs 0.1) and it audits (needs 0.3)
+- [x] It persists past a reload and it audits — and the committee can read the trail at `/admin/audit`
 
 **Done when:** the committee can clear their inbox, and the audit table says who cleared what.
 
@@ -748,6 +748,8 @@ invitation, so nothing to approve and no passwords to reset.
 | 2026-09-15 | 5 | `/admin/content` wired — three buttons had done nothing. Caught a new post reading as "taken down". 525 → 533 tests. |
 | 2026-09-15 | — | Retention settled: the count is kept for good, the names for twelve months. `close_year()` counts before it deletes. 533 → 537 tests. |
 | 2026-09-15 | 3 | The committee types the headcount in. 537 → 551 tests. |
+| 2026-09-16 | 0.2 | `verify.sql` learned it runs against a working database. Three checks were asserting things about the committee's history rather than the rules: two counted the whole audit trail, one assumed the only admins were its own. All scoped to what the run itself did — the last-admin check now stands the real committee down inside the rolled-back transaction, so the test household genuinely is the last one. Found the trigger's delete path relied on `or` short-circuiting, which SQL does not promise. Passed. |
+| 2026-09-16 | 0.3 | The audit trail got a reader. Two writers and no readers until now: the triggers wrote to `audit_log` and `withAuditTrail` kept a list in one browser tab, and no screen showed either. `/admin/audit` reads the database's, which is the one that cannot be skipped. Found `now()` stamping every row of a request identically, so the trail could not be put in order. 710 → 721 tests. |
 | 2026-09-16 | 0.2 | The last admin cannot be demoted or deleted — a trigger now, not a courtesy. Its own SQLSTATE so the sentence the database raises is the one the person reads. |
 | 2026-09-16 | 0.3 | **The member directory removed** — the committee decided against having one. The page, the route, `listDirectory`, `DirectoryEntry`, the view and the three sharing columns are gone rather than switched off: a column nothing reads is one somebody later assumes means something. 732 → 712 tests, and twenty fewer is the point. |
 | 2026-09-16 | 0.2 | Messages can be deleted — asked for first, and audited, because a message is the only record the committee holds of what somebody asked and the subject-access export finds them by address. 724 → 732 tests. |

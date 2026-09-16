@@ -104,6 +104,15 @@ export function useHouseholds() {
   })
 }
 
+export function useAuditTrail(limit = 100) {
+  const api = useApi()
+  const viewer = useViewer()
+  return useQuery({
+    queryKey: ['audit', limit, asks(viewer)],
+    queryFn: () => api.audit.list(viewer, limit),
+  })
+}
+
 export function useDocuments() {
   const api = useApi()
   const viewer = useViewer()

@@ -47,6 +47,7 @@ export function PortalLayout() {
     { label: 'Content', to: '/admin/content', icon: 'layout' },
     { label: 'Photographs', to: '/admin/media', icon: 'image' },
     { label: 'Messages', to: '/admin/messages', icon: 'message' },
+    { label: 'What has changed', to: '/admin/audit', icon: 'clock' },
   ]
 
   const renderGroup = (label: string, items: Item[]) => (

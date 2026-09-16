@@ -588,7 +588,16 @@ as $$
 declare
   losing_the_role boolean;
 begin
-  losing_the_role := tg_op = 'DELETE' or new.role is distinct from 'admin';
+  /*
+   * Written as a branch, not as `tg_op = 'DELETE' or new.role is distinct from 'admin'`.
+   * SQL's `or` is not required to short-circuit, and on a DELETE there is no `new` to read a
+   * field from — so the one-liner could have raised on the delete path instead of guarding it.
+   */
+  if tg_op = 'DELETE' then
+    losing_the_role := true;
+  else
+    losing_the_role := new.role is distinct from 'admin';
+  end if;
 
   if old.role = 'admin' and losing_the_role then
     -- Counted excluding this row, so it answers "would any be left?" rather than "are there
@@ -731,7 +740,26 @@ create table if not exists portal.audit_log (
   at timestamptz not null default now()
 );
 
+/*
+ * Two columns, because a timestamp cannot order this trail on its own.
+ *
+ * `now()` is the transaction's *start* time, so every row a single request writes carries the
+ * same stamp — saving a household writes one line for it and one for each person, and nothing
+ * then says which came first. Read back newest-first they come out in an arbitrary order within
+ * the request, which for a write and the write that undid it is exactly backwards.
+ *
+ * `clock_timestamp()` is read per row and fixes most of that, but it is not a guarantee: it has
+ * microsecond resolution, and a statement that touches several rows fires this trigger for each
+ * of them fast enough to land inside one. So `at` is for reading, and `seq` is for ordering —
+ * a sequence cannot repeat or go backwards, whatever the clock does.
+ *
+ * Both as alters rather than in the create above, because the table already exists.
+ */
+alter table portal.audit_log alter column at set default clock_timestamp();
+alter table portal.audit_log add column if not exists seq bigserial;
+
 create index if not exists audit_log_at_idx on portal.audit_log (at desc);
+create index if not exists audit_log_seq_idx on portal.audit_log (seq desc);
 create index if not exists audit_log_subject_idx on portal.audit_log (subject_kind, subject_id);
 
 alter table portal.audit_log enable row level security;

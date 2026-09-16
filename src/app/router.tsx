@@ -10,6 +10,7 @@ import { HomePage } from '@/features/home'
 import { ArticlePage, NewsPage } from '@/features/news'
 import { NotFoundPage } from '@/features/placeholder'
 import {
+  AdminAuditPage,
   AdminContentPage,
   AdminEventsPage,
   AdminMediaPage,
@@ -67,6 +68,7 @@ export const routes: RouteObject[] = [
           { path: '/admin/content', Component: AdminContentPage },
           { path: '/admin/media', Component: AdminMediaPage },
           { path: '/admin/messages', Component: AdminMessagesPage },
+          { path: '/admin/audit', Component: AdminAuditPage },
         ],
       },
     ],

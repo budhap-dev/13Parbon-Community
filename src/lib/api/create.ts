@@ -2,6 +2,7 @@ import { withAuditTrail } from './audit'
 import { createMockApi } from './mock'
 import { readSupabaseConfig, withSupabaseWrites } from './supabase'
 import { withSupabasePortal } from './supabase/portal'
+import { withSupabaseAudit } from './supabase/audit'
 import { withSupabaseNews } from './supabase/news'
 import { withSupabaseSettings } from './supabase/settings'
 import type { ApiClient } from './types'
@@ -25,5 +26,10 @@ export function createApi(env: Record<string, string | undefined> = import.meta.
     withSupabaseSettings(withSupabasePortal(withSupabaseWrites(base, config), config), config),
     config,
   )
-  return withAuditTrail(live)
+  /*
+   * The audit read goes outside the audit wrapper, which keeps its own list in memory and would
+   * otherwise answer from it. Its recording stays: the trigger is the guarantee, this is the
+   * belt, and the contract test insists every write goes through one of them.
+   */
+  return withSupabaseAudit(withAuditTrail(live), config)
 }

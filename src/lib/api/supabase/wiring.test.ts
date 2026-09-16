@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { createApi } from '../create'
 import { createMockApi } from '../mock'
+import { withAuditTrail } from '../audit'
+import { withSupabaseAudit } from './audit'
 import { withSupabasePortal } from './portal'
 import { withSupabaseNews } from './news'
 import { withSupabaseSettings } from './settings'
@@ -85,6 +87,19 @@ describe('with a project configured', () => {
     const wired = withSupabaseNews(base, { url: configured.VITE_SUPABASE_URL, anonKey: configured.VITE_SUPABASE_ANON_KEY })
     const names = Object.keys(base.news) as (keyof typeof base.news)[]
     expect(names.filter((name) => wired.news[name] === base.news[name])).toEqual([])
+  })
+
+  it('reads the audit trail from the database, not from this tab', () => {
+    /*
+     * `withAuditTrail` keeps its own list in memory, which is built in one browser, thrown away
+     * on reload, and missing everything done from another tab or by anybody else. The trail
+     * worth reading is the one the triggers write, so the read has to come from outside it.
+     */
+    const base = withAuditTrail(createMockApi())
+    const wired = withSupabaseAudit(base, { url: configured.VITE_SUPABASE_URL, anonKey: configured.VITE_SUPABASE_ANON_KEY })
+    // Against the same object. Two separately built clients share no method identity at all,
+    // so comparing those would pass whether anything were wired or not.
+    expect(wired.audit.list).not.toBe(base.audit.list)
   })
 
   it('leaves events and the gallery on fixtures, and says why', async () => {

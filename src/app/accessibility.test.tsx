@@ -42,7 +42,7 @@ describe('the member portal', () => {
 })
 
 describe('the committee pages', () => {
-  for (const path of ['/admin', '/admin/people', '/admin/events', '/admin/content', '/admin/media', '/admin/messages']) {
+  for (const path of ['/admin', '/admin/people', '/admin/events', '/admin/content', '/admin/media', '/admin/messages', '/admin/audit']) {
     it(`${path} has no automatic violations`, () => check(path, admin))
   }
 })

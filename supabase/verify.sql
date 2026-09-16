@@ -27,6 +27,33 @@ begin;
 -- Seed, as the owner
 -- ---------------------------------------------------------------------------
 
+/*
+ * Where the trail stood before this file touched anything.
+ *
+ * The database being verified is a working one: audit_log has rows in it from real use, written
+ * before any of this ran. Every check below that looks at the trail has to look only at what
+ * *this* run wrote, or it is asserting things about the committee's history rather than about
+ * the rules — and on a live database "the trail is not empty" is true whether the triggers
+ * fired or not.
+ *
+ * A transaction-local setting rather than a temporary table. A temp table would have to be
+ * read back under `set local role authenticated`, which holds no grant on one the owner made,
+ * so the first check to use it would have died on a permission error rather than on anything
+ * it was testing. It also makes Supabase's editor warn about a table with no row level
+ * security, which for a table that lives inside one transaction is noise.
+ */
+-- Inside a block so it returns nothing. As a bare select it was the one statement in the file
+-- that produced a result, and the editor showed `{"set_config": "77"}` in place of the "no rows
+-- returned" a clean run has always ended with — a pass that looked like it needed decoding.
+do $$
+begin
+  perform set_config(
+    'verify.audit_from',
+    (select coalesce(max(seq), 0)::text from portal.audit_log),
+    true
+  );
+end $$;
+
 insert into portal.households (id, name, contact_name, email, google_email, role, phone)
 values
   ('11111111-1111-1111-1111-111111111111', 'The Test Members', 'A Member', 'member@example.com', 'member@example.com', 'member', '07700 900001'),
@@ -645,7 +672,10 @@ declare
   doomed uuid;
   trail integer;
 begin
-  select id into doomed from portal.contact_messages limit 1;
+  -- A message this file put there, named rather than whichever row came back first. The
+  -- transaction rolls back either way, but a check that deletes one of the committee's real
+  -- messages to prove a point is one nobody should have to think twice about.
+  select id into doomed from portal.contact_messages where email = 'fourth@example.com';
   delete from portal.contact_messages where id = doomed;
 
   if exists (select 1 from portal.contact_messages where id = doomed) then
@@ -703,6 +733,9 @@ begin
   if not exists (
     select 1 from portal.audit_log
      where subject_kind = 'site_settings' and changes ? 'value'
+       -- This run's line, not one from a settings change the committee made months ago, which
+       -- would let this pass while the trigger did nothing at all.
+       and seq > current_setting('verify.audit_from')::bigint
   ) then
     raise exception 'FAIL: changing what the public site shows left no line in the audit trail';
   end if;
@@ -725,7 +758,10 @@ do $$
 declare
   promotion jsonb;
 begin
-  if (select count(*) from portal.audit_log) = 0 then
+  -- What this run wrote, not what was already there: on a working database the trail is never
+  -- empty, so counting all of it would pass whether the triggers fired or not.
+  if (select count(*) from portal.audit_log
+       where seq > current_setting('verify.audit_from')::bigint) = 0 then
     raise exception 'FAIL: nothing was recorded in the audit trail';
   end if;
 
@@ -750,6 +786,39 @@ begin
        and actor_household_id = '22222222-2222-2222-2222-222222222222'
   ) then
     raise exception 'FAIL: the trail did not record who invited the new household';
+  end if;
+end $$;
+
+/*
+ * The trail comes back in the order things happened.
+ *
+ * Ordering on `at` cannot do this: a statement that changes several rows fires the trigger for
+ * each inside one microsecond, so a write and the write that undid it come back in an arbitrary
+ * order — which is the one thing an audit trail must not do. `seq` is what the screen orders by.
+ *
+ * Checked against something known rather than by counting distinct stamps. The last audited
+ * thing done above was inviting The Newly Invited, so that is what the newest row must be.
+ */
+do $$
+declare
+  newest record;
+  written integer;
+begin
+  select count(*) into written from portal.audit_log
+   where seq > current_setting('verify.audit_from')::bigint;
+  if written < 2 then
+    raise exception 'FAIL: this run recorded only % changes, too few to say anything about order', written;
+  end if;
+
+  select subject_kind, action into newest
+    from portal.audit_log
+   where seq > current_setting('verify.audit_from')::bigint
+   order by seq desc
+   limit 1;
+
+  if newest.subject_kind <> 'households' or newest.action <> 'insert' then
+    raise exception 'FAIL: the newest line in the trail is % %, not the household just invited — the trail is not in the order things happened',
+      newest.action, newest.subject_kind;
   end if;
 end $$;
 
@@ -779,8 +848,16 @@ end $$;
  * The committee locking itself out — the one change with no way back through the app.
  *
  * Promoting somebody is admin-only, so the last admin demoting or deleting themselves takes the
- * key with them and leaves the SQL editor as the only door. Run last, because it ends with the
- * test admins gone and nothing after it could count on them.
+ * key with them and leaves the SQL editor as the only door.
+ *
+ * "The last admin" is a fact about the whole table, which is why an earlier version of this
+ * check was wrong: it assumed the only admins were the two it had made, and on a real database
+ * the committee's own accounts are admins too. So the test household was never the last one,
+ * the guard correctly did nothing, and the check called that a failure.
+ *
+ * Everything below therefore stands the real committee down first, so that one test household
+ * genuinely is the last admin — and it is all inside the transaction this file rolls back, so
+ * nobody's role actually changes. Run last for that reason.
  */
 do $$
 declare
@@ -800,6 +877,32 @@ do $$
 begin
   if (select role from portal.households where id = '11111111-1111-1111-1111-111111111111') <> 'member' then
     raise exception 'FAIL: an admin could not stand down while another one remained';
+  end if;
+end $$;
+
+/*
+ * Down to one, one at a time.
+ *
+ * A single `update ... where role = 'admin' and id <> …` would not do: the trigger fires per
+ * row and asks whether any other admin is left, and rows changed earlier in the same statement
+ * are not reliably visible to that question. A loop makes each demotion its own statement, and
+ * each is legitimate because the test admin is still holding the role.
+ */
+do $$
+declare
+  standing_down record;
+  remaining integer;
+begin
+  for standing_down in
+    select id from portal.households
+     where role = 'admin' and id <> '22222222-2222-2222-2222-222222222222'
+  loop
+    update portal.households set role = 'member' where id = standing_down.id;
+  end loop;
+
+  select count(*) into remaining from portal.households where role = 'admin';
+  if remaining <> 1 then
+    raise exception 'FAIL: could not reduce the committee to a single admin for this check; % left', remaining;
   end if;
 end $$;
 
