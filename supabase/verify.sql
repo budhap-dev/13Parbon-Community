@@ -68,6 +68,14 @@ values
 insert into portal.documents (id, title, category, file_url)
 values ('44444444-4444-4444-4444-444444444444', 'Test Minutes', 'minutes', 'https://example.com/m.pdf');
 
+-- One of each thing about an evening that decides who sees it.
+insert into portal.events (id, slug, title, summary, starts_at, venue, is_public, status)
+values
+  ('aaaaaaaa-0000-0000-0000-000000000001', 'test-published', 'A published evening', 'On.', now() + interval '30 days', 'The hall', true, 'published'),
+  ('aaaaaaaa-0000-0000-0000-000000000002', 'test-draft', 'A draft evening', 'Not finished.', now() + interval '40 days', 'The hall', true, 'draft'),
+  ('aaaaaaaa-0000-0000-0000-000000000003', 'test-cancelled', 'A cancelled evening', 'Off.', now() + interval '20 days', 'The hall', true, 'cancelled'),
+  ('aaaaaaaa-0000-0000-0000-000000000004', 'test-members-only', 'A members-only evening', 'For members.', now() + interval '25 days', 'The hall', false, 'published');
+
 insert into portal.albums (id, slug, title, visibility)
 values
   ('55555555-5555-5555-5555-555555555555', 'test-public-night', 'A public night', 'public'),
@@ -428,6 +436,46 @@ values ('A Fourth Visitor', 'fourth@example.com', 'Just asking', 'Long enough to
 insert into portal.contact_messages (name, email, subject, message, kind)
 values ('A Parent', 'parent@example.com', 'Please take a photograph down', 'The one of my daughter on the Boishakhi page.', 'photo');
 
+/*
+ * What a visitor sees of the evenings: everything published, and nothing else.
+ *
+ * A cancelled evening is readable on purpose. Dropping it would make its page answer as though
+ * it had never existed, and anybody holding the link — or who saw it last week — would learn
+ * nothing. That is how somebody ends up outside a hall on a Saturday.
+ */
+do $$
+declare
+  visible integer;
+begin
+  select count(*) into visible from portal.events where slug like 'test-%';
+  if visible <> 2 then
+    raise exception 'FAIL: a visitor sees % evenings; the published and the cancelled one, and no more', visible;
+  end if;
+
+  if not exists (select 1 from portal.events where slug = 'test-cancelled') then
+    raise exception 'FAIL: a cancelled evening is not readable, so its page denies it ever existed';
+  end if;
+
+  if exists (select 1 from portal.events where slug = 'test-draft') then
+    raise exception 'FAIL: a visitor can read a draft evening';
+  end if;
+
+  if exists (select 1 from portal.events where slug = 'test-members-only') then
+    raise exception 'FAIL: a visitor can read an evening meant for members';
+  end if;
+end $$;
+
+-- And may write none of it.
+do $$
+begin
+  begin
+    insert into portal.events (slug, title, starts_at) values ('a-visitors-evening', 'A visitor''s evening', now());
+    raise exception 'FAIL: a visitor can put an evening on the website';
+  exception when insufficient_privilege then
+    null;
+  end;
+end $$;
+
 -- The gallery a visitor sees: the public album, and its approved photographs. The photograph
 -- policy asks whether the album is visible to the caller, so nothing here restates the rule.
 do $$
@@ -630,6 +678,20 @@ end $$;
 -- below, where there is a role that can see what is left.
 delete from portal.contact_messages;
 
+-- A member sees the members-only evening too, and still no draft.
+do $$
+declare
+  visible integer;
+begin
+  select count(*) into visible from portal.events where slug like 'test-%';
+  if visible <> 3 then
+    raise exception 'FAIL: a member sees % evenings; the two public and the members-only one', visible;
+  end if;
+  if exists (select 1 from portal.events where slug = 'test-draft') then
+    raise exception 'FAIL: a member can read a draft evening';
+  end if;
+end $$;
+
 -- A member sees the members' album as well as the public one, and only approved photographs.
 do $$
 declare
@@ -749,6 +811,32 @@ begin
    where subject_kind = 'contact_messages' and action = 'delete' and subject_id = doomed::text;
   if trail <> 1 then
     raise exception 'FAIL: deleting a message left no line in the audit trail, and the message was the only other record of it';
+  end if;
+end $$;
+
+-- The committee sees every evening, draft included, and files one as past.
+do $$
+declare
+  visible integer;
+begin
+  select count(*) into visible from portal.events where slug like 'test-%';
+  if visible <> 4 then
+    raise exception 'FAIL: the committee sees % of its own four evenings', visible;
+  end if;
+end $$;
+
+update portal.events set status = 'past' where slug = 'test-published';
+
+do $$
+begin
+  if (select status from portal.events where slug = 'test-published') <> 'past' then
+    raise exception 'FAIL: the committee cannot file an evening as past';
+  end if;
+  if not exists (
+    select 1 from portal.audit_log
+     where subject_kind = 'events' and seq > current_setting('verify.audit_from')::bigint
+  ) then
+    raise exception 'FAIL: changing an evening left no line in the audit trail';
   end if;
 end $$;
 

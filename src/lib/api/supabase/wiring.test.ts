@@ -3,6 +3,7 @@ import { createApi } from '../create'
 import { createMockApi } from '../mock'
 import { withAuditTrail } from '../audit'
 import { withSupabaseAudit } from './audit'
+import { withSupabaseEvents } from './events'
 import { withSupabaseGallery } from './gallery'
 import { withSupabasePortal } from './portal'
 import { withSupabaseNews } from './news'
@@ -110,10 +111,15 @@ describe('with a project configured', () => {
     expect(names.filter((name) => wired.gallery[name] === base.gallery[name])).toEqual([])
   })
 
-  it('leaves events on fixtures, and says why', async () => {
-    // Not an oversight: events belong to the committee's separate planner app, and how one
-    // crosses to this site has not been decided.
-    const api = createApi(configured)
-    expect((await api.events.listUpcoming()).length).toBeGreaterThan(0)
+  it('keeps events in the database, front of house being what this site owns', () => {
+    /*
+     * The committee's separate planner app holds the logistics — tasks, phases, who is bringing
+     * the urn. This holds what a visitor sees. They overlap on a title, a date and a venue and
+     * nowhere else, so this is the other half of the same evening, not a copy of the planner.
+     */
+    const base = createMockApi()
+    const wired = withSupabaseEvents(base, { url: configured.VITE_SUPABASE_URL, anonKey: configured.VITE_SUPABASE_ANON_KEY })
+    const names = Object.keys(base.events) as (keyof typeof base.events)[]
+    expect(names.filter((name) => wired.events[name] === base.events[name])).toEqual([])
   })
 })

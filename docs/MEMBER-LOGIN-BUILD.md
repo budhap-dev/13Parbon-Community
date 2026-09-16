@@ -106,6 +106,7 @@ stored until this is right, and it is free to get right while the data is still 
 - [x] **`verify.sql` caught the contact form failing against the real database** — 2026-09-16
 - [x] `return=minimal`: the app stops asking for a row a visitor is not allowed to read back
 - [x] **`portal.sql` and `verify.sql` run again, amended** — passed 2026-09-16
+- [x] And again with the gallery and the events tables — 2026-09-16. Every table the app reads now exists in the project
 - [x] Explicit grants, rather than trusting Supabase's default privileges *(found on the way)*
 - [x] Keep `service_role` executing the helpers after revoking them from `public` *(found on the way)*
 - [x] Rewrite `verify.sql` so it exercises the policies, not only the helper functions *(found on the way)*
@@ -177,7 +178,7 @@ app gets written in the belief that it may ask for anything.
 - [x] The site's own switches — `site_settings`, read by everybody, written by the committee
 - [x] News: posts, notices and newsletters — published content readable by everybody, drafts by the committee
 - [x] The gallery — albums and photographs in the database, with the bucket reached through `/api/photos`
-- [ ] Events — **blocked on a decision**: they belong to the planner app, and how one crosses here is unsettled
+- [x] Events — `portal.events`, designed and published from `/admin/events`
 - [ ] Per-resource mutations land with their own steps, not speculatively up front
 
 **Done when:** one value can be changed from the UI and survives a reload. *Changed from the UI
@@ -361,7 +362,7 @@ in full every time focus landed there. The notes are tied on with `aria-describe
 > there; this site shows what is on. Building a second event back office here would be a second
 > place to keep the same dates correct.
 
-- [ ] **Decide how an event gets from that app to this one.** The only real work left here
+- [x] **Decided 2026-09-16: it does not.** The designer here owns the public evening; the planner keeps the logistics. They overlap on a title, a date and a venue and nowhere else, and neither reads the other
 - [x] A design screen for how an event looks to the public — the other half of the planner
 - [x] Add an event here, because front of house has to be able to create what it owns
 - [x] Archive an evening that has been and gone
@@ -749,6 +750,7 @@ invitation, so nothing to approve and no passwords to reset.
 | 2026-09-15 | 5 | `/admin/content` wired — three buttons had done nothing. Caught a new post reading as "taken down". 525 → 533 tests. |
 | 2026-09-15 | — | Retention settled: the count is kept for good, the names for twelve months. `close_year()` counts before it deletes. 533 → 537 tests. |
 | 2026-09-15 | 3 | The committee types the headcount in. 537 → 551 tests. |
+| 2026-09-16 | 0.4 | Events have a table. The designer was built weeks ago and had nowhere to save to, so a published evening lasted until the next reload. Settled the open question with it: the planner is not read from here at all — front of house is what this site owns. A cancelled evening keeps its page on purpose, in the policy as well as the adapter. 757 → 768 tests. |
 | 2026-09-16 | 0.6 | The gallery is real, rows and pictures. `albums` and `media` with the album deciding who sees what and the photograph following; `api/photos.ts` signing an upload and removing an object, with the database deciding who may. A takedown removes the object *first* — a row deleted while the file is still at its URL is the privacy promise broken while appearing kept, and the adapter refuses to do that even with no bucket configured. 731 → 757 tests. |
 | 2026-09-16 | 0.3 | The portal follows the five themes. It sat on ink whatever the theme and carried its own cream text — the cause of the unreadable-on-two-themes bug, and of the `--page-*` machinery that fixed it. Both gone: page background, page text, raised cards, and the same switcher as the public header in the sidebar. Chosen over new portal-only looks. |
 | 2026-09-16 | 0.3 | The FAQ leaves the files. Edited beside the committee and the roll, read from what was saved, and its gaps link to the box that fills them. Found the gap counter had never seen "[N] weeks" at all — it only caught a string that *started* with a bracket, so About us read "Done" while the page shipped a hole in a sentence. The count is honest now, and went up. 721 → 730 tests. |

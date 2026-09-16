@@ -289,6 +289,90 @@ create policy "admins resolve sign-in attempts"
 
 
 -- ---------------------------------------------------------------------------
+-- Events, as the public sees them
+-- ---------------------------------------------------------------------------
+-- Front of house, and only that. The committee's separate planner app owns the logistics —
+-- tasks, phases, who is bringing the urn — in `public.events` in this same project. These two
+-- overlap on a title, a date and a venue and nowhere else, so this is the other half of the
+-- same evening rather than a second copy of the planner. Nothing here reads that table.
+--
+-- Three columns decide who sees an evening, and they are not the same question:
+--   `status`    draft | published | cancelled | past — where the committee has got to.
+--   `is_public` whether it is for the world or only for members.
+--   `starts_at` which list it falls into, and what a countdown counts to.
+--
+-- A cancelled evening stays readable on purpose. Dropping it would make its page answer as
+-- though it had never existed, and anybody holding the link — or who saw it last week — would
+-- learn nothing. That is how somebody ends up outside a hall on a Saturday.
+
+create table if not exists portal.events (
+  id uuid primary key default gen_random_uuid(),
+  slug text not null unique,
+  title text not null check (char_length(trim(title)) >= 2),
+  summary text not null default '',
+  starts_at timestamptz not null,
+  ends_at timestamptz,
+  venue text not null default '',
+  venue_address text,
+  -- For the map. On the event rather than in the site's settings because we do not always
+  -- meet in the same hall.
+  latitude double precision,
+  longitude double precision,
+  festival_id text,
+  is_public boolean not null default true,
+  status text not null default 'draft' check (status in ('draft', 'published', 'cancelled', 'past')),
+  registration_open boolean not null default false,
+  -- The committee's own Google Forms, so replies land in a sheet they already read. Null means
+  -- there is nothing to book, and the page says so rather than drawing a button that goes nowhere.
+  registration_url text,
+  performer_form_url text,
+  households_registered integer not null default 0 check (households_registered >= 0),
+  cover_image_url text,
+  cover_animation text,
+  -- Written in Bengali, with a plain English rendering: nobody has to be Bengali to come.
+  theme jsonb,
+  -- [{ "time": "18:00", "what": "Doors" }], in time order.
+  programme jsonb,
+  volunteer_call text,
+  performer_call text,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists events_starts_at_idx on portal.events (starts_at desc);
+
+alter table portal.events enable row level security;
+
+grant select on portal.events to anon, authenticated;
+grant insert, update on portal.events to authenticated;
+
+-- Anything published, whatever its date: a past evening keeps its page, and so does a cancelled
+-- one. A draft is the committee's alone.
+drop policy if exists "anybody reads a published event" on portal.events;
+create policy "anybody reads a published event"
+  on portal.events for select to anon, authenticated
+  using (is_public and status <> 'draft');
+
+-- A members-only evening, for somebody the committee has actually recorded.
+drop policy if exists "members read a members' event" on portal.events;
+create policy "members read a members' event"
+  on portal.events for select to authenticated
+  using (not is_public and status <> 'draft' and portal.current_household_id() is not null);
+
+drop policy if exists "admins read every event" on portal.events;
+create policy "admins read every event"
+  on portal.events for select to authenticated using (portal.is_admin());
+
+drop policy if exists "admins write events" on portal.events;
+create policy "admins write events"
+  on portal.events for insert to authenticated with check (portal.is_admin());
+
+drop policy if exists "admins edit events" on portal.events;
+create policy "admins edit events"
+  on portal.events for update to authenticated
+  using (portal.is_admin()) with check (portal.is_admin());
+
+
+-- ---------------------------------------------------------------------------
 -- The gallery: albums, and the photographs in them
 -- ---------------------------------------------------------------------------
 -- The rows are here; the pictures are in the bucket. That split is the privacy page's promise
@@ -927,6 +1011,12 @@ create trigger record_change after insert or update or delete on portal.document
 -- saying a visitor submitted the contact form, which the table already says.
 drop trigger if exists record_change on portal.contact_messages;
 create trigger record_change after update or delete on portal.contact_messages
+  for each row execute function portal.record_change();
+
+-- Publishing and cancelling are both worth a line: "when did that go up?" and "who cancelled
+-- it?" are the two questions asked about an evening after the fact.
+drop trigger if exists record_change on portal.events;
+create trigger record_change after insert or update on portal.events
   for each row execute function portal.record_change();
 
 -- Taking a photograph down is the line somebody asks about later.
