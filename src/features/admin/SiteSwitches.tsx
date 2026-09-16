@@ -9,6 +9,7 @@ import {
   rollFromText,
   rollToText,
   tidyCommittee,
+  tidyFaq,
   type SectionAudience,
   type SiteSettings,
 } from '@/domain/settings'
@@ -48,23 +49,26 @@ export function SiteSwitches({
     home: { ...settings.home },
     text: { ...settings.text },
     committee: settings.committee.map((row) => ({ ...row })),
+    faq: settings.faq.map((row) => ({ ...row })),
     members: [...settings.members],
   }))
   /** Held as typed, so a half-written line does not vanish between keystrokes. */
   const [roll, setRoll] = useState(() => rollToText(settings.members))
   const changed =
-    JSON.stringify({ ...draft, committee: tidyCommittee(draft.committee), members: rollFromText(roll) }) !==
+    JSON.stringify({ ...draft, committee: tidyCommittee(draft.committee), faq: tidyFaq(draft.faq), members: rollFromText(roll) }) !==
     JSON.stringify(settings)
 
   const setRow = (i: number, changes: Partial<(typeof draft.committee)[number]>) =>
     setDraft({ ...draft, committee: draft.committee.map((row, j) => (i === j ? { ...row, ...changes } : row)) })
+  const setQuestion = (i: number, changes: Partial<(typeof draft.faq)[number]>) =>
+    setDraft({ ...draft, faq: draft.faq.map((row, j) => (i === j ? { ...row, ...changes } : row)) })
 
   return (
     <form
       className={styles.form}
       onSubmit={(e) => {
         e.preventDefault()
-        onSave({ ...draft, committee: tidyCommittee(draft.committee), members: rollFromText(roll) })
+        onSave({ ...draft, committee: tidyCommittee(draft.committee), faq: tidyFaq(draft.faq), members: rollFromText(roll) })
       }}
     >
       <fieldset className={styles.form} style={{ border: 0, margin: 0, padding: 0 }}>
@@ -91,8 +95,8 @@ export function SiteSwitches({
       <fieldset className={styles.form} style={{ border: 0, margin: 0, padding: 0 }}>
         <legend className={styles.label}>The words on the public pages</legend>
         <p className={styles.hint}>
-          Only the lines that change. The FAQ, the committee list and the captions under the theme
-          photographs still live in the files — ask a developer for those.
+          Only the lines that change. The captions under the theme photographs still live in the
+          files — ask a developer for those.
         </p>
         {SITE_TEXT_KEYS.map((key) => {
           const field = SITE_TEXT_FIELDS[key]
@@ -180,6 +184,56 @@ export function SiteSwitches({
             onClick={() => setDraft({ ...draft, committee: [...draft.committee, { role: '', name: '' }] })}
           >
             Add somebody
+          </Button>
+        </div>
+      </fieldset>
+
+      <fieldset className={styles.form} style={{ border: 0, margin: 0, padding: 0 }}>
+        <legend className={styles.label}>Questions people ask</legend>
+        <p className={styles.hint}>
+          On the About page, in this order. Anything left in [square brackets] is shown to visitors exactly
+          as it appears, so finish a sentence before you save it.
+        </p>
+        {draft.faq.map((row, i) => (
+          <div key={i} className={styles.field}>
+            <label className={styles.label} htmlFor={`question-${i}`}>
+              Question {i + 1}
+            </label>
+            <input
+              id={`question-${i}`}
+              className={styles.input}
+              value={row.question}
+              onChange={(e) => setQuestion(i, { question: e.target.value })}
+            />
+            <label className={styles.label} htmlFor={`answer-${i}`} style={{ marginTop: 8 }}>
+              Answer {i + 1}
+            </label>
+            <textarea
+              id={`answer-${i}`}
+              className={styles.textarea}
+              rows={3}
+              value={row.answer}
+              onChange={(e) => setQuestion(i, { answer: e.target.value })}
+            />
+            <div className={styles.actions} style={{ marginTop: 6 }}>
+              <Button
+                variant="line"
+                size="sm"
+                aria-label={`Remove question ${i + 1}`}
+                onClick={() => setDraft({ ...draft, faq: draft.faq.filter((_, j) => j !== i) })}
+              >
+                Remove
+              </Button>
+            </div>
+          </div>
+        ))}
+        <div className={styles.actions}>
+          <Button
+            variant="line"
+            size="sm"
+            onClick={() => setDraft({ ...draft, faq: [...draft.faq, { question: '', answer: '' }] })}
+          >
+            Add a question
           </Button>
         </div>
       </fieldset>

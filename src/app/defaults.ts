@@ -30,5 +30,6 @@ export const defaultSettings: SiteSettings = {
     galleryNote: site.galleryNote ?? '',
   },
   committee: about.committee.map((row) => ({ ...row })),
+  faq: about.faq.map((item) => ({ question: item.q, answer: item.a })),
   members: [...about.members],
 }

@@ -17,9 +17,22 @@ import type { SiteSettings } from '@/domain/settings'
  */
 export type Gap = { page: string; where: string[] }
 
-/** Every placeholder string inside a value, however deeply it is nested, with its path. */
+/**
+ * Whether a string has a placeholder anywhere in it — not only when it *is* one.
+ *
+ * `isPlaceholder` asks whether the whole string is a placeholder, which is the right question
+ * for hiding: a finished sentence that happens to mention [the minutes] must not vanish from
+ * the page. Counting is a different question. "usually [N] weeks before the event" is a
+ * finished sentence with a hole in it, and it was on the About page, and this file said
+ * "Nothing in brackets" — because the sentence did not start with one.
+ */
+function hasPlaceholder(value: string): boolean {
+  return isPlaceholder(value) || /\[[^\]]+\]/.test(value)
+}
+
+/** Every string with a placeholder in it, however deeply nested, with its path. */
 function findGaps(value: unknown, path: string[] = []): string[] {
-  if (typeof value === 'string') return isPlaceholder(value) ? [path.join(' › ')] : []
+  if (typeof value === 'string') return hasPlaceholder(value) ? [path.join(' › ')] : []
   if (Array.isArray(value)) return value.flatMap((item, i) => findGaps(item, [...path, `${i + 1}`]))
   if (value && typeof value === 'object') {
     return Object.entries(value).flatMap(([key, child]) => findGaps(child, [...path, key]))
@@ -36,11 +49,14 @@ function findGaps(value: unknown, path: string[] = []): string[] {
  * that was already done, which is the same stale number this file was written to get rid of,
  * pointing the other way.
  */
-export function gapsNow(settings?: Pick<SiteSettings, 'text'>): Gap[] {
+export function gapsNow(settings?: Pick<SiteSettings, 'text' | 'faq'>): Gap[] {
   const homePage = settings ? { ...site, ...settings.text } : site
+  // The About page's questions are the committee's to edit too, and one of them shipped with
+  // "[N] weeks" in it. Counted from what is saved, so filling it in makes the count go down.
+  const aboutPage = settings ? { ...about, faq: settings.faq } : about
   return [
     { page: 'Home page', where: findGaps(homePage) },
-    { page: 'About us', where: findGaps(about) },
+    { page: 'About us', where: findGaps(aboutPage) },
     { page: 'Privacy', where: findGaps(privacy) },
   ]
 }

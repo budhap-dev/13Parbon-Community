@@ -104,6 +104,28 @@ describe('a household nobody has recorded a renewal date for', () => {
   })
 })
 
+/**
+ * The portal follows the five themes and can switch between them from inside.
+ *
+ * It used to paint itself on ink whatever the theme, carrying its own cream text — which meant
+ * two themes came out unreadable the first time anyone looked, and there was no switcher here
+ * because there was nothing for it to change.
+ */
+describe('the portal and the themes', () => {
+  beforeEach(() => localStorage.clear())
+
+  it('offers the same switcher as the public site, and it takes effect', async () => {
+    renderAt('/portal', member)
+    await screen.findByRole('heading', { level: 1, name: 'Dashboard' })
+
+    await userEvent.click(screen.getByRole('button', { name: 'Theme, currently Festival' }))
+    await userEvent.click(screen.getByRole('radio', { name: /Boishakhi/ }))
+
+    expect(document.documentElement.dataset.theme).toBe('poila-boishakh')
+    expect(screen.getByRole('button', { name: 'Theme, currently Boishakhi' })).toBeInTheDocument()
+  })
+})
+
 describe('portal access', () => {
   it('sends a visitor to sign in', async () => {
     const router = renderAt('/portal')
@@ -254,7 +276,10 @@ describe('committee pages', () => {
     renderAt('/admin/content', admin)
     // It said 24 — 7, 13 and 4, written when the pages were built and never recounted. By the
     // time anybody looked, the committee had filled in all but one of them.
-    expect(await screen.findByText(/1 gap still showing publicly/)).toBeInTheDocument()
+    // Two, not one. The About page has always carried "[N] weeks" inside an answer, and the
+    // counter missed it because the sentence did not *start* with a bracket. This number was
+    // wrong in the direction that matters: it said the page was finished while it was not.
+    expect(await screen.findByText(/2 gaps still showing publicly/)).toBeInTheDocument()
     expect(screen.getByText(/cannot go stale/)).toBeInTheDocument()
     expect(screen.getByText('Home page')).toBeInTheDocument()
   })
@@ -272,6 +297,12 @@ describe('committee pages', () => {
     expect(link).toHaveAttribute('href', '#text-missionStatement')
     // And it points at something really on this page.
     expect(document.getElementById('text-missionStatement')).toBeInTheDocument()
+
+    // The same for a question on the About page: the file ships one with "[N] weeks" in its
+    // answer. Counted from 1 in the table, the way a person counts; the box's id from 0.
+    const answer = screen.getByRole('link', { name: 'Answer 4' })
+    expect(answer).toHaveAttribute('href', '#answer-3')
+    expect(document.getElementById('answer-3')).toBeInTheDocument()
 
     // And says so plainly where a page is finished.
     expect(screen.getAllByText('Nothing in brackets').length).toBeGreaterThan(0)

@@ -57,4 +57,23 @@ describe('laying saved settings over what the code says', () => {
     expect(merged.committee).toEqual([{ role: 'Chair', name: 'A Person' }])
     expect(merged.members).toEqual(['A Member', 'Another'])
   })
+
+  it('keeps the questions people ask, and tidies half-written ones out', () => {
+    const merged = mergeSettings(
+      {
+        faq: [
+          { question: '  Is there parking? ', answer: 'Yes, behind the hall. ' },
+          { question: 'No answer', answer: '' },
+          { question: 42, answer: 'not a question' },
+          'not a row',
+        ],
+      },
+      defaultSettings,
+    )
+    expect(merged.faq).toEqual([{ question: 'Is there parking?', answer: 'Yes, behind the hall.' }])
+  })
+
+  it('falls back to the file for the questions when nothing was saved for them', () => {
+    expect(mergeSettings({ showNews: true }, defaultSettings).faq).toEqual(defaultSettings.faq)
+  })
 })

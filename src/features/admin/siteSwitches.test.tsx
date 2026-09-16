@@ -125,6 +125,48 @@ describe('the committee and the roll', () => {
   })
 })
 
+/**
+ * The questions people ask — the last of the nested lists to leave the files. It was the one
+ * most often wrong in a way that mattered, and each fix was a pull request for a sentence.
+ */
+describe('the questions people ask', () => {
+  it('shows them as the About page does, question and answer', async () => {
+    renderAt('/admin/content')
+    const panel = await switches()
+    expect(within(panel).getByLabelText('Question 1')).toHaveValue('Do I need to be a member to come to an event?')
+    expect((within(panel).getByLabelText('Answer 1') as HTMLTextAreaElement).value).toMatch(/open to everyone/)
+  })
+
+  it('adds a question and takes one off', async () => {
+    renderAt('/admin/content')
+    const panel = await switches()
+    const rows = () => within(panel).getAllByLabelText(/^Question \d+$/).length
+
+    const before = rows()
+    await userEvent.click(within(panel).getByRole('button', { name: 'Add a question' }))
+    expect(rows()).toBe(before + 1)
+
+    await userEvent.click(within(panel).getAllByRole('button', { name: /^Remove question / })[0])
+    expect(rows()).toBe(before)
+  })
+
+  it('drops a question with no answer rather than publishing half of one', async () => {
+    renderAt('/admin/content')
+    const panel = await switches()
+    await userEvent.click(within(panel).getByRole('button', { name: 'Add a question' }))
+    await userEvent.type(within(panel).getAllByLabelText(/^Question \d+$/).at(-1)!, 'Is there parking?')
+    // A question with nothing under it is not a change, so there is still nothing to save.
+    expect(within(panel).getByRole('button', { name: 'Save the switches' })).toBeDisabled()
+  })
+
+  it('warns that square brackets are shown to visitors as they are', async () => {
+    renderAt('/admin/content')
+    const panel = await switches()
+    // One shipped as "[N] weeks". This is the line that stops the next one.
+    expect(within(panel).getByText(/shown to visitors exactly/)).toBeInTheDocument()
+  })
+})
+
 describe('what throwing a switch changes', () => {
   it('puts News into the navigation for everybody', async () => {
     renderAt('/admin/content')

@@ -29,10 +29,9 @@ export type HomeSection = (typeof HOME_SECTIONS)[number]
 /**
  * The words on the public pages that belong to the committee rather than to the code.
  *
- * Only flat strings, and only the ones that actually change. The FAQ, the committee list and
- * the captions under the theme photographs are nested arrays, and an editor for those is a
- * different piece of work — they are left in the files until somebody needs to change one
- * without a developer.
+ * Only flat strings here. The lists — the committee, the roll, the questions people ask — are
+ * their own fields below, each with its own editor. What is still in the files is the captions
+ * under the theme photographs, which nobody has needed to change without a developer yet.
  */
 export const SITE_TEXT_KEYS = [
   'tagline',
@@ -71,6 +70,9 @@ export const SITE_TEXT_FIELDS: Record<SiteTextKey, { label: string; note: string
 /** One line of the committee: what they do, and who they are. */
 export type CommitteeMember = { role: string; name: string }
 
+/** One question on the About page, and its answer. */
+export type FaqEntry = { question: string; answer: string }
+
 export type SiteSettings = {
   /** Whether the sign-in is offered in the header and footer. */
   showMemberSignIn: boolean
@@ -92,6 +94,14 @@ export type SiteSettings = {
    */
   committee: CommitteeMember[]
   /**
+   * The questions people ask, and the answers. In the order given.
+   *
+   * The last of the nested lists to leave the files. It was the one most often wrong in a way
+   * that mattered — a number of weeks left as [N], a step in a process that had since changed —
+   * and each fix was a pull request for a sentence.
+   */
+  faq: FaqEntry[]
+  /**
    * The members' roll: names, and nothing else.
    *
    * Nothing here says where anybody lives, how old they are or how to reach them. The About page
@@ -110,7 +120,7 @@ export type SettingsDraft = SiteSettings
  * unlabelled toggles is a good way to have somebody turn the gallery off by accident.
  */
 export const SETTING_LABELS: Record<
-  keyof Omit<SiteSettings, 'home' | 'text' | 'committee' | 'members'>,
+  keyof Omit<SiteSettings, 'home' | 'text' | 'committee' | 'faq' | 'members'>,
   { label: string; note: string }
 > = {
   showPhotos: {
@@ -145,8 +155,9 @@ export function validateSettings(draft: SettingsDraft): boolean {
   if (!HOME_SECTIONS.every((section) => audiences.includes(draft.home[section]))) return false
   if (!SITE_TEXT_KEYS.every((key) => typeof draft.text[key] === 'string')) return false
   // A row with a name and no role, or the other way about, is half-typed rather than wrong —
-  // it is dropped on save. A row with neither was never a row.
-  return Array.isArray(draft.committee) && Array.isArray(draft.members)
+  // it is dropped on save. A row with neither was never a row. The same goes for a question
+  // with no answer.
+  return Array.isArray(draft.committee) && Array.isArray(draft.members) && Array.isArray(draft.faq)
 }
 
 /** The committee as it should be saved: complete rows only, in the order they were given. */
@@ -154,6 +165,13 @@ export function tidyCommittee(rows: CommitteeMember[]): CommitteeMember[] {
   return rows
     .map((row) => ({ role: row.role.trim(), name: row.name.trim() }))
     .filter((row) => row.role && row.name)
+}
+
+/** The questions as they should be saved: complete pairs only, in the order they were given. */
+export function tidyFaq(rows: FaqEntry[]): FaqEntry[] {
+  return rows
+    .map((row) => ({ question: row.question.trim(), answer: row.answer.trim() }))
+    .filter((row) => row.question && row.answer)
 }
 
 /**
@@ -219,6 +237,18 @@ export function mergeSettings(stored: unknown, defaults: SiteSettings): SiteSett
       )
     : defaults.committee
 
+  const faq = Array.isArray(row.faq)
+    ? tidyFaq(
+        (row.faq as unknown[]).filter(
+          (entry): entry is FaqEntry =>
+            !!entry &&
+            typeof entry === 'object' &&
+            typeof (entry as FaqEntry).question === 'string' &&
+            typeof (entry as FaqEntry).answer === 'string',
+        ),
+      )
+    : defaults.faq
+
   const members = Array.isArray(row.members)
     ? (row.members as unknown[]).filter((name): name is string => typeof name === 'string')
     : defaults.members
@@ -231,6 +261,7 @@ export function mergeSettings(stored: unknown, defaults: SiteSettings): SiteSett
     home,
     text,
     committee,
+    faq,
     members,
   }
 }

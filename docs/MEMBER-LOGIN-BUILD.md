@@ -575,7 +575,7 @@ Last, because a page of placeholders reads worse than no page.
 - [x] News posts — **and there is no spike.** The model is plain paragraphs (`paragraphs()`
       splits on blank lines), so a textarea is the honest editor and no rich text is needed
 - [x] Unpublish rather than delete, with the change recorded as its own kind of change
-- [ ] Edit the FAQ entries in `src/app/about.ts` — nested, so still a code change
+- [x] The FAQ is edited from `/admin/content` — the last of the nested lists to leave the files
 - [x] Edit the pending strings in `src/app/site.ts` — mission, venue, address, email, gallery note
 - [x] Move the `site.home` section switches into the admin
 - [x] Move `showNextEventStrip` into the admin — and `showPhotos`, `showNews` and `showMemberSignIn` with it
@@ -671,7 +671,7 @@ because jsdom does not paint — that one belongs in a browser.
 - [x] `vitest-axe` passing on every page — public, portal and committee
 - [ ] RLS verified once more, from a browser, as a member
 - [ ] The audit table has rows in it from real use, not tests
-- [ ] `main` merged in, conflicts resolved
+- [x] `main` merged in — nothing to merge; main has not moved since the branch was cut (checked 2026-09-16)
 - [x] **Preview belongs to the committee** — `?preview` no longer opens the back office to anybody who knows the trick; an admin opens the walkthrough from inside the portal, and it runs on fixtures — chosen 2026-09-16
 - [ ] Decide the release gate: does `showMemberSignIn` go `true` on merge, or does this land dark?
 - [ ] Ask before pushing, before the PR, and before the merge
@@ -748,6 +748,8 @@ invitation, so nothing to approve and no passwords to reset.
 | 2026-09-15 | 5 | `/admin/content` wired — three buttons had done nothing. Caught a new post reading as "taken down". 525 → 533 tests. |
 | 2026-09-15 | — | Retention settled: the count is kept for good, the names for twelve months. `close_year()` counts before it deletes. 533 → 537 tests. |
 | 2026-09-15 | 3 | The committee types the headcount in. 537 → 551 tests. |
+| 2026-09-16 | 0.3 | The portal follows the five themes. It sat on ink whatever the theme and carried its own cream text — the cause of the unreadable-on-two-themes bug, and of the `--page-*` machinery that fixed it. Both gone: page background, page text, raised cards, and the same switcher as the public header in the sidebar. Chosen over new portal-only looks. |
+| 2026-09-16 | 0.3 | The FAQ leaves the files. Edited beside the committee and the roll, read from what was saved, and its gaps link to the box that fills them. Found the gap counter had never seen "[N] weeks" at all — it only caught a string that *started* with a bracket, so About us read "Done" while the page shipped a hole in a sentence. The count is honest now, and went up. 721 → 730 tests. |
 | 2026-09-16 | 0.2 | `verify.sql` learned it runs against a working database. Three checks were asserting things about the committee's history rather than the rules: two counted the whole audit trail, one assumed the only admins were its own. All scoped to what the run itself did — the last-admin check now stands the real committee down inside the rolled-back transaction, so the test household genuinely is the last one. Found the trigger's delete path relied on `or` short-circuiting, which SQL does not promise. Passed. |
 | 2026-09-16 | 0.3 | The audit trail got a reader. Two writers and no readers until now: the triggers wrote to `audit_log` and `withAuditTrail` kept a list in one browser tab, and no screen showed either. `/admin/audit` reads the database's, which is the one that cannot be skipped. Found `now()` stamping every row of a request identically, so the trail could not be put in order. 710 → 721 tests. |
 | 2026-09-16 | 0.2 | The last admin cannot be demoted or deleted — a trigger now, not a courtesy. Its own SQLSTATE so the sentence the database raises is the one the person reads. |

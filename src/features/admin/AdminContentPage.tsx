@@ -23,9 +23,25 @@ import styles from '@/features/portal/Portal.module.css'
 import { AnnouncementForm, NewsForm } from './ContentForms'
 import { SiteSwitches } from './SiteSwitches'
 
-/** Whether a gap names one of the lines the committee can edit from this very page. */
-function editable(where: string): where is SiteTextKey {
-  return (SITE_TEXT_KEYS as readonly string[]).includes(where)
+/**
+ * Where on this page a gap can be filled in, if it can.
+ *
+ * A gap is named by its path in the content — `missionStatement`, or `faq › 4 › answer` —
+ * and the box that edits it is named the way the form names it. Nothing on the screen used to
+ * connect the two, so "where do I fill this in?" had no answer here.
+ */
+function fillable(where: string): { href: string; label: string } | null {
+  if ((SITE_TEXT_KEYS as readonly string[]).includes(where)) {
+    return { href: `#text-${where}`, label: SITE_TEXT_FIELDS[where as SiteTextKey].label }
+  }
+  // The scan numbers list entries from 1, the way a person counts; the form's ids from 0.
+  const question = /^faq › (\d+) › (question|answer)$/.exec(where)
+  if (question) {
+    const n = Number(question[1])
+    const field = question[2] === 'question' ? 'Question' : 'Answer'
+    return { href: `#${question[2]}-${n - 1}`, label: `${field} ${n}` }
+  }
+  return null
 }
 
 export function AdminContentPage() {
@@ -179,13 +195,16 @@ export function AdminContentPage() {
                       : gap.where.map((where, i) => (
                           <span key={where}>
                             {i > 0 ? ', ' : ''}
-                            {editable(where) ? (
-                              <a href={`#text-${where}`} className={styles.inlineLink}>
-                                {SITE_TEXT_FIELDS[where].label}
-                              </a>
-                            ) : (
-                              where
-                            )}
+                            {(() => {
+                              const box = fillable(where)
+                              return box ? (
+                                <a href={box.href} className={styles.inlineLink}>
+                                  {box.label}
+                                </a>
+                              ) : (
+                                where
+                              )
+                            })()}
                           </span>
                         ))}
                   </td>

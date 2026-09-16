@@ -9,7 +9,7 @@ import { Icon, type IconName } from '@/components/Icon'
 import styles from './About.module.css'
 
 export function AboutPage() {
-  const { text, committee, members } = useSettings()
+  const { text, committee, members, faq } = useSettings()
   useDocumentTitle('About us')
 
   return (
@@ -119,10 +119,10 @@ export function AboutPage() {
           Questions people ask
         </h2>
         <div className={styles.faq}>
-          {about.faq.map((item) => (
-            <details key={item.q} className={styles.item}>
-              <summary className={styles.question}>{item.q}</summary>
-              <p className={styles.answer}>{item.a}</p>
+          {faq.map((item) => (
+            <details key={item.question} className={styles.item}>
+              <summary className={styles.question}>{item.question}</summary>
+              <p className={styles.answer}>{item.answer}</p>
             </details>
           ))}
         </div>
