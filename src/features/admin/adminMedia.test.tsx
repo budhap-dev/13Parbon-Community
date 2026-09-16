@@ -41,8 +41,19 @@ describe('the albums', () => {
   it('says what the upload will take, before anybody tries', async () => {
     renderAt('/admin/media')
     await openAlbum(/Boishakhi 2026/)
-    // Somebody dragging photographs off an iPhone is the likeliest person to be refused.
-    expect(screen.getByText(/JPG, JPEG and PNG/)).toBeInTheDocument()
+    // Somebody dragging photographs off an iPhone is the likeliest person to be refused. Said
+    // twice on purpose now: once in the note above, and once on the control itself, where
+    // somebody who skipped the paragraph is about to choose a file.
+    expect(screen.getAllByText(/JPG, JPEG and PNG/).length).toBeGreaterThan(0)
+  })
+
+  it('offers a way to add one to the album', async () => {
+    renderAt('/admin/media')
+    await openAlbum(/Boishakhi 2026/)
+    // The committee could make albums and never fill them: there was nowhere to put a picture,
+    // and no way to say a picture was in one. What the control does once a file is chosen —
+    // including saying there is no bucket — is PhotoUpload's own test.
+    expect(screen.getByRole('button', { name: 'Add a photograph' })).toBeInTheDocument()
   })
 
   it('says the metadata never leaves the machine, which is the whole promise', async () => {

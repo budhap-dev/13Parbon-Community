@@ -3,6 +3,7 @@ import { createMockApi } from './mock'
 import { readSupabaseConfig, withSupabaseWrites } from './supabase'
 import { withSupabasePortal } from './supabase/portal'
 import { withSupabaseAudit } from './supabase/audit'
+import { withSupabaseGallery } from './supabase/gallery'
 import { withSupabaseNews } from './supabase/news'
 import { withSupabaseSettings } from './supabase/settings'
 import type { ApiClient } from './types'
@@ -22,9 +23,10 @@ export function createApi(env: Record<string, string | undefined> = import.meta.
   const base = createMockApi()
   const config = readSupabaseConfig(env)
   if (!config) return withAuditTrail(base)
-  const live = withSupabaseNews(
-    withSupabaseSettings(withSupabasePortal(withSupabaseWrites(base, config), config), config),
+  const live = withSupabaseGallery(
+    withSupabaseNews(withSupabaseSettings(withSupabasePortal(withSupabaseWrites(base, config), config), config), config),
     config,
+    env,
   )
   /*
    * The audit read goes outside the audit wrapper, which keeps its own list in memory and would

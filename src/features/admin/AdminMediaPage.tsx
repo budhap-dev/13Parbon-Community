@@ -3,10 +3,15 @@ import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { Button } from '@/components/Button'
 import { Icon } from '@/components/Icon'
 import { Lightbox, type LightboxItem } from '@/components/Lightbox'
+import { PhotoUpload } from '@/components/PhotoUpload'
 import { ACCEPTED_LABEL } from '@/domain/images'
 import { describeMedia, type AlbumDraft, type AlbumWithMedia } from '@/domain/gallery'
 import { formatLongDate } from '@/domain/dates'
-import { useAllAlbums, useCreateAlbum, useDeleteMedia, useReorderMedia, useSetCaption, useUpdateAlbum } from '@/lib/api'
+import { useAddMedia, useAllAlbums, useCreateAlbum, useDeleteMedia, useReorderMedia, useSetCaption, useUpdateAlbum } from '@/lib/api'
+import { readSupabaseConfig } from '@/lib/api/supabase'
+import { readUploadConfig, uploadPhoto, UploadNotConfigured } from '@/lib/api/uploads'
+import { accessToken } from '@/lib/auth/supabaseAuth'
+import { slugFrom } from '@/domain/slug'
 import styles from '@/features/portal/Portal.module.css'
 import media from './AdminMedia.module.css'
 
@@ -204,6 +209,9 @@ function AlbumPage({
   const setCaption = useSetCaption()
   const reorder = useReorderMedia()
   const remove = useDeleteMedia()
+  const add = useAddMedia()
+  const uploads = readUploadConfig(import.meta.env)
+  const supabase = readSupabaseConfig(import.meta.env)
   const [confirming, setConfirming] = useState<string | null>(null)
   const [open, setOpen] = useState<number | null>(null)
   /** The photograph being dragged, and the one it is currently over. */
@@ -270,6 +278,36 @@ function AlbumPage({
             before it is sent, so the location, camera and date a phone writes into a photograph never
             leave your computer.
           </p>
+          <PhotoUpload
+            canSend={Boolean(uploads && supabase)}
+            label="Add a photograph"
+            onSend={async (prepared, name) => {
+              if (!uploads || !supabase) throw new UploadNotConfigured()
+              // The function asks the database whether this person is on the committee, with
+              // their own token, before it signs anything.
+              const token = await accessToken(supabase)
+              if (!token) throw new Error('Sign in first.')
+              /*
+               * The album's address and the next number in it. Keys are what the bucket is
+               * organised by and what a takedown names, so they are made here rather than taken
+               * from the filename — two phones both offering IMG_0042.jpg would otherwise have
+               * the second quietly overwrite the first.
+               */
+              const key = `${album.slug}-${String(album.media.length + 1).padStart(2, '0')}-${slugFrom(name.replace(/\.[^.]+$/, '')).slice(0, 24) || 'photo'}`
+              return uploadPhoto(uploads, key, prepared, token)
+            }}
+            onDone={(url) =>
+              add.mutate({
+                albumId: album.id,
+                photo: { url, thumbnailUrl: url.replace('/full/', '/thumb/') },
+              })
+            }
+          />
+          {add.isError ? (
+            <p className={`${styles.muted} ${styles.tiny}`} role="alert">
+              It reached the bucket but the album did not take it. {add.error.message}
+            </p>
+          ) : null}
         </div>
       </section>
 
@@ -355,7 +393,7 @@ function AlbumPage({
               {confirming === item.id && open === null ? (
                 <div className={media.confirm} role="alert">
                   <p className={media.confirmText}>
-                    Delete this photograph? It goes from the bucket, so the address stops working for
+                    Delete this photograph? It goes from the bucket first, so the address stops working for
                     everybody who has it. This cannot be undone.
                   </p>
                   <div className={styles.actions}>

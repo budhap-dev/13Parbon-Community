@@ -45,9 +45,15 @@ export async function uploadPhoto(
   config: UploadConfig,
   key: string,
   prepared: Prepared,
+  token: string,
   fetchImpl: typeof fetch = fetch,
 ): Promise<UploadedPhoto> {
-  const signed = await fetchImpl(`${config.signUrl}?key=${encodeURIComponent(key)}`, { method: 'POST' })
+  // The signed-in person's own token: the function asks the database whether they are on the
+  // committee before it signs anything, and it asks with this.
+  const signed = await fetchImpl(`${config.signUrl}?key=${encodeURIComponent(key)}`, {
+    method: 'POST',
+    headers: { authorization: `Bearer ${token}` },
+  })
   if (!signed.ok) throw new Error(`The bucket would not let us in (${signed.status}).`)
   const { full, thumb } = (await signed.json()) as { full: string; thumb: string }
 
@@ -63,4 +69,29 @@ export async function uploadPhoto(
     url: `${config.publicUrl}/full/${key}.jpg`,
     thumbnailUrl: `${config.publicUrl}/thumb/${key}.jpg`,
   }
+}
+
+/**
+ * Takes a photograph out of the bucket — both sizes.
+ *
+ * The half of "taking a photograph down" the database cannot do. The privacy page promises a
+ * picture comes down on request, and a row deleted while the file stays at its URL has broken
+ * that promise while appearing to keep it. The gallery calls this first and removes the row
+ * only once it has succeeded.
+ */
+export async function deletePhoto(config: UploadConfig, key: string, token: string, fetchImpl: typeof fetch = fetch): Promise<void> {
+  const response = await fetchImpl(`${config.signUrl}?key=${encodeURIComponent(key)}`, {
+    method: 'DELETE',
+    headers: { authorization: `Bearer ${token}` },
+  })
+  if (!response.ok) throw new Error(`The bucket would not take that photograph down (${response.status}).`)
+}
+
+/**
+ * The key a photograph was uploaded under, from where it is served — or null for one that is
+ * not in our bucket at all. Nothing else's file is ours to delete.
+ */
+export function keyOf(config: Pick<UploadConfig, 'publicUrl'>, url: string): string | null {
+  const match = new RegExp(`^${config.publicUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}/full/([a-z0-9][a-z0-9-]{0,79})\\.jpg$`).exec(url)
+  return match ? match[1] : null
 }

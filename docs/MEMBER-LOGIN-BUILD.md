@@ -176,7 +176,7 @@ app gets written in the belief that it may ask for anything.
 - [x] The Supabase adapter for the whole `portal` section — reads and writes, against the real database
 - [x] The site's own switches — `site_settings`, read by everybody, written by the committee
 - [x] News: posts, notices and newsletters — published content readable by everybody, drafts by the committee
-- [ ] The gallery — **blocked on R2**: adding a photograph needs the presign endpoint, and a takedown has to remove the object, not the row
+- [x] The gallery — albums and photographs in the database, with the bucket reached through `/api/photos`
 - [ ] Events — **blocked on a decision**: they belong to the planner app, and how one crosses here is unsettled
 - [ ] Per-resource mutations land with their own steps, not speculatively up front
 
@@ -463,12 +463,13 @@ is built, and worth a look at what the planner already stores.
 The takedown promise stops depending on a macOS script and a person remembering to run it.
 
 - [x] The browser half of uploading: choose, prepare, check, send
-- [ ] **Presign endpoint (Vercel function)** — the last piece, and it needs R2 credentials
+- [x] **Presign endpoint** — `api/photos.ts`, signing an upload and removing an object; logic and tests in `src/server/photos.ts`
+- [ ] **Set the six R2 values in Vercel** — see `docs/PHOTOS.md`. Until then the screen says the bucket is off
 - [x] Client-side re-encode to 1600 and 600, which never writes metadata rather than stripping it
 - [x] Apply EXIF orientation before discarding it, or portrait photographs come out sideways
 - [x] HEIC: **decided 2026-09-15** — JPG, JPEG and PNG only, and the screen says so
 - [x] Verify in the browser before anything is sent — the script's refusal, carried over
-- [ ] Verify the object again server-side, once there is a server side to verify it on
+- [ ] Verify the object again server-side — there is a server side now, but the signed PUT is pinned to image/jpeg, which is most of it
 - [ ] Compare quality against `sips` at q70/q68 before switching over
 - [x] Create and edit albums
 - [x] ~~Pin an album cover~~ — **taken off the screen 2026-09-15 at the committee's request.**
@@ -748,6 +749,7 @@ invitation, so nothing to approve and no passwords to reset.
 | 2026-09-15 | 5 | `/admin/content` wired — three buttons had done nothing. Caught a new post reading as "taken down". 525 → 533 tests. |
 | 2026-09-15 | — | Retention settled: the count is kept for good, the names for twelve months. `close_year()` counts before it deletes. 533 → 537 tests. |
 | 2026-09-15 | 3 | The committee types the headcount in. 537 → 551 tests. |
+| 2026-09-16 | 0.6 | The gallery is real, rows and pictures. `albums` and `media` with the album deciding who sees what and the photograph following; `api/photos.ts` signing an upload and removing an object, with the database deciding who may. A takedown removes the object *first* — a row deleted while the file is still at its URL is the privacy promise broken while appearing kept, and the adapter refuses to do that even with no bucket configured. 731 → 757 tests. |
 | 2026-09-16 | 0.3 | The portal follows the five themes. It sat on ink whatever the theme and carried its own cream text — the cause of the unreadable-on-two-themes bug, and of the `--page-*` machinery that fixed it. Both gone: page background, page text, raised cards, and the same switcher as the public header in the sidebar. Chosen over new portal-only looks. |
 | 2026-09-16 | 0.3 | The FAQ leaves the files. Edited beside the committee and the roll, read from what was saved, and its gaps link to the box that fills them. Found the gap counter had never seen "[N] weeks" at all — it only caught a string that *started* with a bracket, so About us read "Done" while the page shipped a hole in a sentence. The count is honest now, and went up. 721 → 730 tests. |
 | 2026-09-16 | 0.2 | `verify.sql` learned it runs against a working database. Three checks were asserting things about the committee's history rather than the rules: two counted the whole audit trail, one assumed the only admins were its own. All scoped to what the run itself did — the last-admin check now stands the real committee down inside the rolled-back transaction, so the test household genuinely is the last one. Found the trigger's delete path relied on `or` short-circuiting, which SQL does not promise. Passed. |

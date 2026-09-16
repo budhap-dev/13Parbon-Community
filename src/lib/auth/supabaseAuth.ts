@@ -80,6 +80,17 @@ export async function startGoogleSignIn(config: AuthConfig, returnTo = '/portal'
   if (error) throw error
 }
 
+/**
+ * The signed-in person's token, for a request that goes somewhere other than PostgREST.
+ *
+ * The photo function verifies the caller by asking the database `is_admin()` with this, so it
+ * carries the same identity every other request does. Null when nobody is signed in.
+ */
+export async function accessToken(config: SupabaseConfig): Promise<string | null> {
+  const { data } = await (await authClient(config)).auth.getSession()
+  return data.session?.access_token ?? null
+}
+
 export async function signOutOfGoogle(config: AuthConfig): Promise<void> {
   await (await authClient(config)).auth.signOut()
 }

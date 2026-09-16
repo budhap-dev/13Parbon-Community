@@ -223,6 +223,11 @@ export function withAuditTrail(base: ApiClient, now: () => Date = () => new Date
         record(viewer, 'album:create', { kind: 'albums', id: album.id }, {}, { ...album })
         return album
       },
+      addMedia: async (albumId, photo, viewer) => {
+        const media = await base.gallery.addMedia(albumId, photo, viewer)
+        record(viewer, 'media:add', { kind: 'media', id: media.id }, {}, { albumId, url: media.url })
+        return media
+      },
       updateAlbum: async (id, draft, viewer) => {
         const was = snapshot(
           await base.gallery.listAllAlbums(viewer).then((all) => all.find((a) => a.id === id)),

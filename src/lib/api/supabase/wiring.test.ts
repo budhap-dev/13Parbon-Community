@@ -3,6 +3,7 @@ import { createApi } from '../create'
 import { createMockApi } from '../mock'
 import { withAuditTrail } from '../audit'
 import { withSupabaseAudit } from './audit'
+import { withSupabaseGallery } from './gallery'
 import { withSupabasePortal } from './portal'
 import { withSupabaseNews } from './news'
 import { withSupabaseSettings } from './settings'
@@ -102,21 +103,17 @@ describe('with a project configured', () => {
     expect(wired.audit.list).not.toBe(base.audit.list)
   })
 
-  it('leaves events and the gallery on fixtures, and says why', async () => {
-    /*
-     * Not an oversight in either case, and both are waiting on somebody rather than on code.
-     *
-     * The gallery needs the bucket: adding a photograph needs the presign endpoint, and
-     * `deleteMedia` has to remove the object as well as the row — the privacy page promises a
-     * photograph comes down on request, and one that is merely unlisted is still at its URL for
-     * anybody who has it. A delete that dropped the row would break that promise while looking
-     * like it kept it.
-     *
-     * Events belong to the committee's separate planner app, and how one crosses to this site
-     * has not been decided.
-     */
+  it('keeps the gallery in the database', () => {
+    const base = createMockApi()
+    const wired = withSupabaseGallery(base, { url: configured.VITE_SUPABASE_URL, anonKey: configured.VITE_SUPABASE_ANON_KEY }, {})
+    const names = Object.keys(base.gallery) as (keyof typeof base.gallery)[]
+    expect(names.filter((name) => wired.gallery[name] === base.gallery[name])).toEqual([])
+  })
+
+  it('leaves events on fixtures, and says why', async () => {
+    // Not an oversight: events belong to the committee's separate planner app, and how one
+    // crosses to this site has not been decided.
     const api = createApi(configured)
     expect((await api.events.listUpcoming()).length).toBeGreaterThan(0)
-    expect((await api.gallery.listAlbums()).length).toBeGreaterThan(0)
   })
 })

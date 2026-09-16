@@ -36,7 +36,7 @@ const READS = [
 const AUDITED = [
   'contact.markHandled', 'contact.deleteMessage',
   'portal.addHousehold', 'portal.updateHousehold', 'portal.deleteHousehold', 'portal.resolveSignInAttempt', 'portal.recordAttendance',
-  'gallery.createAlbum', 'gallery.updateAlbum', 'gallery.setCover', 'gallery.setCaption',
+  'gallery.createAlbum', 'gallery.updateAlbum', 'gallery.addMedia', 'gallery.setCover', 'gallery.setCaption',
   'gallery.reorder', 'gallery.deleteMedia',
   'settings.save', 'events.save', 'events.create', 'events.archive',
   'news.createPost', 'news.updatePost',
@@ -103,6 +103,9 @@ describe('every audited write', () => {
       ['gallery.setCover', () => a.gallery.setCover(album.id, album.media[1].id, admin)],
       ['gallery.setCaption', () => a.gallery.setCaption(album.media[0].id, 'A caption', admin)],
       ['gallery.reorder', () => a.gallery.reorder(album.id, [...album.media].reverse().map((m) => m.id), admin)],
+      // After the reorder, not before: adding one makes `album.media` a partial list of the
+      // album, and reorder refuses a partial list on purpose.
+      ['gallery.addMedia', () => a.gallery.addMedia(album.id, { url: 'https://photos.13parbon.org.uk/full/added-99.jpg', thumbnailUrl: 'https://photos.13parbon.org.uk/thumb/added-99.jpg' }, admin)],
       ['news.updatePost', () => a.news.updatePost(post.id, { title: post.title, excerpt: post.excerpt, body: post.body, tags: [], author: post.author, published: false }, admin)],
       ['news.updateAnnouncement', () => a.news.updateAnnouncement(notice.id, { title: 'Doors at half five', body: notice.body, pinned: true, audience: 'public', publishAt: '', expiresAt: '' }, admin)],
       ['news.removeAnnouncement', () => a.news.removeAnnouncement(notice.id, admin)],

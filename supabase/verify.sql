@@ -68,6 +68,17 @@ values
 insert into portal.documents (id, title, category, file_url)
 values ('44444444-4444-4444-4444-444444444444', 'Test Minutes', 'minutes', 'https://example.com/m.pdf');
 
+insert into portal.albums (id, slug, title, visibility)
+values
+  ('55555555-5555-5555-5555-555555555555', 'test-public-night', 'A public night', 'public'),
+  ('66666666-6666-6666-6666-666666666666', 'test-members-dinner', 'A members'' dinner', 'members');
+
+insert into portal.media (id, album_id, url, thumbnail_url, approved)
+values
+  ('77777777-7777-7777-7777-777777777777', '55555555-5555-5555-5555-555555555555', 'https://photos.example/full/test-public-night-01.jpg', 'https://photos.example/thumb/test-public-night-01.jpg', true),
+  ('88888888-8888-8888-8888-888888888888', '55555555-5555-5555-5555-555555555555', 'https://photos.example/full/test-public-night-02.jpg', 'https://photos.example/thumb/test-public-night-02.jpg', false),
+  ('99999999-9999-9999-9999-999999999999', '66666666-6666-6666-6666-666666666666', 'https://photos.example/full/test-members-dinner-01.jpg', 'https://photos.example/thumb/test-members-dinner-01.jpg', true);
+
 -- Public content, seeded as the owner: one of each thing a visitor should see and one of each
 -- they should not.
 insert into portal.news_posts (slug, title, excerpt, body, author, published_at, hidden)
@@ -305,6 +316,12 @@ begin
   if visible <> 0 then
     raise exception 'FAIL: an unknown account could read the documents library';
   end if;
+
+  -- Signed in is not a member. The public album, and not the members' one.
+  select count(*) into visible from portal.albums where slug like 'test-%';
+  if visible <> 1 then
+    raise exception 'FAIL: an unknown account sees % albums; only the public one should be readable', visible;
+  end if;
 end $$;
 
 
@@ -410,6 +427,23 @@ values ('A Fourth Visitor', 'fourth@example.com', 'Just asking', 'Long enough to
 -- Whether it can then be marked dealt with is asserted from the committee's side, below.
 insert into portal.contact_messages (name, email, subject, message, kind)
 values ('A Parent', 'parent@example.com', 'Please take a photograph down', 'The one of my daughter on the Boishakhi page.', 'photo');
+
+-- The gallery a visitor sees: the public album, and its approved photographs. The photograph
+-- policy asks whether the album is visible to the caller, so nothing here restates the rule.
+do $$
+declare
+  albums integer;
+  photos integer;
+begin
+  select count(*) into albums from portal.albums where slug like 'test-%';
+  if albums <> 1 then
+    raise exception 'FAIL: a visitor sees % albums; only the public one should be readable', albums;
+  end if;
+  select count(*) into photos from portal.media where album_id in ('55555555-5555-5555-5555-555555555555', '66666666-6666-6666-6666-666666666666');
+  if photos <> 1 then
+    raise exception 'FAIL: a visitor sees % photographs; only the approved one in the public album should be readable', photos;
+  end if;
+end $$;
 
 -- What a visitor may read of the committee's writing: what is up, and nothing else. This is
 -- the policy doing the work, not the query — the app asks for every row and is given the
@@ -596,6 +630,35 @@ end $$;
 -- below, where there is a role that can see what is left.
 delete from portal.contact_messages;
 
+-- A member sees the members' album as well as the public one, and only approved photographs.
+do $$
+declare
+  albums integer;
+  photos integer;
+begin
+  select count(*) into albums from portal.albums where slug like 'test-%';
+  if albums <> 2 then
+    raise exception 'FAIL: a member sees % of the two albums', albums;
+  end if;
+  select count(*) into photos from portal.media where album_id in ('55555555-5555-5555-5555-555555555555', '66666666-6666-6666-6666-666666666666');
+  if photos <> 2 then
+    raise exception 'FAIL: a member sees % photographs; the unapproved one should not be among them', photos;
+  end if;
+end $$;
+
+-- And may not add to, change, or take down any of it.
+do $$
+begin
+  begin
+    insert into portal.media (album_id, url, thumbnail_url)
+    values ('55555555-5555-5555-5555-555555555555', 'https://photos.example/full/x.jpg', 'https://photos.example/thumb/x.jpg');
+    raise exception 'FAIL: a member put a photograph in an album';
+  exception when insufficient_privilege then
+    null;
+  end;
+end $$;
+delete from portal.media where id = '77777777-7777-7777-7777-777777777777';
+
 -- A member sees what the public sees of the writing, and no drafts.
 do $$
 declare
@@ -686,6 +749,32 @@ begin
    where subject_kind = 'contact_messages' and action = 'delete' and subject_id = doomed::text;
   if trail <> 1 then
     raise exception 'FAIL: deleting a message left no line in the audit trail, and the message was the only other record of it';
+  end if;
+end $$;
+
+-- The committee sees every album and every photograph, and keeps them.
+do $$
+declare
+  photos integer;
+begin
+  select count(*) into photos from portal.media where album_id in ('55555555-5555-5555-5555-555555555555', '66666666-6666-6666-6666-666666666666');
+  if photos <> 3 then
+    raise exception 'FAIL: the committee sees % of the three photographs (a member''s delete above should have matched nothing)', photos;
+  end if;
+end $$;
+
+update portal.albums set cover_media_id = '77777777-7777-7777-7777-777777777777'
+  where id = '55555555-5555-5555-5555-555555555555';
+delete from portal.media where id = '77777777-7777-7777-7777-777777777777';
+
+do $$
+begin
+  if exists (select 1 from portal.media where id = '77777777-7777-7777-7777-777777777777') then
+    raise exception 'FAIL: the committee cannot take a photograph down';
+  end if;
+  -- An album must not go on pointing at a photograph that is not there.
+  if (select cover_media_id from portal.albums where id = '55555555-5555-5555-5555-555555555555') is not null then
+    raise exception 'FAIL: an album still names a photograph that has been taken down as its cover';
   end if;
 end $$;
 

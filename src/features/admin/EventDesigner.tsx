@@ -11,6 +11,8 @@ import { readUploadConfig, uploadPhoto, UploadNotConfigured } from '@/lib/api/up
 import { slugFrom } from '@/domain/slug'
 import styles from './ContentForms.module.css'
 import design from './EventDesigner.module.css'
+import { readSupabaseConfig } from '@/lib/api/supabase'
+import { accessToken } from '@/lib/auth/supabaseAuth'
 
 const forInput = (iso?: string) => (iso ? iso.slice(0, 16) : '')
 
@@ -72,6 +74,7 @@ export function EventDesigner({
   const now = useNow()
   // Null where no bucket is configured, which the upload says out loud rather than failing.
   const uploads = readUploadConfig(import.meta.env)
+  const supabase = readSupabaseConfig(import.meta.env)
 
   const set = <K extends keyof EventDraft>(key: K, value: EventDraft[K]) => setDraft((d) => ({ ...d, [key]: value }))
 
@@ -175,7 +178,11 @@ export function EventDesigner({
           onSend={async (prepared, name) => {
             if (!uploads) throw new UploadNotConfigured()
             const key = `${slugFrom(draft.title) || 'event'}-cover-${slugFrom(name.replace(/\.[^.]+$/, '')) || 'photo'}`
-            return uploadPhoto(uploads, key, prepared)
+            // The function asks the database whether this person is on the committee, with
+            // their own token, before it signs anything.
+            const token = supabase ? await accessToken(supabase) : null
+            if (!token) throw new Error('Sign in first.')
+            return uploadPhoto(uploads, key, prepared, token)
           }}
           onDone={(url) => set('coverImageUrl', url)}
         />

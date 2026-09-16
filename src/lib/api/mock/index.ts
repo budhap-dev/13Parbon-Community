@@ -4,7 +4,7 @@ import { isValidContact, type ContactMessage } from '@/domain/contact'
 import { isLive, isValid, slugFrom, validateAnnouncement, validateNews, type Announcement, type AnnouncementDraft, type NewsDraft, type NewsPost } from '@/domain/news'
 import { isValidEvent, tidyProgramme, type Event, type EventDraft } from '@/domain/event'
 import { uniqueSlug } from '@/domain/slug'
-import { inOrder, pinnedCover, type AlbumDraft, type AlbumWithMedia } from '@/domain/gallery'
+import { inOrder, pinnedCover, type AlbumDraft, type AlbumWithMedia, type Media } from '@/domain/gallery'
 import { validateSettings, type SiteSettings } from '@/domain/settings'
 import { defaultSettings } from '@/app/defaults'
 import { isAdmin, isMember, isValidHousehold, type Household, type HouseholdDraft, type Person, type Viewer } from '@/domain/household'
@@ -364,6 +364,25 @@ export function createMockApi({ now = () => new Date(), latencyMs = 0, events }:
           if (media) media.position = i
         })
         return delay(inOrder(inAlbum), latencyMs)
+      },
+
+      addMedia: (albumId, photo, viewer) => {
+        if (!isAdmin(viewer)) return Promise.reject(new NotAllowed('only the committee can do that'))
+        const album = fixtures.albums.find((a) => a.id === albumId)
+        if (!album) return Promise.reject(new NotAllowed('no such album'))
+        const inAlbum = fixtures.media.filter((x) => x.albumId === albumId)
+        const media: Media = {
+          id: `m-${photo.url.split('/').pop()?.replace(/\.jpg$/, '') ?? fixtures.media.length + 1}`,
+          albumId,
+          type: 'photo',
+          url: photo.url,
+          thumbnailUrl: photo.thumbnailUrl,
+          approved: true,
+          // At the end: the order the committee put them in is the order they arrived.
+          position: inAlbum.length,
+        }
+        fixtures.media.push(media)
+        return delay(media, latencyMs)
       },
 
       deleteMedia: (id, viewer) => {

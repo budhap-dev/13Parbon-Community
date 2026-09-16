@@ -289,6 +289,97 @@ create policy "admins resolve sign-in attempts"
 
 
 -- ---------------------------------------------------------------------------
+-- The gallery: albums, and the photographs in them
+-- ---------------------------------------------------------------------------
+-- The rows are here; the pictures are in the bucket. That split is the privacy page's promise
+-- made mechanical: a row deleted while the file stays at its URL has not taken anything down,
+-- so the app removes the object first and this row only once the bucket has said yes.
+--
+-- Who sees what is decided once, on albums, and the photographs follow: a photograph's own
+-- policy asks whether its album is visible *to the caller*, and that question runs under the
+-- caller's own row level security. So a visitor asking for every photograph gets the ones in
+-- public albums, a member gets the members' ones too, and nothing on the media table has to
+-- restate the rule.
+
+create table if not exists portal.albums (
+  id uuid primary key default gen_random_uuid(),
+  slug text not null unique,
+  title text not null check (char_length(trim(title)) >= 2),
+  description text,
+  event_slug text,
+  festival_id text,
+  -- Pinned as the album's face. Null means rotate, which is the default and stays the default.
+  -- The constraint is added below, because media does not exist yet at this line.
+  cover_media_id uuid,
+  published_at timestamptz not null default now(),
+  visibility text not null default 'public' check (visibility in ('public', 'members'))
+);
+
+create table if not exists portal.media (
+  id uuid primary key default gen_random_uuid(),
+  album_id uuid not null references portal.albums (id) on delete cascade,
+  type text not null default 'photo' check (type in ('photo', 'video')),
+  url text not null,
+  thumbnail_url text not null,
+  caption text,
+  approved boolean not null default true,
+  -- Where it sits in the album; null falls back to the key, which carries the prepared order.
+  position integer,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists media_album_idx on portal.media (album_id);
+
+-- An album must not go on pointing at a photograph that is not there.
+alter table portal.albums drop constraint if exists albums_cover_media_id_fkey;
+alter table portal.albums
+  add constraint albums_cover_media_id_fkey
+  foreign key (cover_media_id) references portal.media (id) on delete set null;
+
+alter table portal.albums enable row level security;
+alter table portal.media enable row level security;
+
+grant select on portal.albums, portal.media to anon, authenticated;
+grant insert, update, delete on portal.albums, portal.media to authenticated;
+
+drop policy if exists "anybody sees a public album" on portal.albums;
+create policy "anybody sees a public album"
+  on portal.albums for select to anon, authenticated using (visibility = 'public');
+
+-- A member of a household, not merely a signed-in account: an address the committee has not
+-- recorded is a stranger here as everywhere else.
+drop policy if exists "members see the members' albums" on portal.albums;
+create policy "members see the members' albums"
+  on portal.albums for select to authenticated
+  using (visibility = 'members' and portal.current_household_id() is not null);
+
+drop policy if exists "admins see every album" on portal.albums;
+create policy "admins see every album"
+  on portal.albums for select to authenticated using (portal.is_admin());
+
+drop policy if exists "admins keep the albums" on portal.albums;
+create policy "admins keep the albums"
+  on portal.albums for all to authenticated
+  using (portal.is_admin()) with check (portal.is_admin());
+
+-- Approved, and in an album the caller can see. The subquery is what makes the second half
+-- true: it runs as the caller, under the album policies above.
+drop policy if exists "anybody sees the photographs of an album they can see" on portal.media;
+create policy "anybody sees the photographs of an album they can see"
+  on portal.media for select to anon, authenticated
+  using (approved and exists (select 1 from portal.albums a where a.id = media.album_id));
+
+drop policy if exists "admins see every photograph" on portal.media;
+create policy "admins see every photograph"
+  on portal.media for select to authenticated using (portal.is_admin());
+
+drop policy if exists "admins keep the photographs" on portal.media;
+create policy "admins keep the photographs"
+  on portal.media for all to authenticated
+  using (portal.is_admin()) with check (portal.is_admin());
+
+
+-- ---------------------------------------------------------------------------
 -- What the committee writes: news, notices and newsletters
 -- ---------------------------------------------------------------------------
 -- Public content, so the read policies are the unusual ones here: a visitor with no session has
@@ -836,6 +927,15 @@ create trigger record_change after insert or update or delete on portal.document
 -- saying a visitor submitted the contact form, which the table already says.
 drop trigger if exists record_change on portal.contact_messages;
 create trigger record_change after update or delete on portal.contact_messages
+  for each row execute function portal.record_change();
+
+-- Taking a photograph down is the line somebody asks about later.
+drop trigger if exists record_change on portal.albums;
+create trigger record_change after insert or update or delete on portal.albums
+  for each row execute function portal.record_change();
+
+drop trigger if exists record_change on portal.media;
+create trigger record_change after insert or update or delete on portal.media
   for each row execute function portal.record_change();
 
 drop trigger if exists record_change on portal.news_posts;

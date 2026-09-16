@@ -6,6 +6,7 @@ import type { CommunityDocument, SignInAttempt } from '@/domain/document'
 import type { Household, HouseholdDraft, Viewer } from '@/domain/household'
 import type { AttendanceDraft, EventAttendance } from '@/domain/attendance'
 import type { AuditEntry } from '@/domain/audit'
+import type { UploadedPhoto } from './uploads'
 import type { SettingsDraft, SiteSettings } from '@/domain/settings'
 import type { HouseholdExport } from '@/domain/subjectAccess'
 import type { Announcement, AnnouncementDraft, NewsDraft, NewsPost, Newsletter } from '@/domain/news'
@@ -68,6 +69,14 @@ export interface ApiClient {
     listAllAlbums(viewer: Viewer): Promise<AlbumWithMedia[]>
     createAlbum(draft: AlbumDraft, viewer: Viewer): Promise<Album>
     updateAlbum(id: string, draft: AlbumDraft, viewer: Viewer): Promise<Album>
+    /**
+     * Records a photograph that has been uploaded, at the end of the album. Admin only.
+     *
+     * The upload itself goes straight from the browser to the bucket; this is the row that
+     * makes it part of an album. Until this existed the committee could make albums and never
+     * fill them — there was no way to say a picture was in one.
+     */
+    addMedia(albumId: string, photo: UploadedPhoto, viewer: Viewer): Promise<Media>
     /**
      * Chooses the photograph that stands for an album. Admin only.
      *
