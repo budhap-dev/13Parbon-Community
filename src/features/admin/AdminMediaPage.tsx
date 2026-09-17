@@ -280,8 +280,9 @@ function AlbumPage({
           </p>
           <PhotoUpload
             canSend={Boolean(uploads && supabase)}
-            label="Add a photograph"
-            onSend={async (prepared, name) => {
+            label="Add photographs"
+            multiple
+            onSend={async (prepared, name, index) => {
               if (!uploads || !supabase) throw new UploadNotConfigured()
               // The function asks the database whether this person is on the committee, with
               // their own token, before it signs anything.
@@ -292,8 +293,12 @@ function AlbumPage({
                * organised by and what a takedown names, so they are made here rather than taken
                * from the filename — two phones both offering IMG_0042.jpg would otherwise have
                * the second quietly overwrite the first.
+               *
+               * `index` is what makes a batch safe. The album has not grown by the time the
+               * second photograph is signed, so counting from its length alone would hand the
+               * same number to every picture in the drop, and the bucket would keep the last.
                */
-              const key = `${album.slug}-${String(album.media.length + 1).padStart(2, '0')}-${slugFrom(name.replace(/\.[^.]+$/, '')).slice(0, 24) || 'photo'}`
+              const key = `${album.slug}-${String(album.media.length + 1 + index).padStart(2, '0')}-${slugFrom(name.replace(/\.[^.]+$/, '')).slice(0, 24) || 'photo'}`
               return uploadPhoto(uploads, key, prepared, token)
             }}
             onDone={(url) =>

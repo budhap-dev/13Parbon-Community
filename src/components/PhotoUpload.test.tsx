@@ -72,6 +72,64 @@ describe('once it is ready', () => {
   })
 })
 
+describe('a whole evening at once', () => {
+  const named = (name: string) => new File([new Uint8Array([1, 2, 3])], name, { type: 'image/jpeg' })
+
+  it('takes several, and sends them in order with their place in the batch', async () => {
+    stubPrepare()
+    const onSend = vi.fn(async (_p: unknown, name: string, _index: number) => ({
+      url: `https://photos.example/full/${name}.jpg`,
+    }))
+    const onDone = vi.fn()
+    render(<PhotoUpload canSend multiple onSend={onSend} onDone={onDone} />)
+
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement
+    await userEvent.upload(input, [named('one.jpg'), named('two.jpg'), named('three.jpg')])
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Put all 3 in the bucket' }))
+    await waitFor(() => expect(onDone).toHaveBeenCalledTimes(3))
+
+    /*
+     * The index is the whole point. The album has not grown by the time the second is signed,
+     * so a caller numbering keys from its length alone would hand all three the same number and
+     * the bucket would keep only the last.
+     */
+    expect(onSend.mock.calls.map((call) => [call[1], call[2]])).toEqual([
+      ['one.jpg', 0],
+      ['two.jpg', 1],
+      ['three.jpg', 2],
+    ])
+  })
+
+  it('keeps the rest when one of them will not go', async () => {
+    stubPrepare()
+    const onSend = vi.fn(async (_p: unknown, name: string) => {
+      if (name === 'two.jpg') throw new Error('That photograph would not upload (500).')
+      return { url: `https://photos.example/full/${name}.jpg` }
+    })
+    const onDone = vi.fn()
+    render(<PhotoUpload canSend multiple onSend={onSend} onDone={onDone} />)
+
+    const input = document.querySelector('input[type="file"]') as HTMLInputElement
+    await userEvent.upload(input, [named('one.jpg'), named('two.jpg'), named('three.jpg')])
+    await userEvent.click(await screen.findByRole('button', { name: 'Put all 3 in the bucket' }))
+
+    // The two that worked are gone from the list; the one that did not says so and stays.
+    await waitFor(() => expect(onDone).toHaveBeenCalledTimes(2))
+    // Named, because it is one of several: "that photograph" does not say which to try again.
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent(/would not upload/)
+    expect(alert).toHaveTextContent(/two\.jpg/)
+  })
+
+  it('takes one only, where one is the right number', async () => {
+    stubPrepare()
+    render(<PhotoUpload canSend onSend={vi.fn()} onDone={vi.fn()} />)
+    // The event cover is a single photograph, so the picker does not offer a multiple selection.
+    expect(document.querySelector('input[type="file"]')).not.toHaveAttribute('multiple')
+  })
+})
+
 describe('when there is nowhere to put it', () => {
   it('offers no button, and says what to do instead', async () => {
     stubPrepare()

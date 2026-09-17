@@ -47,13 +47,15 @@ describe('the albums', () => {
     expect(screen.getAllByText(/JPG, JPEG and PNG/).length).toBeGreaterThan(0)
   })
 
-  it('offers a way to add one to the album', async () => {
+  it('offers a way to add them to the album, more than one at a time', async () => {
     renderAt('/admin/media')
     await openAlbum(/Boishakhi 2026/)
     // The committee could make albums and never fill them: there was nowhere to put a picture,
     // and no way to say a picture was in one. What the control does once a file is chosen —
     // including saying there is no bucket — is PhotoUpload's own test.
-    expect(screen.getByRole('button', { name: 'Add a photograph' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Add photographs' })).toBeInTheDocument()
+    // An evening arrives as a folder, not as one picture twenty times over.
+    expect(document.querySelector('input[type="file"]')).toHaveAttribute('multiple')
   })
 
   it('says the metadata never leaves the machine, which is the whole promise', async () => {

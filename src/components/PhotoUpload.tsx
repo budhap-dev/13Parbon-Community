@@ -1,21 +1,33 @@
-import { useRef, useState } from 'react'
+import { useId, useRef, useState } from 'react'
 import { Button } from './Button'
 import { CoverImage } from './CoverImage'
 import { ACCEPTED, ACCEPTED_LABEL } from '@/domain/images'
 import { prepareImage, type Prepared } from '@/lib/images/prepare'
 import styles from './PhotoUpload.module.css'
 
-type State =
-  | { step: 'idle' }
-  | { step: 'preparing' }
-  | { step: 'ready'; prepared: Prepared; preview: string; name: string }
-  | { step: 'sending' }
-  | { step: 'failed'; why: string }
+/**
+ * One photograph on its way in.
+ *
+ * A whole evening arrives at once — twenty pictures off a phone — so each carries its own state
+ * rather than the component having a single one. Otherwise the tenth failing would have to
+ * throw away the nine that were fine.
+ */
+type Item = {
+  id: string
+  name: string
+  step: 'preparing' | 'ready' | 'sending' | 'failed'
+  prepared?: Prepared
+  preview?: string
+  why?: string
+}
 
 const sizeOf = (blob: Blob) => `${Math.round(blob.size / 1024)}KB`
 
+let counter = 0
+const nextId = () => `photo-${++counter}`
+
 /**
- * Choosing a photograph, getting it ready, and sending it.
+ * Choosing photographs, getting them ready, and sending them.
  *
  * The preparing happens here, in the browser, before anything is sent: the picture is
  * re-encoded from a pixel buffer, so the location, camera and date a phone writes into a
@@ -24,105 +36,180 @@ const sizeOf = (blob: Blob) => `${Math.round(blob.size / 1024)}KB`
  * Whether it can be sent at all depends on the bucket being configured. Where it is not, this
  * says so and says what to do instead, rather than offering a button that fails — the same way
  * the contact form offers an email address when there is nowhere for a message to go.
+ *
+ * `multiple` is off by default because the other caller is the event cover, where one
+ * photograph is not a limitation but the correct number.
  */
 export function PhotoUpload({
   canSend,
   onSend,
   onDone,
   label = 'Choose a photograph',
+  multiple = false,
 }: {
   canSend: boolean
-  /** Sends both sizes and hands back where they ended up. */
-  onSend: (prepared: Prepared, name: string) => Promise<{ url: string }>
+  /**
+   * Sends both sizes and hands back where they ended up.
+   *
+   * `index` is the photograph's place in the batch being sent, because a caller numbering keys
+   * from how many the album already has would give the same number to all of them: the album
+   * has not grown yet when the second one is signed.
+   */
+  onSend: (prepared: Prepared, name: string, index: number) => Promise<{ url: string }>
   onDone: (url: string) => void
   label?: string
+  multiple?: boolean
 }) {
-  const [state, setState] = useState<State>({ step: 'idle' })
+  const [items, setItems] = useState<Item[]>([])
+  const [dragging, setDragging] = useState(false)
   const input = useRef<HTMLInputElement>(null)
+  const dropId = useId()
 
-  const choose = async (file: File) => {
-    setState({ step: 'preparing' })
-    try {
-      const prepared = await prepareImage(file)
-      setState({ step: 'ready', prepared, preview: URL.createObjectURL(prepared.thumb), name: file.name })
-    } catch (error) {
-      setState({ step: 'failed', why: error instanceof Error ? error.message : 'That picture could not be read.' })
+  const update = (id: string, change: Partial<Item>) =>
+    setItems((current) => current.map((item) => (item.id === id ? { ...item, ...change } : item)))
+
+  const choose = async (files: File[]) => {
+    if (files.length === 0) return
+    const taken = multiple ? files : files.slice(0, 1)
+    const fresh: Item[] = taken.map((file) => ({ id: nextId(), name: file.name, step: 'preparing' }))
+    // One at a time replaces what is there; a batch adds to it, so two drops make one album.
+    setItems((current) => (multiple ? [...current, ...fresh] : fresh))
+
+    /*
+     * Prepared one after another rather than all at once. Each one decodes a full-size
+     * photograph into a pixel buffer, and a dozen 12-megapixel pictures held open together is
+     * how a phone browser runs out of memory and takes the page with it.
+     */
+    for (const [i, file] of taken.entries()) {
+      const { id } = fresh[i]
+      try {
+        const prepared = await prepareImage(file)
+        update(id, { step: 'ready', prepared, preview: URL.createObjectURL(prepared.thumb) })
+      } catch (error) {
+        update(id, { step: 'failed', why: error instanceof Error ? error.message : 'That picture could not be read.' })
+      }
     }
+  }
+
+  const forget = (item: Item) => {
+    if (item.preview) URL.revokeObjectURL(item.preview)
+    setItems((current) => current.filter((other) => other.id !== item.id))
   }
 
   const send = async () => {
-    if (state.step !== 'ready') return
-    const { prepared, name } = state
-    setState({ step: 'sending' })
-    try {
-      const { url } = await onSend(prepared, name)
-      onDone(url)
-      setState({ step: 'idle' })
-    } catch (error) {
-      setState({ step: 'failed', why: error instanceof Error ? error.message : 'It would not upload.' })
+    const ready = items.filter((item) => item.step === 'ready')
+    /*
+     * In order, and one at a time. The bucket would take them together, but the album would
+     * not: each needs its own place in the order, and the screen showing the first arrive
+     * while the fifth is still going is a better answer than a long silence.
+     */
+    for (const [index, item] of ready.entries()) {
+      update(item.id, { step: 'sending' })
+      try {
+        const { url } = await onSend(item.prepared as Prepared, item.name, index)
+        onDone(url)
+        forget(item)
+      } catch (error) {
+        /*
+         * Named, because this one is in a crowd. A refusal from the preparing already carries
+         * the filename; one from the bucket does not, and "that photograph would not upload"
+         * with nine others on the screen does not say which to try again.
+         */
+        const why = error instanceof Error ? error.message : 'It would not upload.'
+        update(item.id, { step: 'failed', why: `${item.name}: ${why}` })
+      }
     }
   }
 
+  const readyCount = items.filter((item) => item.step === 'ready').length
+  const busy = items.some((item) => item.step === 'preparing' || item.step === 'sending')
+
   return (
-    <div className={styles.upload}>
+    <div
+      className={`${styles.upload} ${dragging ? styles.dragging : ''}`}
+      onDragOver={(e) => {
+        // Without this the browser navigates to the file, which loses whatever was on the page.
+        e.preventDefault()
+        setDragging(true)
+      }}
+      onDragLeave={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDragging(false)
+      }}
+      onDrop={(e) => {
+        e.preventDefault()
+        setDragging(false)
+        void choose(Array.from(e.dataTransfer.files))
+      }}
+    >
       <input
         ref={input}
         type="file"
         accept={ACCEPTED.join(',')}
+        multiple={multiple}
         className={styles.file}
         onChange={(e) => {
-          const file = e.target.files?.[0]
-          if (file) void choose(file)
+          void choose(Array.from(e.target.files ?? []))
           e.target.value = ''
         }}
       />
 
-      {state.step === 'ready' ? (
-        <div className={styles.ready}>
-          <CoverImage src={state.preview} ratio="4 / 3" className={styles.thumb} />
-          <div className={styles.readyBody}>
-            <p className={styles.name}>{state.name}</p>
-            <p className={styles.note}>
-              Ready: {state.prepared.width}×{state.prepared.height}, {sizeOf(state.prepared.full)} and{' '}
-              {sizeOf(state.prepared.thumb)} for the grid. <strong>No location, camera or date</strong> — the
-              picture was re-made here, so there was none to carry.
-            </p>
-            <div className={styles.actions}>
-              {canSend ? (
-                <Button variant="gold" size="sm" onClick={() => void send()}>
-                  Put it in the bucket
-                </Button>
-              ) : null}
-              <Button variant="line" size="sm" onClick={() => setState({ step: 'idle' })}>
-                Choose another
-              </Button>
-            </div>
-            {!canSend ? (
-              <p className={styles.note} role="status">
-                There is nowhere to put it yet: this build has no bucket configured. Everything above
-                is real — prepare the rest with <code>scripts/prepare-photos.mjs</code> and upload by
-                hand for now.
+      {items.map((item) =>
+        item.step === 'failed' ? (
+          <p key={item.id} className={styles.error} role="alert">
+            {item.why}
+          </p>
+        ) : item.step === 'preparing' ? (
+          <p key={item.id} className={styles.note} role="status">
+            {item.name}: getting it ready…
+          </p>
+        ) : (
+          <div key={item.id} className={styles.ready}>
+            <CoverImage src={item.preview ?? ''} ratio="4 / 3" className={styles.thumb} />
+            <div className={styles.readyBody}>
+              <p className={styles.name}>{item.name}</p>
+              <p className={styles.note}>
+                {item.step === 'sending' ? (
+                  'Sending…'
+                ) : (
+                  <>
+                    Ready: {item.prepared?.width}×{item.prepared?.height}, {sizeOf(item.prepared?.full as Blob)} and{' '}
+                    {sizeOf(item.prepared?.thumb as Blob)} for the grid.{' '}
+                    <strong>No location, camera or date</strong> — the picture was re-made here, so there was none to
+                    carry.
+                  </>
+                )}
               </p>
-            ) : null}
+              {item.step === 'ready' ? (
+                <div className={styles.actions}>
+                  <Button variant="line" size="sm" onClick={() => forget(item)}>
+                    Take it off the list
+                  </Button>
+                </div>
+              ) : null}
+            </div>
           </div>
-        </div>
-      ) : (
-        <div className={styles.actions}>
-          <Button
-            variant="line"
-            size="sm"
-            disabled={state.step === 'preparing' || state.step === 'sending'}
-            onClick={() => input.current?.click()}
-          >
-            {state.step === 'preparing' ? 'Getting it ready…' : state.step === 'sending' ? 'Sending…' : label}
-          </Button>
-          <span className={styles.note}>{ACCEPTED_LABEL}</span>
-        </div>
+        ),
       )}
 
-      {state.step === 'failed' ? (
-        <p className={styles.error} role="alert">
-          {state.why}
+      <div className={styles.actions}>
+        <Button variant="line" size="sm" disabled={busy} aria-describedby={dropId} onClick={() => input.current?.click()}>
+          {busy ? 'Working…' : label}
+        </Button>
+        <span className={styles.note} id={dropId}>
+          {ACCEPTED_LABEL}
+          {multiple ? ' · or drop them here' : ''}
+        </span>
+        {canSend && readyCount > 0 ? (
+          <Button variant="gold" size="sm" disabled={busy} onClick={() => void send()}>
+            {readyCount === 1 ? 'Put it in the bucket' : `Put all ${readyCount} in the bucket`}
+          </Button>
+        ) : null}
+      </div>
+
+      {!canSend && readyCount > 0 ? (
+        <p className={styles.note} role="status">
+          There is nowhere to put it yet: this build has no bucket configured. Everything above is real — prepare the
+          rest with <code>scripts/prepare-photos.mjs</code> and upload by hand for now.
         </p>
       ) : null}
     </div>

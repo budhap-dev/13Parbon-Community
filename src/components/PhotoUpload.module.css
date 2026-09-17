@@ -75,3 +75,13 @@
     grid-template-columns: 1fr;
   }
 }
+
+/*
+ * Dropping photographs on. There is no keyboard path through a drag, which is why the button
+ * did not go away: it is the same door, and it is the one a keyboard and a screen reader use.
+ */
+.dragging {
+  outline: 3px dashed var(--color-accent, #f7b733);
+  outline-offset: 6px;
+  border-radius: 12px;
+}
