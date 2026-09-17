@@ -6,7 +6,7 @@
 > **What this is:** the order of work from [MEMBER-LOGIN.md](MEMBER-LOGIN.md), broken into steps
 > that can be ticked off. That document says *what* and *why*; this one says *where we are*.
 >
-> **Last updated:** 2026-09-17 · **Current step:** 6 · **Ticked:** 100 of 107
+> **Last updated:** 2026-09-17 · **Current step:** 6 · **Ticked:** 101 of 107
 
 ## How this is kept
 
@@ -374,7 +374,12 @@ in full every time focus landed there. The notes are tied on with `aria-describe
 - [x] Five quiet ways for the cover to move, and the cover drawn on the public event page
 - [x] Render `cancelled` on the public pages — and make a cancelled evening reachable at all
 - [x] The `Registration` fixtures are gone from `/admin/events` and the dashboard — removed, not filled
-- [ ] Volunteer roles and sign-up — in the domain, in PLAN phase 3, and not covered by the other app either
+- [x] ~~Volunteer roles and sign-up~~ — **dropped 2026-09-17 at the committee's request.** It was
+      on the list because PLAN phase 3 named it and the planner app does not cover it. But there
+      is already a way to offer help: the strip on the home page calls for volunteers at the next
+      evening, and the registration form takes the offer. A second place to say the same thing,
+      inside a portal most members will not open, is a screen to maintain rather than help
+      arriving. Nothing is removed — the strip and the call stay exactly as they are
 
 **The design screen** *(2026-09-15)*. The planner holds the logistics — tasks, teams, who is
 bringing the urn. This holds front of house: what somebody sees on arriving to find out what is
@@ -716,6 +721,12 @@ because jsdom does not paint — that one belongs in a browser.
 | Event summaries: written, or drafted for editing? | Step 5 |
 | How an event reaches this site from the planner app | Step 3 |
 | Backups: does the R2 bucket need a second copy? *(to discuss)* | Step 6 |
+
+### Answered 2026-09-17
+
+| | |
+|---|---|
+| **Volunteering in the portal** | Not built. The home page already calls for helpers and the registration form takes the offer; a members-only sign-up would be a second place to say the same thing. A public way to send feedback is wanted, but later and separately |
 
 ### Answered 2026-09-15
 
