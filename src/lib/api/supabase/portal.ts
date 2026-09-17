@@ -36,7 +36,6 @@ export function withSupabasePortal(base: ApiClient, config: SupabaseConfig): Api
       identify: methods.identify,
       getHousehold: (id) => methods.getHousehold(id),
       listHouseholds: () => methods.listHouseholds(),
-      listDocuments: () => methods.listDocuments(),
       listSignInAttempts: () => methods.listSignInAttempts(),
       listAttendance: () => methods.listAttendance(),
       addHousehold: (draft, viewer) => methods.addHousehold(draft, viewer),

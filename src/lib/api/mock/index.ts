@@ -564,11 +564,6 @@ export function createMockApi({ now = () => new Date(), latencyMs = 0, events }:
           isAdmin(viewer) ? [...portal.households].sort((a, b) => a.name.localeCompare(b.name)) : [],
           latencyMs,
         ),
-      listDocuments: (viewer) =>
-        delay(
-          isMember(viewer) ? [...portal.documents].sort((a, b) => b.addedOn.localeCompare(a.addedOn)) : [],
-          latencyMs,
-        ),
       listSignInAttempts: (viewer) =>
         delay(
           isAdmin(viewer)

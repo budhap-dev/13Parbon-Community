@@ -45,9 +45,6 @@ const table: Record<Action, Row> = {
   'household:setRole': { visitor: false, own: false, other: false, admin: true },
   'household:setSignInAddress': { visitor: false, own: false, other: false, admin: true },
   'household:setMembership': { visitor: false, own: false, other: false, admin: true },
-  'documents:read': { visitor: false, own: true, other: true, admin: true },
-  'documents:manage': { visitor: false, own: false, other: false, admin: true },
-
   'attendance:read': { visitor: false, own: true, other: true, admin: true },
   'attendance:record': { visitor: false, own: false, other: false, admin: true },
 

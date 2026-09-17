@@ -4,7 +4,7 @@ import { createMemoryRouter, RouterProvider } from 'react-router'
 import { routes } from '@/app/router'
 import { previewAccounts } from '@/lib/auth/previewAccounts'
 import type { Session } from '@/lib/auth/session'
-import { createEmptyApi, TestDataProviders } from '@/test/render'
+import { TestDataProviders } from '@/test/render'
 import { createMockApi } from '@/lib/api/mock'
 import type { ApiClient } from '@/lib/api'
 import type { SignInAttempt } from '@/domain/document'
@@ -199,17 +199,18 @@ describe('member pages', () => {
   })
 
 
-  it('lists the documents newest first', async () => {
-    renderAt('/portal/documents', member)
-    const rows = await screen.findAllByRole('row')
-    expect(rows[1]).toHaveTextContent('Stage plan and equipment list')
-    expect(rows[1]).toHaveTextContent('Resources')
-    expect(rows[1]).toHaveTextContent('3 September 2026')
-  })
-
-  it('says so plainly when there is nothing to show', async () => {
-    renderAt('/portal/documents', member, createEmptyApi())
-    expect(await screen.findByText('Nothing here yet.')).toBeInTheDocument()
+  /*
+   * Documents were taken out on 2026-09-17. The page listed them and nothing could add one:
+   * the contract had listDocuments and no way to write, so a library the committee could not
+   * put anything into. The table and its policies are still in the database, waiting for the
+   * day somebody decides whether a document is a link or a file.
+   */
+  it('has no documents page to visit', async () => {
+    const router = renderAt('/portal/documents', member)
+    await screen.findByRole('heading', { level: 1 })
+    expect(screen.queryByRole('link', { name: 'Documents' })).not.toBeInTheDocument()
+    expect(router.state.location.pathname).toBe('/portal/documents')
+    expect(screen.queryByText('Nothing here yet.')).not.toBeInTheDocument()
   })
 })
 

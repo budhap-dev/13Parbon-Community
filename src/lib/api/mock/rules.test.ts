@@ -25,7 +25,6 @@ describe('a visitor', () => {
   it('reaches nothing behind the sign-in', async () => {
     const a = api()
     expect(await a.portal.listHouseholds(visitor)).toEqual([])
-    expect(await a.portal.listDocuments(visitor)).toEqual([])
     expect(await a.portal.listSignInAttempts(visitor)).toEqual([])
     expect(await a.contact.listMessages(visitor)).toEqual([])
   })
@@ -70,9 +69,6 @@ describe('a member', () => {
     await expect(api().portal.recordAttendance(draft, member)).rejects.toThrow(/committee/i)
   })
 
-  it('reads the documents library', async () => {
-    expect((await api().portal.listDocuments(member)).length).toBeGreaterThan(0)
-  })
 })
 
 describe('the committee', () => {

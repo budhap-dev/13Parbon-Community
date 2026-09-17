@@ -120,14 +120,6 @@ export function useAuditTrail(limit = 100) {
   })
 }
 
-export function useDocuments() {
-  const api = useApi()
-  const viewer = useViewer()
-  return useQuery({
-    queryKey: ['portal', 'documents', asks(viewer)],
-    queryFn: () => api.portal.listDocuments(viewer),
-  })
-}
 
 export function useSignInAttempts() {
   const api = useApi()

@@ -7,12 +7,10 @@ import {
   peopleRows,
   toAttempt,
   toAttendance,
-  toDocument,
   toHousehold,
   toMessage,
   type AttemptRow,
   type AttendanceRow,
-  type DocumentRow,
   type HouseholdRow,
   type MessageRow,
 } from './rows'
@@ -131,11 +129,6 @@ export function householdMethods(getClient: () => Promise<SupabaseClient>) {
       if (!data) throw new NotAllowed('no such household')
     },
 
-    listDocuments: async () => {
-      const client = await rowsOf()
-      const { data } = await table(client, 'documents').select('*').order('added_on', { ascending: false })
-      return ((data ?? []) as DocumentRow[]).map(toDocument)
-    },
 
     listSignInAttempts: async () => {
       const client = await rowsOf()

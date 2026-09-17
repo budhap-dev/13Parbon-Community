@@ -1,10 +1,10 @@
-import type { CommunityDocument, SignInAttempt } from '@/domain/document'
+import type { SignInAttempt } from '@/domain/document'
 import type { EventAttendance } from '@/domain/attendance'
 import type { Household } from '@/domain/household'
 import type { ContactMessage } from '@/domain/contact'
 
 /**
- * Sample households, registrations and documents for the portal. Enough variety to show
+ * Sample households and registrations for the portal. Enough variety to show
  * every state the screens have to handle: an admin, a lapsed household, one that has
  * never signed in, and one whose membership has lapsed.
  */
@@ -136,12 +136,6 @@ export function buildPortalFixtures() {
     },
   ]
 
-  const documents: CommunityDocument[] = [
-    { id: 'doc-1', title: 'Annual general meeting minutes 2026', category: 'minutes', fileUrl: '#', addedOn: '2026-08-20' },
-    { id: 'doc-2', title: 'How we run a programme', category: 'guidelines', fileUrl: '#', addedOn: '2026-06-02' },
-    { id: 'doc-3', title: 'Constitution', category: 'guidelines', fileUrl: '#', addedOn: '2025-01-14' },
-    { id: 'doc-4', title: 'Stage plan and equipment list', category: 'resources', fileUrl: '#', addedOn: '2026-09-03' },
-  ]
 
   const signInAttempts: SignInAttempt[] = [
     { id: 'sa-1', email: 'priya.dutta@gmail.com', name: 'Priya Dutta', lastTriedAt: '2026-09-03T16:12:00', attempts: 2, resolved: false },
@@ -193,5 +187,5 @@ export function buildPortalFixtures() {
     { eventId: 'ev-saraswati-2026', heldOn: '2026-02-01', households: 28, adults: 61, children: 40, recordedAt: '2026-02-03T10:00:00' },
   ]
 
-  return { households, documents, signInAttempts, messages, attendance }
+  return { households, signInAttempts, messages, attendance }
 }

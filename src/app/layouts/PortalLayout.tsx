@@ -17,7 +17,6 @@ type Item = { label: string; to: string; icon: IconName; end?: boolean; count?: 
 const memberNav: Item[] = [
   { label: 'Dashboard', to: '/portal', icon: 'home', end: true },
   { label: 'My household', to: '/portal/household', icon: 'users' },
-  { label: 'Documents', to: '/portal/documents', icon: 'file' },
 ]
 
 export function PortalLayout() {

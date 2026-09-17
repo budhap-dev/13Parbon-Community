@@ -53,7 +53,7 @@ export function LoginPage() {
         Member <span className={styles.nowrap}>sign-in</span>
       </h1>
       <p className={styles.intro}>
-        Members sign in with Google to see their household, their registrations and the documents library.
+        Members sign in with Google to see their own household and what the committee holds about them.
         Everything else on this website is open to everyone, no account needed.
       </p>
 

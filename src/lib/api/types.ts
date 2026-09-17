@@ -2,7 +2,7 @@ import type { Event, EventDraft } from '@/domain/event'
 import type { Festival } from '@/domain/festival'
 import type { Album, AlbumDraft, AlbumWithMedia, Media } from '@/domain/gallery'
 import type { ContactInput, ContactMessage, ContactReceipt } from '@/domain/contact'
-import type { CommunityDocument, SignInAttempt } from '@/domain/document'
+import type { SignInAttempt } from '@/domain/document'
 import type { Household, HouseholdDraft, Viewer } from '@/domain/household'
 import type { AttendanceDraft, EventAttendance } from '@/domain/attendance'
 import type { AuditEntry } from '@/domain/audit'
@@ -184,8 +184,6 @@ export interface ApiClient {
     getHousehold(id: string, viewer: Viewer): Promise<Household | null>
     /** Every household. Empty for anybody who is not an admin. */
     listHouseholds(viewer: Viewer): Promise<Household[]>
-    /** The documents library. Empty for anybody who is not a member. */
-    listDocuments(viewer: Viewer): Promise<CommunityDocument[]>
     /**
      * How many came to each event, newest first. Readable by any member: it is the history the
      * portal shows, and there is nobody in it.

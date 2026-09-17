@@ -41,8 +41,6 @@ export type Action =
   | 'household:setRole'
   | 'household:setSignInAddress'
   | 'household:setMembership'
-  | 'documents:read'
-  | 'documents:manage'
   /** Read how many came to each event. Numbers only; there is nobody in them. */
   | 'attendance:read'
   /** Record how many came. */
@@ -84,15 +82,13 @@ export function can(viewer: Viewer, action: Action, resource?: Resource): boolea
     case 'household:edit':
       return isOwn(viewer, resource)
 
-    // Mirrors: policy "members read documents".
     case 'portal:enter':
-    case 'documents:read':
     // Mirrors: policy "members read attendance". A count has nobody in it.
     case 'attendance:read':
       return true
 
-    // Mirrors: policy "admins add households" / "admins remove households", policy
-    // "admins manage documents", the admin-only reads, and the trigger
+    // Mirrors: policy "admins add households" / "admins remove households", the
+    // admin-only reads, and the trigger
     // households_guard_protected_columns for the three protected columns.
     case 'admin:enter':
     case 'household:add':
@@ -101,7 +97,6 @@ export function can(viewer: Viewer, action: Action, resource?: Resource): boolea
     case 'household:setRole':
     case 'household:setSignInAddress':
     case 'household:setMembership':
-    case 'documents:manage':
     case 'attendance:record':
     case 'signInAttempts:read':
     case 'signInAttempts:resolve':
