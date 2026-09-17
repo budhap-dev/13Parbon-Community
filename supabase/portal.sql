@@ -496,7 +496,7 @@ create index if not exists news_posts_published_idx on portal.news_posts (publis
 alter table portal.news_posts enable row level security;
 
 grant select on portal.news_posts to anon, authenticated;
-grant insert, update on portal.news_posts to authenticated;
+grant insert, update, delete on portal.news_posts to authenticated;
 
 -- Two select policies, which RLS ORs together: everybody sees what is up, and the committee
 -- sees everything. Written as two rather than one `or` so that removing the second cannot
@@ -518,6 +518,15 @@ drop policy if exists "admins edit posts" on portal.news_posts;
 create policy "admins edit posts"
   on portal.news_posts for update to authenticated
   using (portal.is_admin()) with check (portal.is_admin());
+
+-- Destroying one, which is not how a piece is normally taken down — `hidden` is, and it keeps
+-- the writing and the date it first went up. This is for a piece that should never have been
+-- there: written in the wrong place, or content that arrived with the app rather than from the
+-- committee. There was no way to be rid of one at all until 2026-09-17, and a screen that can
+-- only ever add is a screen somebody works around.
+drop policy if exists "admins delete a piece" on portal.news_posts;
+create policy "admins delete a piece"
+  on portal.news_posts for delete to authenticated using (portal.is_admin());
 
 
 -- A notice on a noticeboard: short, dated, and gone once it stops being true.
@@ -1043,8 +1052,10 @@ drop trigger if exists record_change on portal.media;
 create trigger record_change after insert or update or delete on portal.media
   for each row execute function portal.record_change();
 
+-- Delete as well, now that a piece can be destroyed: the line saying it was, and what it was
+-- called, is the only thing left of it afterwards.
 drop trigger if exists record_change on portal.news_posts;
-create trigger record_change after insert or update on portal.news_posts
+create trigger record_change after insert or update or delete on portal.news_posts
   for each row execute function portal.record_change();
 
 drop trigger if exists record_change on portal.announcements;

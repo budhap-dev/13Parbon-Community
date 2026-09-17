@@ -356,6 +356,7 @@ export const useUpdateAnnouncement = () =>
     api.news.updateAnnouncement(id, draft, viewer),
   )
 export const useRemoveAnnouncement = () => useNewsWrite((api, viewer, id: string) => api.news.removeAnnouncement(id, viewer))
+export const useRemovePost = () => useNewsWrite((api, viewer, id: string) => api.news.removePost(id, viewer))
 
 export function useAllAlbums() {
   const api = useApi()

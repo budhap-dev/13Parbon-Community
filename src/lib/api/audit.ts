@@ -210,6 +210,20 @@ export function withAuditTrail(base: ApiClient, now: () => Date = () => new Date
         )
         return announcement
       },
+      removePost: async (id, viewer) => {
+        /*
+         * Read before the delete, because afterwards there is nothing to read. The title and
+         * whether it was ever published are what answers "what happened to that piece?" once
+         * the row is gone.
+         */
+        const was = snapshot(
+          await base.news.listAllPosts(viewer).then((all) => all.find((p) => p.id === id)),
+          'title',
+          'publishedAt',
+        )
+        await base.news.removePost(id, viewer)
+        record(viewer, 'news:remove', { kind: 'news_posts', id }, was, {})
+      },
       removeAnnouncement: async (id, viewer) => {
         const was = snapshot(
           await base.news.listAllAnnouncements(viewer).then((all) => all.find((a) => a.id === id)),

@@ -39,7 +39,7 @@ const AUDITED = [
   'gallery.createAlbum', 'gallery.updateAlbum', 'gallery.addMedia', 'gallery.setCover', 'gallery.setCaption',
   'gallery.reorder', 'gallery.deleteMedia',
   'settings.save', 'events.save', 'events.create', 'events.archive',
-  'news.createPost', 'news.updatePost',
+  'news.createPost', 'news.updatePost', 'news.removePost',
   'news.createAnnouncement', 'news.updateAnnouncement', 'news.removeAnnouncement',
 ]
 
@@ -109,6 +109,8 @@ describe('every audited write', () => {
       ['news.updatePost', () => a.news.updatePost(post.id, { title: post.title, excerpt: post.excerpt, body: post.body, tags: [], author: post.author, published: false }, admin)],
       ['news.updateAnnouncement', () => a.news.updateAnnouncement(notice.id, { title: 'Doors at half five', body: notice.body, pinned: true, audience: 'public', publishAt: '', expiresAt: '' }, admin)],
       ['news.removeAnnouncement', () => a.news.removeAnnouncement(notice.id, admin)],
+      // After the update above, which needs the piece to still be there.
+      ['news.removePost', () => a.news.removePost(post.id, admin)],
       ['gallery.deleteMedia', () => a.gallery.deleteMedia(album.media[2].id, admin)],
     ]
 

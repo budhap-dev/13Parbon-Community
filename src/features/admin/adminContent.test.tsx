@@ -192,6 +192,41 @@ describe('writing a piece', () => {
     expect(screen.getByText(/blank line between paragraphs/)).toBeInTheDocument()
   })
 
+  /*
+   * Until this existed a piece could be written and never removed — only unpublished, which
+   * keeps it in the committee's own list for ever. Three pieces that arrived with the app
+   * rather than from the committee are what made that a problem worth solving.
+   */
+  it('destroys a piece, once the dialog is answered', async () => {
+    await renderPage('Writing')
+    const news = await screen.findByRole('region', { name: 'News' })
+    const rows = (await within(news).findAllByRole('row')).length
+    const row = (await within(news).findAllByRole('row', { name: /Mahalaya programme/ }))[0]
+
+    await userEvent.click(within(row).getByRole('button', { name: /^Delete / }))
+    const asking = await screen.findByRole('dialog')
+    // The gentler way is offered in the same breath, as the message screen does.
+    expect(asking).toHaveTextContent(/On the website/)
+    await userEvent.click(within(asking).getByRole('button', { name: 'Delete' }))
+
+    await waitFor(() =>
+      expect(within(screen.getByRole('region', { name: 'News' })).getAllByRole('row')).toHaveLength(rows - 1),
+    )
+    expect(screen.queryAllByRole('row', { name: /Mahalaya programme/ })).toHaveLength(0)
+  })
+
+  it('keeps the piece when the dialog is backed out of', async () => {
+    await renderPage('Writing')
+    const news = await screen.findByRole('region', { name: 'News' })
+    const rows = (await within(news).findAllByRole('row')).length
+    const row = (await within(news).findAllByRole('row', { name: /Mahalaya programme/ }))[0]
+
+    await userEvent.click(within(row).getByRole('button', { name: /^Delete / }))
+    await userEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Keep it' }))
+
+    expect(within(screen.getByRole('region', { name: 'News' })).getAllByRole('row')).toHaveLength(rows)
+  })
+
   it('takes a published piece down, and says so in the list', async () => {
     await renderPage('Writing')
     const news = await screen.findByRole('region', { name: 'News' })

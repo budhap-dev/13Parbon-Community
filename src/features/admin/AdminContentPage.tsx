@@ -5,6 +5,7 @@ import { useScrollToTopOn } from '@/app/useScrollToTopOn'
 import { formatLongDate } from '@/domain/dates'
 import { Button } from '@/components/Button'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
+import { Icon } from '@/components/Icon'
 import { formatDateWithYear } from '@/domain/dates'
 import { isLive, type Announcement, type NewsPost } from '@/domain/news'
 import {
@@ -15,6 +16,7 @@ import {
   useCreatePost,
   useNewsletters,
   useRemoveAnnouncement,
+  useRemovePost,
   useUpdateAnnouncement,
   useUpdatePost,
   useSaveSettings,
@@ -79,6 +81,7 @@ export function AdminContentPage() {
   const createNotice = useCreateAnnouncement()
   const updateNotice = useUpdateAnnouncement()
   const removeNotice = useRemoveAnnouncement()
+  const removePost = useRemovePost()
   const saveSettings = useSaveSettings()
   // Read once per render: the same instant should decide every row, or a notice could read as
   // both waiting and finished in one table.
@@ -94,6 +97,8 @@ export function AdminContentPage() {
    * if it was not there, to guess why.
    */
   const [posted, setPosted] = useState<string | null>(null)
+  /** Which piece is being asked about, if any. */
+  const [deleting, setDeleting] = useState<string | null>(null)
   /*
    * Which notice is being asked about.
    *
@@ -567,15 +572,46 @@ export function AdminContentPage() {
                         {!post.publishedAt ? 'Draft' : post.hidden ? 'Taken down' : 'Published'}
                       </span>
                     </td>
-                    <td>
-                      <Button
-                        variant="line"
-                        size="sm"
-                        aria-label={`Edit ${post.title}`}
-                        onClick={() => setEditing({ kind: 'post', post })}
-                      >
-                        Edit
-                      </Button>
+                    <td className={styles.right}>
+                      <span className={`${styles.actions} ${styles.actionsRight}`}>
+                        <Button
+                          variant="line"
+                          size="sm"
+                          aria-label={`Edit ${post.title}`}
+                          onClick={() => setEditing({ kind: 'post', post })}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          aria-label={`Delete ${post.title}`}
+                          onClick={() => setDeleting(post.id)}
+                        >
+                          <Icon name="trash" size={15} />
+                        </Button>
+                        <ConfirmDialog
+                          open={deleting === post.id}
+                          title="Delete this piece?"
+                          confirmLabel="Delete"
+                          busyLabel="Deleting…"
+                          busy={removePost.isPending}
+                          error={removePost.isError ? removePost.error.message : undefined}
+                          onCancel={() => setDeleting(null)}
+                          onConfirm={() =>
+                            removePost.mutate(post.id, {
+                              onSuccess: () => {
+                                setDeleting(null)
+                                setPosted('Deleted. The trail keeps its title and the date it went up.')
+                              },
+                            })
+                          }
+                        >
+                          <strong>{post.title}</strong> and its writing go for good. To take it off
+                          the website and keep it — the usual way — edit it and turn{' '}
+                          <em>On the website</em> off instead.
+                        </ConfirmDialog>
+                      </span>
                     </td>
                   </tr>
                 ))}

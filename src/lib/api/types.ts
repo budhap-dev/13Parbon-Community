@@ -123,12 +123,24 @@ export interface ApiClient {
     /**
      * Takes an announcement off the board.
      *
-     * Really gone, unlike a news post: an announcement is a note on a noticeboard, and there is
-     * no version of it worth keeping once it stops being true. A post is a piece of writing, so
-     * that gets unpublished instead — `published: false` on the draft — and stays there to be
-     * put back.
+     * Really gone, and with no ceremony: an announcement is a note on a noticeboard, and there
+     * is no version of it worth keeping once it stops being true. The ordinary way to take a
+     * *piece* down is different — `published: false` on the draft, which keeps the writing and
+     * the date — though `removePost` destroys one when it should never have been there.
      */
     removeAnnouncement(id: string, viewer: Viewer): Promise<void>
+    /**
+     * Destroys a piece of writing.
+     *
+     * Not the ordinary way to take something down — that is `published: false`, which keeps the
+     * writing and the date it first went up, so it can go back. This is for a piece that should
+     * never have been there: written in the wrong place, or content that arrived with the app
+     * rather than from the committee. The screen says as much before it does it.
+     *
+     * The trail keeps the title, so "what happened to that piece about the hall?" has an answer
+     * after the row itself is gone.
+     */
+    removePost(id: string, viewer: Viewer): Promise<void>
   }
   contact: {
     /**

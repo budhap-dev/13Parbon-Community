@@ -480,6 +480,14 @@ export function createMockApi({ now = () => new Date(), latencyMs = 0, events }:
         return delay(announcement, latencyMs)
       },
 
+      removePost: (id, viewer) => {
+        if (!isAdmin(viewer)) return Promise.reject(new NotAllowed('only the committee can do that'))
+        const index = fixtures.posts.findIndex((p) => p.id === id)
+        if (index === -1) return Promise.reject(new NotAllowed('no such piece'))
+        fixtures.posts.splice(index, 1)
+        return delay(undefined, latencyMs)
+      },
+
       removeAnnouncement: (id, viewer) => {
         if (!isAdmin(viewer)) return Promise.reject(new NotAllowed('only the committee can do that'))
         const index = fixtures.announcements.findIndex((a) => a.id === id)

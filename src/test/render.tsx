@@ -50,6 +50,7 @@ export function createEmptyApi(): ApiClient {
       listAllPosts: async () => [], listAllAnnouncements: async () => [],
       createPost: async () => { throw new Error('not connected') },
       updatePost: async () => { throw new Error('not connected') },
+      removePost: async () => { throw new Error('not connected') },
       createAnnouncement: async () => { throw new Error('not connected') },
       updateAnnouncement: async () => { throw new Error('not connected') },
       removeAnnouncement: async () => { throw new Error('not connected') },
@@ -93,7 +94,7 @@ export function createFailingApi(): ApiClient {
     news: {
       listPosts: down, getPost: down, listAnnouncements: down, listNewsletters: down,
       listAllPosts: down, listAllAnnouncements: down, createPost: down, updatePost: down,
-      createAnnouncement: down, updateAnnouncement: down, removeAnnouncement: down,
+      createAnnouncement: down, updateAnnouncement: down, removeAnnouncement: down, removePost: down,
     },
     contact: { send: down, listMessages: down, markHandled: down, deleteMessage: down },
     portal: {

@@ -774,9 +774,21 @@ do $$
 declare
   visible integer;
 begin
-  select count(*) into visible from portal.news_posts;
+  select count(*) into visible from portal.news_posts where slug in ('a-published-piece', 'a-draft', 'taken-down');
   if visible <> 1 then
-    raise exception 'FAIL: a member can see % news posts; a draft is the committee''s business', visible;
+    raise exception 'FAIL: a member can see % of this file''s three news posts; a draft is the committee''s business', visible;
+  end if;
+end $$;
+
+-- And cannot destroy a piece. The grant is on `authenticated`, so this is the policy's work
+-- alone: a delete the policy refuses removes nothing and raises nothing, which is why this
+-- looks afterwards rather than catching. Added with `news.removePost`, 2026-09-17.
+delete from portal.news_posts where slug = 'a-published-piece';
+
+do $$
+begin
+  if not exists (select 1 from portal.news_posts where slug = 'a-published-piece') then
+    raise exception 'FAIL: a member deleted a published piece';
   end if;
 end $$;
 
@@ -933,6 +945,34 @@ end $$;
 
 insert into portal.news_posts (slug, title, excerpt, body, author, published_at)
 values ('the-committee-writes', 'The committee writes', 'A piece.', 'The body of it.', 'An Admin', now());
+
+/*
+ * And can destroy one, which the committee could not do at all until 2026-09-17: a piece could
+ * be written and unpublished for ever, and never removed. The ordinary way to take one down is
+ * still `hidden`, which keeps the writing and the date; this is for a piece that should never
+ * have been there.
+ *
+ * The line in the trail is the point of checking it here rather than trusting the app. The
+ * trigger was `insert or update` until the same day, so a deleted piece would have gone with
+ * nothing left to say it ever existed — and the trigger swallows its own failures, so it would
+ * have gone quietly.
+ */
+delete from portal.news_posts where slug = 'the-committee-writes';
+
+do $$
+begin
+  if exists (select 1 from portal.news_posts where slug = 'the-committee-writes') then
+    raise exception 'FAIL: the committee cannot delete a piece it wrote';
+  end if;
+
+  if not exists (
+    select 1 from portal.audit_log
+     where subject_kind = 'news_posts' and action = 'delete'
+       and seq > current_setting('verify.audit_from')::bigint
+  ) then
+    raise exception 'FAIL: destroying a piece left no line in the audit trail, and the line is all that is left of it';
+  end if;
+end $$;
 
 delete from portal.announcements where title = 'Long over';
 

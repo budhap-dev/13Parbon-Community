@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { PIECE_MIN } from '@/domain/news'
 import { newsMethods } from './news'
 
 /**
@@ -136,17 +137,36 @@ describe('writing', () => {
     const { news } = api({}, { news_posts: { code: '23505', message: 'duplicate key value violates unique constraint' } })
     await expect(
       news.createPost(
-        { title: 'A first piece', excerpt: 'Something worth reading.', body: 'x'.repeat(60), tags: [], author: 'Someone', published: true },
+        { title: 'A first piece', excerpt: 'Something worth reading, and worth opening.', body: 'x'.repeat(PIECE_MIN), tags: [], author: 'Someone', published: true },
         { householdId: 'h', role: 'admin' },
       ),
     ).rejects.toThrow(/already a piece with that title/)
+  })
+
+  /*
+   * Destroying a piece, which is not how one is normally taken down: `hidden` is, and it keeps
+   * the writing and the date. This is for a piece that should never have been there — the three
+   * that arrived with the fixtures being the case that asked for it.
+   */
+  it('deletes a piece and says which one it was', async () => {
+    const { news, calls } = api({ news_posts: { id: 'np-1' } })
+    await news.removePost('np-1', { householdId: 'h', role: 'admin' })
+    expect(calls).toContain('news_posts.delete()')
+    expect(calls).toContain('news_posts.eq(id,np-1)')
+  })
+
+  it('does not pretend to have deleted a piece the policy hid', async () => {
+    // No row came back: either it is not there, or this person may not touch it. The screen is
+    // told the same thing either way, which is the answer the policy intends.
+    const { news } = api()
+    await expect(news.removePost('np-9', { householdId: 'h', role: 'admin' })).rejects.toThrow(/no such piece/)
   })
 
   it('stamps the date on the way up, and only the first time', async () => {
     const { news, calls } = api({ news_posts: postRow({ published_at: null, hidden: true }) })
     await news.updatePost(
       'np-1',
-      { title: 'A first piece', excerpt: 'Something worth reading.', body: 'x'.repeat(60), tags: [], author: 'Someone', published: true },
+      { title: 'A first piece', excerpt: 'Something worth reading, and worth opening.', body: 'x'.repeat(PIECE_MIN), tags: [], author: 'Someone', published: true },
       { householdId: 'h', role: 'admin' },
     )
     expect(calls.some((c) => c.startsWith('news_posts.update'))).toBe(true)

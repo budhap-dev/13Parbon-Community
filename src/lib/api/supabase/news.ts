@@ -239,6 +239,13 @@ export function newsMethods(getClient: () => Promise<SupabaseClient>, now = () =
         return toNotice(data as NoticeRow)
       },
 
+      removePost: async (id: string) => {
+        const { data, error } = await table(await getClient(), 'news_posts').delete().eq('id', id).select('id').maybeSingle()
+        if (error) refuse('only the committee can do that', error)
+        // The policy matched nothing, so there was nothing there to delete — as far as you know.
+        if (!data) throw new NotAllowed('no such piece')
+      },
+
       removeAnnouncement: async (id: string) => {
         const { data, error } = await table(await getClient(), 'announcements').delete().eq('id', id).select('id').maybeSingle()
         if (error) refuse('only the committee can take that down', error)

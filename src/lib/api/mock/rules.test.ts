@@ -242,6 +242,29 @@ describe('the committee managing households', () => {
   })
 })
 
+describe('destroying a piece of writing', () => {
+  it('is the committee\'s alone, and the mock refuses what the policy refuses', async () => {
+    const a = api()
+    const [piece] = await a.news.listAllPosts(admin)
+    await expect(a.news.removePost(piece.id, member)).rejects.toThrow(/committee/i)
+    expect((await a.news.listAllPosts(admin)).map((p) => p.id)).toContain(piece.id)
+  })
+
+  it('says so plainly when there is no such piece', async () => {
+    const a = api()
+    await expect(a.news.removePost('np-nowhere', admin)).rejects.toThrow(/no such piece/)
+  })
+
+  it('takes it off the website as well as out of the list', async () => {
+    const a = api()
+    const [piece] = await a.news.listAllPosts(admin)
+    await a.news.removePost(piece.id, admin)
+    // Unlike unpublishing, there is nothing left to put back: this is the destructive one.
+    expect(await a.news.getPost(piece.slug)).toBeNull()
+    expect((await a.news.listAllPosts(admin)).map((p) => p.id)).not.toContain(piece.id)
+  })
+})
+
 describe('somebody knocking', () => {
   it('is only the committee\'s to deal with', async () => {
     const a = api()
