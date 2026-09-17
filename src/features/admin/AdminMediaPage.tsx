@@ -213,6 +213,8 @@ function AlbumPage({
   const uploads = readUploadConfig(import.meta.env)
   const supabase = readSupabaseConfig(import.meta.env)
   const [confirming, setConfirming] = useState<string | null>(null)
+  /** What the last takedown did, so the screen is not silent about the one irreversible action. */
+  const [taken, setTaken] = useState<{ ok: boolean; text: string } | null>(null)
   const [open, setOpen] = useState<number | null>(null)
   /** The photograph being dragged, and the one it is currently over. */
   const [dragging, setDragging] = useState<number | null>(null)
@@ -236,18 +238,43 @@ function AlbumPage({
   }))
 
   /**
+   * Taking a photograph down, with something to show for it either way.
+   *
+   * There was no failing path at all: the button disabled itself, the request went, and if the
+   * bucket refused, the dialog simply sat there with the button live again. On the one action
+   * the privacy page makes a promise about, a silent failure reads exactly like success — and
+   * the person walks away believing a picture came down that did not.
+   */
+  const takeDown = (id: string, afterwards?: () => void) => {
+    setTaken(null)
+    remove.mutate(id, {
+      onSuccess: () => {
+        setConfirming(null)
+        setTaken({
+          ok: true,
+          text: 'Taken down. It is out of the bucket, so its address stops working for everybody who had it.',
+        })
+        afterwards?.()
+      },
+      onError: (error: unknown) => {
+        setTaken({
+          ok: false,
+          text: `It has not been taken down. ${error instanceof Error ? error.message : 'Something went wrong.'}`,
+        })
+      },
+    })
+  }
+
+  /**
    * Deleting from the viewer.
    *
    * On the last photograph the viewer closes, because there is nothing left to look at;
    * otherwise it stays open and steps back if it was showing the end of the album.
    */
   const deleteFromViewer = (id: string, index: number) => {
-    remove.mutate(id, {
-      onSuccess: () => {
-        setConfirming(null)
-        if (album.media.length <= 1) setOpen(null)
-        else if (index >= album.media.length - 1) setOpen(album.media.length - 2)
-      },
+    takeDown(id, () => {
+      if (album.media.length <= 1) setOpen(null)
+      else if (index >= album.media.length - 1) setOpen(album.media.length - 2)
     })
   }
 
@@ -270,6 +297,12 @@ function AlbumPage({
           </Button>
         </span>
       </div>
+
+      {taken ? (
+        <p className={taken.ok ? media.tookDown : media.error} role={taken.ok ? 'status' : 'alert'}>
+          {taken.text}
+        </p>
+      ) : null}
 
       <section className={styles.panel}>
         <div className={styles.pad}>
@@ -409,9 +442,9 @@ function AlbumPage({
                       variant="gold"
                       size="sm"
                       disabled={remove.isPending}
-                      onClick={() => remove.mutate(item.id, { onSuccess: () => setConfirming(null) })}
+                      onClick={() => takeDown(item.id)}
                     >
-                      Delete
+                      {remove.isPending ? 'Removing…' : 'Delete'}
                     </Button>
                   </div>
                 </div>
@@ -450,7 +483,7 @@ function AlbumPage({
                 disabled={remove.isPending}
                 onClick={() => deleteFromViewer(item.id, index)}
               >
-                Delete
+                {remove.isPending ? 'Removing…' : 'Delete'}
               </Button>
             </span>
           )

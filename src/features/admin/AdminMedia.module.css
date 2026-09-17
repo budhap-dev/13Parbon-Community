@@ -207,3 +207,10 @@
   font-size: 13px;
   color: var(--error, #b3261e);
 }
+
+/* What a takedown did. Green rather than the theme's own accent: this is an outcome, not a link. */
+.tookDown {
+  margin: 0 0 4px;
+  font-size: 13px;
+  color: var(--color-green, #3d6b46);
+}

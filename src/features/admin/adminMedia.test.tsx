@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { routes } from '@/app/router'
 import { previewAccounts } from '@/lib/auth/previewAccounts'
-import { TestDataProviders } from '@/test/render'
+import { createTestApi, TestDataProviders } from '@/test/render'
 
 const admin = previewAccounts[1]
 const member = previewAccounts[0]
@@ -199,6 +199,43 @@ describe('inside an album', () => {
     await userEvent.click(screen.getByRole('button', { name: /^Delete$/ }))
 
     await waitFor(() => expect(screen.getAllByRole('button', { name: /^Delete / })).toHaveLength(before - 1))
+    // Gone from the grid is not the same as gone from the bucket, so it says which happened.
+    expect(await screen.findByText(/Taken down\./)).toBeInTheDocument()
+    expect(screen.getByText(/address stops working/)).toBeInTheDocument()
+  })
+
+  /*
+   * The one that had no path at all. The button disabled itself, the request went, and when the
+   * bucket refused, the dialog sat there with the button live again and nothing said why — on
+   * the single action the privacy page makes a promise about, where a silent failure reads
+   * exactly like success.
+   */
+  it('says so when the bucket will not let go of it', async () => {
+    const api = createTestApi()
+    const failing = {
+      ...api,
+      gallery: {
+        ...api.gallery,
+        deleteMedia: async () => {
+          throw new Error('The bucket would not let us in (403).')
+        },
+      },
+    }
+    render(
+      <TestDataProviders session={admin} api={failing}>
+        <RouterProvider router={createMemoryRouter(routes, { initialEntries: ['/admin/media'] })} />
+      </TestDataProviders>,
+    )
+    await openAlbum(/Boishakhi 2026/)
+    const before = screen.getAllByRole('button', { name: /^Delete / }).length
+
+    await userEvent.click(screen.getAllByRole('button', { name: /^Delete / })[0])
+    await userEvent.click(screen.getByRole('button', { name: /^Delete$/ }))
+
+    expect(await screen.findByText(/has not been taken down/)).toBeInTheDocument()
+    expect(screen.getByText(/would not let us in/)).toBeInTheDocument()
+    // And the photograph is still there, because it is.
+    expect(screen.getAllByRole('button', { name: /^Delete / })).toHaveLength(before)
   })
 })
 
