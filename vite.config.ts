@@ -11,6 +11,16 @@ const { version } = JSON.parse(readFileSync(new URL('./package.json', import.met
 export default defineConfig({
   plugins: [react()],
   define: { __APP_VERSION__: JSON.stringify(version) },
+  /*
+   * `/api/photos` is a Vercel function, and Vite does not run those. `npx vercel dev` does, so
+   * the two run side by side and this hands it anything under /api.
+   *
+   * Side by side rather than everything under `vercel dev`, because vercel.json rewrites every
+   * unmatched path to /index.html — which in development catches Vite's own module URLs and
+   * asks it to parse index.html as JavaScript. And the page stays on 5173, which is the origin
+   * the bucket's CORS policy names; served from anywhere else the upload is refused.
+   */
+  server: { proxy: { '/api': 'http://localhost:3000' } },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
