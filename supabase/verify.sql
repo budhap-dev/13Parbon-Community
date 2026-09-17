@@ -96,6 +96,21 @@ values
   ('taken-down', 'Taken down', 'Was up, is not.', 'The body of it.', 'Someone', now() - interval '30 days', true)
 on conflict (slug) do nothing;
 
+/*
+ * The noticeboard, in four states.
+ *
+ * The counts below name these titles rather than counting the table, and the evenings and the
+ * albums do the same with a `test-` prefix. Counting the whole table was only ever right on an
+ * empty database: the moment the committee put a real notice on the board, a correct policy
+ * answered one more than this file expected and the file called that a failure — which is worse
+ * than not checking, because it fails on the day the thing it guards starts being used. Found
+ * 2026-09-17, the first run after the noticeboard was seeded.
+ *
+ * By name rather than by a timestamp, which was the first attempt and was wrong in a way worth
+ * recording: `created_at` defaults to `now()`, which is the *transaction's* start, while the
+ * baseline was taken with `clock_timestamp()`, which is later. Every row this file wrote was
+ * therefore "before" the mark, and the same check failed saying nought.
+ */
 insert into portal.announcements (title, body, pinned, audience, publish_at, expires_at)
 values
   ('Doors at six', 'The hall opens at six on Saturday.', false, 'public', now() - interval '1 hour', null),
@@ -146,9 +161,9 @@ end $$;
 do $$
 declare visible integer;
 begin
-  select count(*) into visible from portal.announcements;
+  select count(*) into visible from portal.announcements where title in ('Doors at six', 'Not yet', 'Long over', 'Members only');
   if visible <> 2 then
-    raise exception 'FAIL: a member sees % notices; the live public one and the members one, and nothing else', visible;
+    raise exception 'FAIL: a member sees % of this file''s four notices; the live public one and the members one, and nothing else', visible;
   end if;
 
   if not exists (select 1 from portal.announcements where title = 'Members only') then
@@ -529,18 +544,18 @@ do $$
 declare
   visible integer;
 begin
-  select count(*) into visible from portal.news_posts;
+  select count(*) into visible from portal.news_posts where slug in ('a-published-piece', 'a-draft', 'taken-down');
   if visible <> 1 then
-    raise exception 'FAIL: a visitor can see % news posts; only the published one should be readable', visible;
+    raise exception 'FAIL: a visitor can see % of this file''s three news posts; only the published one should be readable', visible;
   end if;
 
   if not exists (select 1 from portal.news_posts where slug = 'a-published-piece') then
     raise exception 'FAIL: a visitor cannot read a published piece';
   end if;
 
-  select count(*) into visible from portal.announcements;
+  select count(*) into visible from portal.announcements where title in ('Doors at six', 'Not yet', 'Long over', 'Members only');
   if visible <> 1 then
-    raise exception 'FAIL: a visitor can see % notices; only the live public one should be readable', visible;
+    raise exception 'FAIL: a visitor can see % of this file''s four notices; only the live public one should be readable', visible;
   end if;
 
   if not exists (select 1 from portal.announcements where title = 'Doors at six') then
@@ -668,12 +683,16 @@ reset role;
 set local role authenticated;
 set local request.jwt.claims = '{"email": "admin@example.com"}';
 
+-- A slug of its own, prefixed like the evenings and the albums above. It was the real
+-- 'boishakhi-2026' until 2026-09-17: `event_slug` is the primary key, so the first plain insert
+-- would have collided with the committee's own count for that night and taken the whole file
+-- down on a duplicate key — a failure with nothing to do with any rule being verified.
 insert into portal.event_attendance (event_slug, held_on, households, adults, children)
-values ('boishakhi-2026', '2026-04-18', 41, 96, 34);
+values ('test-boishakhi-2026', '2026-04-18', 41, 96, 34);
 
 -- Recording it again corrects the number rather than stacking a second row up.
 insert into portal.event_attendance as ea (event_slug, held_on, households, adults, children)
-values ('boishakhi-2026', '2026-04-18', 43, 99, 34)
+values ('test-boishakhi-2026', '2026-04-18', 43, 99, 34)
 on conflict (event_slug) do update
   set households = excluded.households, adults = excluded.adults, children = excluded.children;
 
@@ -681,11 +700,11 @@ do $$
 declare
   counted record;
 begin
-  select * into counted from portal.event_attendance where event_slug = 'boishakhi-2026';
+  select * into counted from portal.event_attendance where event_slug = 'test-boishakhi-2026';
   if counted.households <> 43 then
     raise exception 'FAIL: correcting a count did not take: %', counted.households;
   end if;
-  if (select count(*) from portal.event_attendance where event_slug = 'boishakhi-2026') <> 1 then
+  if (select count(*) from portal.event_attendance where event_slug = 'test-boishakhi-2026') <> 1 then
     raise exception 'FAIL: recording a count twice left two rows';
   end if;
 end $$;
@@ -696,7 +715,7 @@ set local request.jwt.claims = '{"email": "member@example.com"}';
 
 do $$
 begin
-  if not exists (select 1 from portal.event_attendance where event_slug = 'boishakhi-2026') then
+  if not exists (select 1 from portal.event_attendance where event_slug = 'test-boishakhi-2026') then
     raise exception 'FAIL: a member cannot read the history the portal is meant to show';
   end if;
 end $$;
