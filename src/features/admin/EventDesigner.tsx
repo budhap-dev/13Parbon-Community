@@ -70,6 +70,11 @@ export function EventDesigner({
   const [draft, setDraft] = useState<EventDraft>(() => (event ? draftOfEvent(event) : blankEvent()))
   const [errors, setErrors] = useState<EventErrors>({})
   const [device, setDevice] = useState<'desktop' | 'phone'>('desktop')
+  /*
+   * The chosen photograph as it looks on this machine, before it is in the bucket and has an
+   * address. Only for the preview: what is saved is the address, and there is not one yet.
+   */
+  const [chosenCover, setChosenCover] = useState<string | null>(null)
   const now = useNow()
   // Null where no bucket is configured, which the upload says out loud rather than failing.
   const uploads = readUploadConfig(import.meta.env)
@@ -182,7 +187,12 @@ export function EventDesigner({
           </div>
         </div>
 
-        {field('coverImageUrl', 'Cover photograph', {}, 'The address it is served from. Choose a file below and this fills itself in.')}
+        {field(
+          'coverImageUrl',
+          'Cover photograph',
+          {},
+          'The address it is served from. Putting a chosen file in the bucket fills this in.',
+        )}
 
         <PhotoUpload
           canSend={Boolean(uploads)}
@@ -197,6 +207,7 @@ export function EventDesigner({
             return uploadPhoto(uploads, key, prepared, token)
           }}
           onDone={(url) => set('coverImageUrl', url)}
+          onPreview={setChosenCover}
         />
 
         <div className={styles.field}>
@@ -416,8 +427,11 @@ export function EventDesigner({
 
         <div className={device === 'phone' ? design.phone : design.desktop}>
           <div className={design.card}>
+            {/* A photograph that is only on this machine still shows here, or choosing one and
+                seeing the preview unchanged reads as the choice not having taken. The note
+                below says which of the two this is. */}
             <CoverImage
-              src={draft.coverImageUrl}
+              src={draft.coverImageUrl || chosenCover || ''}
               animation={draft.coverAnimation}
               ratio={device === 'phone' ? '4 / 3' : '16 / 9'}
             />
@@ -469,6 +483,12 @@ export function EventDesigner({
             somebody publishing an evening called Boishakhi 2027 that they never typed. */}
         {!draft.title || !draft.summary || !draft.startsAt ? (
           <p className={design.standIn}>Anything faded is a stand-in, to show the shape. It is not saved.</p>
+        ) : null}
+        {!draft.coverImageUrl && chosenCover ? (
+          <p className={design.standIn}>
+            That photograph is only on this machine so far. Put it in the bucket and the cover
+            photograph field fills in — until then the event saves without one.
+          </p>
         ) : null}
       </aside>
     </div>

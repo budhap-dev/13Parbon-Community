@@ -1,4 +1,4 @@
-import { useId, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { Button } from './Button'
 import { CoverImage } from './CoverImage'
 import { ACCEPTED, ACCEPTED_LABEL } from '@/domain/images'
@@ -44,6 +44,7 @@ export function PhotoUpload({
   canSend,
   onSend,
   onDone,
+  onPreview,
   label = 'Choose a photograph',
   multiple = false,
 }: {
@@ -57,6 +58,17 @@ export function PhotoUpload({
    */
   onSend: (prepared: Prepared, name: string, index: number) => Promise<{ url: string }>
   onDone: (url: string) => void
+  /**
+   * The photograph as it can be seen here, before it is anywhere a page could link to.
+   *
+   * A caller drawing a preview has nothing to draw between choosing a file and the bucket
+   * answering, and a picture-shaped hole next to a picture that says it is ready reads as a
+   * failure. What is handed over is an object URL: good on this machine only, so a caller
+   * showing it says as much beside it. Null when there is nothing chosen.
+   *
+   * Only for the single-photograph caller — an album of twenty has no one preview.
+   */
+  onPreview?: (url: string | null) => void
   label?: string
   multiple?: boolean
 }) {
@@ -120,6 +132,16 @@ export function PhotoUpload({
       }
     }
   }
+
+  /*
+   * Derived rather than announced from each place an item changes. Prepared, failed, removed,
+   * sent — every one of those moves the answer, and the one that gets forgotten is the one that
+   * leaves a preview pointing at an object URL that has been revoked.
+   */
+  const chosen = multiple ? null : (items.find((item) => item.preview)?.preview ?? null)
+  useEffect(() => {
+    onPreview?.(chosen)
+  }, [chosen, onPreview])
 
   const readyCount = items.filter((item) => item.step === 'ready').length
   const busy = items.some((item) => item.step === 'preparing' || item.step === 'sending')

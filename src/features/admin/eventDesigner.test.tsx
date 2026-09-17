@@ -1,5 +1,6 @@
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { vi } from 'vitest'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { routes } from '@/app/router'
 import { previewAccounts } from '@/lib/auth/previewAccounts'
@@ -30,6 +31,21 @@ function renderEvents(session = previewAccounts[1], events = testEvents) {
       <RouterProvider router={createMemoryRouter(routes, { initialEntries: ['/admin/events'] })} />
     </TestDataProviders>,
   )
+}
+
+/** jsdom has no canvas, so the preparing is stubbed where the real thing needs one. */
+function stubPrepare() {
+  const clean = new Uint8Array([0xff, 0xd8, 0xff, 0xdb, 0x00, 0x04, 0x41, 0x41, 0xff, 0xda, 0x00, 0x02, 0x11, 0xff, 0xd9])
+  vi.stubGlobal('createImageBitmap', async () => ({ width: 4000, height: 3000, close: vi.fn() }))
+  HTMLCanvasElement.prototype.getContext = vi.fn(() => ({ drawImage: vi.fn() })) as never
+  HTMLCanvasElement.prototype.toBlob = function (cb: BlobCallback) {
+    cb(new Blob([clean], { type: 'image/jpeg' }))
+  } as never
+  Blob.prototype.arrayBuffer = async function () {
+    return clean.buffer.slice(0) as ArrayBuffer
+  }
+  URL.createObjectURL = vi.fn(() => 'blob:preview')
+  URL.revokeObjectURL = vi.fn()
 }
 
 async function design() {
@@ -219,6 +235,38 @@ describe('the preview', () => {
     // A preview that flattered would be worse than none, so it draws the real component.
     const img = preview.querySelector('img')!
     expect(img.className.split(' ')).toHaveLength(2)
+  })
+
+  it('shows a chosen photograph before it has been anywhere', async () => {
+    stubPrepare()
+    renderEvents()
+    const preview = await design()
+
+    await userEvent.upload(
+      document.querySelector('input[type="file"]') as HTMLInputElement,
+      new File([new Uint8Array([1, 2, 3])], 'boishakhi.jpg', { type: 'image/jpeg' }),
+    )
+
+    /*
+     * The address field is still empty — nothing has been sent. Showing the picture-shaped hole
+     * anyway is what made somebody think choosing a file had not worked.
+     */
+    expect(screen.getByLabelText('Cover photograph')).toHaveValue('')
+    await waitFor(() => expect(preview.querySelector('img')).toHaveAttribute('src', 'blob:preview'))
+  })
+
+  it('says a chosen photograph is not saved until it is in the bucket', async () => {
+    stubPrepare()
+    renderEvents()
+    const preview = await design()
+
+    await userEvent.upload(
+      document.querySelector('input[type="file"]') as HTMLInputElement,
+      new File([new Uint8Array([1, 2, 3])], 'boishakhi.jpg', { type: 'image/jpeg' }),
+    )
+
+    // A preview that flatters is worse than none: the event would save without a cover.
+    expect(await within(preview).findByText(/only on this machine so far/)).toBeInTheDocument()
   })
 
   it('says when the cover is missing instead of showing a gap', async () => {

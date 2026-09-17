@@ -60,6 +60,28 @@ describe('once it is ready', () => {
     expect(await screen.findByText(/1600×1200/)).toBeInTheDocument()
   })
 
+  it('hands the caller something to draw before the bucket has it', async () => {
+    stubPrepare()
+    const onPreview = vi.fn()
+    render(<PhotoUpload canSend onSend={vi.fn()} onDone={vi.fn()} onPreview={onPreview} />)
+    await userEvent.upload(document.querySelector('input[type="file"]') as HTMLInputElement, jpeg())
+
+    // Nothing has been sent, but a caller drawing a preview can show the photograph already.
+    await waitFor(() => expect(onPreview).toHaveBeenCalledWith('blob:preview'))
+  })
+
+  it('takes it back when the photograph is taken off the list', async () => {
+    stubPrepare()
+    const onPreview = vi.fn()
+    render(<PhotoUpload canSend onSend={vi.fn()} onDone={vi.fn()} onPreview={onPreview} />)
+    await userEvent.upload(document.querySelector('input[type="file"]') as HTMLInputElement, jpeg())
+    await waitFor(() => expect(onPreview).toHaveBeenCalledWith('blob:preview'))
+
+    // The object URL is revoked here, so a caller still drawing it would show a broken picture.
+    await userEvent.click(await screen.findByRole('button', { name: 'Take it off the list' }))
+    await waitFor(() => expect(onPreview).toHaveBeenLastCalledWith(null))
+  })
+
   it('sends it and hands back where it landed', async () => {
     stubPrepare()
     const onSend = vi.fn(async () => ({ url: 'https://photos.example/full/x.jpg' }))
