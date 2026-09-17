@@ -6,7 +6,7 @@
 > **What this is:** the order of work from [MEMBER-LOGIN.md](MEMBER-LOGIN.md), broken into steps
 > that can be ticked off. That document says *what* and *why*; this one says *where we are*.
 >
-> **Last updated:** 2026-09-17 · **Current step:** 6 · **Ticked:** 95 of 106
+> **Last updated:** 2026-09-17 · **Current step:** 6 · **Ticked:** 96 of 107
 
 ## How this is kept
 
@@ -683,6 +683,11 @@ because jsdom does not paint — that one belongs in a browser.
 
 - [x] Coverage above the floor, the floor raised, **and CI actually checking it**
 - [x] `vitest-axe` passing on every page — public, portal and committee
+- [x] **Run `supabase/gallery-seed.sql`** — the 63 photographs on the live gallery were two arrays
+      in `fixtures.ts`, and this branch reads the gallery from the database. Merging without it
+      would have emptied the public gallery while every file sat untouched in R2, referenced by
+      nothing. Run 2026-09-17: 28 and 35, checked back out of the database with the anon key, as
+      a stranger rather than as an admin
 - [ ] RLS verified once more, from a browser, as a member
 - [ ] The audit table has rows in it from real use, not tests
 - [x] `main` merged in — nothing to merge; main has not moved since the branch was cut (checked 2026-09-16)
