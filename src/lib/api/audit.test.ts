@@ -147,7 +147,13 @@ describe('the audit trail', () => {
     const a = api()
     const message = (await a.contact.listMessages(admin)).find((m) => !m.handledBy && m.kind !== 'photo')!
     await a.contact.markHandled(message.id, admin)
-    expect((await a.audit.list(admin))[0].actorHouseholdId).toBe('hh-chatterjee')
+
+    const [entry] = await a.audit.list(admin)
+    expect(entry.actorHouseholdId).toBe('hh-chatterjee')
+    // And by name, because a uuid answers "who did this?" with something nobody can read. It is
+    // resolved on the way out rather than written down at the time, so a household renamed
+    // since reads as it is called now.
+    expect(entry.actor).toBe('The Chatterjees')
   })
 
   it('records nothing when the write was refused', async () => {

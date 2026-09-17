@@ -46,6 +46,14 @@
   border: 1px solid var(--color-border-faint);
   border-radius: 14px;
   overflow: hidden;
+  /*
+   * `.page` is a flex column, and a flex item will not shrink below its content unless it is
+   * told it may: the default is min-width: auto. Without this a wide table inside a panel —
+   * the audit trail is the one that does it — widens the panel, which widens the page, and the
+   * whole screen scrolls sideways with the header and the navigation going with it. The
+   * .scroll box inside cannot help while its parent is free to grow.
+   */
+  min-width: 0;
 }
 
 .panelHead {
@@ -82,6 +90,33 @@
 /* Tables */
 .scroll {
   overflow-x: auto;
+}
+
+/*
+ * A table that is read rather than scanned, and is long: the audit trail. A box of its own so
+ * the page has an end to it, with the column labels pinned inside — sticky against this box
+ * rather than against the window, which already has the portal's own header stuck to it.
+ */
+.tall {
+  max-height: 68vh;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.tall thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--color-bg-raised);
+}
+
+/*
+ * A changed value can be a whole jsonb column stringified — the site settings carry the FAQ in
+ * one. To a browser that is a single unbreakable word, which sets the table's width on its own.
+ */
+.changes {
+  overflow-wrap: anywhere;
+  max-width: 48ch;
 }
 
 .table {
@@ -505,4 +540,20 @@
 .tabOn:focus-visible {
   outline: 3px solid var(--color-focus);
   outline-offset: 2px;
+}
+
+/* The way through a long table, under it. */
+.pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 22px;
+  border-top: 1px solid var(--color-border-faint);
+}
+
+.pagerButtons {
+  display: flex;
+  gap: 8px;
 }

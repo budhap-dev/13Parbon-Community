@@ -70,6 +70,13 @@ describe('reading the trail the database keeps', () => {
     expect(toEntry(row({ action: 'delete', subject_kind: 'contact_messages' })).action).toBe('delete contact_messages')
   })
 
+  it('carries the name onto the entry, where the screen can reach it', () => {
+    // It was read out of the database and thrown away here for as long as this file existed:
+    // `households(name)` was in the select, and nothing put it on the entry.
+    expect(toEntry(row()).actor).toBe('The Chatterjees')
+    expect(toEntry(row({ households: null, actor_household_id: null })).actor).toBe('The committee')
+  })
+
   it('names who acted, and says so plainly when there is nobody left to name', () => {
     expect(actorName(row())).toBe('The Chatterjees')
     // `on delete set null`: erasing a household leaves its actions behind with nobody against

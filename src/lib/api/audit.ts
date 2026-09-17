@@ -59,6 +59,9 @@ export function withAuditTrail(base: ApiClient, now: () => Date = () => new Date
     entries.push({
       id: `audit-${entries.length + 1}`,
       actorHouseholdId: viewer?.householdId ?? '',
+      // Filled in when the trail is read: the name is not known here, and a household renamed
+      // since should read as it is called now rather than as it was called that morning.
+      actor: '',
       action,
       subject,
       changes,
@@ -337,14 +340,18 @@ export function withAuditTrail(base: ApiClient, now: () => Date = () => new Date
        * and the write that undid it, a script, a test) and sorting on the stamp alone leaves
        * them in the order they were made, which is exactly backwards.
        */
-      list: async (viewer, limit = 50) =>
-        isAdmin(viewer)
-          ? entries
-              .map((entry, i) => ({ entry, i }))
-              .sort((a, b) => b.entry.at.localeCompare(a.entry.at) || b.i - a.i)
-              .map(({ entry }) => entry)
-              .slice(0, limit)
-          : [],
+      list: async (viewer, limit = 50) => {
+        if (!isAdmin(viewer)) return []
+        const households = await base.portal.listHouseholds(viewer)
+        const nameOf = (id: string) =>
+          households.find((h) => h.id === id)?.name ??
+          (id ? 'A household since erased' : 'The committee')
+        return entries
+          .map((entry, i) => ({ entry, i }))
+          .sort((a, b) => b.entry.at.localeCompare(a.entry.at) || b.i - a.i)
+          .map(({ entry }) => ({ ...entry, actor: nameOf(entry.actorHouseholdId) }))
+          .slice(0, limit)
+      },
     },
   }
 }

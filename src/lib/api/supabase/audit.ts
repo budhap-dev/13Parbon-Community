@@ -31,6 +31,7 @@ export function toEntry(row: AuditRow): AuditEntry {
   return {
     id: row.id,
     actorHouseholdId: row.actor_household_id ?? '',
+    actor: actorName(row),
     action: `${row.action} ${row.subject_kind}`,
     subject: { kind: row.subject_kind, id: row.subject_id },
     changes: row.changes ?? {},

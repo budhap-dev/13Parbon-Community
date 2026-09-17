@@ -1,4 +1,7 @@
+import { useState } from 'react'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
+import { useScrollToTopOn } from '@/app/useScrollToTopOn'
+import { Button } from '@/components/Button'
 import { formatLongDate, formatTime } from '@/domain/dates'
 import { useAuditTrail, useViewer } from '@/lib/api'
 import { can } from '@/lib/auth/permissions'
@@ -31,12 +34,42 @@ function show(value: unknown): string {
   return String(value)
 }
 
+/**
+ * How much of a value the table prints.
+ *
+ * A settings row carries the FAQ, the committee list and every word already printed on the
+ * pages, as one jsonb value. Printed whole it is a paragraph of JSON in a table cell, and the
+ * line either side of it — which is the part somebody came to read — is lost in it. The whole
+ * value stays on the row's `title`, so nothing is hidden from anybody who wants it.
+ */
+const LONGEST = 160
+const clamp = (text: string) => (text.length > LONGEST ? `${text.slice(0, LONGEST)}…` : text)
+
+/*
+ * A hundred changes is what the trail fetches, and a hundred of these rows is a page somebody
+ * scrolls through looking for the one they came for. Twenty is about a screenful.
+ *
+ * The slicing is here rather than in the query because `audit.list` takes a limit and no offset,
+ * and the hundred are already in hand: asking the database again to show rows it has already
+ * sent would be a change to the API contract for no answer anybody is waiting on.
+ */
+const PER_PAGE = 20
+
 export function AdminAuditPage() {
   useDocumentTitle('What has changed')
   const mayRead = can(useViewer(), 'admin:enter')
   const { data: entries, isPending } = useAuditTrail()
 
   const list = entries ?? []
+  const [page, setPage] = useState(0)
+  const pages = Math.max(1, Math.ceil(list.length / PER_PAGE))
+  // Clamped rather than stored blindly: a page that empties while somebody is on page five —
+  // a refetch, a shorter trail — would otherwise leave them looking at nothing.
+  const current = Math.min(page, pages - 1)
+  const first = current * PER_PAGE
+  const shown = list.slice(first, first + PER_PAGE)
+  // Turning a page and staying at the foot of the last one is reading the new page backwards.
+  useScrollToTopOn(current)
 
   return (
     <div className={styles.page}>
@@ -72,20 +105,23 @@ export function AdminAuditPage() {
               Newest first
             </h2>
             <span className={`${styles.muted} ${styles.tiny}`}>
-              {list.length} {list.length === 1 ? 'change' : 'changes'}
+              {list.length === 1
+                ? '1 change'
+                : `${first + 1}–${first + shown.length} of ${list.length} changes`}
             </span>
           </div>
-          <div className={styles.scroll}>
+          <div className={`${styles.scroll} ${styles.tall}`}>
             <table className={styles.table}>
               <thead>
                 <tr>
                   <th>When</th>
+                  <th>Who</th>
                   <th>What</th>
                   <th>What moved</th>
                 </tr>
               </thead>
               <tbody>
-                {list.map((entry) => {
+                {shown.map((entry) => {
                   const [verb, kind] = entry.action.split(' ')
                   const moved = Object.entries(entry.changes)
                   return (
@@ -95,21 +131,29 @@ export function AdminAuditPage() {
                         <br />
                         <span className={styles.muted}>{formatTime(entry.at)}</span>
                       </td>
+                      {/* The page has always promised this — "who made it, and what it was
+                          before" — and the database has always recorded it. It was read out of
+                          the database, dropped on the way to the screen, and never shown. */}
+                      <td>{entry.actor}</td>
                       <td>
                         <strong>
                           {VERBS[verb] ?? verb} {SUBJECTS[kind] ?? kind}
                         </strong>
                       </td>
-                      <td className={`${styles.muted} ${styles.tiny}`}>
+                      <td className={`${styles.muted} ${styles.tiny} ${styles.changes}`}>
                         {moved.length === 0 ? (
                           '—'
                         ) : (
                           <ul className={styles.plainList}>
-                            {moved.map(([field, change]) => (
-                              <li key={field}>
-                                {field}: {show(change.from)} → {show(change.to)}
-                              </li>
-                            ))}
+                            {moved.map(([field, change]) => {
+                              const was = show(change.from)
+                              const now = show(change.to)
+                              return (
+                                <li key={field} title={`${field}: ${was} → ${now}`}>
+                                  {field}: {clamp(was)} → {clamp(now)}
+                                </li>
+                              )
+                            })}
                           </ul>
                         )}
                       </td>
@@ -119,6 +163,31 @@ export function AdminAuditPage() {
               </tbody>
             </table>
           </div>
+          {pages > 1 ? (
+            <div className={styles.pager}>
+              <span className={`${styles.muted} ${styles.tiny}`}>
+                Page {current + 1} of {pages}
+              </span>
+              <span className={styles.pagerButtons}>
+                <Button
+                  variant="line"
+                  size="sm"
+                  disabled={current === 0}
+                  onClick={() => setPage(current - 1)}
+                >
+                  Newer
+                </Button>
+                <Button
+                  variant="line"
+                  size="sm"
+                  disabled={current >= pages - 1}
+                  onClick={() => setPage(current + 1)}
+                >
+                  Older
+                </Button>
+              </span>
+            </div>
+          ) : null}
         </section>
       )}
     </div>

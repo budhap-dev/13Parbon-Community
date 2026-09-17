@@ -9,6 +9,16 @@ export type AuditEntry = {
   id: string
   /** The household that acted. Recorded even for an admin, because an admin is a person. */
   actorHouseholdId: string
+  /**
+   * That household by name, as the screen says it.
+   *
+   * A uuid answers "who did this?" with something nobody can read, and the household it points
+   * at may be gone — the column is `on delete set null`, so the account of what was done
+   * outlives the person who did it. So the name is resolved where the answer is known, and the
+   * two cases with no name to give are named too: work the database did on its own behalf, and
+   * a household since erased.
+   */
+  actor: string
   /** What was done, in the same words `can()` uses, so the two can be read against each other. */
   action: string
   /** What it was done to: a table and a row. */
