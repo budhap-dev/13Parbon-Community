@@ -118,7 +118,6 @@ function shapeOfEvent(draft: EventDraft) {
     registrationOpen: draft.registrationOpen,
     volunteerCall: text(draft.volunteerCall),
     performerCall: text(draft.performerCall),
-    householdsRegistered: draft.householdsRegistered,
     status: draft.status,
     isPublic: draft.isPublic,
   }

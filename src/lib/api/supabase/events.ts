@@ -26,7 +26,6 @@ type EventRow = {
   registration_open: boolean
   registration_url: string | null
   performer_form_url: string | null
-  households_registered: number
   cover_image_url: string | null
   cover_animation: CoverAnimation | null
   theme: { bengali: string; bengaliSubtitle?: string; english?: string } | null
@@ -50,7 +49,6 @@ export function toEvent(row: EventRow): Event {
     isPublic: row.is_public,
     status: row.status,
     registrationOpen: row.registration_open,
-    householdsRegistered: row.households_registered,
     ...(row.ends_at ? { endsAt: row.ends_at } : {}),
     ...(row.venue_address ? { venueAddress: row.venue_address } : {}),
     ...(row.latitude !== null && row.longitude !== null
@@ -86,7 +84,6 @@ export function fromDraft(draft: EventDraft): Record<string, unknown> {
     registration_open: draft.registrationOpen,
     registration_url: text(draft.registrationUrl),
     performer_form_url: text(draft.performerFormUrl),
-    households_registered: draft.householdsRegistered,
     cover_image_url: text(draft.coverImageUrl),
     cover_animation: draft.coverAnimation,
     // An empty theme is absent rather than three empty strings, or the page draws a blank kicker.

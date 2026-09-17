@@ -36,9 +36,6 @@ export function DashboardPage() {
             <p className={styles.muted}>
               {formatLongDate(event.startsAt)}, {formatTime(event.startsAt)} · {event.venue} · {event.summary}
             </p>
-            {event.householdsRegistered > 0 ? (
-              <p className={styles.note}>{event.householdsRegistered} households are coming so far.</p>
-            ) : null}
             <div className={styles.actions}>
               <Button to={`/events/${event.slug}`} variant="gold" size="sm">
                 Book your places

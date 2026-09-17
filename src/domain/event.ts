@@ -34,7 +34,6 @@ export type Event = {
    * the contact page instead.
    */
   performerFormUrl?: string
-  householdsRegistered: number
   /**
    * The theme the committee has set for the programme. Written in Bengali, with a plain
    * English rendering so it reads to everyone: nobody has to be Bengali to come.
@@ -99,7 +98,6 @@ export type EventDraft = {
   registrationOpen: boolean
   volunteerCall: string
   performerCall: string
-  householdsRegistered: number
   status: EventStatus
   isPublic: boolean
 }
@@ -167,7 +165,6 @@ export function blankEvent(): EventDraft {
     registrationOpen: false,
     volunteerCall: '',
     performerCall: '',
-    householdsRegistered: 0,
     status: 'draft',
     isPublic: true,
   }

@@ -28,7 +28,7 @@ const row = (over: Record<string, unknown> = {}): Parameters<typeof toEvent>[0] 
   starts_at: '2026-09-20T18:00:00.000Z', ends_at: null, venue: 'The hall', venue_address: null,
   latitude: null, longitude: null, festival_id: null, is_public: true, status: 'published',
   registration_open: false, registration_url: null, performer_form_url: null,
-  households_registered: 0, cover_image_url: null, cover_animation: null, theme: null,
+  cover_image_url: null, cover_animation: null, theme: null,
   programme: null, volunteer_call: null, performer_call: null, ...over,
 }) as Parameters<typeof toEvent>[0]
 

@@ -182,10 +182,11 @@ describe('member pages', () => {
   it('leads the dashboard with the next event and a way to book', async () => {
     renderAt('/portal', member)
     const feature = (await screen.findByRole('heading', { level: 2, name: 'Cultural programme' })).closest('section')!
-    // We no longer know whether this household has booked — the replies are in the committee's
-    // form — so the page says how many are coming and offers the way through, and claims nothing.
-    expect(within(feature).getByText(/households are coming so far/)).toBeInTheDocument()
-    expect(within(feature).getByText('37')).toBeInTheDocument()
+    // We do not know whether this household has booked — the replies are in the committee's
+    // form — so the page offers the way through and claims nothing. It used to print how many
+    // households were coming; nothing ever read that number off the form, so it only said what
+    // somebody had typed. Removed 2026-09-17.
+    expect(within(feature).queryByText(/households are coming so far/)).not.toBeInTheDocument()
     expect(within(feature).getByRole('link', { name: 'Book your places' })).toBeInTheDocument()
     expect(await screen.findByRole('heading', { name: 'Active' })).toBeInTheDocument()
   })

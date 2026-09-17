@@ -37,7 +37,6 @@ export function draftOfEvent(event: Event): EventDraft {
     registrationOpen: event.registrationOpen,
     volunteerCall: event.volunteerCall ?? '',
     performerCall: event.performerCall ?? '',
-    householdsRegistered: event.householdsRegistered,
     status: event.status,
     isPublic: event.isPublic,
   }
@@ -351,37 +350,21 @@ export function EventDesigner({
           </span>
         </div>
 
-        <div className={styles.row}>
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="status">
-              Status
-            </label>
-            <select
-              id="status"
-              className={styles.input}
-              value={draft.status}
-              onChange={(e) => set('status', e.target.value as EventDraft['status'])}
-            >
-              <option value="draft">Draft — only the committee sees it</option>
-              <option value="published">Published — it is on the website</option>
-              <option value="cancelled">Cancelled</option>
-              <option value="past">Past</option>
-            </select>
-          </div>
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="householdsRegistered">
-              Households booked so far
-            </label>
-            <input
-              id="householdsRegistered"
-              className={styles.input}
-              type="number"
-              min={0}
-              value={String(draft.householdsRegistered)}
-              onChange={(e) => set('householdsRegistered', Number(e.target.value) || 0)}
-            />
-            <p className={styles.hint}>From your sheet. Shown as “N households are coming so far”.</p>
-          </div>
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="status">
+            Status
+          </label>
+          <select
+            id="status"
+            className={styles.input}
+            value={draft.status}
+            onChange={(e) => set('status', e.target.value as EventDraft['status'])}
+          >
+            <option value="draft">Draft — only the committee sees it</option>
+            <option value="published">Published — it is on the website</option>
+            <option value="cancelled">Cancelled</option>
+            <option value="past">Past</option>
+          </select>
         </div>
 
         <div className={styles.actions}>
