@@ -644,7 +644,6 @@ describe('the number beside People', () => {
     id,
     email: `${id}@example.com`,
     name: id,
-    firstTriedAt: '2026-09-01T10:00:00.000Z',
     lastTriedAt: '2026-09-01T10:00:00.000Z',
     attempts: 1,
     resolved,
