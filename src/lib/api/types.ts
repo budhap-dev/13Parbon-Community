@@ -105,8 +105,9 @@ export interface ApiClient {
     /** Published posts, newest first. */
     listPosts(limit?: number): Promise<NewsPost[]>
     getPost(slug: string): Promise<NewsPost | null>
-    /** Live public announcements, pinned first then newest. */
-    listAnnouncements(): Promise<Announcement[]>
+    /** Live notices this viewer may see, pinned first then newest: public for anybody, and
+     *  members-only ones too once signed in and matched to a household. */
+    listAnnouncements(viewer: Viewer): Promise<Announcement[]>
     /** Newsletters, newest first. */
     listNewsletters(): Promise<Newsletter[]>
 

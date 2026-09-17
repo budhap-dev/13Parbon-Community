@@ -400,9 +400,12 @@ export function createMockApi({ now = () => new Date(), latencyMs = 0, events }:
         // Published only. Nothing filtered these before, because nothing could be a draft.
         delay(fixtures.posts.filter(published).sort(byNewest).slice(0, limit), latencyMs),
       getPost: (slug) => delay(fixtures.posts.filter(published).find((p) => p.slug === slug) ?? null, latencyMs),
-      listAnnouncements: () => {
+      listAnnouncements: (viewer) => {
         const at = now().toISOString()
-        const live = fixtures.announcements.filter((a) => a.audience === 'public' && isLive(a, at))
+        // A members-only notice is for anybody signed in and matched to a household. The mock
+        // refuses exactly what the policies refuse, which is the whole point of it.
+        const allowed = isMember(viewer) ? ['public', 'members'] : ['public']
+        const live = fixtures.announcements.filter((a) => allowed.includes(a.audience) && isLive(a, at))
         live.sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.publishAt.localeCompare(a.publishAt))
         return delay(live, latencyMs)
       },

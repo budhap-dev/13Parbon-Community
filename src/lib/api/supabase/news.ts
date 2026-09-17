@@ -1,4 +1,4 @@
-import { isAdmin, type Viewer } from '@/domain/household'
+import { isAdmin, isMember, type Viewer } from '@/domain/household'
 import {
   isValid,
   slugFrom,
@@ -146,10 +146,23 @@ export function newsMethods(getClient: () => Promise<SupabaseClient>, now = () =
         return post?.publishedAt && !post.hidden ? post : null
       },
 
-      listAnnouncements: async () => {
-        // Nothing is filtered by date here: the policy admits only notices that have started
-        // and have not expired, so `now()` is Postgres's, which is the one that cannot drift.
-        const { data } = await table(await getClient(), 'announcements').select('*').eq('audience', 'public')
+      listAnnouncements: async (viewer: Viewer) => {
+        /*
+         * Both audiences are asked for, and the policies decide which come back: a visitor has
+         * no policy admitting a members-only notice, so asking for one costs nothing and gets
+         * nothing. Asking only for 'public' was the bug — it meant a notice written for members
+         * was unreachable by them even once a policy existed to allow it.
+         *
+         * The dates are still Postgres's, sent as the literal `now`, which it resolves itself.
+         * They are here as well as in the policies because of the admin: `admins read every
+         * notice` admits drafts and expired ones, so without this an admin visiting the public
+         * page would see notices nobody else could, including ones not published yet.
+         */
+        const { data } = await table(await getClient(), 'announcements')
+          .select('*')
+          .in('audience', isMember(viewer) ? ['public', 'members'] : ['public'])
+          .lte('publish_at', 'now')
+          .or('expires_at.is.null,expires_at.gt.now')
         return ((data ?? []) as NoticeRow[]).map(toNotice).sort(byPinnedThenNewest)
       },
 

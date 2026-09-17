@@ -46,7 +46,7 @@ describe('createMockApi', () => {
   })
 
   it('lists live public announcements, pinned first', async () => {
-    const live = await api.news.listAnnouncements()
+    const live = await api.news.listAnnouncements(null)
     expect(live.map((a) => a.id)).toEqual(['an-register', 'an-volunteers'])
   })
 

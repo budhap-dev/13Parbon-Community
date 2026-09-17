@@ -116,13 +116,20 @@ describe('an announcement', () => {
     const a = api()
     const made = await a.news.createAnnouncement(notice, admin)
     expect(made.publishAt).toBeTruthy()
-    expect((await a.news.listAnnouncements()).some((x) => x.id === made.id)).toBe(true)
+    expect((await a.news.listAnnouncements(null)).some((x) => x.id === made.id)).toBe(true)
   })
 
-  it('stays off the public page when it is for members', async () => {
+  it('stays off the public page when it is for members, and reaches the members', async () => {
     const a = api()
     const made = await a.news.createAnnouncement({ ...notice, audience: 'members' }, admin)
-    expect((await a.news.listAnnouncements()).some((x) => x.id === made.id)).toBe(false)
+    expect((await a.news.listAnnouncements(null)).some((x) => x.id === made.id)).toBe(false)
+    /*
+     * The half that did not work. The form offers "members only — in the portal, after signing
+     * in", and until now that was untrue in both directions: no policy let a member read one,
+     * and the query asked for public notices only. Choosing it quietly threw the notice away.
+     */
+    const asMember = await a.news.listAnnouncements({ householdId: 'hh-sen', role: 'member' })
+    expect(asMember.some((x) => x.id === made.id)).toBe(true)
     expect((await a.news.listAllAnnouncements(admin)).some((x) => x.id === made.id)).toBe(true)
   })
 

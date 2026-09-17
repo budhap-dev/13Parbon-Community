@@ -131,6 +131,35 @@ begin
   end if;
 end $$;
 
+-- ---------------------------------------------------------------------------
+-- A notice written for members reaches them
+-- ---------------------------------------------------------------------------
+-- The form offers "members only — in the portal, after signing in", and for a long time that
+-- was untrue: the only read policies admitted `audience = 'public'` or an admin, so a notice
+-- marked members-only was visible to the committee that wrote it and to nobody else. It was a
+-- choice that silently threw the announcement away.
+--
+-- Live and audience are both checked here, because the danger of a second read policy is that
+-- it is looser than the first: one that forgot the dates would show members a notice that has
+-- not been published yet, or one that stopped being true a month ago.
+
+do $$
+declare visible integer;
+begin
+  select count(*) into visible from portal.announcements;
+  if visible <> 2 then
+    raise exception 'FAIL: a member sees % notices; the live public one and the members one, and nothing else', visible;
+  end if;
+
+  if not exists (select 1 from portal.announcements where title = 'Members only') then
+    raise exception 'FAIL: a member cannot read a notice written for members';
+  end if;
+
+  if exists (select 1 from portal.announcements where title in ('Not yet', 'Long over')) then
+    raise exception 'FAIL: a member can read a notice that has not started or has expired';
+  end if;
+end $$;
+
 -- The rule the whole portal rests on: one household, and it is their own.
 do $$
 declare

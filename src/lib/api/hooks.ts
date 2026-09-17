@@ -73,7 +73,13 @@ export function useNewsPost(slug: string) {
 
 export function useAnnouncements() {
   const api = useApi()
-  return useQuery({ queryKey: ['news', 'announcements'], queryFn: () => api.news.listAnnouncements() })
+  // Keyed on who is asking: a member sees notices a visitor does not, and a cached visitor
+  // answer handed to somebody who has just signed in would hide them.
+  const viewer = useViewer()
+  return useQuery({
+    queryKey: ['news', 'announcements', asks(viewer)],
+    queryFn: () => api.news.listAnnouncements(viewer),
+  })
 }
 
 export function useNewsletters() {

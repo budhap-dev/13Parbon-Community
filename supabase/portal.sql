@@ -553,6 +553,21 @@ create policy "anybody reads a live public notice"
     and (expires_at is null or expires_at > now())
   );
 
+-- A notice for members is for members, and until now nothing could read one: the public policy
+-- below admits only `audience = 'public'`, and the admin policy admits everybody's, so a notice
+-- marked members-only was visible to the committee that wrote it and to nobody else at all.
+-- current_household_id() is the same test the rest of the portal uses for "signed in and matched
+-- to a household" — an authenticated stranger has none, and so still sees nothing.
+drop policy if exists "members read a live members notice" on portal.announcements;
+create policy "members read a live members notice"
+  on portal.announcements for select to authenticated
+  using (
+    audience = 'members'
+    and portal.current_household_id() is not null
+    and publish_at <= now()
+    and (expires_at is null or expires_at > now())
+  );
+
 drop policy if exists "admins read every notice" on portal.announcements;
 create policy "admins read every notice"
   on portal.announcements for select to authenticated using (portal.is_admin());

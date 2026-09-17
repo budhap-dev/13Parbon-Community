@@ -13,9 +13,11 @@ function fakeClient(answers: Record<string, unknown> = {}, errors: Record<string
   const calls: string[] = []
   const chain = (table: string): Record<string, unknown> => {
     const self: Record<string, unknown> = {}
-    for (const method of ['select', 'eq', 'order', 'insert', 'update', 'delete', 'limit']) {
+    for (const method of ['select', 'eq', 'in', 'lte', 'or', 'order', 'insert', 'update', 'delete', 'limit']) {
       self[method] = (...args: unknown[]) => {
-        calls.push(`${table}.${method}(${args.map((a) => (typeof a === 'string' ? a : '…')).join(',')})`)
+        // Arrays are written out rather than elided, so a test can assert which audiences were asked for.
+        const shown = (a: unknown) => (typeof a === 'string' ? a : Array.isArray(a) ? a.join('|') : '…')
+        calls.push(`${table}.${method}(${args.map(shown).join(',')})`)
         return self
       }
     }
@@ -85,12 +87,30 @@ describe('reading what the committee has written', () => {
     expect(all.hidden).toBe(true)
   })
 
-  it('asks for no dates on a notice, because the policy already applied them', async () => {
+  /*
+   * This used to assert the opposite — that no dates were sent, because the policy applies
+   * them. The policy does, for everybody except an admin: `admins read every notice` admits
+   * drafts and expired ones, so an admin on the public page saw notices nobody else could.
+   * The dates are sent as the literal `now`, which Postgres resolves, so the clock is still
+   * its own rather than the browser's.
+   */
+  it('asks for live notices only, so an admin does not see drafts on the public page', async () => {
     const { news, calls } = api({ announcements: [noticeRow()] })
-    await news.listAnnouncements()
-    // Postgres's `now()`, not the browser's, and one place to get it wrong instead of two.
-    expect(calls.some((c) => c.includes('publish_at') || c.includes('expires_at'))).toBe(false)
-    expect(calls).toContain('announcements.eq(audience,public)')
+    await news.listAnnouncements(null)
+    expect(calls.some((c) => c.includes('publish_at') && c.includes('now'))).toBe(true)
+    expect(calls.some((c) => c.includes('expires_at') && c.includes('now'))).toBe(true)
+  })
+
+  it('asks for members-only notices too once somebody is signed in', async () => {
+    const visitor = api({ announcements: [noticeRow()] })
+    await visitor.news.listAnnouncements(null)
+    expect(visitor.calls.some((c) => c.includes('audience') && c.includes('members'))).toBe(false)
+
+    // The policies decide what comes back; asking is what was missing. Before this, a notice
+    // written for members was unreachable by them however the policies were written.
+    const member = api({ announcements: [noticeRow()] })
+    await member.news.listAnnouncements({ householdId: 'hh-sen', role: 'member' })
+    expect(member.calls.some((c) => c.includes('audience') && c.includes('members'))).toBe(true)
   })
 
   it('reads a noticeboard pinned first, then newest', async () => {
@@ -101,7 +121,7 @@ describe('reading what the committee has written', () => {
         noticeRow({ id: 'pinned', pinned: true, publish_at: '2026-02-01T09:00:00.000Z' }),
       ],
     })
-    expect((await news.listAnnouncements()).map((a) => a.id)).toEqual(['pinned', 'newest', 'old'])
+    expect((await news.listAnnouncements(null)).map((a) => a.id)).toEqual(['pinned', 'newest', 'old'])
   })
 
   it('gives somebody who is not on the committee an empty list, not the published ones', async () => {
