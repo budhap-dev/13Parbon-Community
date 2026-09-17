@@ -132,19 +132,19 @@ describe('HomePage', () => {
 describe('the noticeboard on the home page', () => {
   it('shows what is live, pinned first, near the top', async () => {
     renderWithProviders(<HomePage />)
-    const board = await screen.findByRole('region', { name: 'On the noticeboard' })
+    const board = await screen.findByRole('region', { name: 'Announcements' })
     expect(within(board).getAllByRole('listitem').length).toBeGreaterThan(0)
   })
 
   it('draws nothing at all when there is nothing to say', () => {
     // Not an empty box with a heading on it: the page closes up.
     renderWithProviders(<HomePage />, { api: createEmptyApi() })
-    expect(screen.queryByRole('region', { name: 'On the noticeboard' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Announcements' })).not.toBeInTheDocument()
   })
 
   it('shows at most three, because a wall of notices is not read', async () => {
     renderWithProviders(<HomePage />)
-    const board = await screen.findByRole('region', { name: 'On the noticeboard' })
+    const board = await screen.findByRole('region', { name: 'Announcements' })
     expect(within(board).getAllByRole('listitem').length).toBeLessThanOrEqual(3)
   })
 })

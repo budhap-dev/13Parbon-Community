@@ -588,8 +588,8 @@
    second hero competing with the one above it. */
 
 .notices {
+  position: relative;
   border: 1px solid var(--color-border-faint);
-  border-left: 3px solid var(--color-accent);
   border-radius: var(--radius-tile, 16px);
   background: var(--color-bg-raised);
   padding: 18px 20px;
@@ -645,4 +645,81 @@
 
 .notice > :last-child:not(p) {
   margin-top: 10px;
+}
+
+/* ---------------------------------------------------------------------------
+   Getting noticed, once.
+   ---------------------------------------------------------------------------
+   This sits above the fold on the front page, so the motion has to earn its place
+   and then stop. Nothing here loops: a panel that keeps moving while somebody is
+   trying to read the thing underneath it is an advert, not a notice, and it is the
+   first thing people learn to ignore. It arrives, the megaphone tips twice to say
+   "this is new", and then the page is still. */
+
+.notices {
+  animation: noticeArrive var(--motion-reveal, 700ms) cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes noticeArrive {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* The rule down the side draws itself in after the panel has landed. */
+.notices::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 -3px;
+  width: 3px;
+  border-radius: 3px;
+  background: var(--color-accent);
+  transform-origin: top;
+  animation: noticeRule 520ms 260ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes noticeRule {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+.noticesIcon {
+  transform-origin: 70% 70%;
+  animation: noticeRing 900ms 520ms ease-in-out 2 both;
+}
+
+@keyframes noticeRing {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  20% {
+    transform: rotate(-12deg);
+  }
+  40% {
+    transform: rotate(9deg);
+  }
+  60% {
+    transform: rotate(-5deg);
+  }
+  80% {
+    transform: rotate(2deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .notices,
+  .notices::before,
+  .noticesIcon {
+    animation: none;
+  }
 }

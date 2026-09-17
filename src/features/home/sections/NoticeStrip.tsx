@@ -29,7 +29,7 @@ export function NoticeStrip() {
       <section className={styles.notices} aria-labelledby="notices-heading">
         <h2 id="notices-heading" className={styles.noticesTitle}>
           <Icon name="megaphone" className={styles.noticesIcon} />
-          On the noticeboard
+          Announcements
         </h2>
         <ul className={styles.noticesList}>
           {live.map((notice) => (
