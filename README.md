@@ -36,6 +36,11 @@ npm run dev        # http://localhost:5173
 | `npm run test:coverage` | Run Vitest with coverage (70% floor) |
 | `npm run check` | Lint, typecheck and test in one go |
 
+`npm run check` also runs on every push, from `.githooks/pre-push`. `npm install` points git
+at that folder, so a fresh clone gets it without anybody remembering to. It is the same four
+commands CI runs — it just answers in sixteen seconds rather than four minutes. To push past
+it, `git push --no-verify`.
+
 Two more are run by hand rather than by the build, and need macOS:
 
 | Script | What it does |
