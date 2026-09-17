@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { deletePhoto, depsFromEnv, signUpload } from '../src/server/photos'
+import { deletePhoto, depsFromEnv, signUpload } from '../src/server/photos.js'
 
 /**
  * POST   /api/photos?key=<album>-<nn>   → two signed PUT URLs, full and thumbnail

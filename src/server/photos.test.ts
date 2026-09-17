@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { deletePhoto, depsFromEnv, KEY, objectKeys, signUpload, type PhotoDeps } from './photos'
+import { deletePhoto, depsFromEnv, KEY, objectKeys, signUpload, type PhotoDeps } from './photos.js'
 
 function deps(over: Partial<PhotoDeps> = {}): PhotoDeps & { remove: ReturnType<typeof vi.fn> } {
   return {

@@ -6,9 +6,16 @@
     "types": ["node"],
     "skipLibCheck": true,
 
-    /* Bundler mode: Vercel bundles api/ with esbuild, so extensionless relative imports are fine. */
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
+    /*
+     * Node's own resolution, because that is what actually runs this.
+     *
+     * Vercel does not bundle api/: it transpiles each file and leaves the import specifiers
+     * alone, so `../src/server/photos` reaches Node unchanged and Node's ESM resolver will not
+     * guess an extension. That shipped once as a 500 on every request, invisible to every check
+     * here — NodeNext makes the compiler refuse the extensionless import instead.
+     */
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "verbatimModuleSyntax": true,
     "moduleDetection": "force",
     "noEmit": true,
