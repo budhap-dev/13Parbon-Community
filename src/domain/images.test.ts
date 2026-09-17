@@ -23,6 +23,12 @@ function jpeg(...blocks: { marker: number; body?: number[] }[]): Uint8Array {
 /** A segment of `n` payload bytes, with the two length bytes JPEG requires in front. */
 const block = (marker: number, n = 4) => ({ marker, body: [0x00, n + 2, ...Array(n).fill(0x41)] })
 
+/** An APP2 carrying a colour profile: the signature the browser's own encoder writes. */
+const iccBlock = () => {
+  const signature = [...'ICC_PROFILE'].map((c) => c.charCodeAt(0)).concat(0x00)
+  return { marker: 0xe2, body: [0x00, signature.length + 4, ...signature, 0x01, 0x01] }
+}
+
 describe('what the upload accepts', () => {
   it('takes JPEG and PNG', () => {
     expect(isAccepted('image/jpeg')).toBe(true)
@@ -82,6 +88,20 @@ describe('finding metadata that should not be there', () => {
     expect(hasJpegMetadata(jpeg(block(0xe2)))).toBe(true)
     expect(hasJpegMetadata(jpeg(block(0xed)))).toBe(true)
     expect(metadataMarkers(jpeg(block(0xe2), block(0xed)))).toEqual(['APP2', 'APP13'])
+  })
+
+  /*
+   * The browser writes a colour profile into APP2 for any wide-gamut picture, which is most
+   * photographs taken on a phone. Refusing it refused the encoder's own output, so nothing
+   * could be uploaded at all — and a profile describes colour, not the person who took it.
+   */
+  it('lets a colour profile through, and only a real one', () => {
+    expect(hasJpegMetadata(jpeg(iccBlock()))).toBe(false)
+    expect(metadataMarkers(jpeg(iccBlock()))).toEqual([])
+    // An APP2 that is not a profile is still something nobody asked for.
+    expect(hasJpegMetadata(jpeg(block(0xe2)))).toBe(true)
+    // And the profile does not excuse what sits beside it.
+    expect(metadataMarkers(jpeg(iccBlock(), block(0xe1)))).toEqual(['EXIF (may include GPS)'])
   })
 
   it('catches a free-text comment', () => {

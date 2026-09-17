@@ -29,6 +29,8 @@
   --color-on-accent: #3a0a06;
   --color-focus: #ffd166;
   --color-green: #8fc39b;
+  /* Refusals and warnings. A dark red on a dark red page is invisible, so this is the light side. */
+  --error: #ffb4a8;
   --color-photo-a: #a63b2a;
   --color-photo-b: #b8482f;
   --color-photo-c: #93281c;
@@ -81,6 +83,8 @@
   --color-on-accent: #fff6ea;
   --color-focus: #c8102e;
   --color-green: #3d6b46;
+  /* Refusals and warnings. Light theme, so the red can be the red people expect. */
+  --error: #9e2b1f;
   --color-photo-a: #d94b4b;
   --color-photo-b: #e26b5a;
   --color-photo-c: #c73a3a;
@@ -112,6 +116,8 @@
   --color-on-accent: #fff7d6;
   --color-focus: #1f5fbf;
   --color-green: #3d6b46;
+  /* Refusals and warnings. */
+  --error: #a32218;
   --color-photo-a: #f2c94c;
   --color-photo-b: #e9b73a;
   --color-photo-c: #d9a52a;
@@ -143,6 +149,8 @@
   --color-on-accent: #3d0a2f;
   --color-focus: #ffe45c;
   --color-green: #a8e6b8;
+  /* Refusals and warnings, warmed away from the magenta behind them. */
+  --error: #ffd0c6;
   --color-photo-a: #e0369a;
   --color-photo-b: #2bb3a0;
   --color-photo-c: #f28c28;
@@ -174,6 +182,8 @@
   --color-on-accent: #1c1b4a;
   --color-focus: #ffb35f;
   --color-green: #8fc39b;
+  /* Refusals and warnings. */
+  --error: #ff9d92;
   --color-photo-a: #3a3985;
   --color-photo-b: #524fa8;
   --color-photo-c: #6b64c4;

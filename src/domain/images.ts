@@ -66,11 +66,40 @@ function* segments(data: Uint8Array): Generator<Segment> {
   }
 }
 
+/** `ICC_PROFILE\0`, the signature an ICC segment always opens with. */
+const ICC_SIGNATURE = [0x49, 0x43, 0x43, 0x5f, 0x50, 0x52, 0x4f, 0x46, 0x49, 0x4c, 0x45, 0x00]
+
 /**
- * APP1 holds EXIF, which is where GPS lives. APP2..APP15 carry ICC, XMP and the rest; COM is a
- * free-text comment. APP0 is JFIF, which is only ever the picture's own dimensions, so it stays.
+ * A colour profile — the one thing in APP2 that describes the picture rather than the person
+ * who took it.
+ *
+ * It matters because the browser writes one. A phone photograph is usually Display P3, and
+ * canvas records which colours it meant in an APP2 segment; refusing that refused the encoder's
+ * own output, so every wide-gamut photograph — most photographs taken on a phone — failed the
+ * check and could not be uploaded at all.
+ *
+ * Keeping it is not a concession either. Without the profile the same bytes are read as sRGB
+ * and the picture comes out flat. And a profile says how to show colour: it has nowhere to put
+ * a location, a camera or a date, which is what this check exists to keep out.
  */
-const isMetadata = (marker: number) => (marker >= 0xe1 && marker <= 0xef) || marker === 0xfe
+function isColourProfile(data: Uint8Array, segment: Segment): boolean {
+  if (segment.marker !== 0xe2) return false
+  // Past the marker and its two length bytes is where a segment's own signature begins.
+  const at = segment.start + 4
+  return ICC_SIGNATURE.every((byte, i) => data[at + i] === byte)
+}
+
+/**
+ * APP1 holds EXIF, which is where GPS lives. APP2..APP15 carry XMP, IPTC and the rest; COM is a
+ * free-text comment. APP0 is JFIF, which is only ever the picture's own dimensions, so it stays,
+ * and so does an APP2 that turns out to be a colour profile.
+ *
+ * XMP is APP1 as well, under a different signature, so it is refused with EXIF rather than
+ * needing its own case.
+ */
+const isMetadata = (data: Uint8Array, segment: Segment) =>
+  ((segment.marker >= 0xe1 && segment.marker <= 0xef) || segment.marker === 0xfe) &&
+  !isColourProfile(data, segment)
 
 /**
  * Whether a JPEG still carries anything that is not the picture.
@@ -80,7 +109,7 @@ const isMetadata = (marker: number) => (marker >= 0xe1 && marker <= 0xef) || mar
  * before anything is sent, so the guarantee does not rest on the encoder having behaved.
  */
 export function hasJpegMetadata(data: Uint8Array): boolean {
-  for (const segment of segments(data)) if (isMetadata(segment.marker)) return true
+  for (const segment of segments(data)) if (isMetadata(data, segment)) return true
   return false
 }
 
@@ -88,7 +117,7 @@ export function hasJpegMetadata(data: Uint8Array): boolean {
 export function metadataMarkers(data: Uint8Array): string[] {
   const found: string[] = []
   for (const segment of segments(data)) {
-    if (!isMetadata(segment.marker)) continue
+    if (!isMetadata(data, segment)) continue
     if (segment.marker === 0xfe) found.push('comment')
     else if (segment.marker === 0xe1) found.push('EXIF (may include GPS)')
     else found.push(`APP${segment.marker - 0xe0}`)
