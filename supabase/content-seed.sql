@@ -86,57 +86,36 @@ where not exists (
 );
 
 -- ---------------------------------------------------------------------------
--- The news
+-- The news: not seeded, 2026-09-17
 -- ---------------------------------------------------------------------------
--- `slug` is unique, so on conflict is enough here and a second run changes nothing.
-insert into portal.news_posts (slug, title, excerpt, body, tags, author, published_at, hidden)
-values
-  (
-    'mahalaya-programme-what-to-expect',
-    'Mahalaya programme: what to expect on the night',
-    'Songs, dance and a short play, with the children opening the evening. Here is how the night will run.',
-    'The evening opens at five with the children’s choir, followed by the dance group and a short play written by our own members.
-
-There will be a break for tea and snacks halfway through. Dinner is served after the final act.
-
-If your family would like a slot on the programme, speak to the cultural secretary before [DATE].',
-    array['Updates'],
-    'The committee',
-    timestamptz '2026-09-01 10:00+01',
-    false
-  ),
-  (
-    'saraswati-puja-2026-thank-you',
-    'Saraswati Puja 2026: thank you',
-    'Morning pujo, hatekhori for the children, and lunch together — thank you to everybody who made it happen.',
-    'Thank you to everyone who came, cooked, decorated and cleared up.
-
-The children had their hatekhori, and the photographs from the morning are in the gallery.',
-    array['Success stories'],
-    'The committee',
-    -- February, so GMT rather than BST.
-    timestamptz '2026-02-14 10:00+00',
-    false
-  ),
-  (
-    'we-have-a-hall-for-the-year',
-    'We have a hall for the whole year',
-    'After two years of moving between venues, every programme this year is booked in one place.',
-    'After two years of moving between venues, we have booked St Andrew’s Community Hall for every programme this year.
-
-That means one address to remember, one parking arrangement, and a stage we can decorate the way we want.',
-    array['Success stories', 'Updates'],
-    'The committee',
-    timestamptz '2026-05-20 10:00+01',
-    false
-  )
-on conflict (slug) do nothing;
+-- Three pieces were carried here on the first run of this file, on the same parity argument as
+-- the notices: they were on the live site, so they came across. That was the wrong test to
+-- apply to them.
+--
+-- The committee did not write them. They are sample writing that arrived with the fixtures, to
+-- give the news screens something to draw — one of them still carried "[DATE]" where a deadline
+-- should be, which is what a piece nobody wrote looks like. Notices are a different matter: the
+-- two below are the committee's own words, the second of them the same sentence as the event's
+-- call for volunteers.
+--
+-- If they were seeded before this file was amended, they are removed by hand — the app has no
+-- delete for a piece, by design:
+--
+--   delete from portal.news_posts
+--   where slug in (
+--     'mahalaya-programme-what-to-expect',
+--     'saraswati-puja-2026-thank-you',
+--     'we-have-a-hall-for-the-year'
+--   );
+--
+-- The news page shows nothing until the committee writes something, which is the truth. The
+-- `showNews` switch is off in site_settings, so it is not even a page yet.
 
 -- ---------------------------------------------------------------------------
 -- What just happened
 -- ---------------------------------------------------------------------------
--- Expect three posts and at least the two notices below. Fewer means they were already there.
-select 'news_posts' as what, count(*) from portal.news_posts
+-- Expect no posts and at least the two notices. Fewer notices means they were already there.
+select 'news_posts (expected 0)' as what, count(*) from portal.news_posts
 union all
 select 'announcements', count(*) from portal.announcements
 union all
@@ -147,16 +126,8 @@ select 'newsletters (expected 0)', count(*) from portal.newsletters;
 -- ---------------------------------------------------------------------------
 -- Carried over warts, to fix from the portal once this is in
 -- ---------------------------------------------------------------------------
--- 1. "[DATE]" is live on the site today, in the Mahalaya piece. The evening is 10 October, so
---    the deadline is some date before it — the committee's to choose. When they have:
---
---    update portal.news_posts
---    set body = replace(body, '[DATE]', '<the date>')
---    where slug = 'mahalaya-programme-what-to-expect';
---
--- 2. The headcounts are gone rather than seeded, 2026-09-17: the committee never counted, and
---    the numbers in the fixtures were invented. "Forty households" and "twelve children" are out
---    of the Saraswati piece.
+-- 1. The headcounts are gone rather than seeded, 2026-09-17: the committee never counted, and
+--    the numbers in the fixtures were invented.
 --
 --    "Households booked so far" went further and was removed altogether — the field in the
 --    designer, the line on the members' dashboard, and every mapping between them. Nothing reads
