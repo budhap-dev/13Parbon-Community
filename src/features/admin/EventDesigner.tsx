@@ -4,7 +4,7 @@ import { CoverImage } from '@/components/CoverImage'
 import { PhotoUpload } from '@/components/PhotoUpload'
 import { Icon } from '@/components/Icon'
 import { COVER_ANIMATIONS, type CoverAnimation } from '@/domain/cover'
-import { daysUntil, describeCountdown, formatLongDate, formatTime } from '@/domain/dates'
+import { daysUntil, describeCountdown, formatLongDate, formatTime, forDateTimeInput, fromDateTimeInput } from '@/domain/dates'
 import { blankEvent, tidyProgramme, validateEvent, type Event, type EventDraft, type EventErrors } from '@/domain/event'
 import { useNow } from '@/lib/clock'
 import { readUploadConfig, uploadPhoto, UploadNotConfigured } from '@/lib/api/uploads'
@@ -14,14 +14,13 @@ import design from './EventDesigner.module.css'
 import { readSupabaseConfig } from '@/lib/api/supabase'
 import { accessToken } from '@/lib/auth/supabaseAuth'
 
-const forInput = (iso?: string) => (iso ? iso.slice(0, 16) : '')
 
 export function draftOfEvent(event: Event): EventDraft {
   return {
     title: event.title,
     summary: event.summary,
-    startsAt: forInput(event.startsAt),
-    endsAt: forInput(event.endsAt),
+    startsAt: event.startsAt ?? '',
+    endsAt: event.endsAt ?? '',
     venue: event.venue,
     venueAddress: event.venueAddress ?? '',
     coordinates: event.coordinates ?? null,
@@ -95,13 +94,26 @@ export function EventDesigner({
       <label className={styles.label} htmlFor={key}>
         {label}
       </label>
+      {/*
+        * The one datetime field that goes through this helper needs converting both ways; the
+        * rest are plain text. A `datetime-local` shows a wall clock with no timezone in it, and
+        * everything else here is an instant — slice one into the other and an evening typed as
+        * 18:00 is stored as 18:00 UTC and shown to the public as 19:00.
+        */}
       <input
         id={key}
         className={styles.input}
-        value={String(draft[key] ?? '')}
+        value={props.type === 'datetime-local' ? forDateTimeInput(String(draft[key] ?? '')) : String(draft[key] ?? '')}
         aria-invalid={errors[key] ? true : undefined}
         aria-describedby={errors[key] ? `${key}-error` : undefined}
-        onChange={(e) => set(key, e.target.value as EventDraft[typeof key])}
+        onChange={(e) =>
+          set(
+            key,
+            (props.type === 'datetime-local'
+              ? fromDateTimeInput(e.target.value)
+              : e.target.value) as EventDraft[typeof key],
+          )
+        }
         {...props}
       />
       {hint ? <p className={styles.hint}>{hint}</p> : null}
@@ -148,8 +160,8 @@ export function EventDesigner({
               id="endsAt"
               className={styles.input}
               type="datetime-local"
-              value={draft.endsAt}
-              onChange={(e) => set('endsAt', e.target.value)}
+              value={forDateTimeInput(draft.endsAt)}
+              onChange={(e) => set('endsAt', fromDateTimeInput(e.target.value))}
             />
           </div>
         </div>

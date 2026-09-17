@@ -71,3 +71,40 @@ export function describeCountdown(days: number): Countdown {
   if (days === 1) return { value: '1', label: 'day to go' }
   return { value: String(days), label: 'days to go' }
 }
+
+/*
+ * `<input type="datetime-local">` and the rest of the app do not mean the same thing by a date.
+ *
+ * The field has no timezone in it. It shows and returns a wall clock — "2026-09-17T13:50" — and
+ * means it in whatever timezone the person is standing in. Everything else here is an instant,
+ * written UTC with a Z, because that is what a `timestamptz` column holds and what two people in
+ * two countries can agree on.
+ *
+ * Sliced from one to the other, as this was, the hours are simply relabelled. A notice put up at
+ * 13:50 during British Summer Time was stored as 13:50 UTC, which is 14:50 here: an hour in the
+ * future, invisible to everybody, and the screen that wrote it said it was up. In winter the two
+ * agree and nothing looks wrong at all, which is the worst part — it would have come back every
+ * spring. The same slice is in the event designer, where an evening typed as 18:00 goes on the
+ * public page as 19:00.
+ */
+
+/** An instant, as the local wall clock a `datetime-local` field shows. Empty for no date. */
+export function forDateTimeInput(iso?: string | null): string {
+  if (!iso) return ''
+  const at = new Date(iso)
+  if (Number.isNaN(at.getTime())) return ''
+  const two = (n: number) => String(n).padStart(2, '0')
+  return `${at.getFullYear()}-${two(at.getMonth() + 1)}-${two(at.getDate())}T${two(at.getHours())}:${two(at.getMinutes())}`
+}
+
+/**
+ * What a `datetime-local` field gives back, as an instant.
+ *
+ * `new Date('2026-09-17T13:50')` is local time by specification — a date-time with no offset is
+ * the local one, where a date on its own would be UTC. That difference is the whole fix.
+ */
+export function fromDateTimeInput(value: string): string {
+  if (!value.trim()) return ''
+  const at = new Date(value)
+  return Number.isNaN(at.getTime()) ? '' : at.toISOString()
+}

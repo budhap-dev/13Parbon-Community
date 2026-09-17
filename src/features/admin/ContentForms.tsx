@@ -1,3 +1,4 @@
+import { forDateTimeInput, fromDateTimeInput } from '@/domain/dates'
 import { useState, type FormEvent } from 'react'
 import { Button } from '@/components/Button'
 import {
@@ -13,8 +14,8 @@ import {
 } from '@/domain/news'
 import styles from './ContentForms.module.css'
 
-/** A date for an `<input type="datetime-local">`, which will not take the seconds or the Z. */
-const forInput = (iso?: string) => (iso ? iso.slice(0, 16) : '')
+// forInput used to slice the ISO string, which relabels UTC as local and moves every date by
+// the offset. See forDateTimeInput in domain/dates.
 
 export function newsDraftOf(post?: NewsPost): NewsDraft {
   return {
@@ -33,8 +34,8 @@ export function announcementDraftOf(announcement?: Announcement): AnnouncementDr
     body: announcement?.body ?? '',
     pinned: announcement?.pinned ?? false,
     audience: announcement?.audience ?? 'public',
-    publishAt: forInput(announcement?.publishAt),
-    expiresAt: forInput(announcement?.expiresAt),
+    publishAt: announcement?.publishAt ?? '',
+    expiresAt: announcement?.expiresAt ?? '',
     link: announcement?.link,
   }
 }
@@ -249,8 +250,8 @@ export function AnnouncementForm({
               {...p}
               type="datetime-local"
               className={styles.input}
-              value={draft.publishAt}
-              onChange={(e) => setDraft({ ...draft, publishAt: e.target.value })}
+              value={forDateTimeInput(draft.publishAt)}
+              onChange={(e) => setDraft({ ...draft, publishAt: fromDateTimeInput(e.target.value) })}
             />
           )}
         </Field>
@@ -261,8 +262,8 @@ export function AnnouncementForm({
               {...p}
               type="datetime-local"
               className={styles.input}
-              value={draft.expiresAt}
-              onChange={(e) => setDraft({ ...draft, expiresAt: e.target.value })}
+              value={forDateTimeInput(draft.expiresAt)}
+              onChange={(e) => setDraft({ ...draft, expiresAt: fromDateTimeInput(e.target.value) })}
             />
           )}
         </Field>
