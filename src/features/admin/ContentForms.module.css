@@ -59,7 +59,16 @@
   font-size: 13px;
   opacity: 0.72;
   line-height: 1.5;
-  max-width: 62ch;
+  /*
+   * As wide as the thing it is describing.
+   *
+   * 62ch is a measure for reading paragraphs, and these are not paragraphs — they are a line or
+   * two under a field that spans the whole form. Capped narrower than the input beneath it, a
+   * hint broke mid-sentence with half the panel empty to its right, which reads as a fault
+   * rather than as typography.
+   */
+  max-width: 96ch;
+  text-wrap: pretty;
 }
 
 .error {
