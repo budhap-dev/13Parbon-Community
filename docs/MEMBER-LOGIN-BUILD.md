@@ -6,7 +6,7 @@
 > **What this is:** the order of work from [MEMBER-LOGIN.md](MEMBER-LOGIN.md), broken into steps
 > that can be ticked off. That document says *what* and *why*; this one says *where we are*.
 >
-> **Last updated:** 2026-09-15 · **Current step:** 4 · **Ticked:** 76 of 93
+> **Last updated:** 2026-09-17 · **Current step:** 6 · **Ticked:** 95 of 106
 
 ## How this is kept
 
@@ -60,9 +60,9 @@ twenty screens.
 | 1 | The smallest write, end to end | 0.5 | **mostly done** — brought forward into 0.2 |
 | 2 | Households | ~5 | ✅ **done** |
 | 3 | Events | ~2 | **design screen built**; the planner owns the logistics |
-| 4 | Media | ~4 | **in progress** — the screen is built; only the bucket is unwired |
+| 4 | Media | ~4 | ✅ **done 2026-09-17** — a photograph went up and came down again, against the real bucket |
 | 5 | Content | ~4.5 | ✅ **done** bar the nested content (FAQ, committee list, theme captions) |
-| 6 | Ready to merge | ~2 | not started |
+| 6 | Ready to merge | ~2 | **in progress** — the gate is what is left |
 | | **Total** | **~32–36** *(incl. tests, adapters, states)* | |
 
 **Cheapest useful stopping point:** end of step 2. That is PLAN's phase 2 exit criterion — a
@@ -465,7 +465,7 @@ The takedown promise stops depending on a macOS script and a person remembering 
 
 - [x] The browser half of uploading: choose, prepare, check, send
 - [x] **Presign endpoint** — `api/photos.ts`, signing an upload and removing an object; logic and tests in `src/server/photos.ts`
-- [ ] **Set the six R2 values in Vercel** — see `docs/PHOTOS.md`. Until then the screen says the bucket is off
+- [x] **Set the six R2 values in Vercel** — see `docs/PHOTOS.md`. Done 2026-09-17, and eight rather than six: the two Supabase values had never been put there either
 - [x] Client-side re-encode to 1600 and 600, which never writes metadata rather than stripping it
 - [x] Apply EXIF orientation before discarding it, or portrait photographs come out sideways
 - [x] HEIC: **decided 2026-09-15** — JPG, JPEG and PNG only, and the screen says so
@@ -484,6 +484,18 @@ The takedown promise stops depending on a macOS script and a person remembering 
 
 **Done when:** a committee member on a laptop, with no terminal, puts an album up — and a
 photograph with GPS in it arrives in the bucket with none.
+
+**Met 2026-09-17, and checked from outside the app.** The uploaded file was fetched back from
+`photos.13parbon.org.uk` and walked segment by segment: JFIF, an ICC colour profile, and the
+picture. No EXIF, no GPS, no XMP, no IPTC, and no camera or date string anywhere in the bytes.
+Then deleted from the screen, and both sizes gone from the bucket.
+
+**One gap, found in that last check.** The first fetch after the delete still returned the
+photograph: Cloudflare's edge had cached it from an earlier download, and went on serving a copy
+of a file R2 no longer had. A taken-down photograph therefore stays reachable at its public
+address until that cache expires. The promise is *tell us and we will take it down*, so this
+wants either a short cache TTL on the bucket's custom domain or a purge when the object goes.
+Not fixed: both change how every photograph is served, which is not a thing to guess at.
 
 **It does not strip metadata; it never writes any.** The picture is re-encoded from a pixel
 buffer, so EXIF, GPS, camera, date, XMP, IPTC and the little preview image EXIF carries — which
@@ -728,6 +740,11 @@ invitation, so nothing to approve and no passwords to reset.
 
 | Date | Step | |
 |---|---|---|
+| 2026-09-17 | 4 | **The bucket is real, and a photograph has been the whole way through it.** Eight settings, not six — `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` and `VITE_MEMBER_ALLOWLIST` had never been in Vercel at all, so every "against the real database" session so far had been somebody's laptop reading `.env.local`. The uploaded file was fetched back and read segment by segment from outside the app: JFIF, a colour profile, the picture, nothing else. Deleted, and gone from the bucket. Found that Cloudflare's edge serves a taken-down photograph until its cache expires. 769 → 773 tests. |
+| 2026-09-17 | 4 | A takedown that failed said nothing: the button disabled itself, the request went, and a refusal left the dialog sitting there with no reason given — a silent failure reading exactly like success, on the one action the privacy page makes a promise about. |
+| 2026-09-17 | 4 | Several photographs at once, by picker or dropped on. The key was built from the album's own length, which has not grown when the second one is signed, so a whole evening would have gone up under one key and the bucket would have kept the last of it. |
+| 2026-09-17 | 4 | **The upload refused every photograph taken on a phone.** APP2 is where the browser writes the colour profile, a phone picture is usually Display P3, and the check refused everything from APP1 to APP15 — so it was rejecting its own encoder's output. Nothing here could have caught it: the tests assemble JPEGs a byte at a time and jsdom has no canvas, so the first real camera file in a real browser was the first run of the real path. And the refusal could not be read when it came: `--error` was used in fifteen stylesheets and defined in none. |
+| 2026-09-17 | 0.2 | `/api/photos` died on every request with ERR_MODULE_NOT_FOUND. Vercel transpiles `api/` rather than bundling it, so an import with no `.js` on the end reached Node's ESM resolver unchanged. `tsconfig.api.json` said in a comment that bundling made extensionless imports safe; the compiler is made to agree with Node instead. |
 | 2026-09-15 | — | The committee's eight-section list checked against the repo and amended. Branch opened. |
 | 2026-09-15 | 0.1 | `portal.sql` and `verify.sql` rewritten. Three known faults fixed, three more found. Not run: no Supabase project yet. |
 | 2026-09-15 | 0.2 | Contract narrowed and given a viewer; the mock now refuses what the policies refuse. Found the directory handing whole households to the browser. First write shipped. 228 → 255 tests. |
