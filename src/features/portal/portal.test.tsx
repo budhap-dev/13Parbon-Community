@@ -7,6 +7,7 @@ import type { Session } from '@/lib/auth/session'
 import { createEmptyApi, TestDataProviders } from '@/test/render'
 import { createMockApi } from '@/lib/api/mock'
 import type { ApiClient } from '@/lib/api'
+import type { SignInAttempt } from '@/domain/document'
 
 const member: Session = previewAccounts[0]
 const admin: Session = previewAccounts[1]
@@ -628,5 +629,45 @@ describe('walking through the sample data', () => {
     // Back to their own, with nothing to say about it.
     await waitFor(() => expect(screen.queryByRole('status')).not.toBeInTheDocument())
     expect(screen.getByText('Debashis Chatterjee')).toBeInTheDocument()
+  })
+})
+
+/*
+ * The badge beside People counted every sign-in attempt, resolved or not, while the screen it
+ * points at shows only the ones still wanting an answer. So dealing with somebody cleared them
+ * from the page and left the number sitting in the sidebar for good, pointing at a screen with
+ * nothing on it. A notification nobody can clear is one people stop reading, and then a real
+ * one goes unread too.
+ */
+describe('the number beside People', () => {
+  const attempt = (id: string, resolved: boolean): SignInAttempt => ({
+    id,
+    email: `${id}@example.com`,
+    name: id,
+    firstTriedAt: '2026-09-01T10:00:00.000Z',
+    lastTriedAt: '2026-09-01T10:00:00.000Z',
+    attempts: 1,
+    resolved,
+  })
+
+  const apiWith = (attempts: SignInAttempt[]): ApiClient => {
+    const base = createMockApi()
+    return { ...base, portal: { ...base.portal, listSignInAttempts: async () => attempts } }
+  }
+
+  /*
+   * One still waiting and two dealt with. The mix is the whole test: with the badge counting
+   * every attempt it reads 3, and with it counting what the screen shows it reads 1.
+   *
+   * The first attempt at this test asserted that a badge was absent, inside a waitFor — which
+   * passes on its first tick, before the query has answered and before any badge could have
+   * appeared. It passed with the bug deliberately put back, which is no test at all.
+   */
+  it('counts the ones still wanting an answer, not the ones dealt with', async () => {
+    renderAt('/admin', admin, apiWith([attempt('waiting', false), attempt('done-1', true), attempt('done-2', true)]))
+
+    const people = await screen.findByRole('link', { name: /People/ })
+    await waitFor(() => expect(people).toHaveTextContent('1'))
+    expect(people).not.toHaveTextContent('3')
   })
 })

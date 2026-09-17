@@ -8,6 +8,7 @@ import { useSession, useSignedIn } from '@/lib/auth/session'
 import { previewAccounts } from '@/lib/auth/previewAccounts'
 import { useSignInAttempts, useViewer } from '@/lib/api'
 import { can } from '@/lib/auth/permissions'
+import { unresolved } from '@/domain/document'
 import styles from './PortalLayout.module.css'
 
 type Item = { label: string; to: string; icon: IconName; end?: boolean; count?: number }
@@ -45,7 +46,9 @@ export function PortalLayout() {
 
   const committeeNav: Item[] = [
     { label: 'Overview', to: '/admin', icon: 'grid', end: true },
-    { label: 'People', to: '/admin/people', icon: 'users', count: attempts?.length },
+    // The ones still wanting an answer, which is what the screen itself shows. Counting all
+    // of them meant the badge never cleared once somebody had been dealt with.
+    { label: 'People', to: '/admin/people', icon: 'users', count: unresolved(attempts).length },
     { label: 'Events', to: '/admin/events', icon: 'calendar' },
     { label: 'Content', to: '/admin/content', icon: 'layout' },
     { label: 'Photographs', to: '/admin/media', icon: 'image' },

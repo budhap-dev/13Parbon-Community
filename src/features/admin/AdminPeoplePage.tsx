@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { useScrollToTopOn } from '@/app/useScrollToTopOn'
+import { unresolved } from '@/domain/document'
 import { Button } from '@/components/Button'
 import { HouseholdForm } from '@/components/HouseholdForm'
 import { RemoveHousehold } from '@/components/RemoveHousehold'
@@ -29,7 +30,7 @@ export function AdminPeoplePage() {
   const { data: allAttempts } = useSignInAttempts()
   // Resolved ones are kept, so a second knock does not read as a first — but the screen is
   // about what still wants a decision.
-  const attempts = allAttempts?.filter((a) => !a.resolved)
+  const attempts = unresolved(allAttempts)
   const add = useAddHousehold()
   const update = useUpdateHousehold()
   const remove = useDeleteHousehold()
