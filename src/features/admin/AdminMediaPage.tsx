@@ -442,7 +442,7 @@ function AlbumPage({
                       Keep it
                     </Button>
                     <Button
-                      variant="gold"
+                      variant="danger"
                       size="sm"
                       disabled={remove.isPending}
                       onClick={() => takeDown(item.id)}
@@ -469,7 +469,7 @@ function AlbumPage({
           const index = album.media.findIndex((m) => m.id === item.id)
           if (confirming !== item.id) {
             return (
-              <Button variant="line" size="sm" onClick={() => setConfirming(item.id)}>
+              <Button variant="danger" size="sm" onClick={() => setConfirming(item.id)}>
                 <Icon name="trash" /> Delete this photograph
               </Button>
             )
@@ -481,7 +481,7 @@ function AlbumPage({
                 Keep it
               </Button>
               <Button
-                variant="gold"
+                variant="danger"
                 size="sm"
                 disabled={remove.isPending}
                 onClick={() => deleteFromViewer(item.id, index)}

@@ -93,6 +93,15 @@ export function AdminContentPage() {
    * if it was not there, to guess why.
    */
   const [posted, setPosted] = useState<string | null>(null)
+  /*
+   * Which notice is being asked about.
+   *
+   * Taking one off went straight through — one press and it was gone. Unlike a news piece, which
+   * is unpublished and keeps its writing, a notice is deleted outright: the contract says as
+   * much, that there is no version of it worth keeping once it stops being true. So it was the
+   * one irreversible thing on this screen with nothing between it and a misplaced click.
+   */
+  const [removing, setRemoving] = useState<string | null>(null)
 
   /*
    * Which tab, kept in the address rather than in state.
@@ -452,15 +461,38 @@ export function AdminContentPage() {
                         >
                           Edit
                         </Button>
-                        <Button
-                          variant="line"
-                          size="sm"
-                          aria-label={`Take ${notice.title} off the board`}
-                          disabled={removeNotice.isPending}
-                          onClick={() => removeNotice.mutate(notice.id)}
-                        >
-                          Take off
-                        </Button>
+                        {removing === notice.id ? (
+                          <>
+                            <Button variant="line" size="sm" onClick={() => setRemoving(null)}>
+                              Keep it
+                            </Button>
+                            <Button
+                              variant="danger"
+                              size="sm"
+                              aria-label={`Take ${notice.title} off the board for good`}
+                              disabled={removeNotice.isPending}
+                              onClick={() =>
+                                removeNotice.mutate(notice.id, {
+                                  onSuccess: () => {
+                                    setRemoving(null)
+                                    setPosted('Taken off the board. A notice has no version worth keeping, so it is gone.')
+                                  },
+                                })
+                              }
+                            >
+                              {removeNotice.isPending ? 'Removing…' : 'Take it off for good'}
+                            </Button>
+                          </>
+                        ) : (
+                          <Button
+                            variant="danger"
+                            size="sm"
+                            aria-label={`Take ${notice.title} off the board`}
+                            onClick={() => setRemoving(notice.id)}
+                          >
+                            Take off
+                          </Button>
+                        )}
                       </span>
                     </td>
                   </tr>

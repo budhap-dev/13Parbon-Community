@@ -131,7 +131,7 @@ export function AdminMessagesPage() {
                   </Button>
                   {mayDelete ? (
                     <Button
-                      variant="line"
+                      variant="danger"
                       size="sm"
                       disabled={removeMessage.isPending}
                       onClick={() => setConfirming(true)}
@@ -166,7 +166,7 @@ export function AdminMessagesPage() {
                     </p>
                     <div className={styles.actions}>
                       <Button
-                        variant="gold"
+                        variant="danger"
                         size="sm"
                         disabled={removeMessage.isPending}
                         onClick={() =>

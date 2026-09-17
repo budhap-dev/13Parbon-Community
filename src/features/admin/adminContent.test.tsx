@@ -108,14 +108,34 @@ describe('the noticeboard', () => {
     expect(screen.getByText(/470 characters left/)).toBeInTheDocument()
   })
 
-  it('takes a notice off the board for good', async () => {
+  /*
+   * A notice is deleted outright, not unpublished — the contract says there is no version of one
+   * worth keeping once it stops being true. It used to go on a single press, which made it the
+   * one irreversible thing on this screen with nothing between it and a misplaced click.
+   */
+  it('asks before taking a notice off, and can be backed out of', async () => {
     await renderPage('Noticeboard')
     const board = await screen.findByRole('region', { name: 'The noticeboard' })
     const rows = (await within(board).findAllByRole('row')).length
 
     await userEvent.click(within(board).getAllByRole('button', { name: /off the board$/ })[0])
+    // Nothing has gone yet.
+    expect(within(board).getAllByRole('row')).toHaveLength(rows)
+
+    await userEvent.click(within(board).getAllByRole('button', { name: 'Keep it' })[0])
+    expect(within(board).getAllByRole('row')).toHaveLength(rows)
+  })
+
+  it('takes a notice off the board for good, once asked', async () => {
+    await renderPage('Noticeboard')
+    const board = await screen.findByRole('region', { name: 'The noticeboard' })
+    const rows = (await within(board).findAllByRole('row')).length
+
+    await userEvent.click(within(board).getAllByRole('button', { name: /off the board$/ })[0])
+    await userEvent.click(within(board).getAllByRole('button', { name: /off the board for good$/ })[0])
 
     await waitFor(() => expect(within(board).getAllByRole('row')).toHaveLength(rows - 1))
+    expect(await screen.findByText(/Taken off the board/)).toBeInTheDocument()
   })
 
   it('says why a notice goes and a piece does not', async () => {

@@ -91,3 +91,29 @@
   background: rgba(0, 0, 0, 0.08);
   color: var(--color-ink);
 }
+
+/*
+ * Destroying something.
+ *
+ * Red where it deletes a thing that exists, and never anywhere else. A "remove" that only takes
+ * a row out of a form you have not saved is not destruction, and colouring it the same teaches
+ * people that red means nothing here — which costs exactly once, on the button that did.
+ *
+ * Outlined rather than filled: this is usually the second button in a row, and a solid red block
+ * beside the thing it would destroy pulls the eye to the wrong one.
+ */
+.danger {
+  background: transparent;
+  border-color: var(--error);
+  color: var(--error);
+}
+
+.danger:hover {
+  background: var(--error);
+  color: var(--color-bg-raised);
+  border-color: var(--error);
+}
+
+.danger:focus-visible {
+  outline-color: var(--error);
+}

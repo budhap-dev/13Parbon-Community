@@ -101,7 +101,7 @@ export function RemoveHousehold({
         <Button variant="line" size="sm" onClick={() => setOpen(false)}>
           Keep them
         </Button>
-        <Button variant="gold" size="sm" disabled={!matches || removing} onClick={onRemove}>
+        <Button variant="danger" size="sm" disabled={!matches || removing} onClick={onRemove}>
           {removing ? 'Removing…' : 'Remove permanently'}
         </Button>
       </div>
