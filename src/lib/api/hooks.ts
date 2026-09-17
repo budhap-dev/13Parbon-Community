@@ -342,7 +342,9 @@ export function useAllAnnouncements() {
 }
 
 /** Writes on the news tree. Invalidates all of it: a piece shows in the list and on the home page. */
-function useNewsWrite<A>(run: (api: ApiClient, viewer: Viewer, args: A) => Promise<unknown>) {
+// Generic in what it gives back as well as what it takes, so a caller can say something about
+// what was saved — where a notice went, and when — rather than being handed `unknown`.
+function useNewsWrite<A, R>(run: (api: ApiClient, viewer: Viewer, args: A) => Promise<R>) {
   const api = useApi()
   const viewer = useViewer()
   const queries = useQueryClient()

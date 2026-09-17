@@ -458,3 +458,10 @@
   flex-direction: column;
   gap: 3px;
 }
+
+/* What just happened. Green, because it is an outcome rather than a link or a warning. */
+.said {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-green);
+}

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { useScrollToTopOn } from '@/app/useScrollToTopOn'
+import { formatLongDate } from '@/domain/dates'
 import { Button } from '@/components/Button'
 import { formatDateWithYear } from '@/domain/dates'
 import { isLive, type Announcement, type NewsPost } from '@/domain/news'
@@ -64,6 +65,24 @@ export function AdminContentPage() {
   // Read once per render: the same instant should decide every row, or a notice could read as
   // both waiting and finished in one table.
   const at = useNow().toISOString()
+
+  /**
+   * What just happened, said out loud.
+   *
+   * Putting a notice up closed the form and returned you to this page, and that was the whole
+   * of the feedback: no word that it had saved, and nothing about where it had gone. A notice
+   * for members and a notice that starts next Tuesday both look exactly like one that is on the
+   * website this second — so the only way to find out was to go and look somewhere else, and
+   * if it was not there, to guess why.
+   */
+  const [posted, setPosted] = useState<string | null>(null)
+
+  const whereItWent = (notice: Announcement): string => {
+    const where = notice.audience === 'public' ? 'on the website' : 'in the portal, to members'
+    if (notice.publishAt > at) return `Saved. It goes up ${where} on ${formatLongDate(notice.publishAt)}.`
+    if (notice.expiresAt && notice.expiresAt <= at) return 'Saved — but the take-down date has already passed, so nobody will see it.'
+    return `Up now, ${where}.`
+  }
 
   /** Which form is open: nothing, a new one, or an existing piece or notice. */
   const [editing, setEditing] = useState<
@@ -141,8 +160,13 @@ export function AdminContentPage() {
               onCancel={() => setEditing(null)}
               onSave={(draft) =>
                 editing.notice
-                  ? updateNotice.mutate({ id: editing.notice.id, draft }, { onSuccess: () => setEditing(null) })
-                  : createNotice.mutate(draft, { onSuccess: () => setEditing(null) })
+                  ? updateNotice.mutate(
+                      { id: editing.notice.id, draft },
+                      { onSuccess: (notice) => { setPosted(whereItWent(notice)); setEditing(null) } },
+                    )
+                  : createNotice.mutate(draft, {
+                      onSuccess: (notice) => { setPosted(whereItWent(notice)); setEditing(null) },
+                    })
               }
             />
           </div>
@@ -181,6 +205,12 @@ export function AdminContentPage() {
         )}{' '}
         Counted from the pages themselves, so this cannot go stale.
       </p>
+
+      {posted ? (
+        <p className={styles.said} role="status">
+          {posted}
+        </p>
+      ) : null}
 
       <section className={styles.panel} aria-labelledby="pages-title">
         <div className={styles.panelHead}>
