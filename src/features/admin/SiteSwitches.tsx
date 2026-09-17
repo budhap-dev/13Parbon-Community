@@ -22,15 +22,112 @@ const AUDIENCES: { value: SectionAudience; label: string }[] = [
   { value: 'admins', label: 'The committee only' },
 ]
 
+type SectionKey = 'switches' | 'words' | 'committee' | 'faq' | 'roll' | 'home'
+
+const SWITCH_KEYS = Object.keys(SETTING_LABELS) as (keyof typeof SETTING_LABELS)[]
+
 /**
- * The switches that used to be a code change.
+ * Six unrelated jobs, and each one saves on its own.
  *
- * Each one says what it does underneath, because a row of unlabelled toggles is a good way to
- * have somebody turn the gallery off by accident and not know which one did it.
+ * This was a single form six fieldsets long with one button at the bottom of it saying "save
+ * the switches" — which was the right name for one section and the wrong name for the other
+ * five. Changing the venue meant scrolling past the committee, the FAQ and the whole members'
+ * roll to find a button that claimed to be about something else, and pressing it saved
+ * everything you had touched on the way.
  *
- * Nothing saves as it is clicked. These change what every visitor sees, so they are a decision
- * with a Save under it rather than five separate live edits.
+ * Each section now carries the save for its own fields, and saves *only* those: edits left open
+ * elsewhere stay open rather than being committed by a button somebody pressed for another
+ * reason. Collapsed to their headings, so the screen opens as six things you can read rather
+ * than one you have to scroll.
  */
+/**
+ * One section of the settings, with the save for its own fields under it.
+ *
+ * Declared out here rather than inside the component that uses it. A component defined during
+ * render is a new type on every render, so React throws the old subtree away and builds a new
+ * one — which, in a panel full of text fields, means the cursor leaves the box you are typing
+ * in after every single character.
+ */
+function Section({
+  k,
+  label,
+  summary,
+  saveLabel,
+  open,
+  unsaved,
+  saving,
+  saved,
+  error,
+  onToggle,
+  onSubmit,
+  children,
+}: {
+  k: SectionKey
+  label: string
+  summary: string
+  saveLabel: string
+  open: boolean
+  unsaved: boolean
+  saving: boolean
+  saved: boolean
+  error?: string
+  onToggle: () => void
+  onSubmit: () => void
+  children: React.ReactNode
+}) {
+  return (
+    <form
+      className={styles.section}
+      onSubmit={(e) => {
+        e.preventDefault()
+        onSubmit()
+      }}
+    >
+      <button
+        type="button"
+        className={styles.sectionHead}
+        aria-expanded={open}
+        aria-controls={`section-${k}`}
+        onClick={onToggle}
+      >
+        <span className={styles.sectionName}>{label}</span>
+        <span className={styles.sectionNote}>
+          {summary}
+          {unsaved ? ' · unsaved' : ''}
+        </span>
+        <span aria-hidden="true" className={open ? styles.chevronOpen : styles.chevron}>
+          ⌄
+        </span>
+      </button>
+
+      {/* Animated by grid rows rather than height, so a section can grow a committee member
+          while it is open without anybody having measured anything. */}
+      <div id={`section-${k}`} className={open ? styles.bodyOpen : styles.body}>
+        <div className={styles.bodyInner}>
+          <div className={styles.form}>
+            {children}
+            <div className={styles.actions}>
+              <Button variant="gold" type="submit" size="sm" disabled={saving || !unsaved}>
+                {saving ? 'Saving…' : saveLabel}
+              </Button>
+              {saved && !unsaved ? (
+                <span className={styles.hint} role="status">
+                  Saved. The site changes for everybody straight away.
+                </span>
+              ) : null}
+              {error ? (
+                <span className={styles.error} role="alert">
+                  {error}
+                </span>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      </div>
+    </form>
+  )
+}
+
 export function SiteSwitches({
   settings,
   onSave,
@@ -54,25 +151,53 @@ export function SiteSwitches({
   }))
   /** Held as typed, so a half-written line does not vanish between keystrokes. */
   const [roll, setRoll] = useState(() => rollToText(settings.members))
-  const changed =
-    JSON.stringify({ ...draft, committee: tidyCommittee(draft.committee), faq: tidyFaq(draft.faq), members: rollFromText(roll) }) !==
-    JSON.stringify(settings)
 
   const setRow = (i: number, changes: Partial<(typeof draft.committee)[number]>) =>
     setDraft({ ...draft, committee: draft.committee.map((row, j) => (i === j ? { ...row, ...changes } : row)) })
   const setQuestion = (i: number, changes: Partial<(typeof draft.faq)[number]>) =>
     setDraft({ ...draft, faq: draft.faq.map((row, j) => (i === j ? { ...row, ...changes } : row)) })
 
+  /**
+   * What each section owns, and nothing else.
+   *
+   * `apply` builds what to save: the settings as they are, with this one section's fields taken
+   * from the draft. So saving the committee saves the committee — a half-written FAQ answer
+   * further down the page stays a half-written FAQ answer, rather than going live because
+   * somebody pressed a button about something else.
+   */
+  const apply: Record<SectionKey, () => SiteSettings> = {
+    switches: () => ({ ...settings, ...Object.fromEntries(SWITCH_KEYS.map((k) => [k, draft[k]])) }),
+    words: () => ({ ...settings, text: { ...draft.text } }),
+    committee: () => ({ ...settings, committee: tidyCommittee(draft.committee) }),
+    faq: () => ({ ...settings, faq: tidyFaq(draft.faq) }),
+    roll: () => ({ ...settings, members: rollFromText(roll) }),
+    home: () => ({ ...settings, home: { ...draft.home } }),
+  }
+
+  /** Whether this section has anything unsaved, which is what lights its own Save. */
+  const dirty = (k: SectionKey) => JSON.stringify(apply[k]()) !== JSON.stringify(settings)
+
+  const [open, setOpen] = useState<SectionKey[]>(['switches'])
+  const [attempted, setAttempted] = useState<SectionKey | null>(null)
+  const toggle = (k: SectionKey) => setOpen((now) => (now.includes(k) ? now.filter((x) => x !== k) : [...now, k]))
+
+  const sectionProps = (k: SectionKey) => ({
+    k,
+    open: open.includes(k),
+    unsaved: dirty(k),
+    saving: Boolean(saving) && attempted === k,
+    saved: Boolean(saved) && attempted === k,
+    error: attempted === k ? error : undefined,
+    onToggle: () => toggle(k),
+    onSubmit: () => {
+      setAttempted(k)
+      onSave(apply[k]())
+    },
+  })
+
   return (
-    <form
-      className={styles.form}
-      onSubmit={(e) => {
-        e.preventDefault()
-        onSave({ ...draft, committee: tidyCommittee(draft.committee), faq: tidyFaq(draft.faq), members: rollFromText(roll) })
-      }}
-    >
-      <fieldset className={styles.form} style={{ border: 0, margin: 0, padding: 0 }}>
-        <legend className={styles.label}>What the public site shows</legend>
+    <div className={styles.sections}>
+      <Section {...sectionProps('switches')} label="What the public site shows" summary={`${SWITCH_KEYS.filter((k) => draft[k]).length} of ${SWITCH_KEYS.length} switched on`} saveLabel="Save the switches">
         {(Object.keys(SETTING_LABELS) as (keyof typeof SETTING_LABELS)[]).map((key) => (
           <div key={key} className={styles.check}>
             <input
@@ -90,10 +215,9 @@ export function SiteSwitches({
             </span>
           </div>
         ))}
-      </fieldset>
+      </Section>
 
-      <fieldset className={styles.form} style={{ border: 0, margin: 0, padding: 0 }}>
-        <legend className={styles.label}>The words on the public pages</legend>
+      <Section {...sectionProps('words')} label="The words on the public pages" summary={`${SITE_TEXT_KEYS.filter((k) => isPlaceholder(draft.text[k] ?? '')).length} still in brackets`} saveLabel="Save the wording">
         <p className={styles.hint}>
           Only the lines that change. The captions under the theme photographs still live in the
           files — ask a developer for those.
@@ -133,10 +257,9 @@ export function SiteSwitches({
             </div>
           )
         })}
-      </fieldset>
+      </Section>
 
-      <fieldset className={styles.form} style={{ border: 0, margin: 0, padding: 0 }}>
-        <legend className={styles.label}>The committee</legend>
+      <Section {...sectionProps('committee')} label="The committee" summary={`${tidyCommittee(draft.committee).length} people`} saveLabel="Save the committee">
         <p className={styles.hint}>
           As shown on the About page, in this order — which is not a ranking. It changes at the AGM
           every year, which is exactly the sort of thing that should not need a developer.
@@ -186,10 +309,9 @@ export function SiteSwitches({
             Add somebody
           </Button>
         </div>
-      </fieldset>
+      </Section>
 
-      <fieldset className={styles.form} style={{ border: 0, margin: 0, padding: 0 }}>
-        <legend className={styles.label}>Questions people ask</legend>
+      <Section {...sectionProps('faq')} label="Questions people ask" summary={`${tidyFaq(draft.faq).length} questions`} saveLabel="Save the questions">
         <p className={styles.hint}>
           On the About page, in this order. Anything left in [square brackets] is shown to visitors exactly
           as it appears, so finish a sentence before you save it.
@@ -236,10 +358,9 @@ export function SiteSwitches({
             Add a question
           </Button>
         </div>
-      </fieldset>
+      </Section>
 
-      <fieldset className={styles.form} style={{ border: 0, margin: 0, padding: 0 }}>
-        <legend className={styles.label}>The members’ roll</legend>
+      <Section {...sectionProps('roll')} label="The members’ roll" summary={`${rollFromText(roll).length} names`} saveLabel="Save the roll">
         <div className={styles.field}>
           <label className={styles.label} htmlFor="roll">
             One name to a line
@@ -258,10 +379,9 @@ export function SiteSwitches({
             that used to mean waiting for a developer.
           </p>
         </div>
-      </fieldset>
+      </Section>
 
-      <fieldset className={styles.form} style={{ border: 0, margin: 0, padding: 0 }}>
-        <legend className={styles.label}>Who each part of the home page is for</legend>
+      <Section {...sectionProps('home')} label="Who each part of the home page is for" summary={`${HOME_SECTIONS.length} parts`} saveLabel="Save who sees what">
         <p className={styles.hint}>
           A section set to the committee is a way of getting something ready where only you can see
           it. Nothing here makes anything private — it decides what is drawn, not what is sent.
@@ -289,23 +409,8 @@ export function SiteSwitches({
             </div>
           ))}
         </div>
-      </fieldset>
+      </Section>
 
-      <div className={styles.actions}>
-        <Button variant="gold" type="submit" size="sm" disabled={saving || !changed}>
-          {saving ? 'Saving…' : 'Save the switches'}
-        </Button>
-        {saved && !changed ? (
-          <span className={styles.hint} role="status">
-            Saved. The site changes for everybody straight away.
-          </span>
-        ) : null}
-        {error ? (
-          <span className={styles.error} role="alert">
-            {error}
-          </span>
-        ) : null}
-      </div>
-    </form>
+    </div>
   )
 }

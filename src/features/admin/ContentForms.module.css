@@ -103,3 +103,108 @@
   gap: 12px;
   align-items: center;
 }
+
+/* ---------------------------------------------------------------------------
+   Six sections, each opening on its own.
+   --------------------------------------------------------------------------- */
+
+.sections {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.section {
+  border: 1px solid var(--color-border-faint);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.sectionHead {
+  appearance: none;
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  background: none;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  min-height: 56px;
+  padding: 12px 16px;
+  cursor: pointer;
+}
+
+.sectionHead:hover {
+  background: var(--color-hover-wash);
+}
+
+.sectionHead:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: -3px;
+}
+
+.sectionName {
+  font-weight: 600;
+}
+
+.sectionNote {
+  font-size: 13px;
+  opacity: 0.72;
+  margin-right: auto;
+}
+
+.chevron,
+.chevronOpen {
+  font-size: 18px;
+  line-height: 1;
+  transition: transform var(--motion-fast, 160ms) ease;
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+/*
+ * Opening and closing, animated by grid rows rather than by height.
+ *
+ * `height: auto` cannot be transitioned, and measuring the contents to fake it goes wrong the
+ * moment somebody adds a committee member while the section is open. 0fr to 1fr does the same
+ * job and needs to know nothing about how tall anything is.
+ */
+.body,
+.bodyOpen {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--motion-fast, 160ms) ease;
+}
+
+.bodyOpen {
+  grid-template-rows: 1fr;
+}
+
+.bodyInner {
+  overflow: hidden;
+  min-height: 0;
+}
+
+.body .bodyInner > * {
+  /* Nothing inside a closed section takes focus or is read out. */
+  visibility: hidden;
+}
+
+.bodyOpen .bodyInner > * {
+  visibility: visible;
+  padding: 0 16px 16px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .body,
+  .bodyOpen,
+  .chevron,
+  .chevronOpen {
+    transition: none;
+  }
+}
