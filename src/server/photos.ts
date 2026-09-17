@@ -11,6 +11,8 @@
  * `api/photos.ts` is a few lines that hand it a request.
  */
 
+import { metadataMarkers } from '../domain/images.js'
+
 export type PhotoDeps = {
   /** A URL the browser may PUT one object to, for a few minutes. */
   signPut: (objectKey: string) => Promise<string>
@@ -18,6 +20,8 @@ export type PhotoDeps = {
   remove: (objectKeys: string[]) => Promise<void>
   /** Whether the bearer of this token acts for the committee — answered by the database. */
   isAdmin: (token: string) => Promise<boolean>
+  /** Reads an object back out of the bucket, to see what actually arrived in it. */
+  read: (objectKey: string) => Promise<Uint8Array>
 }
 
 export type Reply = { status: number; body: Record<string, unknown> }
@@ -52,6 +56,45 @@ export async function signUpload(deps: PhotoDeps, token: string, key: string): P
   const keys = objectKeys(key)
   const [full, thumb] = await Promise.all([deps.signPut(keys.full), deps.signPut(keys.thumb)])
   return { status: 200, body: { full, thumb } }
+}
+
+/**
+ * Reads back what arrived, and refuses to leave it there if it carries anything.
+ *
+ * Until now the only check on a photograph's metadata ran in the browser — which is the thing
+ * being defended against. The signed PUT is pinned to image/jpeg, but that constrains what the
+ * upload *claims* to be, not what its bytes are: anyone who can sign in as the committee could
+ * put an untouched camera file, GPS and all, at a URL the gallery would then publish.
+ *
+ * So the object is fetched back out of the bucket here, where the browser cannot reach, and put
+ * through the same rules the browser used. It costs a download per photograph. That is the price
+ * of the promise resting on the bytes in the bucket rather than on a check somebody else ran.
+ *
+ * A failure takes both objects out. Leaving a photograph with GPS in it sitting at a public URL
+ * while somebody decides what to do about it is the whole harm, already done.
+ */
+export async function verifyUpload(deps: PhotoDeps, token: string, key: string): Promise<Reply> {
+  const refused = await admitted(deps, token, key)
+  if (refused) return refused
+
+  const keys = objectKeys(key)
+  const found: string[] = []
+  for (const [what, objectKey] of [
+    ['full', keys.full],
+    ['thumbnail', keys.thumb],
+  ] as const) {
+    const markers = metadataMarkers(await deps.read(objectKey))
+    if (markers.length > 0) found.push(`the ${what} carries ${markers.join(', ')}`)
+  }
+
+  if (found.length > 0) {
+    await deps.remove([keys.full, keys.thumb])
+    return {
+      status: 422,
+      body: { error: `That photograph was not accepted: ${found.join('; ')}. It has been taken out of the bucket.` },
+    }
+  }
+  return { status: 200, body: { ok: true } }
 }
 
 /**
@@ -95,7 +138,7 @@ export async function depsFromEnv(env: PhotoEnv): Promise<PhotoDeps | null> {
   const anonKey = env.VITE_SUPABASE_ANON_KEY?.trim()
   if (!accountId || !accessKeyId || !secretAccessKey || !bucket || !supabaseUrl || !anonKey) return null
 
-  const [{ S3Client, PutObjectCommand, DeleteObjectsCommand }, { getSignedUrl }, { createClient }] =
+  const [{ S3Client, PutObjectCommand, DeleteObjectsCommand, GetObjectCommand }, { getSignedUrl }, { createClient }] =
     await Promise.all([import('@aws-sdk/client-s3'), import('@aws-sdk/s3-request-presigner'), import('@supabase/supabase-js')])
 
   // R2 speaks S3. `auto` is the only region it accepts.
@@ -110,6 +153,10 @@ export async function depsFromEnv(env: PhotoEnv): Promise<PhotoDeps | null> {
       // The browser sends image/jpeg, and a signed PUT is only valid for the type it was signed
       // with — so nothing but a JPEG can go in through here, whatever the browser says.
       getSignedUrl(s3, new PutObjectCommand({ Bucket: bucket, Key, ContentType: 'image/jpeg' }), { expiresIn: 300 }),
+    read: async (Key) => {
+      const out = await s3.send(new GetObjectCommand({ Bucket: bucket, Key }))
+      return new Uint8Array(await out.Body!.transformToByteArray())
+    },
     remove: async (keys) => {
       await s3.send(new DeleteObjectsCommand({ Bucket: bucket, Delete: { Objects: keys.map((Key) => ({ Key })), Quiet: true } }))
     },

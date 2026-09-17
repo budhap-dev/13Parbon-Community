@@ -36,12 +36,51 @@ describe('putting a photograph in the bucket', () => {
 
     const result = await uploadPhoto(config, 'holi-2027-01', prepared, 'admin-token', fetchImpl as unknown as typeof fetch)
 
-    // The file goes to the bucket, not through a server that would then be holding it.
-    expect(calls).toEqual(['POST https://site.example/api/sign', 'PUT https://put/full', 'PUT https://put/thumb'])
+    // The file goes to the bucket, not through a server that would then be holding it — and
+    // then the server is asked what actually landed there, before any row is written.
+    expect(calls).toEqual([
+      'POST https://site.example/api/sign',
+      'PUT https://put/full',
+      'PUT https://put/thumb',
+      'POST https://site.example/api/sign',
+    ])
     expect(result).toEqual({
       url: 'https://photos.example/full/holi-2027-01.jpg',
       thumbnailUrl: 'https://photos.example/thumb/holi-2027-01.jpg',
     })
+  })
+
+  /*
+   * Everything before this happens in the browser, including the metadata check — and the
+   * browser is what is being defended against. If the server reads the object back and finds
+   * anything, the upload fails here, so no row is ever written and nothing appears in an album.
+   */
+  it('fails when the server reads the object back and does not like it', async () => {
+    const fetchImpl = vi.fn(async (url: string | URL | Request) => {
+      if (String(url).includes('verify=1')) {
+        return new Response(JSON.stringify({ error: 'That photograph was not accepted: the full carries EXIF (may include GPS). It has been taken out of the bucket.' }), { status: 422 })
+      }
+      if (String(url).startsWith(config.signUrl)) {
+        return new Response(JSON.stringify({ full: 'https://put/full', thumb: 'https://put/thumb' }))
+      }
+      return new Response(null, { status: 200 })
+    })
+    await expect(
+      uploadPhoto(config, 'x', prepared, 'admin-token', fetchImpl as unknown as typeof fetch),
+    ).rejects.toThrow(/was not accepted.*taken out of the bucket/)
+  })
+
+  it('says something usable even when the refusal carries no words', async () => {
+    const fetchImpl = vi.fn(async (url: string | URL | Request) => {
+      if (String(url).includes('verify=1')) return new Response('not json', { status: 500 })
+      if (String(url).startsWith(config.signUrl)) {
+        return new Response(JSON.stringify({ full: 'https://put/full', thumb: 'https://put/thumb' }))
+      }
+      return new Response(null, { status: 200 })
+    })
+    await expect(
+      uploadPhoto(config, 'x', prepared, 'admin-token', fetchImpl as unknown as typeof fetch),
+    ).rejects.toThrow(/could not be checked \(500\)/)
   })
 
   it('says so plainly when the bucket refuses', async () => {

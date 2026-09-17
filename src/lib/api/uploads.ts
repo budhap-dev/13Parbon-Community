@@ -65,6 +65,24 @@ export async function uploadPhoto(
   // Both, or neither: a full picture with no thumbnail shows as a gap in every grid.
   await Promise.all([put(full, prepared.full), put(thumb, prepared.thumb)])
 
+  /*
+   * Now ask the server what actually landed.
+   *
+   * Everything above this line happens in the browser, including the check that the photograph
+   * carries no location — and the browser is the thing being defended against. This reads both
+   * objects back where nothing here can reach them, and takes them out of the bucket if they
+   * carry anything. Until it has said yes, no row is written, so a refused photograph is not in
+   * the album and not at a URL.
+   */
+  const checked = await fetchImpl(`${config.signUrl}?key=${encodeURIComponent(key)}&verify=1`, {
+    method: 'POST',
+    headers: { authorization: `Bearer ${token}` },
+  })
+  if (!checked.ok) {
+    const said = (await checked.json().catch(() => null)) as { error?: string } | null
+    throw new Error(said?.error ?? `What arrived in the bucket could not be checked (${checked.status}).`)
+  }
+
   return {
     url: `${config.publicUrl}/full/${key}.jpg`,
     thumbnailUrl: `${config.publicUrl}/thumb/${key}.jpg`,

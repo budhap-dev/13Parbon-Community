@@ -6,7 +6,7 @@
 > **What this is:** the order of work from [MEMBER-LOGIN.md](MEMBER-LOGIN.md), broken into steps
 > that can be ticked off. That document says *what* and *why*; this one says *where we are*.
 >
-> **Last updated:** 2026-09-17 · **Current step:** 6 · **Ticked:** 98 of 107
+> **Last updated:** 2026-09-17 · **Current step:** 6 · **Ticked:** 100 of 107
 
 ## How this is kept
 
@@ -183,7 +183,7 @@ app gets written in the belief that it may ask for anything.
 - [x] News: posts, notices and newsletters — published content readable by everybody, drafts by the committee
 - [x] The gallery — albums and photographs in the database, with the bucket reached through `/api/photos`
 - [x] Events — `portal.events`, designed and published from `/admin/events`
-- [ ] Per-resource mutations land with their own steps, not speculatively up front
+- [x] Per-resource mutations land with their own steps, not speculatively up front — followed: every resource above arrived with the step that needed it
 
 **Done when:** one value can be changed from the UI and survives a reload. *Changed from the UI
 and proven by test; surviving a reload needs somewhere to persist, so this closes with 0.1.*
@@ -474,7 +474,11 @@ The takedown promise stops depending on a macOS script and a person remembering 
 - [x] Apply EXIF orientation before discarding it, or portrait photographs come out sideways
 - [x] HEIC: **decided 2026-09-15** — JPG, JPEG and PNG only, and the screen says so
 - [x] Verify in the browser before anything is sent — the script's refusal, carried over
-- [ ] Verify the object again server-side — there is a server side now, but the signed PUT is pinned to image/jpeg, which is most of it
+- [x] Verify the object again server-side — done 2026-09-17. The object is read back out of the
+      bucket by the function and put through the same rules the browser used. Pinning the signed
+      PUT to image/jpeg constrains what an upload *claims*, not what its bytes are, and every
+      check before this ran on the machine being defended against. Anything that carries metadata
+      is taken out of the bucket and no row is written, so a refused photograph is never at a URL
 - [ ] Compare quality against `sips` at q70/q68 before switching over
 - [x] Create and edit albums
 - [x] ~~Pin an album cover~~ — **taken off the screen 2026-09-15 at the committee's request.**

@@ -292,6 +292,8 @@ honest place to test this, and check 2 above is the test.
 [src/server/photos.ts](../src/server/photos.ts).
 
 - `POST /api/photos?key=<album>-<nn>-<name>` — two signed URLs, one per size, good for five minutes.
+- `POST /api/photos?key=<album>-<nn>-<name>&verify=1` — reads both objects back out of the bucket
+  and refuses anything carrying metadata, taking it out rather than leaving it at a public URL.
 - `DELETE /api/photos?key=<album>-<nn>-<name>` — both objects removed.
 
 Both require `Authorization: Bearer <the signed-in person's token>`, and the database decides
@@ -300,7 +302,11 @@ against `^[a-z0-9][a-z0-9-]{0,79}$` before it reaches the bucket: it names what 
 and left open it could name anything the token can reach.
 
 The signed PUT is pinned to `image/jpeg`, so nothing but a JPEG can go in through it, whatever
-the browser claims to be sending.
+the browser claims to be sending. That pins what an upload *claims*, though, not what its bytes
+are — which is why the browser's own check is no longer the last word. After the two PUTs the
+browser asks `&verify=1`, and the function reads both objects back where the browser cannot
+reach them. Anything carrying EXIF, XMP, IPTC or a comment is removed from the bucket and the
+upload fails, so no album row is ever written for it.
 
 ## Reference: taking a photograph down
 

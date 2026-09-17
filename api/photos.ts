@@ -1,9 +1,11 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { deletePhoto, depsFromEnv, signUpload } from '../src/server/photos.js'
+import { deletePhoto, depsFromEnv, signUpload, verifyUpload } from '../src/server/photos.js'
 
 /**
- * POST   /api/photos?key=<album>-<nn>   → two signed PUT URLs, full and thumbnail
- * DELETE /api/photos?key=<album>-<nn>   → both objects removed
+ * POST   /api/photos?key=<album>-<nn>            → two signed PUT URLs, full and thumbnail
+ * POST   /api/photos?key=<album>-<nn>&verify=1   → reads both back and refuses anything that
+ *                                                  carries metadata, taking it out of the bucket
+ * DELETE /api/photos?key=<album>-<nn>            → both objects removed
  *
  * Both need `Authorization: Bearer <the signed-in person's Supabase token>`, and the database
  * is what decides whether that person is on the committee. Everything else is in
@@ -17,9 +19,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   }
   const token = (req.headers.authorization ?? '').replace(/^Bearer\s+/i, '')
   const key = typeof req.query.key === 'string' ? req.query.key : ''
+  // Signing and checking are the same resource at two moments, so they share a route: the
+  // browser asks for permission, uploads, then asks whether what it sent was acceptable.
   const reply =
     req.method === 'POST'
-      ? await signUpload(deps, token, key)
+      ? req.query.verify === '1'
+        ? await verifyUpload(deps, token, key)
+        : await signUpload(deps, token, key)
       : req.method === 'DELETE'
         ? await deletePhoto(deps, token, key)
         : { status: 405, body: { error: 'POST to sign an upload, DELETE to take a photograph down.' } }
