@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Viewer } from '@/domain/household'
+import { PIECE_MIN } from '@/domain/news'
 import { withAuditTrail } from './audit'
 import { createMockApi } from './mock'
 import type { ApiClient } from './types'
@@ -80,7 +81,7 @@ describe('every audited write', () => {
     const a = api()
     const album = (await a.gallery.listAllAlbums(admin)).find((x) => x.media.length > 2)!
     const post = await a.news.createPost(
-      { title: 'A first piece', excerpt: 'Something worth reading about.', body: 'x'.repeat(60), tags: [], author: 'Someone', published: true },
+      { title: 'A first piece', excerpt: 'Something worth reading about.', body: 'x'.repeat(PIECE_MIN), tags: [], author: 'Someone', published: true },
       admin,
     )
     const notice = await a.news.createAnnouncement(

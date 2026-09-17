@@ -1,5 +1,6 @@
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { EXCERPT_MIN, PIECE_MIN } from '@/domain/news'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { routes } from '@/app/router'
 import { previewAccounts } from '@/lib/auth/previewAccounts'
@@ -29,7 +30,10 @@ describe('writing a piece', () => {
 
     await userEvent.type(screen.getByLabelText('Title'), 'How the evening went')
     await userEvent.type(screen.getByLabelText('One line for the list'), 'Two hundred of us, and the hall only just held everybody.')
-    await userEvent.type(screen.getByLabelText('The piece'), 'The hall was full by seven, and the children went first as they always do.')
+    await userEvent.type(
+      screen.getByLabelText('The piece'),
+      'The hall was full by seven, and the children went first as they always do. Nobody minded that it ran long, and there was food enough for everybody who came.',
+    )
     await userEvent.type(screen.getByLabelText('Written by'), 'Debashis Chatterjee')
     await userEvent.click(screen.getByRole('button', { name: 'Write it' }))
 
@@ -38,12 +42,147 @@ describe('writing a piece', () => {
     expect(within(row).getByText('Draft')).toBeInTheDocument()
   })
 
+  /*
+   * A blank box and a button that says "Write something" is a fair question to be stuck on.
+   * These are prompts rather than templates on purpose: nothing goes into a field, because a
+   * form that fills itself in is how "[DATE]" ended up live in a piece nobody had finished.
+   */
+  it('offers something to write about, on a blank one', async () => {
+    await renderPage('Writing')
+    await userEvent.click(await screen.findByRole('button', { name: 'Write something' }))
+
+    expect(screen.getByText('Not sure what to write?')).toBeInTheDocument()
+    expect(screen.getByText(/Thank you to the people who cooked/)).toBeInTheDocument()
+    // And where the other kind of thing goes, which is the question behind the question.
+    expect(screen.getByText(/it is a notice rather than a/)).toBeInTheDocument()
+    // Suggested, not typed in: the boxes are still empty.
+    expect(screen.getByLabelText('Title')).toHaveValue('')
+    expect(screen.getByLabelText('The piece')).toHaveValue('')
+  })
+
+  it('does not offer them to somebody already editing a piece', async () => {
+    await renderPage('Writing')
+    const news = await screen.findByRole('region', { name: 'News' })
+    const row = (await within(news).findAllByRole('row', { name: /Mahalaya programme/ }))[0]
+    await userEvent.click(within(row).getByRole('button', { name: /^Edit / }))
+
+    // They have decided what it is about; this would be read past every time.
+    expect(screen.queryByText('Not sure what to write?')).not.toBeInTheDocument()
+  })
+
   it('will not write one with nothing in it, and says what is missing', async () => {
     await renderPage('Writing')
     await userEvent.click(await screen.findByRole('button', { name: 'Write something' }))
     await userEvent.click(screen.getByRole('button', { name: 'Write it' }))
 
     expect(screen.getByText(/Give the piece a title/)).toBeInTheDocument()
+    expect(screen.getByLabelText('Title')).toHaveAttribute('aria-invalid', 'true')
+
+    /*
+     * And each refusal says what the rule is. The counter under a box only appears once
+     * somebody has started, so on the commonest refusal of all — a form somebody pressed the
+     * button on too early — the message is the only thing that can carry the number.
+     */
+    expect(
+      screen.getByText(`There is not much here yet — a piece runs to at least ${PIECE_MIN} characters.`),
+    ).toBeInTheDocument()
+    // Named in full: the piece and its one-line summary now share a floor, so "at least 30
+    // characters" on its own matches both of them.
+    expect(
+      screen.getByText(
+        `One line for the list page, so people know whether to open it — at least ${EXCERPT_MIN} characters.`,
+      ),
+    ).toBeInTheDocument()
+  })
+
+  /*
+   * The rules were invisible until the form refused you. You wrote a piece, pressed Write it,
+   * and were told the body was too thin — with no way of knowing how much more it wanted.
+   */
+  /*
+   * The red line used to sit there until somebody pressed the button again — under a box that
+   * was, by then, perfectly good. A form that goes on objecting to something you have already
+   * put right reads as one that has stopped listening.
+   */
+  it('takes a refusal back as soon as it stops being true', async () => {
+    await renderPage('Writing')
+    await userEvent.click(await screen.findByRole('button', { name: 'Write something' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Write it' }))
+
+    const complaint = `One line for the list page, so people know whether to open it — at least ${EXCERPT_MIN} characters.`
+    expect(screen.getByText(complaint)).toBeInTheDocument()
+
+    await userEvent.type(screen.getByLabelText('One line for the list'), 'A line long enough to be worth reading.')
+    expect(screen.queryByText(complaint)).not.toBeInTheDocument()
+    // The ones still true stay: fixing one box does not clear the form.
+    expect(screen.getByText(/a piece runs to at least/)).toBeInTheDocument()
+  })
+
+  it('does not object to a box somebody has not reached yet', async () => {
+    await renderPage('Writing')
+    await userEvent.click(await screen.findByRole('button', { name: 'Write something' }))
+
+    await userEvent.type(screen.getByLabelText('Title'), 'How the evening went')
+    // Nothing pressed yet, so nothing has been refused — the counters do the talking.
+    expect(screen.queryByText(/a piece runs to at least/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Who wrote it/)).not.toBeInTheDocument()
+  })
+
+  it('says how much more a box needs, while it is still short', async () => {
+    await renderPage('Writing')
+    await userEvent.click(await screen.findByRole('button', { name: 'Write something' }))
+
+    const piece = screen.getByLabelText('The piece')
+    // Nothing on an untouched form: a page covered in what it will refuse, before anybody has
+    // typed anything, reads as a telling-off.
+    expect(screen.queryByText(/characters so far/)).not.toBeInTheDocument()
+
+    await userEvent.type(piece, 'The hall was full by seven.')
+    expect(screen.getByText(`27 of ${PIECE_MIN} characters so far.`)).toBeInTheDocument()
+    // And the field carries it, for somebody who cannot see it sitting underneath.
+    expect(piece.getAttribute('aria-describedby')).toContain('the-piece-need')
+
+    await userEvent.paste('x'.repeat(PIECE_MIN))
+    expect(screen.queryByText(/characters so far/)).not.toBeInTheDocument()
+  })
+
+  /*
+   * Both tables have said `char_length(trim(title)) between 1 and 200` since they were written,
+   * and nothing in the app knew it: a longer title was accepted, sent, and refused by a check
+   * constraint, which reaches the screen as whatever Postgres called it — after the writing was
+   * done. Added 2026-09-17.
+   */
+  it('counts a title down as the cap comes into sight, and says when it is past it', async () => {
+    await renderPage('Writing')
+    await userEvent.click(await screen.findByRole('button', { name: 'Write something' }))
+
+    const title = screen.getByLabelText('Title')
+    await userEvent.type(title, 'A short title')
+    // Far from the wall: a running count here would be noise.
+    expect(screen.queryByText(/characters left/)).not.toBeInTheDocument()
+
+    await userEvent.clear(title)
+    await userEvent.paste('x'.repeat(190))
+    expect(screen.getByText('10 characters left of 200.')).toBeInTheDocument()
+
+    // 190 and 15 more is 205, which is five past the wall.
+    await userEvent.paste('y'.repeat(15))
+    expect(screen.getByText('5 over the 200 allowed.')).toBeInTheDocument()
+  })
+
+  it('refuses a title too long for the column, rather than letting the database refuse it', async () => {
+    await renderPage('Writing')
+    await userEvent.click(await screen.findByRole('button', { name: 'Write something' }))
+
+    await userEvent.type(screen.getByLabelText('Title'), 'A title')
+    await userEvent.clear(screen.getByLabelText('Title'))
+    await userEvent.paste('x'.repeat(201))
+    await userEvent.type(screen.getByLabelText('One line for the list'), 'Long enough for the list page, and then some.')
+    await userEvent.type(screen.getByLabelText('The piece'), 'x'.repeat(PIECE_MIN))
+    await userEvent.type(screen.getByLabelText('Written by'), 'Someone')
+    await userEvent.click(screen.getByRole('button', { name: 'Write it' }))
+
+    expect(screen.getByText('A title has to fit in 200 characters.')).toBeInTheDocument()
     expect(screen.getByLabelText('Title')).toHaveAttribute('aria-invalid', 'true')
   })
 

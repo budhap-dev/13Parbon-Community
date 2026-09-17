@@ -44,7 +44,7 @@ const postRow = (over: Record<string, unknown> = {}) => ({
   id: 'np-1',
   slug: 'a-first-piece',
   title: 'A first piece',
-  excerpt: 'Something worth reading.',
+  excerpt: 'Something worth reading, and worth opening.',
   body: 'The body.',
   tags: ['durga-puja'],
   author: 'Someone',

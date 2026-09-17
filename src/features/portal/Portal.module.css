@@ -557,3 +557,12 @@
   display: flex;
   gap: 8px;
 }
+
+/* A column of controls belongs at the end of the row, against the edge it is read from. */
+.right {
+  text-align: right;
+}
+
+.actionsRight {
+  justify-content: flex-end;
+}

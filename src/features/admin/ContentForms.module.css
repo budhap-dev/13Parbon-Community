@@ -39,8 +39,17 @@
 .textarea {
   line-height: 1.6;
   resize: vertical;
-  /* Writing, so it reads like writing rather than like a form field. */
-  max-width: 68ch;
+  /*
+   * The full width of the form, like every other box on it.
+   *
+   * It was capped at 68ch — a reading measure, on the argument that writing should look like
+   * writing. But the boxes above it are not capped, so on anything wider than a laptop the
+   * piece sat in the left half of the form with nothing beside it, which reads as a layout
+   * that has broken rather than as a considered column. Anybody who prefers the narrow
+   * measure can drag the corner; `resize: vertical` is now `both` so they can.
+   */
+  width: 100%;
+  resize: both;
 }
 
 .input:focus-visible,
@@ -207,4 +216,36 @@
   .chevronOpen {
     transition: none;
   }
+}
+
+/*
+ * What a blank form could be filled with.
+ *
+ * Only on a new piece: somebody editing one has already decided what it is about, and would be
+ * reading past this every time.
+ */
+.ideas {
+  margin: 0;
+  padding: 14px 16px;
+  border: 1px dashed var(--color-border, rgba(0, 0, 0, 0.2));
+  border-radius: 12px;
+  background: var(--color-hover-wash, rgba(0, 0, 0, 0.03));
+}
+
+.ideasTitle {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.ideasList {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 13px;
+  line-height: 1.6;
+  opacity: 0.85;
+}
+
+.ideasList li + li {
+  margin-top: 2px;
 }

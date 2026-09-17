@@ -3,6 +3,11 @@ import { useState, type FormEvent } from 'react'
 import { Button } from '@/components/Button'
 import {
   ANNOUNCEMENT_MAX,
+  EXCERPT_MIN,
+  PIECE_MAX,
+  PIECE_MIN,
+  TITLE_MAX,
+  TITLE_MIN,
   isValid,
   validateAnnouncement,
   validateNews,
@@ -40,18 +45,72 @@ export function announcementDraftOf(announcement?: Announcement): AnnouncementDr
   }
 }
 
+/**
+ * The refusals to show, of those the form has actually made.
+ *
+ * `refused` is what the last press of the button objected to; `now` is what is wrong at this
+ * moment. Showing the overlap means two things. A red line goes as soon as the thing it
+ * objected to has been put right, rather than sitting under a box that is now perfectly good
+ * until somebody presses the button again — which is what it did, and it reads as a form that
+ * has stopped listening. And nothing new appears while somebody is still typing: a box they
+ * have not reached yet is not a mistake.
+ *
+ * The message comes from `now` rather than from `refused`, so a field that has gone from too
+ * short to too long says the thing that is true of it.
+ */
+function outstanding(refused: ContentErrors, now: ContentErrors): ContentErrors {
+  return Object.fromEntries(
+    Object.keys(refused)
+      .filter((field) => now[field])
+      .map((field) => [field, now[field]]),
+  )
+}
+
 function Field({
   label,
   hint,
   error,
+  need,
   children,
 }: {
   label: string
   hint?: string
   error?: string
+  /**
+   * The shortest this field may be, and what is in it.
+   *
+   * Shown only once somebody has started and while they are still short of it. The rules were
+   * invisible until then: you wrote a piece, pressed Write it, and were told the body was too
+   * thin — which is a poor moment to learn a rule, and no help at all in knowing how much more.
+   * The noticeboard's "N characters left" has done this from the start; this is the same idea
+   * from the other end.
+   *
+   * Not announced while it is empty, because a form that opens covered in what it will refuse
+   * reads as a telling-off before anybody has typed anything.
+   */
+  need?: { value: string; min: number; max?: number }
   children: (props: { id: string; 'aria-invalid'?: true; 'aria-describedby'?: string }) => React.ReactNode
 }) {
   const id = label.toLowerCase().replace(/[^a-z]+/g, '-')
+  const written = need ? need.value.trim().length : 0
+  const short = need ? written > 0 && written < need.min : false
+  /*
+   * The far end, and only once it is in sight. A running count under a box with two hundred
+   * characters of room is noise for the first hundred and eighty of them; what is wanted is a
+   * word before the wall, and the truth after it.
+   */
+  const room = need?.max !== undefined ? need.max - written : null
+  const warnFrom = need?.max !== undefined ? Math.max(25, Math.round(need.max / 10)) : 0
+  const nearTheEnd = room !== null && room <= warnFrom
+  // Everything under the box, in the order it is read, so the field carries its own rules for
+  // anybody who cannot see them sitting there.
+  const describedBy = [
+    hint ? `${id}-hint` : '',
+    short || nearTheEnd ? `${id}-need` : '',
+    error ? `${id}-error` : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
   return (
     <div className={styles.field}>
       <label className={styles.label} htmlFor={id}>
@@ -59,9 +118,23 @@ function Field({
       </label>
       {children({
         id,
-        ...(error ? { 'aria-invalid': true as const, 'aria-describedby': `${id}-error` } : {}),
+        ...(error ? { 'aria-invalid': true as const } : {}),
+        ...(describedBy ? { 'aria-describedby': describedBy } : {}),
       })}
-      {hint ? <p className={styles.hint}>{hint}</p> : null}
+      {hint ? (
+        <p id={`${id}-hint`} className={styles.hint}>
+          {hint}
+        </p>
+      ) : null}
+      {short || nearTheEnd ? (
+        <p id={`${id}-need`} className={styles.hint}>
+          {short
+            ? `${written} of ${need!.min} characters so far.`
+            : room! >= 0
+              ? `${room} characters left of ${need!.max}.`
+              : `${-room!} over the ${need!.max} allowed.`}
+        </p>
+      ) : null}
       {error ? (
         <p id={`${id}-error`} className={styles.error}>
           {error}
@@ -70,6 +143,21 @@ function Field({
     </div>
   )
 }
+
+/**
+ * What the committee has actually had to write, offered to somebody looking at a blank box.
+ *
+ * Prompts, not templates. Nothing here goes into a field: a form that fills itself in is how
+ * "[DATE]" ended up on the live site, sitting in a piece nobody had finished. These say what a
+ * piece could be about and leave the writing to the person writing.
+ */
+const IDEAS = [
+  'How an evening went, while people still remember it',
+  'Thank you to the people who cooked, decorated and cleared up',
+  'What to expect at the next programme, so nobody has to ask',
+  'A change of venue, date or time that wants more than a line on the noticeboard',
+  'Something the committee has decided, and why',
+]
 
 /**
  * Writing a piece.
@@ -91,24 +179,46 @@ export function NewsForm({
   error?: string
 }) {
   const [draft, setDraft] = useState<NewsDraft>(() => newsDraftOf(post))
-  const [errors, setErrors] = useState<ContentErrors>({})
+  const [refused, setRefused] = useState<ContentErrors>({})
+  const errors = outstanding(refused, validateNews(draft))
 
   const submit = (event: FormEvent) => {
     event.preventDefault()
     const found = validateNews(draft)
-    setErrors(found)
+    setRefused(found)
     if (isValid(found)) onSave(draft)
   }
 
   return (
     <form className={styles.form} onSubmit={submit} noValidate>
-      <Field label="Title" error={errors.title}>
+      {/* Only on a blank one. Somebody editing has already decided what it is about. */}
+      {!post ? (
+        <div className={styles.ideas}>
+          <p className={styles.ideasTitle}>Not sure what to write?</p>
+          <ul className={styles.ideasList}>
+            {IDEAS.map((idea) => (
+              <li key={idea}>{idea}</li>
+            ))}
+          </ul>
+          <p className={styles.hint} style={{ marginTop: 8 }}>
+            If it is one sentence and it stops being true next week, it is a notice rather than a
+            piece — the noticeboard is the other tab.
+          </p>
+        </div>
+      ) : null}
+
+      <Field label="Title" error={errors.title} need={{ value: draft.title, min: TITLE_MIN, max: TITLE_MAX }}>
         {(p) => (
           <input {...p} className={styles.input} value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} />
         )}
       </Field>
 
-      <Field label="One line for the list" hint="What somebody reads before deciding to open it." error={errors.excerpt}>
+      <Field
+        label="One line for the list"
+        hint="What somebody reads before deciding to open it."
+        error={errors.excerpt}
+        need={{ value: draft.excerpt, min: EXCERPT_MIN }}
+      >
         {(p) => (
           <input
             {...p}
@@ -119,7 +229,12 @@ export function NewsForm({
         )}
       </Field>
 
-      <Field label="The piece" hint="Leave a blank line between paragraphs. That is all the formatting there is." error={errors.body}>
+      <Field
+        label="The piece"
+        hint="Leave a blank line between paragraphs. That is all the formatting there is."
+        error={errors.body}
+        need={{ value: draft.body, min: PIECE_MIN, max: PIECE_MAX }}
+      >
         {(p) => (
           <textarea
             {...p}
@@ -132,7 +247,7 @@ export function NewsForm({
       </Field>
 
       <div className={styles.row}>
-        <Field label="Written by" error={errors.author}>
+        <Field label="Written by" error={errors.author} need={{ value: draft.author, min: 2 }}>
           {(p) => (
             <input
               {...p}
@@ -209,19 +324,20 @@ export function AnnouncementForm({
   error?: string
 }) {
   const [draft, setDraft] = useState<AnnouncementDraft>(() => announcementDraftOf(announcement))
-  const [errors, setErrors] = useState<ContentErrors>({})
+  const [refused, setRefused] = useState<ContentErrors>({})
+  const errors = outstanding(refused, validateAnnouncement(draft))
   const left = ANNOUNCEMENT_MAX - draft.body.trim().length
 
   const submit = (event: FormEvent) => {
     event.preventDefault()
     const found = validateAnnouncement(draft)
-    setErrors(found)
+    setRefused(found)
     if (isValid(found)) onSave(draft)
   }
 
   return (
     <form className={styles.form} onSubmit={submit} noValidate>
-      <Field label="Notice" error={errors.title}>
+      <Field label="Notice" error={errors.title} need={{ value: draft.title, min: TITLE_MIN, max: TITLE_MAX }}>
         {(p) => (
           <input {...p} className={styles.input} value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} />
         )}

@@ -435,7 +435,9 @@ export function AdminContentPage() {
                   <th>Notice</th>
                   <th>Who sees it</th>
                   <th>Showing</th>
-                  <th><span className="sr-only">Actions</span></th>
+                  <th className={styles.right}>
+                    <span className="sr-only">Actions</span>
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -452,8 +454,8 @@ export function AdminContentPage() {
                         {isLive(notice, at) ? 'On the board' : notice.publishAt > at ? 'Waiting' : 'Finished'}
                       </span>
                     </td>
-                    <td>
-                      <span className={styles.actions}>
+                    <td className={styles.right}>
+                      <span className={`${styles.actions} ${styles.actionsRight}`}>
                         <Button
                           variant="line"
                           size="sm"
@@ -525,9 +527,14 @@ export function AdminContentPage() {
               <thead>
                 <tr>
                   <th>Article</th>
+                  {/* A column of its own. It was a word at the end of the date line, which is
+                      where somebody looks for when it went up, not for who wrote it. */}
+                  <th>Written by</th>
                   <th>Tags</th>
                   <th>Status</th>
-                  <th><span className="sr-only">Edit</span></th>
+                  <th className={styles.right}>
+                    <span className="sr-only">Edit</span>
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -537,9 +544,10 @@ export function AdminContentPage() {
                       <strong>{post.title}</strong>
                       <br />
                       <span className={`${styles.muted} ${styles.tiny}`}>
-                        {post.publishedAt ? formatDateWithYear(post.publishedAt) : 'Not published'} · {post.author}
+                        {post.publishedAt ? formatDateWithYear(post.publishedAt) : 'Not published'}
                       </span>
                     </td>
+                    <td className={styles.tiny}>{post.author}</td>
                     <td>
                       <ul className={styles.chips}>
                         {post.tags.map((tag) => (

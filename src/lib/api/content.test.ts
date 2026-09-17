@@ -11,7 +11,8 @@ const api = () => withAuditTrail(createMockApi())
 const piece: NewsDraft = {
   title: 'How the Boishakhi evening went',
   excerpt: 'Two hundred of us, and the hall only just held everybody.',
-  body: 'The hall was full by seven.\n\nThe children went first, as they always do, and nobody minded that it ran long.',
+  body:
+    'The hall was full by seven, and the queue for the food was out of the door by half past.\n\nThe children went first, as they always do, and nobody minded that it ran long.',
   tags: ['boishakhi'],
   author: 'Debashis Chatterjee',
   published: true,
