@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { PhotoUpload } from './PhotoUpload'
@@ -136,9 +136,16 @@ describe('when there is nowhere to put it', () => {
     render(<PhotoUpload canSend={false} onSend={vi.fn()} onDone={vi.fn()} />)
     await userEvent.upload(document.querySelector('input[type="file"]') as HTMLInputElement, jpeg())
 
-    await screen.findByText(/No location, camera or date/)
+    const ready = await screen.findByText(/No location, camera or date/)
     expect(screen.queryByRole('button', { name: 'Put it in the bucket' })).not.toBeInTheDocument()
-    // Everything up to the sending is real, and it says so rather than looking broken.
-    expect(screen.getByRole('status')).toHaveTextContent(/prepare-photos\.mjs/)
+    /*
+     * Said beside the picture rather than at the foot of the component. On the event designer
+     * the choose-a-file row sits below this one, so a notice under that was off the bottom of
+     * what somebody was looking at: a picture that prepared itself, then did nothing, with no
+     * button and no reason given.
+     */
+    const row = ready.closest('div')!.parentElement!
+    expect(within(row).getByRole('status')).toHaveTextContent(/Nowhere to put it/)
+    expect(within(row).getByRole('status')).toHaveTextContent(/cannot be saved/)
   })
 })

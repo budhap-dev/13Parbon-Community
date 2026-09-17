@@ -184,6 +184,19 @@ export function PhotoUpload({
                   <Button variant="line" size="sm" onClick={() => forget(item)}>
                     Take it off the list
                   </Button>
+                  {/*
+                    * Said here, beside the picture, rather than at the foot of the component.
+                    * On the event designer the choose-a-file row sits under this one, so a
+                    * notice below that was off the bottom of what somebody was looking at —
+                    * and what they saw was a picture that had prepared itself and then done
+                    * nothing, with no button and no reason given.
+                    */}
+                  {!canSend ? (
+                    <span className={styles.note} role="status">
+                      Nowhere to put it: this build has no bucket configured, so it cannot be
+                      saved and nothing will use it yet.
+                    </span>
+                  ) : null}
                 </div>
               ) : null}
             </div>
@@ -206,12 +219,6 @@ export function PhotoUpload({
         ) : null}
       </div>
 
-      {!canSend && readyCount > 0 ? (
-        <p className={styles.note} role="status">
-          There is nowhere to put it yet: this build has no bucket configured. Everything above is real — prepare the
-          rest with <code>scripts/prepare-photos.mjs</code> and upload by hand for now.
-        </p>
-      ) : null}
     </div>
   )
 }
