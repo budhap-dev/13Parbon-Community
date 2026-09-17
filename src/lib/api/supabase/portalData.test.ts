@@ -104,6 +104,34 @@ describe('saving the people of a household', () => {
     ).rejects.toThrow(/not complete/i)
     expect(calls).toEqual([])
   })
+
+  /*
+   * One sign-in address, one household — a partial unique index, and deliberate. But the clash
+   * arrived on screen as `duplicate key value violates unique constraint
+   * "households_google_email_idx"`, which is Postgres talking to a committee member who has no
+   * reason to know what an index is. Albums, news and events had all been given a sentence for
+   * this weeks ago; households was the one nobody had come back to.
+   */
+  it('says who the address belongs to rather than naming the index', async () => {
+    const { client } = fakeClient({}, {
+      households: {
+        code: '23505',
+        message: 'duplicate key value violates unique constraint "households_google_email_idx"',
+      },
+    })
+    await expect(
+      householdMethods(async () => client).addHousehold(draft, { householdId: 'x', role: 'admin' }),
+    ).rejects.toThrow(/already signs in as another household/)
+  })
+
+  it('says the general thing for a clash it does not recognise', async () => {
+    const { client } = fakeClient({}, {
+      households: { code: '23505', message: 'duplicate key value violates unique constraint "something_else_idx"' },
+    })
+    await expect(
+      householdMethods(async () => client).addHousehold(draft, { householdId: 'x', role: 'admin' }),
+    ).rejects.toThrow(/already a record with those details/)
+  })
 })
 
 

@@ -38,6 +38,25 @@ function refuse(message: string, error: { code?: string; message: string } | nul
   // other refusal comes back saying a policy was violated, which is not.
   if (error?.code === '45001') throw new NotAllowed(error.message)
   if (error?.code === '42501') throw new NotAllowed(message)
+  /*
+   * A clash, which is a thing somebody did rather than a thing that went wrong.
+   *
+   * The albums, news and events adapters have all turned 23505 into a sentence for weeks;
+   * households never did, so adding a second household with an address already in use put
+   * `duplicate key value violates unique constraint "households_google_email_idx"` on the
+   * screen of a committee member who has no idea what an index is.
+   *
+   * The constraint's name is the only thing telling the two apart — PostgREST gives back the
+   * message Postgres raised and nothing more structured — so it is matched on, and anything
+   * unrecognised says the general thing rather than guessing at the specific one.
+   */
+  if (error?.code === '23505') {
+    throw new NotAllowed(
+      error.message.includes('google_email')
+        ? 'that Google address already signs in as another household'
+        : 'there is already a record with those details',
+    )
+  }
   throw new Error(error?.message ?? message)
 }
 

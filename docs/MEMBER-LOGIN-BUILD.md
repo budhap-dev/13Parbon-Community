@@ -6,7 +6,7 @@
 > **What this is:** the order of work from [MEMBER-LOGIN.md](MEMBER-LOGIN.md), broken into steps
 > that can be ticked off. That document says *what* and *why*; this one says *where we are*.
 >
-> **Last updated:** 2026-09-17 · **Current step:** 6 · **Ticked:** 96 of 107
+> **Last updated:** 2026-09-17 · **Current step:** 6 · **Ticked:** 98 of 107
 
 ## How this is kept
 
@@ -112,7 +112,11 @@ stored until this is right, and it is free to get right while the data is still 
 - [x] Rewrite `verify.sql` so it exercises the policies, not only the helper functions *(found on the way)*
 - [x] **Run `portal.sql`, then `verify.sql`, in the project** — passed 2026-09-15, first time
 - [x] Sign in with Google against the real project — works end to end, 2026-09-16
-- [ ] Sign in as a *member* with a household and confirm another household is not there
+- [x] Sign in as a *member* with a household and confirm another household is not there — done
+      2026-09-17, and asked of the database rather than of the screen: four tables queried with
+      the member's own token, bypassing the app. One household, its own people, nothing from the
+      inbox or the sign-in attempts. All four answered 200, which is the point — a 401 would have
+      meant the gateway refused and told us nothing about the policies
 - [x] Take `supabase/portal.sql` and `supabase/verify.sql` out of `.gitignore` and commit them
 
 **Done when:** a signed-in member, using the browser console and their own token, cannot read
@@ -688,7 +692,7 @@ because jsdom does not paint — that one belongs in a browser.
       would have emptied the public gallery while every file sat untouched in R2, referenced by
       nothing. Run 2026-09-17: 28 and 35, checked back out of the database with the anon key, as
       a stranger rather than as an admin
-- [ ] RLS verified once more, from a browser, as a member
+- [x] RLS verified once more, from a browser, as a member — 2026-09-17, the same run as 0.1
 - [ ] The audit table has rows in it from real use, not tests
 - [x] `main` merged in — nothing to merge; main has not moved since the branch was cut (checked 2026-09-16)
 - [x] **Preview belongs to the committee** — `?preview` no longer opens the back office to anybody who knows the trick; an admin opens the walkthrough from inside the portal, and it runs on fixtures — chosen 2026-09-16
