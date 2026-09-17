@@ -3,6 +3,7 @@ import { Link, NavLink, Outlet, ScrollRestoration, useLocation } from 'react-rou
 import { site } from '@/app/site'
 import { Icon, type IconName } from '@/components/Icon'
 import { ThemeSwitcher } from './ThemeSwitcher'
+import { useThemeScope } from '@/app/theme/ThemeContext'
 import { useGoogleSignIn } from '@/lib/auth/GoogleSignIn'
 import { useSession, useSignedIn } from '@/lib/auth/session'
 import { previewAccounts } from '@/lib/auth/previewAccounts'
@@ -26,6 +27,8 @@ export function PortalLayout() {
   const { signOut } = useGoogleSignIn()
   const { enterPreview, leavePreview } = useSession()
   const { pathname } = useLocation()
+  // Everything below here wears the committee's own looks, not the community's festivals.
+  useThemeScope('portal')
   const mainRef = useRef<HTMLElement>(null)
   const first = useRef(true)
   const { data: attempts } = useSignInAttempts()

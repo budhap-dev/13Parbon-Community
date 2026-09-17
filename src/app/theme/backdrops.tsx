@@ -1,4 +1,4 @@
-import type { ThemeName } from './themes'
+import type { PublicThemeName, ThemeName } from './themes'
 import motion from './backdrops.module.css'
 
 type Props = { className?: string }
@@ -279,7 +279,9 @@ function Kash({ className }: Props) {
   )
 }
 
-const backdrops: Record<ThemeName, (props: Props) => React.JSX.Element> = {
+// The festivals only. The portal's own looks carry no motif: a drawn alpona behind a table of
+// names is the sort of decoration that makes a back office harder to read, not friendlier.
+const backdrops: Record<PublicThemeName, (props: Props) => React.JSX.Element> = {
   festival: Alpona,
   'poila-boishakh': Fish,
   saraswati: Veena,
@@ -289,6 +291,6 @@ const backdrops: Record<ThemeName, (props: Props) => React.JSX.Element> = {
 
 /** The decorative, gently animated motif behind the hero for the active theme. */
 export function Backdrop({ theme, className }: Props & { theme: ThemeName }) {
-  const Motif = backdrops[theme]
-  return <Motif className={className} />
+  const Motif = backdrops[theme as PublicThemeName]
+  return Motif ? <Motif className={className} /> : null
 }

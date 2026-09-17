@@ -189,3 +189,109 @@
   --color-photo-c: #6b64c4;
   --color-photo-d: #ff9a3c;
 }
+
+/* ===========================================================================
+   The committee's own looks.
+   ===========================================================================
+   Not festivals. Nobody picks a Holi magenta to spend an hour checking a roll of
+   names against, and the portal followed the public themes until 2026-09-17, which
+   meant exactly that. These are made to be looked past: a neutral ground, one
+   restrained accent, and contrast chosen for reading a table rather than for
+   celebrating anything. The festival palettes stay where they belong — the public
+   site, and an evening being designed. */
+
+/* Paper: warm white and ink, with a deep blue. The default in the portal. */
+[data-theme='paper'] {
+  --color-scheme: light;
+  --logo-lineart-filter: none;
+  --logo-lineart-blend: multiply;
+  --color-bg: #f7f7f5;
+  --color-bg-top: #fbfbfa;
+  --color-bg-bottom: #f1f1ee;
+  --color-bg-glow: rgba(31, 78, 121, 0.05);
+  --color-bg-raised: #ffffff;
+  --color-bg-raised-hover: #f2f4f7;
+  --color-ink: #1c1d1f;
+  --color-ink-hover: #000000;
+  --color-on-ink: #f7f7f5;
+  --color-fg: #1c1d1f;
+  --color-fg-muted: rgba(28, 29, 31, 0.72);
+  --color-fg-faint: rgba(28, 29, 31, 0.45);
+  --color-border: rgba(28, 29, 31, 0.24);
+  --color-border-faint: rgba(28, 29, 31, 0.12);
+  --color-hover-wash: rgba(28, 29, 31, 0.05);
+  --color-accent: #1f4e79;
+  --color-accent-hover: #173a5a;
+  --color-on-accent: #ffffff;
+  --color-focus: #1f4e79;
+  --color-green: #2f6b46;
+  --error: #a5251b;
+  --color-photo-a: #cfd6dd;
+  --color-photo-b: #dde3e9;
+  --color-photo-c: #c2cbd4;
+  --color-photo-d: #e6eaee;
+}
+
+/* Linen: oatmeal and muted teal. The same quiet, a degree warmer. */
+[data-theme='linen'] {
+  --color-scheme: light;
+  --logo-lineart-filter: none;
+  --logo-lineart-blend: multiply;
+  --color-bg: #f6f3ed;
+  --color-bg-top: #faf8f4;
+  --color-bg-bottom: #efeae1;
+  --color-bg-glow: rgba(47, 107, 106, 0.06);
+  --color-bg-raised: #fffdf9;
+  --color-bg-raised-hover: #f3efe7;
+  --color-ink: #23211d;
+  --color-ink-hover: #100f0d;
+  --color-on-ink: #f6f3ed;
+  --color-fg: #23211d;
+  --color-fg-muted: rgba(35, 33, 29, 0.72);
+  --color-fg-faint: rgba(35, 33, 29, 0.45);
+  --color-border: rgba(35, 33, 29, 0.24);
+  --color-border-faint: rgba(35, 33, 29, 0.12);
+  --color-hover-wash: rgba(35, 33, 29, 0.05);
+  --color-accent: #2f6b6a;
+  --color-accent-hover: #234f4e;
+  --color-on-accent: #fffdf9;
+  --color-focus: #2f6b6a;
+  --color-green: #33684a;
+  --error: #9d2a1e;
+  --color-photo-a: #d8d2c6;
+  --color-photo-b: #e4dfd4;
+  --color-photo-c: #cbc4b5;
+  --color-photo-d: #eee9e0;
+}
+
+/* Slate: blue-grey dark, for the evenings this work actually gets done in. */
+[data-theme='slate'] {
+  --color-scheme: dark;
+  --logo-lineart-filter: invert(1) brightness(1.1);
+  --logo-lineart-blend: screen;
+  --color-bg: #16181d;
+  --color-bg-top: #1b1e24;
+  --color-bg-bottom: #101216;
+  --color-bg-glow: rgba(106, 169, 255, 0.08);
+  --color-bg-raised: #1f2229;
+  --color-bg-raised-hover: #272b33;
+  --color-ink: #0d1117;
+  --color-ink-hover: #05070a;
+  --color-on-ink: #e8eaed;
+  --color-fg: #e8eaed;
+  --color-fg-muted: rgba(232, 234, 237, 0.72);
+  --color-fg-faint: rgba(232, 234, 237, 0.45);
+  --color-border: rgba(232, 234, 237, 0.26);
+  --color-border-faint: rgba(232, 234, 237, 0.13);
+  --color-hover-wash: rgba(255, 255, 255, 0.07);
+  --color-accent: #6aa9ff;
+  --color-accent-hover: #8dbcff;
+  --color-on-accent: #0d1117;
+  --color-focus: #8dbcff;
+  --color-green: #7fd39b;
+  --error: #ff9d92;
+  --color-photo-a: #2b303a;
+  --color-photo-b: #343a45;
+  --color-photo-c: #232831;
+  --color-photo-d: #3d4450;
+}

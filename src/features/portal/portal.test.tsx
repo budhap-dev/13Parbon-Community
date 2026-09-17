@@ -106,24 +106,42 @@ describe('a household nobody has recorded a renewal date for', () => {
 })
 
 /**
- * The portal follows the five themes and can switch between them from inside.
+ * The portal has its own looks, and they are not the festivals.
  *
- * It used to paint itself on ink whatever the theme, carrying its own cream text — which meant
- * two themes came out unreadable the first time anyone looked, and there was no switcher here
- * because there was nothing for it to change.
+ * It painted itself on ink whatever the theme once, which made two themes unreadable the first
+ * time anyone looked. The fix then was to follow the five public themes — which solved the
+ * contrast and left the committee checking a roll of names against a Holi magenta. It has its
+ * own quiet set now: neutral grounds, one restrained accent, chosen for reading rather than for
+ * celebrating. The festivals stay on the public site and on an evening being designed.
  */
-describe('the portal and the themes', () => {
+describe('the portal and its own looks', () => {
   beforeEach(() => localStorage.clear())
 
-  it('offers the same switcher as the public site, and it takes effect', async () => {
+  it('offers the committee\u2019s own set, and not the festivals', async () => {
     renderAt('/portal', member)
     await screen.findByRole('heading', { level: 1, name: 'Dashboard' })
 
-    await userEvent.click(screen.getByRole('button', { name: 'Theme, currently Festival' }))
-    await userEvent.click(screen.getByRole('radio', { name: /Boishakhi/ }))
+    await userEvent.click(screen.getByRole('button', { name: 'Theme, currently Paper' }))
 
-    expect(document.documentElement.dataset.theme).toBe('poila-boishakh')
-    expect(screen.getByRole('button', { name: 'Theme, currently Boishakhi' })).toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: /Slate/ })).toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: /Linen/ })).toBeInTheDocument()
+    // A back office is not a celebration.
+    expect(screen.queryByRole('radio', { name: /Holi/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('radio', { name: /Boishakhi/ })).not.toBeInTheDocument()
+  })
+
+  it('takes effect, and is remembered apart from the public one', async () => {
+    renderAt('/portal', member)
+    await screen.findByRole('heading', { level: 1, name: 'Dashboard' })
+
+    await userEvent.click(screen.getByRole('button', { name: 'Theme, currently Paper' }))
+    await userEvent.click(screen.getByRole('radio', { name: /Slate/ }))
+
+    expect(document.documentElement.dataset.theme).toBe('slate')
+    expect(screen.getByRole('button', { name: 'Theme, currently Slate' })).toBeInTheDocument()
+    // Under its own key: the website the visitors see is untouched by this.
+    expect(localStorage.getItem('13parbon:portal-theme')).toBe('slate')
+    expect(localStorage.getItem('13parbon:theme')).toBeNull()
   })
 })
 

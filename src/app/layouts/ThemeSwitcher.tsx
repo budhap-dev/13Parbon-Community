@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react'
 import { Icon } from '@/components/Icon'
 import { useTheme } from '../theme/ThemeContext'
-import { themes, type ThemeName } from '../theme/themes'
+import { type ThemeName } from '../theme/themes'
 import styles from './ThemeSwitcher.module.css'
 
 /**
@@ -12,7 +12,9 @@ import styles from './ThemeSwitcher.module.css'
  * than the list, so from there it has to hang left and open over the content instead.
  */
 export function ThemeSwitcher({ align = 'end' }: { align?: 'end' | 'start' } = {}) {
-  const { theme, setTheme } = useTheme()
+  // The list comes from the context, so this draws the festivals on the public site and the
+  // committee's own quiet set inside the portal, without knowing which is which.
+  const { theme, setTheme, options: themes } = useTheme()
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
