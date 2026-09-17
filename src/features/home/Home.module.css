@@ -579,3 +579,70 @@
     flex-direction: column;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   The noticeboard.
+   ---------------------------------------------------------------------------
+   Quiet on purpose. It sits near the top because a notice is the one thing on this
+   page with a date on it, and it should read as a note pinned up rather than as a
+   second hero competing with the one above it. */
+
+.notices {
+  border: 1px solid var(--color-border-faint);
+  border-left: 3px solid var(--color-accent);
+  border-radius: var(--radius-tile, 16px);
+  background: var(--color-bg-raised);
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.noticesTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-fg-muted);
+}
+
+.noticesIcon {
+  color: var(--color-accent);
+}
+
+.noticesList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.notice + .notice {
+  border-top: 1px solid var(--color-border-faint);
+  padding-top: 14px;
+}
+
+.noticeTitle {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.noticeBody {
+  margin: 4px 0 0;
+  color: var(--color-fg-muted);
+  line-height: 1.55;
+  max-width: 96ch;
+  text-wrap: pretty;
+  white-space: pre-line;
+}
+
+.notice > :last-child:not(p) {
+  margin-top: 10px;
+}

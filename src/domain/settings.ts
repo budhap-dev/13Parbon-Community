@@ -8,7 +8,7 @@
 export type SectionAudience = 'public' | 'members' | 'admins'
 
 /** The sections of the home page whose audience the committee can change. */
-export const HOME_SECTIONS = ['nextEvent', 'upcoming', 'volunteer', 'yearStrip', 'photos'] as const
+export const HOME_SECTIONS = ['notices', 'nextEvent', 'upcoming', 'volunteer', 'yearStrip', 'photos'] as const
 export type HomeSection = (typeof HOME_SECTIONS)[number]
 
 /**
@@ -142,6 +142,7 @@ export const SETTING_LABELS: Record<
 }
 
 export const HOME_SECTION_LABELS: Record<HomeSection, string> = {
+  notices: 'The noticeboard',
   nextEvent: 'The next event',
   upcoming: 'What is coming up',
   volunteer: 'Helping out',

@@ -122,3 +122,29 @@ describe('HomePage', () => {
     expect(screen.queryByRole('region', { name: 'Our year' })).not.toBeInTheDocument()
   })
 })
+
+/*
+ * Notices had two homes and a visitor could reach neither: the News page, which stays out of
+ * the navigation until there is news to carry, and the member dashboard, which is behind a
+ * sign-in that is switched off. The committee could put up "the hall is shut on Saturday" and
+ * nobody outside the committee could find it — which is most of what a noticeboard is for.
+ */
+describe('the noticeboard on the home page', () => {
+  it('shows what is live, pinned first, near the top', async () => {
+    renderWithProviders(<HomePage />)
+    const board = await screen.findByRole('region', { name: 'On the noticeboard' })
+    expect(within(board).getAllByRole('listitem').length).toBeGreaterThan(0)
+  })
+
+  it('draws nothing at all when there is nothing to say', () => {
+    // Not an empty box with a heading on it: the page closes up.
+    renderWithProviders(<HomePage />, { api: createEmptyApi() })
+    expect(screen.queryByRole('region', { name: 'On the noticeboard' })).not.toBeInTheDocument()
+  })
+
+  it('shows at most three, because a wall of notices is not read', async () => {
+    renderWithProviders(<HomePage />)
+    const board = await screen.findByRole('region', { name: 'On the noticeboard' })
+    expect(within(board).getAllByRole('listitem').length).toBeLessThanOrEqual(3)
+  })
+})

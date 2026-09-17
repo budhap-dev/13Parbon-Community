@@ -118,6 +118,10 @@ export const site = {
    * viewer has logged in (phase 2). For the public MVP, events and volunteering are members-only.
    */
   home: {
+    // A notice is the one thing on this page with an expiry on it, and the one somebody needs
+    // *today*: the hall shut on Saturday, the puja moved an hour. Public by default, because a
+    // noticeboard nobody can see is not a noticeboard.
+    notices: 'public',
     nextEvent: 'public',
     upcoming: 'members',
     volunteer: 'public',
