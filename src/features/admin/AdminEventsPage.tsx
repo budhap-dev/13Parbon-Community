@@ -1,5 +1,6 @@
 import { site } from '@/app/site'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
+import { useScrollToTopOn } from '@/app/useScrollToTopOn'
 import { Button } from '@/components/Button'
 import { Icon } from '@/components/Icon'
 import { formatDateWithYear, formatLongDate, formatTime } from '@/domain/dates'
@@ -38,6 +39,8 @@ export function AdminEventsPage() {
   const now = useNow()
   // null is closed, 'new' is a blank evening, an event is that one being designed.
   const [designing, setDesigning] = useState<Event | 'new' | null>(null)
+  // The designer replaces the list in place.
+  useScrollToTopOn(designing)
 
 
   if (designing) {

@@ -75,6 +75,23 @@ describe('the noticeboard', () => {
     expect(await screen.findByText('Doors open at six')).toBeInTheDocument()
   })
 
+  /*
+   * Cancel sits at the foot of the form, which is right for the button that abandons what you
+   * typed — but on a long form it is below the fold, and it is not what somebody who opened the
+   * form to look rather than to write is after. The browser's own Back leaves the screen
+   * entirely, because the form is a state of this page rather than a page of its own.
+   */
+  it('lets somebody out of the form from the top, without saving or scrolling', async () => {
+    renderPage()
+    await userEvent.click((await screen.findAllByRole('button', { name: 'Put up a notice' }))[0])
+    expect(screen.getByLabelText('Notice')).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'All content' }))
+
+    expect(screen.queryByLabelText('Notice')).not.toBeInTheDocument()
+    expect(await screen.findByRole('region', { name: 'The noticeboard' })).toBeInTheDocument()
+  })
+
   it('counts down, and says what a long one wants to be instead', async () => {
     renderPage()
     await userEvent.click((await screen.findAllByRole('button', { name: 'Put up a notice' }))[0])

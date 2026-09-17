@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
+import { useScrollToTopOn } from '@/app/useScrollToTopOn'
 import { Button } from '@/components/Button'
 import { HouseholdForm } from '@/components/HouseholdForm'
 import { RemoveHousehold } from '@/components/RemoveHousehold'
@@ -34,6 +35,8 @@ export function AdminPeoplePage() {
   const remove = useDeleteHousehold()
   const resolve = useResolveSignInAttempt()
   const [open, setOpenRaw] = useState<Household | 'new' | null>(null)
+  // The household form replaces the list in place, from a button at the foot of a long table.
+  useScrollToTopOn(open)
   // What we already know about somebody who has been knocking, carried into the empty form.
   const [prefill, setPrefill] = useState<Partial<HouseholdDraft> | undefined>()
   const copy = useHouseholdExport(open && open !== 'new' ? open.id : undefined)

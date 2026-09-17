@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { Link, NavLink, Outlet, useLocation } from 'react-router'
+import { Link, NavLink, Outlet, ScrollRestoration, useLocation } from 'react-router'
 import { site } from '@/app/site'
 import { Icon, type IconName } from '@/components/Icon'
 import { ThemeSwitcher } from './ThemeSwitcher'
@@ -35,7 +35,9 @@ export function PortalLayout() {
       return
     }
     // preventScroll matters: focusing an element scrolls it into view, which would push
-    // the top of the page up behind the sticky header on every navigation.
+    // the top of the page up behind the sticky header on every navigation. Getting back to
+    // the top is ScrollRestoration's job, below — and for a long time nothing did it here,
+    // so every move inside the portal kept whatever scroll position you arrived with.
     mainRef.current?.focus({ preventScroll: true })
   }, [pathname])
 
@@ -193,6 +195,7 @@ export function PortalLayout() {
           <Outlet />
         </div>
       </main>
+      <ScrollRestoration />
     </div>
   )
 }

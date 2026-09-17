@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
+import { useScrollToTopOn } from '@/app/useScrollToTopOn'
 import { Button } from '@/components/Button'
 import { formatDateWithYear } from '@/domain/dates'
 import { isLive, type Announcement, type NewsPost } from '@/domain/news'
@@ -68,6 +69,8 @@ export function AdminContentPage() {
   const [editing, setEditing] = useState<
     { kind: 'post'; post?: NewsPost } | { kind: 'notice'; notice?: Announcement } | null
   >(null)
+  // Opening or leaving a form replaces the page without changing the address.
+  useScrollToTopOn(editing)
 
   if (editing?.kind === 'post') {
     return (
@@ -79,6 +82,20 @@ export function AdminContentPage() {
               Nothing goes on the website until you say so, and taking it off again keeps the writing.
             </p>
           </div>
+          {/*
+            * A way out that does not require reading to the end of the form.
+            *
+            * Cancel is at the foot of it, which is the right place for the button that abandons
+            * what you have typed — but it is not a way back, and it is below the fold on a long
+            * form. Somebody who opened this to look rather than to write had nothing at the top
+            * to leave by, and the browser's own Back goes out of the screen entirely, because
+            * the form is a state of this page rather than a page of its own.
+            */}
+          <span className={styles.actions}>
+            <Button variant="line" size="sm" onClick={() => setEditing(null)}>
+              All content
+            </Button>
+          </span>
         </div>
         <section className={styles.panel}>
           <div className={styles.pad}>
@@ -109,6 +126,11 @@ export function AdminContentPage() {
               Short, and few. A noticeboard people can read at a glance is the whole point of it.
             </p>
           </div>
+          <span className={styles.actions}>
+            <Button variant="line" size="sm" onClick={() => setEditing(null)}>
+              All content
+            </Button>
+          </span>
         </div>
         <section className={styles.panel}>
           <div className={styles.pad}>
@@ -384,8 +406,16 @@ export function AdminContentPage() {
               <h2 id="albums-title" className={styles.panelTitle}>
                 Photo albums
               </h2>
-              <Button variant="line" size="sm" onClick={() => {}}>
-                New album
+              {/*
+                * Went to the Photographs screen, rather than nowhere.
+                *
+                * This panel is a summary: albums are made and filled on /admin/media, which is
+                * where the upload and the takedown live. The button had an empty handler, so it
+                * looked like the way to make an album and was the one control on this page that
+                * did nothing at all when pressed.
+                */}
+              <Button variant="line" size="sm" to="/admin/media">
+                Photographs
               </Button>
             </div>
             <div className={styles.scroll}>

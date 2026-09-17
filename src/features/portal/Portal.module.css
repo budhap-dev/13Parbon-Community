@@ -19,7 +19,17 @@
 .sub {
   margin-top: 6px;
   color: var(--color-fg-muted);
-  max-width: 62ch;
+  /*
+   * 62ch was a reading measure, and these are not paragraphs. Nearly every one of them is a
+   * single sentence under a heading, and a sentence with obvious room to its right that breaks
+   * anyway and leaves three words on a line of their own looks like a fault rather than a
+   * choice. Wide enough now that the one-line ones stay on one line on a full screen.
+   *
+   * Still capped, because the cap is not the enemy: two of these run past 120 characters, and a
+   * line that long is harder to read than the wrap was. Those two want shorter sentences, which
+   * is a writing fix and not a CSS one.
+   */
+  max-width: 96ch;
   text-wrap: pretty;
 }
 

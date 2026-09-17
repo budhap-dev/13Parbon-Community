@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
+import { useScrollToTopOn } from '@/app/useScrollToTopOn'
 import { Button } from '@/components/Button'
 import { Icon } from '@/components/Icon'
 import { Lightbox, type LightboxItem } from '@/components/Lightbox'
@@ -22,6 +23,8 @@ export function AdminMediaPage() {
   const { data: albums, isPending } = useAllAlbums()
   const [openId, setOpenId] = useState<string | null>(null)
   const [editing, setEditing] = useState<AlbumDraft | null>(null)
+  // Opening an album, and opening the album form, are both swaps rather than navigations.
+  useScrollToTopOn(`${openId ?? ''}|${editing ? 'form' : ''}`)
 
   const create = useCreateAlbum()
   const update = useUpdateAlbum()
