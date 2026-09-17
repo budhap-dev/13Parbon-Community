@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useSearchParams } from 'react-router'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { useScrollToTopOn } from '@/app/useScrollToTopOn'
 import { formatLongDate } from '@/domain/dates'
@@ -24,6 +25,22 @@ import { SITE_TEXT_FIELDS, SITE_TEXT_KEYS, type SiteTextKey } from '@/domain/set
 import styles from '@/features/portal/Portal.module.css'
 import { AnnouncementForm, NewsForm } from './ContentForms'
 import { SiteSwitches } from './SiteSwitches'
+
+type Tab = 'content' | 'notices' | 'writing'
+
+/**
+ * Three things, three tabs.
+ *
+ * This screen carried six unrelated jobs at once — the site's wording, its switches, the
+ * noticeboard, the writing, the albums and the newsletters — and opening any form replaced the
+ * lot. Splitting it is not decoration: it is what makes "save this and let me carry on where I
+ * was" possible at all.
+ */
+const TABS: { key: Tab; label: string }[] = [
+  { key: 'content', label: 'The pages' },
+  { key: 'notices', label: 'Noticeboard' },
+  { key: 'writing', label: 'Writing' },
+]
 
 /**
  * Where on this page a gap can be filled in, if it can.
@@ -77,6 +94,25 @@ export function AdminContentPage() {
    */
   const [posted, setPosted] = useState<string | null>(null)
 
+  /*
+   * Which tab, kept in the address rather than in state.
+   *
+   * So that saving a notice leaves you looking at notices, a reload does not throw you back to
+   * the beginning, and the browser's own Back works between the three. This screen carried six
+   * unrelated things on one page — the site's wording, its switches, the noticeboard, the
+   * writing, the albums and the newsletters — and putting up a notice replaced all of it.
+   */
+  const [params, setParams] = useSearchParams()
+  const tab: Tab = TABS.some((t) => t.key === params.get('tab')) ? (params.get('tab') as Tab) : 'content'
+  const showTab = (next: Tab) => {
+    const now = new URLSearchParams(params)
+    now.set('tab', next)
+    setParams(now, { replace: true })
+    // A form belongs to the tab it was opened from; leaving the tab closes it.
+    setEditing(null)
+    setPosted(null)
+  }
+
   const whereItWent = (notice: Announcement): string => {
     const where = notice.audience === 'public' ? 'on the website' : 'in the portal, to members'
     if (notice.publishAt > at) return `Saved. It goes up ${where} on ${formatLongDate(notice.publishAt)}.`
@@ -91,12 +127,12 @@ export function AdminContentPage() {
   // Opening or leaving a form replaces the page without changing the address.
   useScrollToTopOn(editing)
 
-  if (editing?.kind === 'post') {
-    return (
-      <div className={styles.page}>
+  const postForm =
+    editing?.kind === 'post' ? (
+      <>
         <div className={styles.top}>
           <div>
-            <h1 className={styles.title}>{editing.post ? 'Edit the piece' : 'Write something'}</h1>
+            <h2 className={styles.panelTitle}>{editing.post ? 'Edit the piece' : 'Write something'}</h2>
             <p className={styles.sub}>
               Nothing goes on the website until you say so, and taking it off again keeps the writing.
             </p>
@@ -112,7 +148,7 @@ export function AdminContentPage() {
             */}
           <span className={styles.actions}>
             <Button variant="line" size="sm" onClick={() => setEditing(null)}>
-              All content
+              Back to the list
             </Button>
           </span>
         </div>
@@ -131,23 +167,22 @@ export function AdminContentPage() {
             />
           </div>
         </section>
-      </div>
-    )
-  }
+      </>
+    ) : null
 
-  if (editing?.kind === 'notice') {
-    return (
-      <div className={styles.page}>
+  const noticeForm =
+    editing?.kind === 'notice' ? (
+      <>
         <div className={styles.top}>
           <div>
-            <h1 className={styles.title}>{editing.notice ? 'Edit the notice' : 'Put up a notice'}</h1>
+            <h2 className={styles.panelTitle}>{editing.notice ? 'Edit the notice' : 'Put up a notice'}</h2>
             <p className={styles.sub}>
               Short, and few. A noticeboard people can read at a glance is the whole point of it.
             </p>
           </div>
           <span className={styles.actions}>
             <Button variant="line" size="sm" onClick={() => setEditing(null)}>
-              All content
+              Back to the list
             </Button>
           </span>
         </div>
@@ -171,9 +206,8 @@ export function AdminContentPage() {
             />
           </div>
         </section>
-      </div>
-    )
-  }
+      </>
+    ) : null
 
   return (
     <div className={styles.page}>
@@ -182,16 +216,34 @@ export function AdminContentPage() {
           <h1 className={styles.title}>Content</h1>
           <p className={styles.sub}>Everything the public sees. Publish when you are ready, not before.</p>
         </div>
-        <span className={styles.actions}>
-          <Button variant="line" size="sm" onClick={() => setEditing({ kind: 'notice' })}>
-            Put up a notice
-          </Button>
-          <Button variant="gold" size="sm" onClick={() => setEditing({ kind: 'post' })}>
-            Write something
-          </Button>
-        </span>
       </div>
 
+      <div className={styles.tabs} role="tablist" aria-label="Content">
+        {TABS.map((t) => (
+          <button
+            key={t.key}
+            type="button"
+            role="tab"
+            id={`tab-${t.key}`}
+            aria-selected={tab === t.key}
+            aria-controls={`panel-${t.key}`}
+            className={tab === t.key ? styles.tabOn : styles.tab}
+            onClick={() => showTab(t.key)}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`} className={styles.page}>
+      {posted ? (
+        <p className={styles.said} role="status">
+          {posted}
+        </p>
+      ) : null}
+
+      {tab === 'content' ? (
+        <>
       <p className={styles.note}>
         {totalGaps === 0 ? (
           <strong>Nothing left in brackets.</strong>
@@ -205,12 +257,6 @@ export function AdminContentPage() {
         )}{' '}
         Counted from the pages themselves, so this cannot go stale.
       </p>
-
-      {posted ? (
-        <p className={styles.said} role="status">
-          {posted}
-        </p>
-      ) : null}
 
       <section className={styles.panel} aria-labelledby="pages-title">
         <div className={styles.panelHead}>
@@ -293,6 +339,73 @@ export function AdminContentPage() {
         </div>
       </section>
 
+        <div className={styles.stack}>
+          <section className={styles.panel} aria-labelledby="albums-title">
+            <div className={styles.panelHead}>
+              <h2 id="albums-title" className={styles.panelTitle}>
+                Photo albums
+              </h2>
+              {/*
+                * Went to the Photographs screen, rather than nowhere.
+                *
+                * This panel is a summary: albums are made and filled on /admin/media, which is
+                * where the upload and the takedown live. The button had an empty handler, so it
+                * looked like the way to make an album and was the one control on this page that
+                * did nothing at all when pressed.
+                */}
+              <Button variant="line" size="sm" to="/admin/media">
+                Photographs
+              </Button>
+            </div>
+            <div className={styles.scroll}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>Album</th>
+                    <th>Photos</th>
+                    <th>Who sees it</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(albums ?? []).map((album) => (
+                    <tr key={album.id}>
+                      <td>
+                        <strong>{album.title}</strong>
+                      </td>
+                      <td className={styles.num}>{album.media.length}</td>
+                      <td>
+                        <span className={styles.pill}>Everyone</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section className={styles.panel} aria-labelledby="newsletters-title">
+            <div className={styles.panelHead}>
+              <h2 id="newsletters-title" className={styles.panelTitle}>
+                Newsletters
+              </h2>
+            </div>
+            <div className={styles.list}>
+              {(newsletters ?? []).map((n) => (
+                <div key={n.id} className={styles.listItem}>
+                  <div className={styles.listBody}>
+                    <strong>{n.title}</strong>
+                    <span className={`${styles.muted} ${styles.tiny}`}>{formatDateWithYear(n.issuedOn)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
+        </>
+      ) : null}
+
+      {tab === 'notices' ? (
+        noticeForm ?? (
       <section className={styles.panel} aria-labelledby="notices-title">
         <div className={styles.panelHead}>
           <h2 id="notices-title" className={styles.panelTitle}>
@@ -364,14 +477,18 @@ export function AdminContentPage() {
         </div>
       </section>
 
-      <div className={styles.two}>
+        )
+      ) : null}
+
+      {tab === 'writing' ? (
+        postForm ?? (
         <section className={styles.panel} aria-labelledby="news-title">
           <div className={styles.panelHead}>
             <h2 id="news-title" className={styles.panelTitle}>
               News
             </h2>
-            <Button variant="line" size="sm" onClick={() => setEditing({ kind: 'post' })}>
-              New article
+            <Button variant="gold" size="sm" onClick={() => setEditing({ kind: 'post' })}>
+              Write something
             </Button>
           </div>
           <div className={styles.scroll}>
@@ -429,69 +546,8 @@ export function AdminContentPage() {
             </table>
           </div>
         </section>
-
-        <div className={styles.stack}>
-          <section className={styles.panel} aria-labelledby="albums-title">
-            <div className={styles.panelHead}>
-              <h2 id="albums-title" className={styles.panelTitle}>
-                Photo albums
-              </h2>
-              {/*
-                * Went to the Photographs screen, rather than nowhere.
-                *
-                * This panel is a summary: albums are made and filled on /admin/media, which is
-                * where the upload and the takedown live. The button had an empty handler, so it
-                * looked like the way to make an album and was the one control on this page that
-                * did nothing at all when pressed.
-                */}
-              <Button variant="line" size="sm" to="/admin/media">
-                Photographs
-              </Button>
-            </div>
-            <div className={styles.scroll}>
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>Album</th>
-                    <th>Photos</th>
-                    <th>Who sees it</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(albums ?? []).map((album) => (
-                    <tr key={album.id}>
-                      <td>
-                        <strong>{album.title}</strong>
-                      </td>
-                      <td className={styles.num}>{album.media.length}</td>
-                      <td>
-                        <span className={styles.pill}>Everyone</span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
-
-          <section className={styles.panel} aria-labelledby="newsletters-title">
-            <div className={styles.panelHead}>
-              <h2 id="newsletters-title" className={styles.panelTitle}>
-                Newsletters
-              </h2>
-            </div>
-            <div className={styles.list}>
-              {(newsletters ?? []).map((n) => (
-                <div key={n.id} className={styles.listItem}>
-                  <div className={styles.listBody}>
-                    <strong>{n.title}</strong>
-                    <span className={`${styles.muted} ${styles.tiny}`}>{formatDateWithYear(n.issuedOn)}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        </div>
+        )
+      ) : null}
       </div>
     </div>
   )
