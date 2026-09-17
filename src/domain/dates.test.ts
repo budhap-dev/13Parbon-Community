@@ -59,7 +59,7 @@ describe('dates', () => {
     expect(describeCountdown(32)).toEqual({ value: '32', label: 'days to go' })
     expect(describeCountdown(1)).toEqual({ value: '1', label: 'day to go' })
     expect(describeCountdown(0).value).toBe('Today')
-    expect(describeCountdown(-1).value).toBe('Now')
+    expect(describeCountdown(-1)).toEqual({ value: 'Past', label: 'this evening has happened' })
   })
 })
 

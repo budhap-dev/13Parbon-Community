@@ -66,7 +66,10 @@ export type Countdown = { value: string; label: string }
 
 /** Turns a day count into the two-line countdown shown on the next-festival card. */
 export function describeCountdown(days: number): Countdown {
-  if (days < 0) return { value: 'Now', label: 'happening now' }
+  // The day of the evening answers 'Today' all day, so a negative count is never "now": it is
+  // the morning after at the earliest. Saying 'happening now' to somebody who missed it is the
+  // page insisting on something they can see is not true.
+  if (days < 0) return { value: 'Past', label: 'this evening has happened' }
   if (days === 0) return { value: 'Today', label: 'see you there' }
   if (days === 1) return { value: '1', label: 'day to go' }
   return { value: String(days), label: 'days to go' }

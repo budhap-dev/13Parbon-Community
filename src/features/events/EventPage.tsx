@@ -51,7 +51,12 @@ export function EventPage() {
   // Nothing to book, nothing to count down to, and no form to put your name on the stage.
   const registrationUrl = cancelled || !event.registrationOpen ? undefined : event.registrationUrl
   const countdown = describeCountdown(days)
-  const isPast = days < 0 && event.status === 'past'
+  // Two different questions. The date has passed on its own; whether the committee has
+  // finished with the evening is a decision somebody makes at /admin/events, and archiving is
+  // deliberately not automatic. Only the second hides the booking and the calls for help — but
+  // the countdown follows the date, or the page goes on counting down to last Saturday.
+  const hasHappened = days < 0
+  const isPast = hasHappened && event.status === 'past'
 
   return (
     <Container className={styles.detail}>
@@ -189,7 +194,11 @@ export function EventPage() {
 
         {/* Not merely hidden: a countdown to an evening that is not happening should not be in
             the page at all, for anything reading it aloud or scraping it. */}
-        {!isPast && !cancelled ? (
+        {hasHappened && !cancelled ? (
+          <p className={styles.note}>This evening has happened.</p>
+        ) : null}
+
+        {!hasHappened && !cancelled ? (
           <p className={styles.countdown}>
           <span className="sr-only">{`${countdown.value} ${countdown.label}`}</span>
             <span className={styles.countValue} aria-hidden="true">

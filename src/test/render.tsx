@@ -123,6 +123,8 @@ export function createDeliveringTestApi(): ApiClient {
 type DataProps = {
   children: ReactNode
   api?: ApiClient
+  /** Where "now" stands. Defaults to TEST_NOW; pass one to walk past an event's date. */
+  now?: Date
   session?: Session
   /** Sign-in settings. Empty by default, so no test reaches for a real Supabase project. */
   env?: Record<string, string | undefined>
@@ -141,11 +143,12 @@ export function TestDataProviders({
   previewApi,
   session = { role: 'visitor' },
   env = {},
+  now = TEST_NOW,
 }: DataProps) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return (
     <QueryClientProvider client={client}>
-      <ClockProvider now={() => TEST_NOW}>
+      <ClockProvider now={() => now}>
         <SessionProvider initial={session}>
           <ApiForSession real={api} fixtures={previewApi ?? api}>
             <GoogleSignInProvider env={env}>
@@ -163,9 +166,9 @@ export function TestDataProviders({
 type Props = DataProps & { route?: string }
 
 /** Everything a component needs, including an in-memory router. */
-export function TestProviders({ children, api, session, env, route = '/' }: Props) {
+export function TestProviders({ children, api, session, env, now, route = '/' }: Props) {
   return (
-    <TestDataProviders api={api} session={session} env={env}>
+    <TestDataProviders api={api} session={session} env={env} now={now}>
       <MemoryRouter initialEntries={[route]}>{children}</MemoryRouter>
     </TestDataProviders>
   )
@@ -176,6 +179,8 @@ type Options = Omit<RenderOptions, 'wrapper'> & {
   api?: ApiClient
   session?: Session
   env?: Record<string, string | undefined>
+  /** Where "now" stands, for a page whose answer depends on the date. */
+  now?: Date
   /**
    * What a preview runs on. Defaults to the same client, which is what nearly every test wants:
    * the sample accounts carry `preview: true`, so a separate fixtures client here would quietly
@@ -184,10 +189,10 @@ type Options = Omit<RenderOptions, 'wrapper'> & {
   previewApi?: ApiClient
 }
 
-export function renderWithProviders(ui: ReactElement, { route, api, session, env, ...options }: Options = {}) {
+export function renderWithProviders(ui: ReactElement, { route, api, session, env, now, ...options }: Options = {}) {
   return render(ui, {
     wrapper: ({ children }) => (
-      <TestProviders api={api} session={session} env={env} route={route}>
+      <TestProviders api={api} session={session} env={env} now={now} route={route}>
         {children}
       </TestProviders>
     ),

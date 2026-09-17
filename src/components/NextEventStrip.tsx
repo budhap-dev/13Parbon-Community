@@ -46,7 +46,7 @@ export function NextEventStrip() {
             </span>
           ) : null}
           <span className={styles.count}>
-            {countdown.value === 'Today' || countdown.value === 'Now'
+            {countdown.value === 'Today' || countdown.value === 'Past'
             ? countdown.value
             : `${countdown.value} ${countdown.label}`}
           </span>
