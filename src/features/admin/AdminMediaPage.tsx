@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { useScrollToTopOn } from '@/app/useScrollToTopOn'
 import { Button } from '@/components/Button'
+import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { Icon } from '@/components/Icon'
 import { Lightbox, type LightboxItem } from '@/components/Lightbox'
 import { PhotoUpload } from '@/components/PhotoUpload'
@@ -431,27 +432,20 @@ function AlbumPage({
                 }}
               />
 
-              {confirming === item.id && open === null ? (
-                <div className={media.confirm} role="alert">
-                  <p className={media.confirmText}>
-                    Delete this photograph? It goes from the bucket first, so the address stops working for
-                    everybody who has it. This cannot be undone.
-                  </p>
-                  <div className={styles.actions}>
-                    <Button variant="line" size="sm" onClick={() => setConfirming(null)}>
-                      Keep it
-                    </Button>
-                    <Button
-                      variant="danger"
-                      size="sm"
-                      disabled={remove.isPending}
-                      onClick={() => takeDown(item.id)}
-                    >
-                      {remove.isPending ? 'Removing…' : 'Delete'}
-                    </Button>
-                  </div>
-                </div>
-              ) : null}
+              <ConfirmDialog
+                // Not while the viewer is open: that one asks in its own action bar, because a
+                // second modal over a modal would be two focus traps arguing.
+                open={confirming === item.id && open === null}
+                title="Delete this photograph?"
+                confirmLabel="Delete"
+                busyLabel="Removing…"
+                busy={remove.isPending}
+                onCancel={() => setConfirming(null)}
+                onConfirm={() => takeDown(item.id)}
+              >
+                It goes from the bucket first, so the address stops working for everybody who has it.
+                This cannot be undone.
+              </ConfirmDialog>
             </li>
           ))}
         </ul>
@@ -476,7 +470,7 @@ function AlbumPage({
           }
           return (
             <span className={styles.actions}>
-              <span className={media.confirmText}>Delete for good? This cannot be undone.</span>
+              <span className={media.confirmText}>Delete this photograph? This cannot be undone.</span>
               <Button variant="line" size="sm" onClick={() => setConfirming(null)}>
                 Keep it
               </Button>

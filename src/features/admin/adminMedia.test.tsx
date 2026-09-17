@@ -173,10 +173,13 @@ describe('inside an album', () => {
     await openAlbum(/Boishakhi 2026/)
 
     await userEvent.click(screen.getAllByRole('button', { name: /^Delete / })[0])
-    const confirm = screen.getByRole('alert')
+    const confirm = await screen.findByRole('dialog')
+    expect(confirm).toHaveAccessibleName('Delete this photograph?')
     // The address stopping working is the point, and it is what the privacy page promises.
-    expect(within(confirm).getByText(/goes from the bucket/)).toBeInTheDocument()
-    expect(within(confirm).getByText(/cannot be undone/)).toBeInTheDocument()
+    expect(confirm).toHaveTextContent(/goes from the bucket/)
+    expect(confirm).toHaveTextContent(/cannot be undone/)
+    // Focus lands on the way out, not on the way through.
+    expect(within(confirm).getByRole('button', { name: 'Keep it' })).toHaveFocus()
   })
 
   it('backs out of deleting', async () => {

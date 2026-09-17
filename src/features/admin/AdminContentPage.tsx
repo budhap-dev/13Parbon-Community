@@ -4,6 +4,7 @@ import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { useScrollToTopOn } from '@/app/useScrollToTopOn'
 import { formatLongDate } from '@/domain/dates'
 import { Button } from '@/components/Button'
+import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { formatDateWithYear } from '@/domain/dates'
 import { isLive, type Announcement, type NewsPost } from '@/domain/news'
 import {
@@ -461,38 +462,34 @@ export function AdminContentPage() {
                         >
                           Edit
                         </Button>
-                        {removing === notice.id ? (
-                          <>
-                            <Button variant="line" size="sm" onClick={() => setRemoving(null)}>
-                              Keep it
-                            </Button>
-                            <Button
-                              variant="danger"
-                              size="sm"
-                              aria-label={`Take ${notice.title} off the board for good`}
-                              disabled={removeNotice.isPending}
-                              onClick={() =>
-                                removeNotice.mutate(notice.id, {
-                                  onSuccess: () => {
-                                    setRemoving(null)
-                                    setPosted('Taken off the board. A notice has no version worth keeping, so it is gone.')
-                                  },
-                                })
-                              }
-                            >
-                              {removeNotice.isPending ? 'Removing…' : 'Take it off for good'}
-                            </Button>
-                          </>
-                        ) : (
-                          <Button
-                            variant="danger"
-                            size="sm"
-                            aria-label={`Take ${notice.title} off the board`}
-                            onClick={() => setRemoving(notice.id)}
-                          >
-                            Take off
-                          </Button>
-                        )}
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          aria-label={`Take ${notice.title} off the board`}
+                          onClick={() => setRemoving(notice.id)}
+                        >
+                          Take off
+                        </Button>
+                        <ConfirmDialog
+                          open={removing === notice.id}
+                          title="Take this notice off the board?"
+                          confirmLabel="Take it off"
+                          busyLabel="Removing…"
+                          busy={removeNotice.isPending}
+                          error={removeNotice.isError ? removeNotice.error.message : undefined}
+                          onCancel={() => setRemoving(null)}
+                          onConfirm={() =>
+                            removeNotice.mutate(notice.id, {
+                              onSuccess: () => {
+                                setRemoving(null)
+                                setPosted('Taken off the board. A notice has no version worth keeping, so it is gone.')
+                              },
+                            })
+                          }
+                        >
+                          <strong>{notice.title}</strong> goes for good. A notice has no version worth
+                          keeping, so there is nothing to put back.
+                        </ConfirmDialog>
                       </span>
                     </td>
                   </tr>

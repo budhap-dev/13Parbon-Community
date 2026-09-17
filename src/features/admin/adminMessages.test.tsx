@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { describe, expect, it } from 'vitest'
@@ -32,10 +32,11 @@ describe('deleting a message', () => {
     const before = (await screen.findAllByRole('listitem')).length
 
     await userEvent.click(screen.getByRole('button', { name: /Delete/ }))
-    expect(screen.getByRole('alert')).toHaveTextContent(/only record the committee holds/)
+    const asking = await screen.findByRole('dialog')
+    expect(asking).toHaveTextContent(/only record the committee holds/)
 
-    await userEvent.click(screen.getByRole('button', { name: 'Keep it' }))
-    expect(screen.queryByRole('button', { name: 'Delete for good' })).not.toBeInTheDocument()
+    await userEvent.click(within(asking).getByRole('button', { name: 'Keep it' }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     expect(await screen.findAllByRole('listitem')).toHaveLength(before)
   })
 
@@ -45,7 +46,7 @@ describe('deleting a message', () => {
     // inbox. The list is what has to be there before there is anything to delete.
     await screen.findAllByRole('listitem')
     await userEvent.click(screen.getByRole('button', { name: /Delete/ }))
-    expect(screen.getByRole('alert')).toHaveTextContent(/mark it handled instead/)
+    expect(await screen.findByRole('dialog')).toHaveTextContent(/mark it handled instead/)
   })
 
   it('takes it off the list once confirmed', async () => {
@@ -54,7 +55,7 @@ describe('deleting a message', () => {
     const before = (await screen.findAllByRole('listitem')).length
 
     await userEvent.click(screen.getByRole('button', { name: /Delete/ }))
-    await userEvent.click(screen.getByRole('button', { name: 'Delete for good' }))
+    await userEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Delete' }))
 
     await waitFor(async () => expect(await screen.findAllByRole('listitem')).toHaveLength(before - 1))
   })

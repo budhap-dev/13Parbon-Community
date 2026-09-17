@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { Button } from '@/components/Button'
+import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { Icon } from '@/components/Icon'
 import { formatLongDate, formatTime } from '@/domain/dates'
 import { paragraphs } from '@/domain/news'
@@ -155,38 +156,28 @@ export function AdminMessagesPage() {
                     {open.handledBy ? 'Handled' : markHandled.isPending ? 'Marking…' : 'Mark handled'}
                   </Button>
                 </div>
-                {confirming ? (
-                  <div className={styles.note} role="alert">
-                    <p>
-                      <strong>Delete this message?</strong> It goes for good, and it is the only
-                      record the committee holds of what was asked
-                      {open.kind === 'photo' ? ', including that a photograph was asked about' : ''}. A
-                      line stays in the audit trail saying you deleted it. To keep it and clear the
-                      unread count, mark it handled instead.
-                    </p>
-                    <div className={styles.actions}>
-                      <Button
-                        variant="danger"
-                        size="sm"
-                        disabled={removeMessage.isPending}
-                        onClick={() =>
-                          removeMessage.mutate(open.id, {
-                            onSuccess: () => {
-                              setConfirming(false)
-                              // Whatever is left is the next thing to read, chosen by the list.
-                              setOpenId(null)
-                            },
-                          })
-                        }
-                      >
-                        {removeMessage.isPending ? 'Deleting…' : 'Delete for good'}
-                      </Button>
-                      <Button variant="line" size="sm" onClick={() => setConfirming(false)}>
-                        Keep it
-                      </Button>
-                    </div>
-                  </div>
-                ) : null}
+                <ConfirmDialog
+                  open={confirming}
+                  title="Delete this message?"
+                  confirmLabel="Delete"
+                  busyLabel="Deleting…"
+                  busy={removeMessage.isPending}
+                  onCancel={() => setConfirming(false)}
+                  onConfirm={() =>
+                    removeMessage.mutate(open.id, {
+                      onSuccess: () => {
+                        setConfirming(false)
+                        // Whatever is left is the next thing to read, chosen by the list.
+                        setOpenId(null)
+                      },
+                    })
+                  }
+                >
+                  It goes for good, and it is the only record the committee holds of what was asked
+                  {open.kind === 'photo' ? ', including that a photograph was asked about' : ''}. A line
+                  stays in the audit trail saying you deleted it. To keep it and clear the unread count,
+                  mark it handled instead.
+                </ConfirmDialog>
                 {removeMessage.isError ? (
                   <p className={`${styles.muted} ${styles.tiny}`} role="alert">
                     That did not delete. {removeMessage.error.message}
