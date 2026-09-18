@@ -701,6 +701,13 @@ because jsdom does not paint — that one belongs in a browser.
       would have emptied the public gallery while every file sat untouched in R2, referenced by
       nothing. Run 2026-09-17: 28 and 35, checked back out of the database with the anon key, as
       a stranger rather than as an admin
+- [x] **Run `supabase/content-seed.sql`** — the same argument as the gallery, for the words. The
+      notices and the news were arrays in `fixtures.ts`, and with the database configured the
+      public pages ask `portal.announcements` and `portal.news_posts`, which held one notice and
+      no posts. Run 2026-09-17: the two notices across, checked back out with the anon key. The
+      three news pieces were carried too and then removed — they were sample writing that
+      arrived with the app rather than anything the committee wrote, and one still had "[DATE]"
+      in it. The file no longer seeds them
 - [x] RLS verified once more, from a browser, as a member — 2026-09-17, the same run as 0.1
 - [ ] The audit table has rows in it from real use, not tests
 - [x] `main` merged in — nothing to merge; main has not moved since the branch was cut (checked 2026-09-16)
@@ -719,8 +726,13 @@ because jsdom does not paint — that one belongs in a browser.
 | Should committee titles live on households, so the About page's list is derived rather than typed twice? *Left for now, 2026-09-16* | Nothing — it works as two lists |
 | Does `setCover` get a way back onto a screen? Kept 2026-09-15, and unreachable meanwhile | Step 4 |
 | Event summaries: written, or drafted for editing? | Step 5 |
-| How an event reaches this site from the planner app | Step 3 |
 | Backups: does the R2 bucket need a second copy? *(to discuss)* | Step 6 |
+
+### Answered 2026-09-18
+
+| | |
+|---|---|
+| **How an event reaches this site from the planner app** | It does not. An evening is typed into both, and the two tables stay unjoined. They share one Supabase project and have a table each — this site's `portal.events`, and the planner's `public.events` (`name`, `date` as *text* with no time in it, `venue`, `tasks`, `columns`). The planner holds three fields a public page needs and cannot drive a countdown or a start time without guessing; the summary, cover, theme, programme, booking link and published-or-not exist only here. So an import would save typing three fields a few times a year and buy a permanent question about which side owns the date — and a join would let somebody shuffling a task board move a date on a page the public is reading. If entering an evening twice starts to hurt, the answer is a one-way "start a page from this planner evening" button, not a sync |
 
 ### Answered 2026-09-17
 
