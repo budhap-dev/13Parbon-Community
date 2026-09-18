@@ -22,6 +22,57 @@ const SUBJECTS: Record<string, string> = {
 const VERBS: Record<string, string> = { insert: 'Added', update: 'Changed', delete: 'Removed' }
 
 /**
+ * The app's own words for the same changes.
+ *
+ * Two vocabularies reach this screen. A trigger sees a row change and records `update
+ * households`; the wrapper around the client records what somebody *meant* — `household:add`,
+ * `messages:handle` — because it sits where the intention is known. Against the real database
+ * the trigger's lines are the ones read back, so only the first was ever translated, and the
+ * committee's walkthrough — which runs on the wrapper — showed rows reading "household:add"
+ * with nothing beside them. A screen that teaches somebody the portal should not be the one
+ * speaking in slugs. Found by clicking through the walkthrough, 2026-09-18.
+ */
+const DOING: Record<string, string> = {
+  add: 'Added',
+  create: 'Added',
+  edit: 'Changed',
+  save: 'Changed',
+  remove: 'Removed',
+  delete: 'Removed',
+  archive: 'Filed',
+  unpublish: 'Took down',
+  handle: 'Dealt with',
+  record: 'Recorded',
+  reorder: 'Reordered',
+  setCover: 'Chose the face of',
+  caption: 'Captioned',
+}
+
+const THINGS: Record<string, string> = {
+  household: 'a household',
+  album: 'an album',
+  announcement: 'a notice',
+  attendance: 'an attendance count',
+  event: 'an evening',
+  media: 'a photograph',
+  messages: 'a message',
+  news: 'a piece',
+  settings: 'what the site shows',
+}
+
+/** What happened, in a sentence, whichever half of the app wrote the line. */
+export function describeAction(action: string): string {
+  if (action.includes(':')) {
+    const [thing, doing] = action.split(':')
+    // Falls back to the slug rather than to silence: an action nobody has named here should
+    // look unfinished, not look like nothing happened.
+    return `${DOING[doing] ?? doing} ${THINGS[thing] ?? thing}`.trim()
+  }
+  const [verb, kind] = action.split(' ')
+  return `${VERBS[verb] ?? verb} ${SUBJECTS[kind] ?? kind ?? ''}`.trim()
+}
+
+/**
  * What a value looks like in a sentence.
  *
  * Absent has to read as absent rather than as the word "undefined", because half the entries
@@ -122,7 +173,6 @@ export function AdminAuditPage() {
               </thead>
               <tbody>
                 {shown.map((entry) => {
-                  const [verb, kind] = entry.action.split(' ')
                   const moved = Object.entries(entry.changes)
                   return (
                     <tr key={entry.id}>
@@ -136,9 +186,7 @@ export function AdminAuditPage() {
                           the database, dropped on the way to the screen, and never shown. */}
                       <td>{entry.actor}</td>
                       <td>
-                        <strong>
-                          {VERBS[verb] ?? verb} {SUBJECTS[kind] ?? kind}
-                        </strong>
+                        <strong>{describeAction(entry.action)}</strong>
                       </td>
                       <td className={`${styles.muted} ${styles.tiny} ${styles.changes}`}>
                         {moved.length === 0 ? (

@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { describe, expect, it } from 'vitest'
 import { routes } from '@/app/router'
+import { describeAction } from './AdminAuditPage'
 import { previewAccounts } from '@/lib/auth/previewAccounts'
 import type { Session } from '@/lib/auth/session'
 import { createMockApi, withAuditTrail, type ApiClient } from '@/lib/api'
@@ -128,6 +129,30 @@ describe('what has changed', () => {
     const row = (await screen.findByText(/handledBy: nothing → The Chatterjees/)).closest('tr')!
     expect(within(row).getByText('The Chatterjees')).toBeInTheDocument()
     expect(within(screen.getByRole('table')).getByText('Who')).toBeInTheDocument()
+  })
+
+  /*
+   * Two vocabularies reach this screen: the trigger's (`update households`) and the app's own
+   * (`household:add`). Only the first was ever turned into a sentence, so the committee's
+   * walkthrough — which runs on the app's wrapper — listed rows reading "messages:handle".
+   */
+  it('says what happened in words, whichever half of the app wrote the line', async () => {
+    renderAt('/admin/audit', admin, await withSomethingDone())
+    await screen.findByRole('heading', { level: 1, name: 'What has changed' })
+    expect(await screen.findByText('Dealt with a message')).toBeInTheDocument()
+  })
+
+  it('has words for both vocabularies, and shows the slug for one it does not know', () => {
+    // The database's.
+    expect(describeAction('update households')).toBe('Changed a household')
+    expect(describeAction('delete contact_messages')).toBe('Removed a message')
+    // The app's.
+    expect(describeAction('household:add')).toBe('Added a household')
+    expect(describeAction('news:unpublish')).toBe('Took down a piece')
+    expect(describeAction('album:setCover')).toBe('Chose the face of an album')
+    expect(describeAction('settings:save')).toBe('Changed what the site shows')
+    // And one nobody has named: unfinished rather than silent.
+    expect(describeAction('spaceship:launch')).toBe('launch spaceship')
   })
 
   it('says plainly when nothing has happened yet', async () => {
