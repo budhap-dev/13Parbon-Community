@@ -9,6 +9,7 @@ import { PrivacyPage } from '@/features/privacy'
 import { HomePage } from '@/features/home'
 import { ArticlePage, NewsPage } from '@/features/news'
 import { NotFoundPage } from '@/features/placeholder'
+import { SectionGate } from './SectionGate'
 import {
   AdminAuditPage,
   AdminContentPage,
@@ -32,10 +33,22 @@ export const routes: RouteObject[] = [
       { index: true, Component: HomePage },
       { path: 'events', Component: EventsPage },
       { path: 'events/:slug', Component: EventPage },
-      { path: 'gallery', Component: GalleryPage },
-      { path: 'gallery/:slug', Component: AlbumPage },
-      { path: 'news', Component: NewsPage },
-      { path: 'news/:slug', Component: ArticlePage },
+      {
+        // Both sections answer as though they were not there while their switch is off, which
+        // is what the switch says it does. See SectionGate.
+        element: <SectionGate setting="showPhotos" />,
+        children: [
+          { path: 'gallery', Component: GalleryPage },
+          { path: 'gallery/:slug', Component: AlbumPage },
+        ],
+      },
+      {
+        element: <SectionGate setting="showNews" />,
+        children: [
+          { path: 'news', Component: NewsPage },
+          { path: 'news/:slug', Component: ArticlePage },
+        ],
+      },
       { path: 'about', Component: AboutPage },
       { path: 'contact', Component: ContactPage },
       { path: 'login', Component: LoginPage },
