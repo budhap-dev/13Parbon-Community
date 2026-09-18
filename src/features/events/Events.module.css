@@ -387,21 +387,29 @@
     gap: 32px;
   }
 
-  /* The same order as the desktop layout: the theme, which is what the day is about and the
-     best-looking part of the page, comes straight after the title, and the details follow. */
-  .head {
+  /*
+   * The same order as the desktop layout: the theme, which is what the day is about and the
+   * best-looking part of the page, comes straight after the title, and the details follow.
+   *
+   * Scoped to `.detail`, the evening's own page. `.head` is also the events list's title block
+   * and this stylesheet serves both, so an unscoped `order: 1` put "What's on", its opening
+   * line and the occasion filters at the foot of the list on any screen under 960px — below
+   * every card and directly above the footer, while its siblings sat at the default 0. The
+   * page read as one whose heading had been forgotten. Found 2026-09-18, walking at 390px.
+   */
+  .detail .head {
     order: 1;
   }
 
-  .theme {
+  .detail .theme {
     order: 2;
   }
 
-  .detailBody {
+  .detail .detailBody {
     order: 3;
   }
 
-  .side {
+  .detail .side {
     order: 4;
   }
 }
