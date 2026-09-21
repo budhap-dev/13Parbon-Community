@@ -2,6 +2,7 @@ import type { SignInAttempt } from '@/domain/document'
 import type { EventAttendance } from '@/domain/attendance'
 import type { Household } from '@/domain/household'
 import type { ContactMessage } from '@/domain/contact'
+import type { Feedback } from '@/domain/feedback'
 
 /**
  * Sample households and registrations for the portal. Enough variety to show
@@ -181,11 +182,58 @@ export function buildPortalFixtures() {
     },
   ]
 
+  /**
+   * What the public has sent in: one of each state the review screen has to handle.
+   *
+   * A signed piece already on the website, an anonymous one waiting, a signed one waiting, and
+   * one that was turned down — because a queue with nothing turned down in it teaches nobody
+   * what turning something down looks like afterwards.
+   */
+  const feedback: Feedback[] = [
+    {
+      id: 'fb-1',
+      message:
+        'We came to Poila Boishakh not knowing a soul and left with our daughter in the dance line. Whoever thought to put the children on first, thank you — it broke the ice for the whole room.',
+      authorName: 'Meera Ghosh',
+      signedIn: true,
+      status: 'approved',
+      reviewedBy: 'Debashis Chatterjee',
+      reviewedAt: '2026-04-22T09:10:00',
+      createdAt: '2026-04-20T21:35:00',
+    },
+    {
+      id: 'fb-2',
+      message:
+        'The hall gets very cold by the interval. Nothing that spoils the evening, but a word to whoever holds the heating key would be kind for the older ones among us.',
+      signedIn: false,
+      status: 'pending',
+      createdAt: '2026-09-14T18:02:00',
+    },
+    {
+      id: 'fb-3',
+      message:
+        'Third year we have come to the Durga Puja here and it is the one weekend our children ask about all year. Please keep the food stalls — the queue is half the fun.',
+      authorName: 'Arjun Banerjee',
+      signedIn: true,
+      status: 'pending',
+      createdAt: '2026-09-12T11:20:00',
+    },
+    {
+      id: 'fb-4',
+      message: 'Testing testing does this box work 123456789',
+      signedIn: false,
+      status: 'rejected',
+      reviewedBy: 'Debashis Chatterjee',
+      reviewedAt: '2026-09-10T08:00:00',
+      createdAt: '2026-09-09T23:55:00',
+    },
+  ]
+
   /** A couple of years of numbers, which is what the history looks like once it has run a while. */
   const attendance: EventAttendance[] = [
     { eventId: 'ev-poila-2026', heldOn: '2026-04-18', households: 41, adults: 96, children: 34, recordedAt: '2026-04-20T10:00:00' },
     { eventId: 'ev-saraswati-2026', heldOn: '2026-02-01', households: 28, adults: 61, children: 40, recordedAt: '2026-02-03T10:00:00' },
   ]
 
-  return { households, signInAttempts, messages, attendance }
+  return { households, signInAttempts, messages, feedback, attendance }
 }

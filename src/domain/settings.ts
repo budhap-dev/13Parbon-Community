@@ -8,7 +8,7 @@
 export type SectionAudience = 'public' | 'members' | 'admins'
 
 /** The sections of the home page whose audience the committee can change. */
-export const HOME_SECTIONS = ['notices', 'nextEvent', 'upcoming', 'volunteer', 'yearStrip', 'photos'] as const
+export const HOME_SECTIONS = ['notices', 'nextEvent', 'upcoming', 'volunteer', 'yearStrip', 'photos', 'feedback'] as const
 export type HomeSection = (typeof HOME_SECTIONS)[number]
 
 /**
@@ -82,6 +82,15 @@ export type SiteSettings = {
   showNextEventStrip: boolean
   /** Whether the gallery is in the navigation and the photographs are on the home page. */
   showPhotos: boolean
+  /**
+   * Whether the public can leave feedback, and read what has been approved.
+   *
+   * One switch for both halves on purpose. A page that takes feedback and shows none reads as
+   * a suggestion box; a page that shows feedback and takes none reads as a testimonial wall.
+   * Which of the two it is depends entirely on whether the committee has approved anything
+   * yet, and that is a decision they make piece by piece rather than with a switch.
+   */
+  showFeedback: boolean
   /** Who each home page section is for. */
   home: Record<HomeSection, SectionAudience>
   /** The words the committee owns. Empty means "use what the code says". */
@@ -135,6 +144,10 @@ export const SETTING_LABELS: Record<
     label: 'Next event banner',
     note: 'The strip pinned under the wordmark on the home page.',
   },
+  showFeedback: {
+    label: 'Feedback from the public',
+    note: 'The feedback page, in the navigation. Nothing anybody sends appears anywhere until the committee has approved it. Turning this off hides the page and everything approved with it.',
+  },
   showMemberSignIn: {
     label: 'Member sign-in',
     note: 'The sign-in link in the header and footer. The portal still works for anybody who knows the address.',
@@ -148,6 +161,7 @@ export const HOME_SECTION_LABELS: Record<HomeSection, string> = {
   volunteer: 'Helping out',
   yearStrip: 'Our year',
   photos: 'Photographs',
+  feedback: 'What people say',
 }
 
 /** Nothing here can be wrong in a way a form allows, but a bad saved value should not get through. */
@@ -255,6 +269,7 @@ export function mergeSettings(stored: unknown, defaults: SiteSettings): SiteSett
     : defaults.members
 
   return {
+    showFeedback: bool('showFeedback'),
     showMemberSignIn: bool('showMemberSignIn'),
     showNews: bool('showNews'),
     showNextEventStrip: bool('showNextEventStrip'),

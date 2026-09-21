@@ -19,6 +19,7 @@ export const defaultSettings: SiteSettings = {
   showNews: site.showNews,
   showNextEventStrip: site.showNextEventStrip,
   showPhotos: site.showPhotos,
+  showFeedback: site.showFeedback,
   home: { ...site.home },
   text: {
     tagline: site.tagline,

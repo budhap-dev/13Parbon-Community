@@ -6,7 +6,7 @@
  */
 export const privacy = {
   /* Change this whenever anything on this page changes: it is the date the notice took effect. */
-  updatedOn: '7 September 2026',
+  updatedOn: '21 September 2026',
   controller: '13Parbon, Leeds.',
   sections: [
     {
@@ -15,12 +15,14 @@ export const privacy = {
         'When you contact us: your name, email address and message.',
         'When you apply to join: the household name, a contact name, email, phone if you give it, and how many adults and children are in the household.',
         'When you register for an event: who is coming from your household and anything you tell us, such as an offer to volunteer.',
+        'When you leave feedback: what you wrote. If you sign in with Google first and tick the box, we also keep your name as your Google account gives it, so that what you said can be attributed to you. We never keep your email address with it, which means we cannot reply to feedback and cannot tie it to anything else we hold about you. Sent without signing in, it carries nothing about you at all.',
       ],
     },
     {
       title: 'Why we use it',
       body: [
         'To reply to you, to run the events you register for, and to manage membership.',
+        'Feedback is read by the committee, and we put some of it on the website — your name and the date, or “Anonymous” if you did not sign it. Nothing goes up until a member of the committee has approved it, and anything you send may simply be read and not published. Ask us and we will take yours down.',
         'We do not sell or share your details with anyone outside the committee, and we do not use them for advertising.',
       ],
     },
@@ -36,7 +38,7 @@ export const privacy = {
       title: 'Your name and your photographs',
       body: [
         'We list the committee and our members by name on the About page, and we publish photographs from our events in the gallery.',
-        'If you would rather your name was not on this website, tell us through the contact form or by email and we will take it off. The same goes for any photograph you or your child appear in.',
+        'If you would rather your name was not on this website, tell us through the contact form or by email and we will take it off. The same goes for any photograph you or your child appear in, and for any feedback of yours we have put up.',
         'You do not have to give a reason, and asking makes no difference to your membership or your welcome at anything we put on.',
       ],
     },

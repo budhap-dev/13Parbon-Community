@@ -54,6 +54,13 @@ const table: Record<Action, Row> = {
   'messages:read': { visitor: false, own: false, other: false, admin: true },
   'messages:handle': { visitor: false, own: false, other: false, admin: true },
   'messages:delete': { visitor: false, own: false, other: false, admin: true },
+
+  // Feedback comes from the public, so a member has no more claim on the queue than a
+  // stranger does. The approved pieces are readable by everybody, but that is a different
+  // question — it is not an action anybody has to be allowed to take.
+  'feedback:read': { visitor: false, own: false, other: false, admin: true },
+  'feedback:review': { visitor: false, own: false, other: false, admin: true },
+  'feedback:delete': { visitor: false, own: false, other: false, admin: true },
 }
 
 describe('can', () => {

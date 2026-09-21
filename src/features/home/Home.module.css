@@ -449,6 +449,54 @@
   padding-bottom: 24px;
 }
 
+/* What people say */
+.saying {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding-top: 64px;
+  padding-bottom: 24px;
+}
+
+.sayings {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+  list-style: none;
+}
+
+.saysCard {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 26px 24px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-bg-raised);
+}
+
+/*
+ * Clamped rather than truncated in the data: the whole note is in the page for anybody
+ * reading it another way, and the card stays the size of its neighbours.
+ */
+.saysQuote {
+  flex: 1 1 auto;
+  font-size: 17px;
+  line-height: 1.65;
+  text-wrap: pretty;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 6;
+  line-clamp: 6;
+  overflow: hidden;
+}
+
+.saysBy {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-fg-muted);
+}
+
 /* Join */
 .joinActions {
   display: flex;

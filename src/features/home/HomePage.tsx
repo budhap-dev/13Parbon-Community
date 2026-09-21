@@ -3,6 +3,7 @@ import type { HomeSection } from '@/domain/settings'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { canSee, useSession } from '@/lib/auth/session'
 import styles from './Home.module.css'
+import { FeedbackStrip } from './sections/FeedbackStrip'
 import { Hero } from './sections/Hero'
 import { JoinCta } from './sections/JoinCta'
 import { NextEvent } from './sections/NextEvent'
@@ -31,6 +32,9 @@ export function HomePage() {
       {show('yearStrip') ? <YearStrip /> : null}
       {show('upcoming') ? <UpcomingEvents /> : null}
       {show('volunteer') ? <VolunteerStrip /> : null}
+      {/* Low, and after the volunteering: what people said is the thing that persuades
+          somebody who has read everything above and is still deciding. */}
+      {settings.showFeedback && show('feedback') ? <FeedbackStrip /> : null}
       <JoinCta />
     </div>
   )

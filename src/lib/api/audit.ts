@@ -110,6 +110,48 @@ export function withAuditTrail(base: ApiClient, now: () => Date = () => new Date
         )
       },
     },
+    feedback: {
+      ...base.feedback,
+      // `send` is not recorded, the same as `contact.send`: a line per member of the public
+      // using the form would say nothing the table does not already say.
+      review: async (id, status, viewer) => {
+        const was = snapshot(
+          (await base.feedback.listAll(viewer)).find((item) => item.id === id),
+          'status',
+        )
+        const piece = await base.feedback.review(id, status, viewer)
+        /*
+         * Approving is publishing. Recorded under its own action rather than as a status
+         * moving from one word to another, because "who put that on the website?" is the
+         * question somebody asks months later, and an answer of `status: pending → approved`
+         * is one the reader has to translate.
+         */
+        record(
+          viewer,
+          status === 'approved' ? 'feedback:publish' : status === 'rejected' ? 'feedback:decline' : 'feedback:withdraw',
+          { kind: 'feedback', id },
+          was,
+          { status: piece.status },
+        )
+        return piece
+      },
+      remove: async (id, viewer) => {
+        /*
+         * Read before the delete, and deliberately thin: whether it was signed, and what had
+         * been decided about it. Never the words. A line saying what somebody wrote would put
+         * the abuse this exists to destroy into the one table the committee cannot delete
+         * from, which is the opposite of taking it down.
+         */
+        const was = snapshot(
+          (await base.feedback.listAll(viewer)).find((item) => item.id === id),
+          'status',
+          'signedIn',
+          'createdAt',
+        )
+        await base.feedback.remove(id, viewer)
+        record(viewer, 'feedback:remove', { kind: 'feedback', id }, was, {})
+      },
+    },
     events: {
       ...base.events,
       create: async (draft, viewer) => {

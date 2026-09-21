@@ -1,0 +1,273 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+  padding-top: 48px;
+  padding-bottom: 96px;
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.title {
+  font-size: clamp(40px, 5vw, 72px);
+}
+
+.intro {
+  max-width: 560px;
+  font-size: 20px;
+  color: var(--color-fg-muted);
+  text-wrap: pretty;
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 640px;
+}
+
+.formTitle {
+  font-size: clamp(24px, 2.6vw, 34px);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.textarea {
+  width: 100%;
+  min-height: 180px;
+  padding: 12px 16px;
+  border: 1.5px solid var(--color-border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--color-bg-raised) 60%, transparent);
+  color: var(--color-fg);
+  font: inherit;
+  font-size: 17px;
+  resize: vertical;
+  transition: border-color var(--motion-fast) ease;
+}
+
+.textarea:hover {
+  border-color: var(--color-fg);
+}
+
+.textarea[aria-invalid='true'] {
+  border-color: var(--color-accent);
+}
+
+/* Counts down rather than up: what is left is the useful number near a limit. */
+.count {
+  align-self: flex-end;
+  font-size: 14px;
+  color: var(--color-fg-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.countLow {
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+.error {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-accent);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  padding-top: 4px;
+}
+
+.hint {
+  font-size: 15px;
+  color: var(--color-fg-muted);
+  text-wrap: pretty;
+}
+
+/*
+ * Who it will be signed by, and how to change that. A panel rather than a line, because it is
+ * the one decision on this form somebody might regret afterwards.
+ */
+.who {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px 22px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: color-mix(in srgb, var(--color-bg-raised) 55%, transparent);
+}
+
+.whoRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.whoName {
+  font-weight: 700;
+  font-size: 17px;
+}
+
+.whoNote {
+  font-size: 15px;
+  color: var(--color-fg-muted);
+  text-wrap: pretty;
+}
+
+.choice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 16px;
+  line-height: 1.45;
+  cursor: pointer;
+}
+
+.choice input {
+  margin-top: 3px;
+  width: 20px;
+  height: 20px;
+  accent-color: var(--color-accent);
+}
+
+/* The Google button, matched to the one on the member sign-in rather than invented again. */
+.google {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 12px 22px;
+  border: 1.5px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-bg-raised);
+  color: var(--color-fg);
+  font: inherit;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  transition:
+    border-color var(--motion-fast) ease,
+    transform var(--motion-fast) ease;
+}
+
+.google:hover:not(:disabled) {
+  border-color: var(--color-accent);
+  transform: translateY(-1px);
+}
+
+.google:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .google:hover:not(:disabled) {
+    transform: none;
+  }
+}
+
+.sent {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 32px;
+  border: 2px solid var(--color-accent);
+  border-radius: var(--radius-panel);
+}
+
+.sentTitle {
+  font-size: 30px;
+}
+
+.sentText {
+  font-size: 18px;
+  line-height: 1.5;
+  color: var(--color-fg-muted);
+  text-wrap: pretty;
+}
+
+.note {
+  max-width: 640px;
+  padding: 18px 20px;
+  border-left: 3px solid var(--color-accent);
+  border-radius: 0 var(--radius-tile) var(--radius-tile) 0;
+  background: color-mix(in srgb, var(--color-bg-raised) 55%, transparent);
+  font-size: 16px;
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+
+/* What has been approved. A wall of cards, not a list: these are quotations. */
+.wall {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.pieces {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+  list-style: none;
+}
+
+.piece {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 26px 24px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-bg-raised);
+}
+
+.quote {
+  flex: 1 1 auto;
+  font-size: 17px;
+  line-height: 1.65;
+  text-wrap: pretty;
+}
+
+.by {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 15px;
+  color: var(--color-fg-muted);
+}
+
+.byName {
+  font-weight: 700;
+  color: var(--color-fg);
+}
+
+.empty {
+  font-size: 17px;
+  color: var(--color-fg-muted);
+}

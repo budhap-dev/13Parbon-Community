@@ -36,6 +36,45 @@ describe('a visitor', () => {
   it('cannot handle a message', async () => {
     await expect(api().contact.markHandled('cm-1', visitor)).rejects.toThrow(/not allowed/i)
   })
+
+  it('may leave feedback and read what has been approved, and nothing else', async () => {
+    const a = api()
+    await expect(a.feedback.send({ message: 'A lovely evening, thank you all.', signed: false })).resolves.toEqual({
+      signed: false,
+    })
+    const approved = await a.feedback.listApproved()
+    expect(approved.length).toBeGreaterThan(0)
+    expect(approved.every((piece) => piece.status === 'approved')).toBe(true)
+    // The queue itself is the committee's. A visitor asking for it gets nothing, not a refusal:
+    // a policy hides rows, it does not announce them.
+    expect(await a.feedback.listAll(visitor)).toEqual([])
+  })
+
+  it('cannot review or delete feedback', async () => {
+    const a = api()
+    await expect(a.feedback.review('fb-2', 'approved', visitor)).rejects.toThrow(/not allowed/i)
+    await expect(a.feedback.remove('fb-2', visitor)).rejects.toThrow(/not allowed/i)
+  })
+
+  it('cannot publish their own feedback by sending it approved', async () => {
+    const a = api()
+    await a.feedback.send({ message: 'This one should sit in the queue like every other.', signed: false })
+    const queue = await a.feedback.listAll(admin)
+    const mine = queue.find((piece) => piece.message.startsWith('This one should sit'))
+    expect(mine?.status).toBe('pending')
+  })
+
+  it('cannot sign feedback with a name, because there is no name to take', async () => {
+    const a = api()
+    // Ticked the box with nothing behind it: the words are kept, the claim is not.
+    await expect(a.feedback.send({ message: 'Ticked the box with no account at all.', signed: true })).resolves.toEqual({
+      signed: false,
+    })
+    const queue = await a.feedback.listAll(admin)
+    const mine = queue.find((piece) => piece.message.startsWith('Ticked the box'))
+    expect(mine?.signedIn).toBe(false)
+    expect(mine?.authorName).toBeUndefined()
+  })
 })
 
 describe('a member', () => {
@@ -51,6 +90,15 @@ describe('a member', () => {
 
   it('cannot list the households', async () => {
     expect(await api().portal.listHouseholds(member)).toEqual([])
+  })
+
+  it('is no closer to the feedback queue than a stranger', async () => {
+    const a = api()
+    // Feedback comes from the public and belongs to the committee. Being a member is not a
+    // claim on it, and the approved pieces they can see are the ones anybody can see.
+    expect(await a.feedback.listAll(member)).toEqual([])
+    await expect(a.feedback.review('fb-2', 'approved', member)).rejects.toThrow(/not allowed/i)
+    await expect(a.feedback.remove('fb-2', member)).rejects.toThrow(/not allowed/i)
   })
 
   it('cannot read the committee\'s inbox or who has been knocking', async () => {

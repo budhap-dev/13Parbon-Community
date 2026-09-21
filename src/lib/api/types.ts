@@ -2,6 +2,7 @@ import type { Event, EventDraft } from '@/domain/event'
 import type { Festival } from '@/domain/festival'
 import type { Album, AlbumDraft, AlbumWithMedia, Media } from '@/domain/gallery'
 import type { ContactInput, ContactMessage, ContactReceipt } from '@/domain/contact'
+import type { Feedback, FeedbackInput, FeedbackReceipt, FeedbackStatus } from '@/domain/feedback'
 import type { SignInAttempt } from '@/domain/document'
 import type { Household, HouseholdDraft, Viewer } from '@/domain/household'
 import type { AttendanceDraft, EventAttendance } from '@/domain/attendance'
@@ -172,6 +173,53 @@ export interface ApiClient {
      * handled is what to do with one that mattered; this is for the ones that never did.
      */
     deleteMessage(id: string, viewer: Viewer): Promise<void>
+  }
+  /**
+   * What the public says about us.
+   *
+   * The one part of this contract a stranger both writes to and reads from, which is why the
+   * two halves are so unevenly shaped. Anybody may send a piece; nobody sees it until the
+   * committee has approved it; and what comes back out carries a first name at most.
+   */
+  feedback: {
+    /**
+     * Approved feedback, newest first. Readable by anybody, including a visitor — it is what
+     * the showcase on the public page is made of.
+     */
+    listApproved(limit?: number): Promise<Feedback[]>
+    /**
+     * Sends a piece of feedback. Rejects with an Error when the input is invalid.
+     *
+     * Returns a receipt, not the stored row, for the same reason `contact.send` does: what
+     * has just been written is pending, and pending rows are exactly what the public website
+     * has no policy to read. Asking for the row back would turn the insert into a read and
+     * fail the whole request.
+     *
+     * Whether it arrives signed is decided by the token, not by the input. `signed: true`
+     * from somebody not signed in sends anonymous feedback rather than failing: the box was
+     * ticked in hope, and losing the words over it would be the worse answer.
+     */
+    send(input: FeedbackInput): Promise<FeedbackReceipt>
+    /** Everything, waiting first then newest. Empty for anybody who is not an admin. */
+    listAll(viewer: Viewer): Promise<Feedback[]>
+    /**
+     * Approves a piece, turns it down, or puts an approved one back in the queue.
+     *
+     * Approving is publishing: the moment this returns, those words are on the public page
+     * over somebody's first name. Nothing else in this contract puts a member of the public's
+     * writing on the website, so it is the one write here that cannot be undone quietly —
+     * `pending` takes it down again, but it was up in between.
+     */
+    review(id: string, status: FeedbackStatus, viewer: Viewer): Promise<Feedback>
+    /**
+     * Removes a piece for good. Admin only.
+     *
+     * For what should never have been sent — abuse, a test, somebody's phone number typed in
+     * by mistake. Turning a piece down is what to do with one that simply is not for the
+     * website; this is for one that should not be held at all. The trail keeps that it went
+     * and who sent it away, never the words.
+     */
+    remove(id: string, viewer: Viewer): Promise<void>
   }
   /**
    * Everything behind the sign-in.

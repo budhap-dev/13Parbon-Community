@@ -66,8 +66,14 @@ export function authClient(config: SupabaseConfig): Promise<SupabaseClient> {
   return client
 }
 
-/** Sends the viewer to Google, and back to the portal afterwards. */
-export async function startGoogleSignIn(config: AuthConfig, returnTo = '/portal'): Promise<void> {
+/**
+ * Sends the viewer to Google, and back to the portal afterwards.
+ *
+ * Takes the project settings rather than the whole `AuthConfig`, because getting to Google
+ * has nothing to do with the allowlist — that decides what to do with the address on the way
+ * back. The public feedback sign-in has no list at all and uses this same door.
+ */
+export async function startGoogleSignIn(config: SupabaseConfig, returnTo = '/portal'): Promise<void> {
   const supabase = await authClient(config)
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
@@ -91,7 +97,7 @@ export async function accessToken(config: SupabaseConfig): Promise<string | null
   return data.session?.access_token ?? null
 }
 
-export async function signOutOfGoogle(config: AuthConfig): Promise<void> {
+export async function signOutOfGoogle(config: SupabaseConfig): Promise<void> {
   await (await authClient(config)).auth.signOut()
 }
 

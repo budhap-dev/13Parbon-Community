@@ -26,6 +26,7 @@ const READS = [
   'news.listPosts', 'news.getPost', 'news.listAnnouncements', 'news.listNewsletters',
   'news.listAllPosts', 'news.listAllAnnouncements',
   'contact.listMessages',
+  'feedback.listApproved', 'feedback.listAll',
   'portal.identify', 'portal.getHousehold', 'portal.listHouseholds',
   'portal.listSignInAttempts', 'portal.exportHousehold', 'portal.listAttendance',
   'audit.list', 'settings.get',
@@ -35,6 +36,7 @@ const READS = [
 /** Writes that leave a line in the trail. */
 const AUDITED = [
   'contact.markHandled', 'contact.deleteMessage',
+  'feedback.review', 'feedback.remove',
   'portal.addHousehold', 'portal.updateHousehold', 'portal.deleteHousehold', 'portal.resolveSignInAttempt', 'portal.recordAttendance',
   'gallery.createAlbum', 'gallery.updateAlbum', 'gallery.addMedia', 'gallery.setCover', 'gallery.setCaption',
   'gallery.reorder', 'gallery.deleteMedia',
@@ -48,7 +50,7 @@ const AUDITED = [
  * contact_messages for updates only: a line per visitor using the contact form would say
  * nothing the table does not already say.
  */
-const NOT_AUDITED = ['contact.send']
+const NOT_AUDITED = ['contact.send', 'feedback.send']
 
 function methodsOf(client: ApiClient): string[] {
   const found: string[] = []

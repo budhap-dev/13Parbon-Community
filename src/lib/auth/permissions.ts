@@ -51,6 +51,17 @@ export type Action =
   | 'messages:handle'
   /** Separate from handling one: taking a message away is not the same as dealing with it. */
   | 'messages:delete'
+  /** Read what the public has sent in, including what has not been approved. */
+  | 'feedback:read'
+  /**
+   * Approve a piece of feedback, or turn it down.
+   *
+   * The one action in this list that publishes a member of the public's writing to the public
+   * website, which is why it is not folded in with reading the queue.
+   */
+  | 'feedback:review'
+  /** Destroy a piece. Separate from turning one down, the same way deleting a message is. */
+  | 'feedback:delete'
 
 /** What the action is about, where the answer depends on which one. */
 export type Resource = { householdId?: string }
@@ -103,6 +114,9 @@ export function can(viewer: Viewer, action: Action, resource?: Resource): boolea
     case 'messages:read':
     case 'messages:handle':
     case 'messages:delete':
+    case 'feedback:read':
+    case 'feedback:review':
+    case 'feedback:delete':
       return false
   }
 }

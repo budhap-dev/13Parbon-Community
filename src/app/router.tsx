@@ -3,6 +3,7 @@ import { RouteError } from '@/components/RouteError'
 import { AboutPage } from '@/features/about'
 import { ContactPage } from '@/features/contact'
 import { EventPage, EventsPage } from '@/features/events'
+import { FeedbackPage } from '@/features/feedback'
 import { AlbumPage, GalleryPage } from '@/features/gallery'
 import { LoginPage } from '@/features/membership'
 import { PrivacyPage } from '@/features/privacy'
@@ -14,6 +15,7 @@ import {
   AdminAuditPage,
   AdminContentPage,
   AdminEventsPage,
+  AdminFeedbackPage,
   AdminMediaPage,
   AdminMessagesPage,
   AdminOverviewPage,
@@ -49,6 +51,13 @@ export const routes: RouteObject[] = [
           { path: 'news/:slug', Component: ArticlePage },
         ],
       },
+      {
+        // Off by default. Turning it off takes the page with it, not merely the link: a page
+        // still answering with what strangers wrote is not a section the committee has
+        // switched off, whatever the switch said.
+        element: <SectionGate setting="showFeedback" />,
+        children: [{ path: 'feedback', Component: FeedbackPage }],
+      },
       { path: 'about', Component: AboutPage },
       { path: 'contact', Component: ContactPage },
       { path: 'login', Component: LoginPage },
@@ -80,6 +89,7 @@ export const routes: RouteObject[] = [
           { path: '/admin/content', Component: AdminContentPage },
           { path: '/admin/media', Component: AdminMediaPage },
           { path: '/admin/messages', Component: AdminMessagesPage },
+          { path: '/admin/feedback', Component: AdminFeedbackPage },
           { path: '/admin/audit', Component: AdminAuditPage },
         ],
       },

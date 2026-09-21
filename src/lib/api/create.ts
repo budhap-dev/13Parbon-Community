@@ -4,6 +4,7 @@ import { readSupabaseConfig, withSupabaseWrites } from './supabase'
 import { withSupabasePortal } from './supabase/portal'
 import { withSupabaseAudit } from './supabase/audit'
 import { withSupabaseEvents } from './supabase/events'
+import { withSupabaseFeedback } from './supabase/feedback'
 import { withSupabaseGallery } from './supabase/gallery'
 import { withSupabaseNews } from './supabase/news'
 import { withSupabaseSettings } from './supabase/settings'
@@ -24,14 +25,19 @@ export function createApi(env: Record<string, string | undefined> = import.meta.
   const base = createMockApi()
   const config = readSupabaseConfig(env)
   if (!config) return withAuditTrail(base)
-  const live = withSupabaseEvents(
-    withSupabaseGallery(
-      withSupabaseNews(withSupabaseSettings(withSupabasePortal(withSupabaseWrites(base, config), config), config), config),
-      config,
-      env,
-    ),
-    config,
-  )
+  /*
+   * One layer per part of the site, each replacing its own slice of the contract and passing
+   * the rest through. Written as steps rather than as one nested call: the nesting was five
+   * deep already, and adding a sixth meant counting brackets to see which `config` belonged
+   * to which wrapper.
+   */
+  let live = withSupabaseWrites(base, config)
+  live = withSupabasePortal(live, config)
+  live = withSupabaseSettings(live, config)
+  live = withSupabaseNews(live, config)
+  live = withSupabaseGallery(live, config, env)
+  live = withSupabaseFeedback(live, config)
+  live = withSupabaseEvents(live, config)
   /*
    * The audit read goes outside the audit wrapper, which keeps its own list in memory and would
    * otherwise answer from it. Its recording stays: the trigger is the guarantee, this is the

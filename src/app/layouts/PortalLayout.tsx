@@ -7,9 +7,10 @@ import { useThemeScope } from '@/app/theme/ThemeContext'
 import { useGoogleSignIn } from '@/lib/auth/GoogleSignIn'
 import { useSession, useSignedIn } from '@/lib/auth/session'
 import { previewAccounts } from '@/lib/auth/previewAccounts'
-import { useSignInAttempts, useViewer } from '@/lib/api'
+import { useAllFeedback, useSignInAttempts, useViewer } from '@/lib/api'
 import { can } from '@/lib/auth/permissions'
 import { unresolved } from '@/domain/document'
+import { waiting } from '@/domain/feedback'
 import styles from './PortalLayout.module.css'
 
 type Item = { label: string; to: string; icon: IconName; end?: boolean; count?: number }
@@ -31,6 +32,7 @@ export function PortalLayout() {
   const mainRef = useRef<HTMLElement>(null)
   const first = useRef(true)
   const { data: attempts } = useSignInAttempts()
+  const { data: feedback } = useAllFeedback()
 
   useEffect(() => {
     if (first.current) {
@@ -55,6 +57,9 @@ export function PortalLayout() {
     { label: 'Content', to: '/admin/content', icon: 'layout' },
     { label: 'Photographs', to: '/admin/media', icon: 'image' },
     { label: 'Messages', to: '/admin/messages', icon: 'message' },
+    // Only what is still waiting, the same as People: a badge counting everything ever sent
+    // is a badge that never clears, and one that never clears stops being read.
+    { label: 'Feedback', to: '/admin/feedback', icon: 'heart', count: waiting(feedback ?? []).length },
     { label: 'What has changed', to: '/admin/audit', icon: 'clock' },
   ]
 

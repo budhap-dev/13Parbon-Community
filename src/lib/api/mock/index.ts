@@ -1,6 +1,7 @@
 import { isUpcoming } from '@/domain/dates'
 import { isValidAttendance, type EventAttendance } from '@/domain/attendance'
 import { isValidContact, type ContactMessage } from '@/domain/contact'
+import { forReview, isValidFeedback, type Feedback, type FeedbackStatus } from '@/domain/feedback'
 import { isLive, isValid, slugFrom, validateAnnouncement, validateNews, type Announcement, type AnnouncementDraft, type NewsDraft, type NewsPost } from '@/domain/news'
 import { isValidEvent, tidyProgramme, type Event, type EventDraft } from '@/domain/event'
 import { uniqueSlug } from '@/domain/slug'
@@ -548,6 +549,67 @@ export function createMockApi({ now = () => new Date(), latencyMs = 0, events }:
           }
         }
         return Promise.reject(new NotAllowed('no such message'))
+      },
+    },
+    feedback: {
+      listApproved: (limit = 20) =>
+        delay(
+          portal.feedback
+            .filter((item) => item.status === 'approved')
+            .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+            .slice(0, limit),
+          latencyMs,
+        ),
+
+      send: (input) => {
+        if (!isValidFeedback(input)) return Promise.reject(new Error('Please check the form and try again.'))
+        /*
+         * Anonymous whatever the box said, because there is no token here to take a name from.
+         *
+         * Not a shortcut: it is the same answer `portal.stamp_feedback` gives when somebody
+         * ticks "put my name to it" while signed out, and a mock that invented a name would be
+         * teaching the one thing the database refuses to do — let the browser decide who wrote
+         * something. A build with no Supabase project has no Google sign-in either, so the
+         * form cannot offer the box in the first place.
+         */
+        const piece: Feedback = {
+          id: `fb-${portal.feedback.length + 1}`,
+          message: input.message.trim(),
+          signedIn: false,
+          status: 'pending',
+          createdAt: now().toISOString(),
+        }
+        portal.feedback.push(piece)
+        // The receipt, not the row: what has just been written is pending, and pending is
+        // exactly what the person who wrote it has no way to read back.
+        return delay({ signed: false }, latencyMs)
+      },
+
+      listAll: (viewer) => delay(isAdmin(viewer) ? forReview(portal.feedback) : [], latencyMs),
+
+      review: (id, status: FeedbackStatus, viewer) => {
+        if (!isAdmin(viewer)) return Promise.reject(new NotAllowed('only the committee can review feedback'))
+        const piece = portal.feedback.find((item) => item.id === id)
+        if (!piece) return Promise.reject(new NotAllowed('no such feedback'))
+        piece.status = status
+        if (status === 'pending') {
+          // Put back in the queue, so it reads as waiting rather than as handled and undone.
+          delete piece.reviewedBy
+          delete piece.reviewedAt
+        } else {
+          // The name, not the id: the screen prints this column straight out.
+          piece.reviewedBy = portal.households.find((h) => h.id === viewer.householdId)?.name ?? 'The committee'
+          piece.reviewedAt = now().toISOString()
+        }
+        return delay(piece, latencyMs)
+      },
+
+      remove: (id, viewer) => {
+        if (!isAdmin(viewer)) return Promise.reject(new NotAllowed('only the committee can do that'))
+        const at = portal.feedback.findIndex((item) => item.id === id)
+        if (at === -1) return Promise.reject(new NotAllowed('no such feedback'))
+        portal.feedback.splice(at, 1)
+        return delay(undefined, latencyMs)
       },
     },
     // Every rule below has a policy in supabase/portal.sql that says the same thing, and a

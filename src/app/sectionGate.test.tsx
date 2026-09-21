@@ -46,6 +46,21 @@ describe('a section the committee has switched off', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Page not found' })).toBeInTheDocument()
   })
 
+  it('shows the feedback page once the committee has turned it on', async () => {
+    renderAt('/feedback', withSwitches({ showFeedback: true }))
+    expect(await screen.findByRole('heading', { level: 1, name: 'What people say' })).toBeInTheDocument()
+  })
+
+  /*
+   * The one section whose content is written by strangers, so the switch has to take the page
+   * and not merely the link. A page still serving what the public wrote, to anybody holding
+   * the address, is not a section the committee has switched off.
+   */
+  it('answers as though the feedback page were not there while it is off', async () => {
+    renderAt('/feedback', withSwitches({ showFeedback: false }))
+    expect(await screen.findByRole('heading', { level: 1, name: 'Page not found' })).toBeInTheDocument()
+  })
+
   it('shows the news page once there is news to carry', async () => {
     renderAt('/news', withSwitches({ showNews: true }))
     expect(await screen.findByRole('heading', { level: 1, name: /News/ })).toBeInTheDocument()

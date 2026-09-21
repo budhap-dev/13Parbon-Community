@@ -6,6 +6,8 @@ import { previewAccounts } from '@/lib/auth/previewAccounts'
 import { expectNoAxeViolations } from '@/test/axe'
 import { TestDataProviders } from '@/test/render'
 import type { Session } from '@/lib/auth/session'
+import { createMockApi, type ApiClient } from '@/lib/api'
+import { defaultSettings } from '@/app/defaults'
 
 /**
  * Every page, checked against the automated half of WCAG.
@@ -15,9 +17,9 @@ import type { Session } from '@/lib/auth/session'
  *
  * One test per page rather than one big one: a failure should name the page.
  */
-async function check(path: string, session?: Session) {
+async function check(path: string, session?: Session, api?: ApiClient) {
   const { container, findByRole } = render(
-    <TestDataProviders session={session}>
+    <TestDataProviders session={session} api={api}>
       <RouterProvider router={createMemoryRouter(routes, { initialEntries: [path] })} />
     </TestDataProviders>,
   )
@@ -29,10 +31,30 @@ async function check(path: string, session?: Session) {
 const member = previewAccounts[0]
 const admin = previewAccounts[1]
 
+/**
+ * The feedback pages, with the switch the committee has to throw turned on.
+ *
+ * Off by default, so without this the sweep would audit the not-found page twice and call
+ * the feedback screens checked.
+ */
+function withFeedbackOn(): ApiClient {
+  const base = createMockApi()
+  return {
+    ...base,
+    delivers: true,
+    settings: { ...base.settings, get: async () => ({ ...defaultSettings, showFeedback: true }) },
+  }
+}
+
 describe('the public pages', () => {
   for (const path of ['/', '/events', '/gallery', '/about', '/contact', '/privacy', '/login']) {
     it(`${path} has no automatic violations`, () => check(path))
   }
+})
+
+describe('the feedback pages', () => {
+  it('/feedback has no automatic violations', () => check('/feedback', undefined, withFeedbackOn()))
+  it('/admin/feedback has no automatic violations', () => check('/admin/feedback', admin, withFeedbackOn()))
 })
 
 describe('the member portal', () => {

@@ -3,7 +3,8 @@ import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { Button } from '@/components/Button'
 import { formatLongDate } from '@/domain/dates'
 import { peopleAt } from '@/domain/attendance'
-import { useAttendance, useContactMessages, useHouseholds, useSignInAttempts } from '@/lib/api'
+import { waiting } from '@/domain/feedback'
+import { useAllFeedback, useAttendance, useContactMessages, useHouseholds, useSignInAttempts } from '@/lib/api'
 import styles from '@/features/portal/Portal.module.css'
 
 function Stat({ label, value, note, accent }: { label: string; value: string | number; note: string; accent?: boolean }) {
@@ -23,6 +24,8 @@ export function AdminOverviewPage() {
   const attempts = allAttempts?.filter((a) => !a.resolved)
   const { data: messages } = useContactMessages()
   const { data: attendance } = useAttendance()
+  const { data: feedback } = useAllFeedback()
+  const unapproved = waiting(feedback ?? [])
 
   /** The most recent night we have a number for. Nothing here is per household any more. */
   const lastCounted = attendance?.[0]
@@ -44,6 +47,7 @@ export function AdminOverviewPage() {
       <div className={styles.stats}>
         <Stat label="Waiting on you" value={attempts?.length ?? 0} note="tried to sign in, not on the list" accent />
         <Stat label="Unread" value={unhandled.length} note="messages from the public" accent />
+        <Stat label="To review" value={unapproved.length} note="feedback waiting for a decision" accent />
         <Stat
           label="Came last time"
           value={lastCounted ? peopleAt(lastCounted) : '—'}
@@ -107,7 +111,7 @@ export function AdminOverviewPage() {
               Needs a decision
             </h2>
           </div>
-          {(attempts?.length ?? 0) + unhandled.length === 0 ? (
+          {(attempts?.length ?? 0) + unhandled.length + unapproved.length === 0 ? (
             <p className={styles.empty}>Nothing waiting. </p>
           ) : (
             <div className={styles.list}>
@@ -122,6 +126,23 @@ export function AdminOverviewPage() {
                   </div>
                   <Link to="/admin/people" className={styles.tiny}>
                     Add
+                  </Link>
+                </div>
+              ))}
+              {/* Feedback waits on a judgement rather than a reply, which is why it is here
+                  and not only behind its own badge: a queue nobody is reminded of is a queue
+                  where somebody's note about the heating sits for a month. */}
+              {unapproved.map((piece) => (
+                <div key={piece.id} className={styles.listItem}>
+                  <span className={styles.dot} />
+                  <div className={styles.listBody}>
+                    <strong>{piece.authorName ?? 'Anonymous'}</strong>
+                    <span className={`${styles.muted} ${styles.tiny}`}>
+                      Left feedback · {formatLongDate(piece.createdAt)} · not on the website yet
+                    </span>
+                  </div>
+                  <Link to="/admin/feedback" className={styles.tiny}>
+                    Read
                   </Link>
                 </div>
               ))}

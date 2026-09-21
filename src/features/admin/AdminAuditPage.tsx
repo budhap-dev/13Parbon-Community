@@ -17,6 +17,7 @@ const SUBJECTS: Record<string, string> = {
   site_settings: 'what the site shows',
   news_posts: 'a news piece',
   announcements: 'a notice',
+  feedback: 'a piece of feedback',
 }
 
 const VERBS: Record<string, string> = { insert: 'Added', update: 'Changed', delete: 'Removed' }
@@ -46,6 +47,9 @@ const DOING: Record<string, string> = {
   reorder: 'Reordered',
   setCover: 'Chose the face of',
   caption: 'Captioned',
+  publish: 'Put on the website',
+  decline: 'Turned down',
+  withdraw: 'Took off the website',
 }
 
 const THINGS: Record<string, string> = {
@@ -58,6 +62,7 @@ const THINGS: Record<string, string> = {
   messages: 'a message',
   news: 'a piece',
   settings: 'what the site shows',
+  feedback: 'a piece of feedback',
 }
 
 /** What happened, in a sentence, whichever half of the app wrote the line. */

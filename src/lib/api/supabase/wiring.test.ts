@@ -4,6 +4,7 @@ import { createMockApi } from '../mock'
 import { withAuditTrail } from '../audit'
 import { withSupabaseAudit } from './audit'
 import { withSupabaseEvents } from './events'
+import { withSupabaseFeedback } from './feedback'
 import { withSupabaseGallery } from './gallery'
 import { withSupabasePortal } from './portal'
 import { withSupabaseNews } from './news'
@@ -109,6 +110,19 @@ describe('with a project configured', () => {
     const wired = withSupabaseGallery(base, { url: configured.VITE_SUPABASE_URL, anonKey: configured.VITE_SUPABASE_ANON_KEY }, {})
     const names = Object.keys(base.gallery) as (keyof typeof base.gallery)[]
     expect(names.filter((name) => wired.gallery[name] === base.gallery[name])).toEqual([])
+  })
+
+  /*
+   * Feedback is the half-wired failure the inbox test above was written for, all over again
+   * and worse: the form writes to the real table, and a queue left on fixtures would show the
+   * committee four sample notes while what the public actually sent sat unread and unapproved
+   * — invisible, because sample data looks exactly like real data.
+   */
+  it('reads the feedback queue from the same table the form writes to', () => {
+    const base = createMockApi()
+    const wired = withSupabaseFeedback(base, { url: configured.VITE_SUPABASE_URL, anonKey: configured.VITE_SUPABASE_ANON_KEY })
+    const names = Object.keys(base.feedback) as (keyof typeof base.feedback)[]
+    expect(names.filter((name) => wired.feedback[name] === base.feedback[name])).toEqual([])
   })
 
   it('keeps events in the database, front of house being what this site owns', () => {

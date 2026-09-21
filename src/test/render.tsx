@@ -56,6 +56,12 @@ export function createEmptyApi(): ApiClient {
       removeAnnouncement: async () => { throw new Error('not connected') },
     },
     contact: { send: async () => { throw new Error('not connected') }, listMessages: async () => [], markHandled: async () => { throw new Error('not connected') }, deleteMessage: async () => { throw new Error('not connected') } },
+    feedback: {
+      listApproved: async () => [], listAll: async () => [],
+      send: async () => { throw new Error('not connected') },
+      review: async () => { throw new Error('not connected') },
+      remove: async () => { throw new Error('not connected') },
+    },
     portal: {
       identify: async () => null,
       getHousehold: async () => null,
@@ -97,6 +103,7 @@ export function createFailingApi(): ApiClient {
       createAnnouncement: down, updateAnnouncement: down, removeAnnouncement: down, removePost: down,
     },
     contact: { send: down, listMessages: down, markHandled: down, deleteMessage: down },
+    feedback: { listApproved: down, listAll: down, send: down, review: down, remove: down },
     portal: {
       identify: down,
       getHousehold: down,

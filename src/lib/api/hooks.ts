@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { ContactInput } from '@/domain/contact'
+import type { FeedbackInput, FeedbackStatus } from '@/domain/feedback'
 import type { AttendanceDraft } from '@/domain/attendance'
 import type { EventDraft } from '@/domain/event'
 import type { SettingsDraft } from '@/domain/settings'
@@ -90,6 +91,59 @@ export function useNewsletters() {
 export function useSendContact() {
   const api = useApi()
   return useMutation({ mutationFn: (input: ContactInput) => api.contact.send(input) })
+}
+
+/**
+ * What the public has said about us, as the public sees it.
+ *
+ * Not keyed on who is asking, unlike the notices: the answer is the same for everybody,
+ * because "approved" is the only thing that makes a piece readable and the committee's own
+ * queue is a different query. A cached visitor answer handed to an admin is the right answer.
+ */
+export function useApprovedFeedback(limit = 12) {
+  const api = useApi()
+  return useQuery({ queryKey: ['feedback', 'approved', limit], queryFn: () => api.feedback.listApproved(limit) })
+}
+
+export function useSendFeedback() {
+  const api = useApi()
+  return useMutation({ mutationFn: (input: FeedbackInput) => api.feedback.send(input) })
+}
+
+export function useAllFeedback() {
+  const api = useApi()
+  const viewer = useViewer()
+  return useQuery({
+    queryKey: ['feedback', 'all', asks(viewer)],
+    queryFn: () => api.feedback.listAll(viewer),
+  })
+}
+
+/**
+ * Approving a piece, or turning it down.
+ *
+ * Both lists are invalidated, not just the queue. Approving *is* publishing — the showcase on
+ * the public page is the other half of this write, and a reviewer who approves something and
+ * then looks at the page to check would otherwise be shown the cached version without it.
+ */
+export function useReviewFeedback() {
+  const api = useApi()
+  const viewer = useViewer()
+  const queries = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, status }: { id: string; status: FeedbackStatus }) => api.feedback.review(id, status, viewer),
+    onSuccess: () => queries.invalidateQueries({ queryKey: ['feedback'] }),
+  })
+}
+
+export function useRemoveFeedback() {
+  const api = useApi()
+  const viewer = useViewer()
+  const queries = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => api.feedback.remove(id, viewer),
+    onSuccess: () => queries.invalidateQueries({ queryKey: ['feedback'] }),
+  })
 }
 
 export function useHousehold(id: string | undefined) {

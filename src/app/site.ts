@@ -108,6 +108,15 @@ export const site = {
    */
   showNews: false,
   /**
+   * Feedback from the public: the page, and the approved pieces on it.
+   *
+   * Off until the committee has decided they want it, because this is the one section of the
+   * site whose content is written by strangers. Everything sent waits for approval whatever
+   * this says, so the risk of turning it on is a queue to work through rather than anything
+   * appearing unasked.
+   */
+  showFeedback: false,
+  /**
    * The next-event banner pinned under the wordmark on the home page. Parked for now at the
    * committee's request; the component and its styles are untouched, so setting this to true
    * brings it back exactly as it was.
@@ -127,6 +136,9 @@ export const site = {
     volunteer: 'public',
     yearStrip: 'public',
     photos: 'public',
+    // The committee only, until there is something approved worth putting on the front page.
+    // A home page section that is empty most of the time teaches people to scroll past it.
+    feedback: 'admins',
   } satisfies Record<string, 'public' | 'members' | 'admins'>,
   /**
    * Other tools the committee runs. Separate apps with their own sign-in, linked from the
