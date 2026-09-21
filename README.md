@@ -2,6 +2,8 @@
 
 > *Baro mase tero parbon* — twelve months, thirteen festivals. A community app for people who always have something to gather around.
 
+**New to the project? Start with [what this app does](docs/FEATURES.md)** — every screen, every rule, and the decisions behind them, in one place.
+
 Read the [project story](docs/STORY.md) for the vision and the [portal plan](docs/PLAN.md) for structure, architecture and delivery phases. [Photographs](docs/PHOTOS.md) covers how pictures from an event reach the gallery, and why they are not kept in this repository. [Member login](docs/MEMBER-LOGIN.md) is the parked story for sign-in and the committee's back office, and [Feedback](docs/FEEDBACK.md) covers what the public can send in, how the committee reviews it, and why signing in to leave feedback is a different door from signing in as a member.
 
 ## Stack
@@ -62,6 +64,7 @@ src/
   features/          # one folder per capability (home, events, news, gallery, about, contact, membership, privacy, placeholder)
   test/              # Vitest setup and render helpers
 docs/
+  FEATURES.md        # every feature, screen and rule — the tour for somebody new
   STORY.md           # project story and vision
   PLAN.md            # portal structure, architecture and delivery phases
   PHOTOS.md          # how photographs reach the gallery, and where they are kept
