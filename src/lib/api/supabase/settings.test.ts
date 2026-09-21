@@ -1,6 +1,19 @@
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { defaultSettings } from '@/app/defaults'
-import { mergeSettings } from '@/domain/settings'
+import type { Viewer } from '@/domain/household'
+import { mergeSettings, type SiteSettings } from '@/domain/settings'
+import { createMockApi } from '../mock'
+import { withSupabaseSettings } from './settings'
+
+/**
+ * The switches, in two halves.
+ *
+ * `mergeSettings` is the pure half: what a stored row becomes once it has been laid over the
+ * code's own values. `withSupabaseSettings` is the half that talks to the database. They fail
+ * in different ways and are tested separately, but they belong in one file because between
+ * them they decide what the public site *is* — whether the gallery exists, whether there is a
+ * news page, which home page sections a visitor ever sees.
+ */
 
 /**
  * The row is one JSON object, which is the shape `domain/settings.ts` warns about: a column
@@ -75,5 +88,122 @@ describe('laying saved settings over what the code says', () => {
 
   it('falls back to the file for the questions when nothing was saved for them', () => {
     expect(mergeSettings({ showNews: true }, defaultSettings).faq).toEqual(defaultSettings.faq)
+  })
+})
+
+/**
+ * The switches, against the real database.
+ *
+ * Worth testing on its own because this one row decides what the public site *is*: whether
+ * the gallery exists, whether there is a news page, which home page sections a visitor sees.
+ * Two of the behaviours below are the difference between a working site and a blank one on
+ * the morning after something goes wrong with the database.
+ */
+
+const upsert = vi.fn(async () => ({ error: null as { code?: string; message: string } | null }))
+let stored: unknown = undefined
+
+const client = {
+  schema: () => ({
+    from: () => ({
+      select: () => ({
+        eq: () => ({
+          // No row is the ordinary state of a new project, so undefined is the default here.
+          maybeSingle: async () => ({ data: stored === undefined ? null : { value: stored } }),
+        }),
+      }),
+      upsert,
+    }),
+  }),
+}
+
+vi.mock('@/lib/auth/supabaseAuth', () => ({ dataClient: async () => client }))
+
+const config = { url: 'https://project.supabase.co', anonKey: 'anon-key' }
+const admin: Viewer = { householdId: 'hh-1', role: 'admin' }
+const member: Viewer = { householdId: 'hh-2', role: 'member' }
+
+const wired = () => withSupabaseSettings(createMockApi(), config)
+
+beforeEach(() => {
+  stored = undefined
+  upsert.mockClear()
+  upsert.mockResolvedValue({ error: null })
+})
+
+describe('reading the switches', () => {
+  /**
+   * The ordinary state of a new project, and not a failure: nobody has changed anything yet,
+   * so the code's own values are the right answer. An adapter that treated "no row" as an
+   * error would take the whole public site down on the day the project was created.
+   */
+  it('falls back to what the code says when nothing has been saved', async () => {
+    const settings = await wired().settings.get()
+    expect(settings).toEqual(defaultSettings)
+  })
+
+  it('lays a saved row over the defaults, key by key', async () => {
+    stored = { showNews: true, showFeedback: true }
+    const settings = await wired().settings.get()
+    expect(settings.showNews).toBe(true)
+    expect(settings.showFeedback).toBe(true)
+    // Untouched keys keep the code's answer rather than becoming undefined.
+    expect(settings.showPhotos).toBe(defaultSettings.showPhotos)
+    expect(settings.committee).toEqual(defaultSettings.committee)
+  })
+
+  /**
+   * Nothing stored is trusted on the way out. A key renamed in the code must not leave a
+   * stale value quietly driving the live site, and a half-written row must not blank a page.
+   */
+  it('ignores a row that is the wrong shape', async () => {
+    stored = { showNews: 'yes please', home: { photos: 'everyone' }, committee: 'the committee' }
+    const settings = await wired().settings.get()
+    expect(settings.showNews).toBe(defaultSettings.showNews)
+    expect(settings.home.photos).toBe(defaultSettings.home.photos)
+    expect(settings.committee).toEqual(defaultSettings.committee)
+  })
+})
+
+describe('saving them', () => {
+  const draft: SiteSettings = { ...defaultSettings, showFeedback: true }
+
+  it('writes one row, and reads the switches back afterwards', async () => {
+    const saved = await wired().settings.save(draft, admin)
+    expect(upsert).toHaveBeenCalledTimes(1)
+    const [row] = upsert.mock.calls[0] as unknown as [{ id: boolean; value: SiteSettings }]
+    expect(row.id).toBe(true)
+    expect(row.value.showFeedback).toBe(true)
+    // What comes back is what the database now holds, not what was hopefully sent.
+    expect(saved).toEqual(defaultSettings)
+  })
+
+  it('refuses a draft that is not a settings object at all', async () => {
+    const broken = { ...defaultSettings, home: { ...defaultSettings.home, photos: 'everybody' } } as unknown as SiteSettings
+    await expect(wired().settings.save(broken, admin)).rejects.toThrow(/do not look right/i)
+    expect(upsert).not.toHaveBeenCalled()
+  })
+
+  /**
+   * A refused write comes back 42501 from an upsert with a `with check` on both policies.
+   * It reaches a person, so it is translated rather than shown raw — nobody should read
+   * "new row violates row-level security policy" and have to work out that they are not on
+   * the committee.
+   */
+  it('says who may change this when the policy refuses', async () => {
+    upsert.mockResolvedValue({ error: { code: '42501', message: 'new row violates row-level security policy' } })
+    await expect(wired().settings.save(draft, admin)).rejects.toThrow(/only the committee/i)
+  })
+
+  it('says the same to a member whatever the database called it', async () => {
+    // `isAdmin` is consulted for the wording only, never to decide: the database has already
+    // decided by the time this runs.
+    upsert.mockResolvedValue({ error: { code: '08006', message: 'connection failure' } })
+    await expect(wired().settings.save(draft, member)).rejects.toThrow(/only the committee/i)
+  })
+
+  it('passes a real failure through to the committee rather than blaming them', async () => {
+    upsert.mockResolvedValue({ error: { code: '08006', message: 'connection failure' } })
+    await expect(wired().settings.save(draft, admin)).rejects.toThrow(/connection failure/)
   })
 })
