@@ -3,6 +3,11 @@
  * committee. Update this file when a backend or payments are added, and whenever what the
  * site collects changes: the analytics note here has to match what <Analytics /> in App.tsx
  * actually does.
+ *
+ * The committee can reword the notice from the portal, and what they save is what the public
+ * reads. That makes `updatedOn` below load-bearing: **move it on whenever you change this
+ * file.** The saved notice remembers which date it was edited from, and a different date here
+ * is the only thing that tells the committee their wording now describes an older site.
  */
 export const privacy = {
   /* Change this whenever anything on this page changes: it is the date the notice took effect. */

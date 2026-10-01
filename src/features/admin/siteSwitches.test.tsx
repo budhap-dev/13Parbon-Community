@@ -13,7 +13,18 @@ function renderAt(path: string, session = previewAccounts[1]) {
   )
 }
 
-const switches = () => screen.findByRole('region', { name: 'What the site shows' })
+/*
+ * The panel, once the form inside it has opened.
+ *
+ * The form waits for the saved settings before it shows itself: opened on what the code says,
+ * it would offer to save the code's version over the committee's. So the panel is on the page a
+ * moment before there is anything in it to press.
+ */
+const switches = async () => {
+  const panel = await screen.findByRole('region', { name: 'What the site shows' })
+  await within(panel).findByRole('button', { name: 'Save the switches' })
+  return panel
+}
 
 describe('the switches', () => {
   it('says what each one does, so nobody turns the gallery off by accident', async () => {
@@ -47,8 +58,8 @@ describe('the words on the public pages', () => {
     expect(within(panel).getByLabelText('Who we are')).toBeInTheDocument()
     expect(within(panel).getByLabelText('Mission and vision')).toBeInTheDocument()
     expect(within(panel).getByLabelText('Note on the gallery')).toBeInTheDocument()
-    // Honest about what it does not cover, rather than leaving somebody hunting.
-    expect(within(panel).getByText(/still live in the files/)).toBeInTheDocument()
+    // Says where the lists are, rather than leaving somebody hunting for the festivals here.
+    expect(within(panel).getByText(/has a section of its own on this page/)).toBeInTheDocument()
   })
 
   it('says when a line is still in brackets and therefore not shown at all', async () => {
@@ -97,7 +108,8 @@ describe('the committee and the roll', () => {
     await userEvent.click(within(panel).getByRole('button', { name: 'Add somebody' }))
     expect(rows()).toBe(before + 1)
 
-    await userEvent.click(within(panel).getAllByRole('button', { name: /^Remove / })[0])
+    // By name: this screen has other lists now, each with a Remove of its own.
+    await userEvent.click(within(panel).getByRole('button', { name: 'Remove Mr. Dalim Ghosh' }))
     expect(rows()).toBe(before)
   })
 

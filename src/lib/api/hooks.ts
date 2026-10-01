@@ -302,9 +302,21 @@ export function useHouseholdExport(id: string | undefined) {
   })
 }
 
+/**
+ * The year's occasions, which the committee keeps with the rest of the site's settings.
+ *
+ * The same query the settings provider makes, read through a `select`, so the home page asks
+ * once rather than twice — and a festival saved in the portal is on the page as soon as the
+ * settings are, with nothing separate to remember to refresh.
+ */
 export function useFestivals() {
   const api = useApi()
-  return useQuery({ queryKey: ['festivals'], queryFn: () => api.festivals.list() })
+  return useQuery({
+    queryKey: ['settings'],
+    queryFn: () => api.settings.get(),
+    staleTime: 5 * 60 * 1000,
+    select: (settings) => settings.festivals,
+  })
 }
 
 export function useRecentMedia(limit = 6) {

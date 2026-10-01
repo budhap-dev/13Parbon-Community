@@ -1,6 +1,5 @@
 import { useId, useState, type FormEvent } from "react";
 import { useSearchParams } from "react-router";
-import { site } from "@/app/site";
 import { useSettings } from "@/app/SettingsContext";
 import { useDocumentTitle } from "@/app/useDocumentTitle";
 import { Button } from "@/components/Button";
@@ -18,7 +17,7 @@ import styles from "./Contact.module.css";
 const empty: ContactInput = { name: "", email: "", subject: "", message: "", kind: "general" };
 
 export function ContactPage() {
-  const { text } = useSettings()
+  const { text, social } = useSettings()
   useDocumentTitle("Contact us");
   const id = useId();
   /**
@@ -130,7 +129,7 @@ export function ContactPage() {
             </a>
           </li>
 
-          {site.social.map((channel) => (
+          {social.map((channel) => (
             <li key={channel.name} className={styles.channel}>
               <Icon
                 name={channel.icon}

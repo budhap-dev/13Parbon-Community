@@ -49,15 +49,27 @@ function findGaps(value: unknown, path: string[] = []): string[] {
  * that was already done, which is the same stale number this file was written to get rid of,
  * pointing the other way.
  */
-export function gapsNow(settings?: Pick<SiteSettings, 'text' | 'faq'>): Gap[] {
-  const homePage = settings ? { ...site, ...settings.text } : site
+export function gapsNow(
+  settings?: Pick<SiteSettings, 'text' | 'faq'> & Partial<Pick<SiteSettings, 'story' | 'values' | 'festivals' | 'privacy'>>,
+): Gap[] {
+  const homePage = settings
+    ? { ...site, ...settings.text, ...(settings.festivals ? { festivals: settings.festivals } : {}) }
+    : site
   // The About page's questions are the committee's to edit too, and one of them shipped with
   // "[N] weeks" in it. Counted from what is saved, so filling it in makes the count go down.
-  const aboutPage = settings ? { ...about, faq: settings.faq } : about
+  // The story and the values followed them out of the files, and are counted the same way.
+  const aboutPage = settings
+    ? {
+        ...about,
+        faq: settings.faq,
+        ...(settings.story ? { story: settings.story } : {}),
+        ...(settings.values ? { values: settings.values } : {}),
+      }
+    : about
   return [
     { page: 'Home page', where: findGaps(homePage) },
     { page: 'About us', where: findGaps(aboutPage) },
-    { page: 'Privacy', where: findGaps(privacy) },
+    { page: 'Privacy', where: findGaps(settings?.privacy ?? privacy) },
   ]
 }
 

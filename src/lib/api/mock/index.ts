@@ -112,6 +112,7 @@ function shapeOfEvent(draft: EventDraft) {
     venue: draft.venue.trim(),
     venueAddress: text(draft.venueAddress),
     coordinates: draft.coordinates ?? undefined,
+    festivalId: text(draft.festivalId),
     coverImageUrl: text(draft.coverImageUrl),
     coverAnimation: draft.coverAnimation,
     // An empty theme is absent rather than three empty strings, or the page draws a blank kicker.
@@ -309,7 +310,9 @@ export function createMockApi({
       },
     },
     festivals: {
-      list: () => delay([...fixtures.festivals], latencyMs),
+      // From the settings, where the committee keeps them, so a festival added in the portal is
+      // the festival the home page shows.
+      list: () => delay(saved.festivals.map((festival) => ({ ...festival })), latencyMs),
     },
     gallery: {
       listRecentMedia: (limit = 6) => delay(someOf(publicAlbums().flatMap((a) => a.media), limit), latencyMs),

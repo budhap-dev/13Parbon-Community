@@ -89,6 +89,13 @@ export type EventDraft = {
   venue: string
   venueAddress: string
   coordinates: { lat: number; lon: number } | null
+  /**
+   * Which of the year's festivals this evening is, by its id. Empty is none of them.
+   *
+   * It is what marks a festival "Next up" on the home page and what the filter on Events
+   * sorts by — and until the form asked for it, the only way to set it was in the database.
+   */
+  festivalId: string
   coverImageUrl: string
   coverAnimation: CoverAnimation
   theme: { bengali: string; bengaliSubtitle: string; english: string }
@@ -156,6 +163,7 @@ export function blankEvent(): EventDraft {
     venue: '',
     venueAddress: '',
     coordinates: null,
+    festivalId: '',
     coverImageUrl: '',
     coverAnimation: 'none',
     theme: { bengali: '', bengaliSubtitle: '', english: '' },

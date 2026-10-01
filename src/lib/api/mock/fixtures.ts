@@ -1,5 +1,6 @@
 import type { Event } from '@/domain/event'
 import type { Festival } from '@/domain/festival'
+import { festivals as defaultFestivals } from '@/app/festivals'
 import type { Album, Media } from '@/domain/gallery'
 import type { Announcement, NewsPost, Newsletter } from '@/domain/news'
 import type { VolunteerRole } from '@/domain/volunteer'
@@ -121,42 +122,9 @@ export function buildFixtures() {
   */
     ]
 
-  /** The community's year, in Bengali-calendar order from the month of Boishakh. */
-  const festivals: Festival[] = [
-    {
-      id: 'boishakhi',
-      name: 'Boishakhi',
-      bengaliName: 'বৈশাখী',
-      season: 'April or May',
-      /*
-       * Not Poila Boishakh itself: the community does not hold a programme on the day. This is
-       * whatever we put on during the month of Boishakh, which is often Rabindra Jayanti.
-       */
-      description:
-        'Our gathering in the month of Boishakh, often around Rabindra Jayanti. Songs, recitation and a meal to open the Bengali year together.',
-    },
-    {
-      id: 'mahalaya',
-      name: 'Mahalaya programme',
-      bengaliName: 'মহালয়া',
-      season: 'September or October',
-      description: 'The dawn that opens the Puja season. Our cultural programme: songs, recitation and the stage.',
-    },
-    {
-      id: 'saraswati-puja',
-      name: 'Saraswati Puja',
-      bengaliName: 'সরস্বতী পূজা',
-      season: 'January or February',
-      description: 'Morning pujo for learning, the children’s hatekhori and their first letters, then lunch.',
-    },
-    {
-      id: 'holi',
-      name: 'Holi',
-      bengaliName: 'দোল',
-      season: 'March',
-      description: 'Colours, songs and a shared lunch, outdoors when the weather allows it.',
-    },
-  ]
+  // The year's occasions are the committee's to edit now, so they live with the rest of what
+  // the site falls back to rather than here among the sample data.
+  const festivals: Festival[] = defaultFestivals.map((festival) => ({ ...festival }))
 
   const albums: Album[] = [
     { id: 'al-boishakhi-2026', slug: 'boishakhi-2026', title: 'Boishakhi 2026', description: 'Our Boishakh evening at St Andrew’s Community Hall, April 2026.', festivalId: 'boishakhi', publishedAt: '2026-04-20T12:00:00', visibility: 'public' },

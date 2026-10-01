@@ -79,6 +79,7 @@ export function fromDraft(draft: EventDraft): Record<string, unknown> {
     venue_address: text(draft.venueAddress),
     latitude: draft.coordinates?.lat ?? null,
     longitude: draft.coordinates?.lon ?? null,
+    festival_id: text(draft.festivalId),
     is_public: draft.isPublic,
     status: draft.status,
     registration_open: draft.registrationOpen,

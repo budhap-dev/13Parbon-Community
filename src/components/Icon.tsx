@@ -10,6 +10,8 @@ export type IconName =
   | 'facebook'
   | 'instagram'
   | 'whatsapp'
+  | 'youtube'
+  | 'link'
   | 'palette'
   | 'check'
   | 'home'
@@ -59,6 +61,19 @@ const paths: Record<IconName, ReactElement> = {
     </>
   ),
   whatsapp: <path d="M21 11.5a8.4 8.4 0 0 1-12.6 7.3L3 21l2.2-5.4A8.5 8.5 0 1 1 21 11.5z" />,
+  youtube: (
+    <>
+      <rect x="2" y="5" width="20" height="14" rx="4" />
+      <path d="M10 9l5 3-5 3z" />
+    </>
+  ),
+  // For a channel there is no drawing of: a chain link, which says "this goes somewhere".
+  link: (
+    <>
+      <path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1" />
+      <path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" />
+    </>
+  ),
   palette: (
     <>
       <path d="M12 3a9 9 0 0 0 0 18h1.5a2.5 2.5 0 0 0 0-5H12a2 2 0 0 1 0-4h2.5A6.5 6.5 0 0 0 12 3z" />

@@ -1,5 +1,4 @@
 import { useLocation } from 'react-router'
-import { site } from '@/app/site'
 import { useSettings } from '@/app/SettingsContext'
 import { Backdrop } from '@/app/theme/backdrops'
 import { useTheme } from '@/app/theme/ThemeContext'
@@ -24,10 +23,14 @@ export function Hero() {
       <Container className={styles.heroInner}>
         <div className={styles.heroCopy}>
           <h1 id="hero-title" className={styles.heroTitle}>
-            <span lang="bn" className={styles.heroTitleLead}>
-              {site.bengaliTitleLead}
-            </span>{' '}
-            <span className={styles.heroTitleName}>{site.groupName}</span>
+            {text.heroLead ? (
+              <>
+                <span lang="bn" className={styles.heroTitleLead}>
+                  {text.heroLead}
+                </span>{' '}
+              </>
+            ) : null}
+            <span className={styles.heroTitleName}>{text.heroName}</span>
           </h1>
           <p className={styles.lead}>
             {text.tagline}

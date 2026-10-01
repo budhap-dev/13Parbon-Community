@@ -1,4 +1,4 @@
-import { site } from '@/app/site'
+import { useSettings } from '@/app/SettingsContext'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { useScrollToTopOn } from '@/app/useScrollToTopOn'
 import { Button } from '@/components/Button'
@@ -25,6 +25,14 @@ import styles from '@/features/portal/Portal.module.css'
 
 export function AdminEventsPage() {
   useDocumentTitle('Events')
+  /*
+   * The first of the committee's other tools, which is the planner.
+   *
+   * Only the first, because the panel below is about one question — which of the two do I use
+   * for an evening? — and that is a question about the planner, not about whatever else the
+   * committee has since added to the list. The sidebar links all of them.
+   */
+  const planner = useSettings().tools.slice(0, 1)
   const { data: event } = useNextEvent()
   const { data: upcoming } = useUpcomingEvents(20)
   const { data: past } = usePastEvents(6)
@@ -101,7 +109,7 @@ export function AdminEventsPage() {
 
       </div>
 
-      {site.tools.map((tool) => (
+      {planner.map((tool) => (
         <section key={tool.href} className={styles.panel} aria-labelledby="planning-title">
           <div className={styles.panelHead}>
             <h2 id="planning-title" className={styles.panelTitle}>

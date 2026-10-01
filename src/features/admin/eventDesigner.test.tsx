@@ -422,3 +422,47 @@ describe('refusing to save something broken', () => {
     expect((await screen.findAllByText('A renamed evening')).length).toBeGreaterThan(0)
   })
 })
+
+/*
+ * Which festival an evening is. The home page marks that festival "Next up" and the Events page
+ * files the evening under it — and until the form asked, the only way to set it was a column in
+ * the database, which is not somewhere the committee goes.
+ */
+describe('filing an evening under a festival', () => {
+  it('offers the committee’s own list, and none of them', async () => {
+    renderEvents()
+    await design()
+    const festival = screen.getByLabelText('Which festival it is')
+    expect(within(festival).getByRole('option', { name: 'None of them' })).toBeInTheDocument()
+    expect(within(festival).getByRole('option', { name: 'Saraswati Puja' })).toBeInTheDocument()
+  })
+
+  it('files a new evening under the festival chosen', async () => {
+    const api = createMockApi({ now: () => TEST_NOW, events: testEvents })
+    render(
+      <TestDataProviders session={previewAccounts[1]} api={api}>
+        <RouterProvider router={createMemoryRouter(routes, { initialEntries: ['/admin/events'] })} />
+      </TestDataProviders>,
+    )
+    await userEvent.click(await screen.findByRole('button', { name: 'New event' }))
+    await userEvent.type(screen.getByLabelText('What it is called'), 'Holi 2027')
+    await userEvent.type(screen.getByLabelText('One line about it'), 'Colours in the park, and a late lunch.')
+    await userEvent.type(screen.getByLabelText('Starts'), '2027-03-12T11:00')
+    await userEvent.type(screen.getByLabelText('Venue'), 'Morley Park')
+    await userEvent.selectOptions(screen.getByLabelText('Which festival it is'), 'holi')
+    await userEvent.click(screen.getByRole('button', { name: 'Add the event' }))
+
+    await screen.findByRole('row', { name: /Holi 2027/ })
+    const all = await api.events.listAll({ householdId: 'hh-chatterjee', role: 'admin' })
+    expect(all.find((event) => event.title === 'Holi 2027')?.festivalId).toBe('holi')
+  })
+
+  it('keeps an evening filed under a festival that has left the list, rather than unfiling it on save', async () => {
+    const orphan = { ...testEvents[0], id: 'ev-orphan', slug: 'orphan', title: 'An older occasion', festivalId: 'kali-puja' }
+    renderEvents(previewAccounts[1], [orphan])
+    await design()
+    // Still chosen, and said to be gone — so opening the form and saving it changes nothing.
+    expect(screen.getByLabelText('Which festival it is')).toHaveValue('kali-puja')
+    expect(screen.getByRole('option', { name: 'kali-puja (no longer on the list)' })).toBeInTheDocument()
+  })
+})

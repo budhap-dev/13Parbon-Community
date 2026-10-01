@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import { useSettings } from '@/app/SettingsContext'
 import { Button } from '@/components/Button'
 import { CoverImage } from '@/components/CoverImage'
 import { PhotoUpload } from '@/components/PhotoUpload'
@@ -24,6 +25,7 @@ export function draftOfEvent(event: Event): EventDraft {
     venue: event.venue,
     venueAddress: event.venueAddress ?? '',
     coordinates: event.coordinates ?? null,
+    festivalId: event.festivalId ?? '',
     coverImageUrl: event.coverImageUrl ?? '',
     coverAnimation: event.coverAnimation ?? 'none',
     theme: {
@@ -74,6 +76,7 @@ export function EventDesigner({
    * address. Only for the preview: what is saved is the address, and there is not one yet.
    */
   const [chosenCover, setChosenCover] = useState<string | null>(null)
+  const { festivals } = useSettings()
   const now = useNow()
   // Null where no bucket is configured, which the upload says out loud rather than failing.
   const uploads = readUploadConfig(import.meta.env)
@@ -184,6 +187,35 @@ export function EventDesigner({
             />
             <p className={styles.hint}>Shown under the venue, and used for the map.</p>
           </div>
+        </div>
+
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="festivalId">
+            Which festival it is
+          </label>
+          <select
+            id="festivalId"
+            className={styles.input}
+            value={draft.festivalId}
+            aria-describedby="festivalId-note"
+            onChange={(e) => set('festivalId', e.target.value)}
+          >
+            <option value="">None of them</option>
+            {festivals.map((festival) => (
+              <option key={festival.id} value={festival.id}>
+                {festival.name}
+              </option>
+            ))}
+            {/* Filed under a festival that has since been taken off the list: still said, so
+                opening the form and saving it does not quietly unfile the evening. */}
+            {draft.festivalId && !festivals.some((festival) => festival.id === draft.festivalId) ? (
+              <option value={draft.festivalId}>{draft.festivalId} (no longer on the list)</option>
+            ) : null}
+          </select>
+          <p id="festivalId-note" className={styles.hint}>
+            Marks that festival “Next up” on the home page, and files the evening under it on the
+            Events page. The list is yours to change under Content.
+          </p>
         </div>
 
         {field(

@@ -1,15 +1,14 @@
 import { Link } from 'react-router'
-import { about } from '@/app/about'
 import { site } from '@/app/site'
 import { useSettings } from '@/app/SettingsContext'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { Button } from '@/components/Button'
 import { Container } from '@/components/Container'
-import { Icon, type IconName } from '@/components/Icon'
+import { Icon } from '@/components/Icon'
 import styles from './About.module.css'
 
 export function AboutPage() {
-  const { text, committee, members, faq } = useSettings()
+  const { text, committee, members, faq, story, values } = useSettings()
   useDocumentTitle('About us')
 
   return (
@@ -35,12 +34,14 @@ export function AboutPage() {
         </div>
       </section>
 
+      {/* A heading over nothing is worse than no heading: an emptied story takes its title with it. */}
+      {story.length > 0 ? (
       <section className={styles.section} aria-labelledby="story-title">
         <h2 id="story-title" className={styles.sectionTitle}>
           Our story
         </h2>
         <div className={styles.prose}>
-          {about.story.map((block) =>
+          {story.map((block) =>
             block.kind === 'heading' ? (
               <h3 key={block.text} className={styles.storyHeading}>
                 {block.text}
@@ -57,21 +58,24 @@ export function AboutPage() {
           )}
         </div>
       </section>
+      ) : null}
 
+      {values.length > 0 ? (
       <section className={styles.section} aria-labelledby="values-title">
         <h2 id="values-title" className={styles.sectionTitle}>
           What we stand for
         </h2>
         <ul className={styles.values}>
-          {about.values.map((value) => (
+          {values.map((value) => (
             <li key={value.title} className={styles.value}>
-              <Icon name={value.icon as IconName} size={26} className={styles.valueIcon} />
+              <Icon name={value.icon} size={26} className={styles.valueIcon} />
               <h3 className={styles.valueTitle}>{value.title}</h3>
               <p className={styles.valueText}>{value.text}</p>
             </li>
           ))}
         </ul>
       </section>
+      ) : null}
 
       <section className={styles.section} aria-labelledby="committee-title">
         <h2 id="committee-title" className={styles.sectionTitle}>

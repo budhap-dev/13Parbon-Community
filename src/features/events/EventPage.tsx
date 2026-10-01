@@ -1,5 +1,6 @@
 import { Link, useParams } from 'react-router'
-import { activeSocial, site } from '@/app/site'
+import { site } from '@/app/site'
+import { useSettings } from '@/app/SettingsContext'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { Button } from '@/components/Button'
 import { Container } from '@/components/Container'
@@ -22,7 +23,9 @@ function sameDay(a: string, b: string): boolean {
 }
 
 export function EventPage() {
-  const facebook = activeSocial().find((channel) => channel.name === 'Facebook')
+  const { social, collage, volunteerFormUrl } = useSettings()
+  // By its mark rather than its name: the committee may call the channel "Facebook group".
+  const facebook = social.find((channel) => channel.icon === 'facebook' && channel.href)
   const { slug = '' } = useParams()
   const { data: event, isPending, isError, refetch } = useEvent(slug)
   const now = useNow()
@@ -106,9 +109,9 @@ export function EventPage() {
             ) : null}
             {event.theme.english ? <p className={styles.themeEnglish}>{event.theme.english}</p> : null}
             <ThenNowCollage
-              label="Calcutta then, Kolkata now"
-              images={site.themeImages}
-              credit={site.themeImageCredit}
+              label={collage.label}
+              images={collage.photos}
+              credit={collage.credit || undefined}
             />
         </section>
       ) : null}
@@ -142,8 +145,8 @@ export function EventPage() {
           <div className={styles.actions}>
             {registrationUrl ? <Button href={registrationUrl}>Register to come</Button> : null}
             {event.volunteerCall && !cancelled ? (
-              site.volunteerFormUrl ? (
-                <Button href={site.volunteerFormUrl} variant="line">
+              volunteerFormUrl ? (
+                <Button href={volunteerFormUrl} variant="line">
                   Volunteer
                 </Button>
               ) : (

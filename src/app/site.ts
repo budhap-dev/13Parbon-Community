@@ -1,5 +1,16 @@
 /**
- * Facts about this community that the committee owns.
+ * Facts about this community that the committee owns, as the site starts out.
+ *
+ * Nearly everything below is edited from the portal now — Content → The pages — and what is
+ * saved there is what a visitor sees. These are the values the site has before anybody has
+ * saved anything, and the ones it falls back to if the saved settings cannot be read, so each
+ * should still be something it would be all right to publish. `src/app/defaults.ts` is where
+ * they are gathered into the shape the portal edits.
+ *
+ * What is *not* editable from the portal, and why: the name, the wordmark and the logo files.
+ * They are baked into `index.html`, the share card and the sitemap, which link previews and
+ * search engines read without running any of this.
+ *
  * Bracketed values are placeholders to be filled in; nothing here is fabricated.
  */
 export const site = {
@@ -152,9 +163,9 @@ export const site = {
     },
   ],
   /**
-   * Where the community can be found. A channel with a null address is not shown at all,
-   * so nothing on the page is ever a link that goes nowhere. Add a channel here and it
-   * appears in the footer, on the contact page and wherever else we offer a way through.
+   * Where the community can be found, until the committee saves a list of their own. A channel
+   * with a null address is named on the contact page and left out of the footer, so nothing on
+   * the page is ever a link that goes nowhere.
    */
   social: [
     {
@@ -181,13 +192,6 @@ export const site = {
     },
   ],
 } as const
-
-type SocialChannel = (typeof site.social)[number]
-
-/** The channels with an address, which are the only ones worth putting on a page. */
-export function activeSocial(): (SocialChannel & { href: string })[] {
-  return site.social.filter((channel): channel is SocialChannel & { href: string } => Boolean(channel.href))
-}
 
 /**
  * Values above that the committee has not filled in yet are written in brackets.

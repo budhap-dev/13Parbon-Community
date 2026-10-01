@@ -1,9 +1,11 @@
+import { SITE_THEMES } from '@/domain/siteContent'
+
 /**
  * The community's year, for the public site. These are the festival colours, and from
  * 2026-09-17 they are the public site's alone: the committee's own screens were following
  * them, which meant doing the books against a magenta Holi background.
  */
-export const publicThemeNames = ['festival', 'poila-boishakh', 'saraswati', 'holi', 'mahalaya'] as const
+export const publicThemeNames = SITE_THEMES
 
 /**
  * The portal's own, and deliberately quiet.
@@ -57,6 +59,13 @@ export const defaultPortalTheme: ThemeName = 'paper'
 
 /** Separate keys, so choosing Slate for the back office does not repaint the public site. */
 export const THEME_STORAGE_KEY = '13parbon:theme'
+/**
+ * The committee's choice of colours, as this browser last heard it.
+ *
+ * Kept so the second visit opens in the right colours straight away. Without it every page
+ * load would start in Festival red and change a moment later, once the settings had arrived.
+ */
+export const SITE_THEME_STORAGE_KEY = '13parbon:site-theme'
 export const PORTAL_THEME_STORAGE_KEY = '13parbon:portal-theme'
 
 export const themesFor = (scope: ThemeScope): ThemeMeta[] => (scope === 'portal' ? portalThemes : themes)
@@ -100,6 +109,24 @@ export function storeTheme(
     storage?.setItem(keyFor(scope), name)
   } catch {
     // Private mode or blocked storage. The choice just will not persist.
+  }
+}
+
+/** The committee's choice as this browser last heard it, if it ever has. */
+export function readSiteTheme(storage: Pick<Storage, 'getItem'> | null = safeStorage()): ThemeName | null {
+  try {
+    const value = storage?.getItem(SITE_THEME_STORAGE_KEY)
+    return isThemeForScope(value, 'public') ? value : null
+  } catch {
+    return null
+  }
+}
+
+export function storeSiteTheme(name: ThemeName, storage: Pick<Storage, 'setItem'> | null = safeStorage()): void {
+  try {
+    storage?.setItem(SITE_THEME_STORAGE_KEY, name)
+  } catch {
+    // Private mode or blocked storage. The next visit just starts from what the code says.
   }
 }
 

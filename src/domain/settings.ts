@@ -1,3 +1,23 @@
+import type { Festival } from './festival'
+import {
+  isSiteTheme,
+  readCollage,
+  readFestivals,
+  readPrivacy,
+  readSocial,
+  readStory,
+  readTools,
+  readValues,
+  webAddressOr,
+  type PrivacyNotice,
+  type SiteTheme,
+  type SocialChannel,
+  type StoryBlock,
+  type ThemeCollage,
+  type Tool,
+  type ValueCard,
+} from './siteContent'
+
 /**
  * Who a section of the home page is for.
  *
@@ -10,6 +30,35 @@ export type SectionAudience = 'public' | 'members' | 'admins'
 /** The sections of the home page whose audience the committee can change. */
 export const HOME_SECTIONS = ['notices', 'nextEvent', 'upcoming', 'volunteer', 'yearStrip', 'photos', 'feedback'] as const
 export type HomeSection = (typeof HOME_SECTIONS)[number]
+
+/**
+ * Everything on the home page that can be moved, in the order the code would put it.
+ *
+ * One more than the sections with an audience: "Who we are" is for everybody and always was,
+ * so it has no audience to set, but it sits in the middle of the page and has to be in the
+ * list for anything to be moved past it. The wordmark at the top and the invitation at the
+ * bottom are not here — a page that opens on the volunteering call is not a rearrangement
+ * anybody meant.
+ */
+export const HOME_BLOCKS = [
+  'notices',
+  'nextEvent',
+  'whoWeAre',
+  'photos',
+  'yearStrip',
+  'upcoming',
+  'volunteer',
+  'feedback',
+] as const satisfies readonly (HomeSection | 'whoWeAre')[]
+export type HomeBlock = (typeof HOME_BLOCKS)[number]
+
+/** A saved order with the strangers taken out and anything it never mentioned put back. */
+export function tidyHomeOrder(order: readonly unknown[]): HomeBlock[] {
+  const known = order.filter((block): block is HomeBlock => (HOME_BLOCKS as readonly unknown[]).includes(block))
+  const once = known.filter((block, i) => known.indexOf(block) === i)
+  // A block added to the code after the order was saved still has to be drawn somewhere.
+  return [...once, ...HOME_BLOCKS.filter((block) => !once.includes(block))]
+}
 
 /**
  * The switches the committee can throw without a developer.
@@ -29,14 +78,19 @@ export type HomeSection = (typeof HOME_SECTIONS)[number]
 /**
  * The words on the public pages that belong to the committee rather than to the code.
  *
- * Only flat strings here. The lists — the committee, the roll, the questions people ask — are
- * their own fields below, each with its own editor. What is still in the files is the captions
- * under the theme photographs, which nobody has needed to change without a developer yet.
+ * Only flat strings here. The lists — the committee, the roll, the questions people ask, the
+ * story, the festivals — are their own fields below, each with its own editor.
  */
 export const SITE_TEXT_KEYS = [
+  'heroLead',
+  'heroName',
   'tagline',
   'mission',
   'missionStatement',
+  'volunteerTitle',
+  'joinTitle',
+  'joinText',
+  'town',
   'venue',
   'address',
   'email',
@@ -45,7 +99,31 @@ export const SITE_TEXT_KEYS = [
 
 export type SiteTextKey = (typeof SITE_TEXT_KEYS)[number]
 
-export const SITE_TEXT_FIELDS: Record<SiteTextKey, { label: string; note: string; lines?: number }> = {
+export const SITE_TEXT_FIELDS: Record<
+  SiteTextKey,
+  {
+    label: string
+    note: string
+    lines?: number
+    /**
+     * Whether the page has a hole in it without this line.
+     *
+     * A gallery note left empty is a decision: there is no note. A home page title left empty
+     * is a heading with nothing in it, so those fall back to what the code says rather than
+     * being saved as blank.
+     */
+    required?: boolean
+  }
+> = {
+  heroLead: {
+    label: 'Home page title, first half',
+    note: 'The opening of the saying, in Bengali, before the name. Empty leaves the name on its own.',
+  },
+  heroName: {
+    label: 'Home page title, the name',
+    note: 'The name as it is written large at the top of the home page.',
+    required: true,
+  },
   tagline: { label: 'Tagline', note: 'The line under the name, on the home page and in link previews.' },
   mission: {
     label: 'Who we are',
@@ -57,6 +135,23 @@ export const SITE_TEXT_FIELDS: Record<SiteTextKey, { label: string; note: string
     note: 'Two or three sentences from the committee. Left in [brackets] it is hidden rather than shown as a placeholder.',
     lines: 4,
   },
+  volunteerTitle: {
+    label: 'Heading over the call for helpers',
+    note: 'On the home page, above whatever the next event asks for.',
+    required: true,
+  },
+  joinTitle: {
+    label: 'Invitation, the heading',
+    note: 'The last thing on the home page, asking somebody to come along.',
+    required: true,
+  },
+  joinText: {
+    label: 'Invitation, the paragraph',
+    note: 'A sentence or two under that heading.',
+    lines: 3,
+    required: true,
+  },
+  town: { label: 'Town', note: 'Beside the name at the foot of every page.', required: true },
   venue: { label: 'Where we usually meet', note: 'The hall’s name, as people would say it.' },
   address: { label: 'Address', note: 'Used on the contact page and to place the map.' },
   email: { label: 'Email', note: 'Where the contact page points, and where replies come from.' },
@@ -93,6 +188,20 @@ export type SiteSettings = {
   showFeedback: boolean
   /** Who each home page section is for. */
   home: Record<HomeSection, SectionAudience>
+  /**
+   * The order the home page is drawn in, between the wordmark and the invitation.
+   *
+   * It was fixed in the code, which was fine until the week of an event — when the noticeboard
+   * and the next evening belong at the top — and the month after one, when the photographs do.
+   */
+  homeOrder: HomeBlock[]
+  /**
+   * The colours a visitor sees before they have chosen any.
+   *
+   * The site has five looks for five parts of the year, and a first visit always opened in the
+   * same one. Somebody who picks their own keeps it; this is only what the door is painted.
+   */
+  defaultTheme: SiteTheme
   /** The words the committee owns. Empty means "use what the code says". */
   text: Record<SiteTextKey, string>
   /**
@@ -118,7 +227,44 @@ export type SiteSettings = {
    * its owner asks — which until now meant a pull request on the day somebody asked.
    */
   members: string[]
+  /** Facebook, Instagram and the rest: the footer, the contact page, and "tell us on". */
+  social: SocialChannel[]
+  /**
+   * Where an offer to help goes. Empty sends people to the contact page instead, which always
+   * works.
+   */
+  volunteerFormUrl: string
+  /** The occasions of the year: the strip on the home page and the filter on Events. */
+  festivals: Festival[]
+  /** The story on the About page, in the committee's own voice. */
+  story: StoryBlock[]
+  /** What we stand for, on the About page. */
+  values: ValueCard[]
+  /** The photographs behind this year's theme, on an event's page. */
+  collage: ThemeCollage
+  /** The privacy notice. See `PrivacyNotice.basedOn` for why this one is watched. */
+  privacy: PrivacyNotice
+  /** The committee's other apps, linked from the portal. */
+  tools: Tool[]
 }
+
+/** The lists and blocks, which are everything that is neither a switch nor an audience. */
+type ContentKey =
+  | 'home'
+  | 'homeOrder'
+  | 'defaultTheme'
+  | 'text'
+  | 'committee'
+  | 'faq'
+  | 'members'
+  | 'social'
+  | 'volunteerFormUrl'
+  | 'festivals'
+  | 'story'
+  | 'values'
+  | 'collage'
+  | 'privacy'
+  | 'tools'
 
 export type SettingsDraft = SiteSettings
 
@@ -128,10 +274,7 @@ export type SettingsDraft = SiteSettings
  * Kept next to the type so a new switch cannot be added without saying what it does — a row of
  * unlabelled toggles is a good way to have somebody turn the gallery off by accident.
  */
-export const SETTING_LABELS: Record<
-  keyof Omit<SiteSettings, 'home' | 'text' | 'committee' | 'faq' | 'members'>,
-  { label: string; note: string }
-> = {
+export const SETTING_LABELS: Record<keyof Omit<SiteSettings, ContentKey>, { label: string; note: string }> = {
   showPhotos: {
     label: 'Photographs',
     note: 'The gallery in the navigation, and pictures on the home page. Turning this off pulls the whole gallery at once.',
@@ -154,9 +297,10 @@ export const SETTING_LABELS: Record<
   },
 }
 
-export const HOME_SECTION_LABELS: Record<HomeSection, string> = {
+export const HOME_SECTION_LABELS: Record<HomeBlock, string> = {
   notices: 'The noticeboard',
   nextEvent: 'The next event',
+  whoWeAre: 'Who we are',
   upcoming: 'What is coming up',
   volunteer: 'Helping out',
   yearStrip: 'Our year',
@@ -172,7 +316,15 @@ export function validateSettings(draft: SettingsDraft): boolean {
   // A row with a name and no role, or the other way about, is half-typed rather than wrong —
   // it is dropped on save. A row with neither was never a row. The same goes for a question
   // with no answer.
-  return Array.isArray(draft.committee) && Array.isArray(draft.members) && Array.isArray(draft.faq)
+  if (!Array.isArray(draft.committee) || !Array.isArray(draft.members) || !Array.isArray(draft.faq)) return false
+  // The same for the rest: what is in each list is tidied on the way out of the database, so
+  // all that is asked here is that a list is a list. A save that sent a string where the
+  // festivals go would otherwise replace four festivals with none.
+  const lists = [draft.homeOrder, draft.social, draft.festivals, draft.story, draft.values, draft.tools]
+  if (!lists.every(Array.isArray)) return false
+  if (!isSiteTheme(draft.defaultTheme) || typeof draft.volunteerFormUrl !== 'string') return false
+  if (!draft.collage || !Array.isArray(draft.collage.photos)) return false
+  return Boolean(draft.privacy) && Array.isArray(draft.privacy.sections) && draft.privacy.sections.length > 0
 }
 
 /** The committee as it should be saved: complete rows only, in the order they were given. */
@@ -236,7 +388,9 @@ export function mergeSettings(stored: unknown, defaults: SiteSettings): SiteSett
   if (storedText && typeof storedText === 'object') {
     for (const key of SITE_TEXT_KEYS) {
       const value = (storedText as Record<string, unknown>)[key]
-      if (typeof value === 'string') text[key] = value
+      // Blank is an answer for most of these — no gallery note, no mission statement yet — but
+      // not for the ones a page has a hole without.
+      if (typeof value === 'string' && (value.trim() || !SITE_TEXT_FIELDS[key].required)) text[key] = value
     }
   }
 
@@ -275,9 +429,21 @@ export function mergeSettings(stored: unknown, defaults: SiteSettings): SiteSett
     showNextEventStrip: bool('showNextEventStrip'),
     showPhotos: bool('showPhotos'),
     home,
+    homeOrder: Array.isArray(row.homeOrder) ? tidyHomeOrder(row.homeOrder) : defaults.homeOrder,
+    defaultTheme: isSiteTheme(row.defaultTheme) ? row.defaultTheme : defaults.defaultTheme,
     text,
     committee,
     faq,
     members,
+    // Each of these keeps only what is fit to draw. An empty list that was saved is an answer —
+    // no festivals this year, no channels — and is not the same as nothing having been saved.
+    social: readSocial(row.social) ?? defaults.social,
+    volunteerFormUrl: typeof row.volunteerFormUrl === 'string' ? webAddressOr(row.volunteerFormUrl) : defaults.volunteerFormUrl,
+    festivals: readFestivals(row.festivals) ?? defaults.festivals,
+    story: readStory(row.story) ?? defaults.story,
+    values: readValues(row.values) ?? defaults.values,
+    collage: readCollage(row.collage, defaults.collage),
+    privacy: readPrivacy(row.privacy, defaults.privacy),
+    tools: readTools(row.tools) ?? defaults.tools,
   }
 }

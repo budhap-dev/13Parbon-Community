@@ -1,3 +1,4 @@
+import { useSettings } from '@/app/SettingsContext'
 import { Button } from '@/components/Button'
 import { Container } from '@/components/Container'
 import { Icon } from '@/components/Icon'
@@ -7,6 +8,7 @@ import styles from '../Home.module.css'
 /** A plain call for helpers at the next event. No slots: people say so when they register. */
 export function VolunteerStrip() {
   const { data: event } = useNextEvent()
+  const { text } = useSettings()
   if (!event?.volunteerCall) return null
 
   return (
@@ -15,7 +17,7 @@ export function VolunteerStrip() {
         <Icon name="megaphone" className={styles.volunteerIcon} />
         <div className={styles.volunteerBody}>
           <h2 id="volunteer-title" className={styles.volunteerTitle}>
-            A Festival is Best Shared
+            {text.volunteerTitle}
           </h2>
           <p className={styles.volunteerText}>{event.volunteerCall}</p>
         </div>

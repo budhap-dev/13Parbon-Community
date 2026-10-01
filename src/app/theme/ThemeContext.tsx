@@ -1,8 +1,11 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
+import { useSettings, useSettingsLoaded } from '../SettingsContext'
 import {
   applyTheme,
   defaultFor,
+  readSiteTheme,
   readStoredTheme,
+  storeSiteTheme,
   storeTheme,
   themesFor,
   type ThemeMeta,
@@ -23,7 +26,7 @@ type ThemeContextValue = {
 const ThemeContext = createContext<ThemeContextValue | null>(null)
 
 type Props = {
-  /** Used when the viewer has not chosen a theme yet. */
+  /** Used when the viewer has not chosen a theme yet, ahead of the committee's own choice. */
   initialTheme?: ThemeName
   children: ReactNode
 }
@@ -35,15 +38,36 @@ type Props = {
  * the committee were doing the books against a Holi magenta — the portal followed the public
  * themes, and a back office is not a celebration. Each scope remembers its own choice under its
  * own key, so picking Slate for the portal leaves the website exactly as the visitors see it.
+ *
+ * The public site has a third voice: the committee's. Somebody who has never chosen sees the
+ * colours the committee set for the season, and somebody who has chosen keeps their own — a
+ * visitor's `null` below means "has not chosen", which is what lets the committee's choice
+ * through without ever overwriting a person's.
  */
 export function ThemeProvider({ initialTheme, children }: Props) {
   const [scope, setScope] = useState<ThemeScope>('public')
-  const [chosen, setChosen] = useState<Record<ThemeScope, ThemeName>>(() => ({
-    public: readStoredTheme('public') ?? initialTheme ?? defaultFor('public'),
+  const [chosen, setChosen] = useState<{ public: ThemeName | null; portal: ThemeName }>(() => ({
+    public: readStoredTheme('public') ?? initialTheme ?? null,
     portal: readStoredTheme('portal') ?? defaultFor('portal'),
   }))
 
-  const theme = chosen[scope]
+  const settings = useSettings()
+  const loaded = useSettingsLoaded()
+  /*
+   * What the committee chose, as far as this browser knows.
+   *
+   * The settings arrive a moment after the first paint, and until they do the context holds
+   * what the code says. Painting that and then repainting is a flash of the wrong colours on
+   * every visit, so the last answer is remembered and used until the real one lands.
+   */
+  const [remembered] = useState(() => readSiteTheme())
+  const siteTheme: ThemeName = loaded ? settings.defaultTheme : (remembered ?? settings.defaultTheme)
+
+  useEffect(() => {
+    if (loaded) storeSiteTheme(settings.defaultTheme)
+  }, [loaded, settings.defaultTheme])
+
+  const theme = scope === 'portal' ? chosen.portal : (chosen.public ?? siteTheme)
 
   useEffect(() => {
     applyTheme(theme)

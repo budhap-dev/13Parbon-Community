@@ -308,6 +308,8 @@ describe('committee pages', () => {
   it('names which ones, and links each to the box that fills it', async () => {
     renderAt('/admin/content', admin)
     await screen.findByText('Home page')
+    // The form opens once the saved settings have been read, which is a moment after the table.
+    await screen.findByRole('button', { name: 'Save the switches' })
 
     /*
      * Under the name the form uses, not the key in the code. The table said

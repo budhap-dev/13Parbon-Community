@@ -83,6 +83,14 @@ describe('with a project configured', () => {
     expect(wired.settings.save).not.toBe(base.settings.save)
   })
 
+  it('reads the year’s festivals from that same row', () => {
+    // They are the committee's to edit now. Left on the base client the home page would show
+    // the code's four for ever, and a festival added in the portal would save and never appear.
+    const base = createMockApi()
+    const wired = withSupabaseSettings(base, { url: configured.VITE_SUPABASE_URL, anonKey: configured.VITE_SUPABASE_ANON_KEY })
+    expect(wired.festivals.list).not.toBe(base.festivals.list)
+  })
+
   it('writes what the committee writes to the database', () => {
     // News posts, notices and newsletters. On fixtures these lived in memory, so an admin
     // publishing a piece on the live site watched it save and lost it on the next reload.

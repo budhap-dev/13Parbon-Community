@@ -33,6 +33,9 @@ export function withSupabaseSettings(base: ApiClient, config: SupabaseConfig): A
 
   return {
     ...base,
+    // The year's occasions are a field of the same row. Left on the base client they would be
+    // the code's four for ever, whatever the committee had saved.
+    festivals: { list: async () => (await load()).festivals },
     settings: {
       get: load,
       save: async (draft, viewer: Viewer) => {

@@ -1,5 +1,6 @@
+import { Fragment, type ReactNode } from 'react'
 import { useSettings } from '@/app/SettingsContext'
-import type { HomeSection } from '@/domain/settings'
+import type { HomeBlock, HomeSection } from '@/domain/settings'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { canSee, useSession } from '@/lib/auth/session'
 import styles from './Home.module.css'
@@ -20,21 +21,31 @@ export function HomePage() {
   const settings = useSettings()
   const show = (section: HomeSection) => canSee(settings.home[section], session.role)
 
+  /*
+   * Each part, and whether this viewer gets it. The order they are drawn in is the
+   * committee's — `settings.homeOrder` — and what the code says is only where that starts:
+   * notices high, because a notice is the one thing here with a date on it, and what people
+   * said low, because it persuades somebody who has read everything above and is still
+   * deciding. Whether a part is drawn at all is still decided here, by its audience and its
+   * switch, so moving the photographs to the top cannot bring back a gallery that is off.
+   */
+  const blocks: Record<HomeBlock, () => ReactNode> = {
+    notices: () => (show('notices') ? <NoticeStrip /> : null),
+    nextEvent: () => (show('nextEvent') ? <NextEvent /> : null),
+    whoWeAre: () => <WhoWeAre />,
+    photos: () => (settings.showPhotos && show('photos') ? <PhotoStrip /> : null),
+    yearStrip: () => (show('yearStrip') ? <YearStrip /> : null),
+    upcoming: () => (show('upcoming') ? <UpcomingEvents /> : null),
+    volunteer: () => (show('volunteer') ? <VolunteerStrip /> : null),
+    feedback: () => (settings.showFeedback && show('feedback') ? <FeedbackStrip /> : null),
+  }
+
   return (
     <div className={styles.page}>
       <Hero />
-      {/* High, because a notice is the one thing here with a date on it: the hall shut on
-          Saturday is no use below the photographs. */}
-      {show('notices') ? <NoticeStrip /> : null}
-      {show('nextEvent') ? <NextEvent /> : null}
-      <WhoWeAre />
-      {settings.showPhotos && show('photos') ? <PhotoStrip /> : null}
-      {show('yearStrip') ? <YearStrip /> : null}
-      {show('upcoming') ? <UpcomingEvents /> : null}
-      {show('volunteer') ? <VolunteerStrip /> : null}
-      {/* Low, and after the volunteering: what people said is the thing that persuades
-          somebody who has read everything above and is still deciding. */}
-      {settings.showFeedback && show('feedback') ? <FeedbackStrip /> : null}
+      {settings.homeOrder.map((block) => (
+        <Fragment key={block}>{blocks[block]()}</Fragment>
+      ))}
       <JoinCta />
     </div>
   )

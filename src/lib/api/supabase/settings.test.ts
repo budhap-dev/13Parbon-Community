@@ -20,6 +20,70 @@ import { withSupabaseSettings } from './settings'
  * anybody can put anything in. Nothing is trusted on the way out, and this is where that is
  * proved — a stale key, a renamed switch or a half-written row must not reach a public page.
  */
+/**
+ * The lists that left the files: the channels, the festivals, the story, the privacy notice.
+ *
+ * The same rule as the switches, with more at stake. A switch of the wrong type falls back to
+ * what the code says; a channel with the wrong sort of address would be a link on every page.
+ */
+describe('laying saved content over what the code says', () => {
+  it('is the code’s own when nothing of the kind has been saved', () => {
+    const merged = mergeSettings({ showNews: true }, defaultSettings)
+    expect(merged.social).toEqual(defaultSettings.social)
+    expect(merged.festivals).toEqual(defaultSettings.festivals)
+    expect(merged.story).toEqual(defaultSettings.story)
+    expect(merged.privacy).toEqual(defaultSettings.privacy)
+    expect(merged.homeOrder).toEqual(defaultSettings.homeOrder)
+    expect(merged.defaultTheme).toBe('festival')
+  })
+
+  it('takes the committee’s festivals, and an empty list when that is what they saved', () => {
+    const merged = mergeSettings({ festivals: [{ id: 'holi', name: 'Dol Jatra', season: 'March' }] }, defaultSettings)
+    expect(merged.festivals).toEqual([{ id: 'holi', name: 'Dol Jatra', season: 'March' }])
+    expect(mergeSettings({ festivals: [] }, defaultSettings).festivals).toEqual([])
+  })
+
+  it('never lets a script out as a link', () => {
+    const merged = mergeSettings(
+      {
+        social: [{ name: 'Facebook', icon: 'facebook', href: 'javascript:alert(1)', blurb: '' }],
+        volunteerFormUrl: 'javascript:alert(1)',
+        tools: [{ name: 'Planner', description: '', href: 'javascript:alert(1)' }],
+      },
+      defaultSettings,
+    )
+    expect(merged.social[0].href).toBe('')
+    expect(merged.volunteerFormUrl).toBe('')
+    expect(merged.tools).toEqual([])
+  })
+
+  it('puts the home page in the saved order, and finds room for a part the order never mentioned', () => {
+    const merged = mergeSettings({ homeOrder: ['photos', 'notices', 'photos', 'adverts'] }, defaultSettings)
+    expect(merged.homeOrder.slice(0, 2)).toEqual(['photos', 'notices'])
+    // Every part exactly once: a stranger dropped, a repeat dropped, the rest put back.
+    expect([...merged.homeOrder].sort()).toEqual([...defaultSettings.homeOrder].sort())
+  })
+
+  it('falls back to the code’s colours for a theme it does not have', () => {
+    expect(mergeSettings({ defaultTheme: 'holi' }, defaultSettings).defaultTheme).toBe('holi')
+    expect(mergeSettings({ defaultTheme: 'neon' }, defaultSettings).defaultTheme).toBe('festival')
+    // A portal theme is a real theme, and still not one the public site wears.
+    expect(mergeSettings({ defaultTheme: 'slate' }, defaultSettings).defaultTheme).toBe('festival')
+  })
+
+  it('will not blank a line the page has a hole without', () => {
+    const merged = mergeSettings({ text: { heroName: '  ', joinTitle: '', galleryNote: '' } }, defaultSettings)
+    expect(merged.text.heroName).toBe(defaultSettings.text.heroName)
+    expect(merged.text.joinTitle).toBe(defaultSettings.text.joinTitle)
+    // Whereas no gallery note is a perfectly good answer.
+    expect(merged.text.galleryNote).toBe('')
+  })
+
+  it('keeps the developer’s privacy notice rather than an empty one', () => {
+    expect(mergeSettings({ privacy: { sections: [] } }, defaultSettings).privacy).toEqual(defaultSettings.privacy)
+  })
+})
+
 describe('laying saved settings over what the code says', () => {
   it('uses the code when nothing has been saved', () => {
     expect(mergeSettings(null, defaultSettings)).toEqual(defaultSettings)

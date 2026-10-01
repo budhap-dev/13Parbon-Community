@@ -102,6 +102,10 @@ describe("between the database's words and the app's", () => {
     expect(toEvent(row({ theme: { bengali: '' } })).theme).toBeUndefined()
     expect(toEvent(row({ theme: { bengali: 'শরৎ' } })).theme).toEqual({ bengali: 'শরৎ' })
     expect(fromDraft({ ...blankEvent(), theme: { bengali: ' ', bengaliSubtitle: 'x', english: 'y' } }).theme).toBeNull()
+    // The festival it is filed under is a column, and none is null rather than an empty string:
+    // '' would be an id that matches no festival and still is not "no festival".
+    expect(fromDraft({ ...blankEvent(), festivalId: 'holi' }).festival_id).toBe('holi')
+    expect(fromDraft(blankEvent()).festival_id).toBeNull()
   })
 
   it('carries coordinates only when both halves are there', () => {

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { Link, NavLink, Outlet, ScrollRestoration, useLocation } from 'react-router'
 import { site } from '@/app/site'
+import { useSettings } from '@/app/SettingsContext'
 import { Icon, type IconName } from '@/components/Icon'
 import { ThemeSwitcher } from './ThemeSwitcher'
 import { useThemeScope } from '@/app/theme/ThemeContext'
@@ -32,6 +33,7 @@ export function PortalLayout() {
   const mainRef = useRef<HTMLElement>(null)
   const first = useRef(true)
   const { data: attempts } = useSignInAttempts()
+  const { tools } = useSettings()
   const { data: feedback } = useAllFeedback()
 
   useEffect(() => {
@@ -104,10 +106,12 @@ export function PortalLayout() {
         {onTheCommittee ? (
           <>
             <nav aria-label="Committee">{renderGroup('Committee', committeeNav)}</nav>
+            {/* A heading over an empty list is noise: with no tools saved there is no group. */}
+            {tools.length > 0 ? (
             <nav aria-label="Other tools">
               <div className={styles.group}>
                 <span className={styles.groupLabel}>Other tools</span>
-                {site.tools.map((tool) => (
+                {tools.map((tool) => (
                   <a
                     key={tool.href}
                     href={tool.href}
@@ -116,7 +120,7 @@ export function PortalLayout() {
                     className={styles.link}
                     title={tool.description}
                   >
-                    <Icon name="calendar" size={19} />
+                    <Icon name="link" size={19} />
                     {tool.name}
                     <Icon name="external" size={15} className={styles.externalMark} />
                     <span className={styles.srOnly}>opens in a new tab</span>
@@ -124,6 +128,7 @@ export function PortalLayout() {
                 ))}
               </div>
             </nav>
+            ) : null}
           </>
         ) : null}
         <div className={styles.who}>

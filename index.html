@@ -54,7 +54,8 @@
     <title>13Parbon Community</title>
     <script>
       try {
-        var theme = localStorage.getItem('13parbon:theme')
+        // The visitor's own choice, or failing that the committee's as this browser last heard it.
+        var theme = localStorage.getItem('13parbon:theme') || localStorage.getItem('13parbon:site-theme')
         if (theme) document.documentElement.dataset.theme = theme
       } catch (error) {}
     </script>

@@ -5,6 +5,8 @@ import type { SiteSettings } from '@/domain/settings'
 import { useApi } from '@/lib/api'
 
 const SettingsContext = createContext<SiteSettings>(defaultSettings)
+/** Whether what the context holds was read from the committee's saved settings yet. */
+const SettingsLoadedContext = createContext(false)
 
 /**
  * The committee's switches, available to the whole app.
@@ -21,7 +23,23 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     // They change rarely and are read by nearly every page, so asking once is plenty.
     staleTime: 5 * 60 * 1000,
   })
-  return <SettingsContext.Provider value={data ?? defaultSettings}>{children}</SettingsContext.Provider>
+  return (
+    <SettingsLoadedContext.Provider value={data !== undefined}>
+      <SettingsContext.Provider value={data ?? defaultSettings}>{children}</SettingsContext.Provider>
+    </SettingsLoadedContext.Provider>
+  )
+}
+
+/**
+ * Whether the settings have arrived, as opposed to still being what the code says.
+ *
+ * Almost nothing should ask. A page draws the same either way, and that is the point of the
+ * fallback. The one thing that has to know is anything that *remembers* a setting between
+ * visits: "the committee chose Festival" and "nothing has loaded yet" hold the same value, and
+ * only one of them is worth writing down.
+ */
+export function useSettingsLoaded(): boolean {
+  return useContext(SettingsLoadedContext)
 }
 
 export function useSettings(): SiteSettings {

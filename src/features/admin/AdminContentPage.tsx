@@ -22,7 +22,7 @@ import {
   useSaveSettings,
 } from '@/lib/api'
 import { useNow } from '@/lib/clock'
-import { useSettings } from '@/app/SettingsContext'
+import { useSettings, useSettingsLoaded } from '@/app/SettingsContext'
 import { countGaps, gapsNow } from '@/app/gaps'
 import { SITE_TEXT_FIELDS, SITE_TEXT_KEYS, type SiteTextKey } from '@/domain/settings'
 import styles from '@/features/portal/Portal.module.css'
@@ -69,6 +69,7 @@ function fillable(where: string): { href: string; label: string } | null {
 export function AdminContentPage() {
   useDocumentTitle('Content')
   const settings = useSettings()
+  const settingsLoaded = useSettingsLoaded()
   const { data: posts } = useAllPosts()
   const { data: announcements } = useAllAnnouncements()
   const { data: albums } = useAlbums()
@@ -341,16 +342,33 @@ export function AdminContentPage() {
         </div>
         <div className={styles.pad}>
           <p className={`${styles.muted} ${styles.tiny}`} style={{ marginBottom: 16 }}>
-            These were a code change until now — a pull request and a deploy to turn the gallery
-            off. They are yours.
+            Everything about the public site that is the committee’s to decide: what is switched
+            on, what it says, what order it comes in and what colours it wears. Each of these was
+            a code change once — a pull request and a deploy to turn the gallery off. They are yours.
           </p>
-          <SiteSwitches
-            settings={settings}
-            saving={saveSettings.isPending}
-            saved={saveSettings.isSuccess}
-            error={saveSettings.isError ? saveSettings.error.message : undefined}
-            onSave={(draft) => saveSettings.mutate(draft)}
-          />
+          {/*
+            * Not until what is saved has been read.
+            *
+            * The form copies the settings when it opens and edits the copy. Opened a moment too
+            * early — a reload of this page, before the database has answered — the copy is of
+            * what the code says, every section that differs lights up as unsaved, and pressing
+            * its Save writes the code's version over the committee's. With the story and the
+            * privacy notice now in here, that is too much to lose to a race.
+            */}
+          {settingsLoaded ? (
+            <SiteSwitches
+              settings={settings}
+              saving={saveSettings.isPending}
+              saved={saveSettings.isSuccess}
+              error={saveSettings.isError ? saveSettings.error.message : undefined}
+              onSave={(draft) => saveSettings.mutate(draft)}
+            />
+          ) : (
+            <p className={styles.muted} role="status">
+              Reading what is saved… If this does not go away, the settings could not be reached —
+              reload the page before changing anything.
+            </p>
+          )}
         </div>
       </section>
 

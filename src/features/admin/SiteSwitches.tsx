@@ -13,7 +13,35 @@ import {
   type SectionAudience,
   type SiteSettings,
 } from '@/domain/settings'
+import {
+  paragraphsFromText,
+  paragraphsToText,
+  storyFromText,
+  storyToText,
+  tidyFestivals,
+  tidyPrivacySections,
+  tidySocial,
+  tidyThemePhotos,
+  tidyTools,
+  tidyValues,
+  webAddressOr,
+  isWebAddress,
+  type SiteTheme,
+} from '@/domain/siteContent'
+import { defaultSettings } from '@/app/defaults'
 import { isPlaceholder } from '@/app/site'
+import { themes } from '@/app/theme/themes'
+import { useNow } from '@/lib/clock'
+import {
+  CollageEditor,
+  FestivalEditor,
+  OrderEditor,
+  PrivacyEditor,
+  SocialEditor,
+  ToolsEditor,
+  ValuesEditor,
+  type PrivacyRow,
+} from './SettingsEditors'
 import styles from './ContentForms.module.css'
 
 const AUDIENCES: { value: SectionAudience; label: string }[] = [
@@ -22,12 +50,38 @@ const AUDIENCES: { value: SectionAudience; label: string }[] = [
   { value: 'admins', label: 'The committee only' },
 ]
 
-type SectionKey = 'switches' | 'words' | 'committee' | 'faq' | 'roll' | 'home'
+type SectionKey =
+  | 'switches'
+  | 'look'
+  | 'words'
+  | 'social'
+  | 'home'
+  | 'festivals'
+  | 'story'
+  | 'values'
+  | 'committee'
+  | 'roll'
+  | 'faq'
+  | 'collage'
+  | 'privacy'
+  | 'tools'
+
+/** The date a notice took effect, as the privacy page prints it: 21 September 2026. */
+const longDate = (when: Date) =>
+  new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/London' }).format(when)
+
+const privacyRowsOf = (sections: SiteSettings['privacy']['sections']): PrivacyRow[] =>
+  sections.map((section) => ({ title: section.title, text: paragraphsToText(section.body) }))
 
 const SWITCH_KEYS = Object.keys(SETTING_LABELS) as (keyof typeof SETTING_LABELS)[]
 
 /**
- * Six unrelated jobs, and each one saves on its own.
+ * A good many unrelated jobs, and each one saves on its own.
+ *
+ * It was six. It is now everything about the site that the committee owns and a developer used
+ * to edit for them — the festivals, the story, the channels, the privacy notice — grouped by
+ * the page each one changes, because "where is the thing that changes the About page?" is the
+ * question somebody arrives with.
  *
  * This was a single form six fieldsets long with one button at the bottom of it saying "save
  * the switches" — which was the right name for one section and the wrong name for the other
@@ -58,6 +112,7 @@ function Section({
   saving,
   saved,
   error,
+  lazy,
   onToggle,
   onSubmit,
   children,
@@ -71,10 +126,21 @@ function Section({
   saving: boolean
   saved: boolean
   error?: string
+  /**
+   * Whether to leave the fields undrawn until the section is first opened.
+   *
+   * The lists are heavy — a festival is four boxes and three buttons, and there are eight such
+   * lists — and with all of them drawn, every keystroke anywhere on the screen redrew several
+   * hundred fields nobody was looking at. Once opened a section stays drawn, so closing it
+   * again does not throw away what was typed into it.
+   */
+  lazy?: boolean
   onToggle: () => void
   onSubmit: () => void
   children: React.ReactNode
 }) {
+  const [drawn, setDrawn] = useState(open || !lazy)
+  if (open && !drawn) setDrawn(true)
   return (
     <form
       className={styles.section}
@@ -105,7 +171,7 @@ function Section({
       <div id={`section-${k}`} className={open ? styles.bodyOpen : styles.body}>
         <div className={styles.bodyInner}>
           <div className={styles.form}>
-            {children}
+            {drawn ? children : null}
             <div className={styles.actions}>
               <Button variant="gold" type="submit" size="sm" disabled={saving || !unsaved}>
                 {saving ? 'Saving…' : saveLabel}
@@ -148,9 +214,55 @@ export function SiteSwitches({
     committee: settings.committee.map((row) => ({ ...row })),
     faq: settings.faq.map((row) => ({ ...row })),
     members: [...settings.members],
+    homeOrder: [...settings.homeOrder],
+    social: settings.social.map((row) => ({ ...row })),
+    festivals: settings.festivals.map((row) => ({ ...row })),
+    values: settings.values.map((row) => ({ ...row })),
+    collage: { ...settings.collage, photos: settings.collage.photos.map((row) => ({ ...row })) },
+    tools: settings.tools.map((row) => ({ ...row })),
   }))
   /** Held as typed, so a half-written line does not vanish between keystrokes. */
   const [roll, setRoll] = useState(() => rollToText(settings.members))
+  /** The story as one box of text, for the same reason and because it is pasted in whole. */
+  const [story, setStory] = useState(() => storyToText(settings.story))
+  const [privacyRows, setPrivacyRows] = useState<PrivacyRow[]>(() => privacyRowsOf(settings.privacy.sections))
+  const [controller, setController] = useState(settings.privacy.controller)
+  /** "Ours is still right": said about a notice the developer has since rewritten. */
+  const [keepOurs, setKeepOurs] = useState(false)
+  const now = useNow()
+
+  /*
+   * The developer's notice, and whether ours was written before it.
+   *
+   * The privacy notice is the one piece of wording here that has to be true about the code:
+   * it says what the site collects. When the site changes, the notice in the files is rewritten
+   * and its date moves on — and a notice saved from this screen would carry on being shown
+   * over the top of it. So the saved one remembers which version it was edited from, and when
+   * that is no longer the version in the files, this says so rather than leaving it to luck.
+   */
+  const codeNotice = defaultSettings.privacy
+  const noticeIsBehind = settings.privacy.basedOn !== codeNotice.updatedOn
+
+  const privacyToSave = (): SiteSettings => {
+    const was = settings.privacy
+    const sections = tidyPrivacySections(
+      privacyRows.map((row) => ({ title: row.title, body: paragraphsFromText(row.text) })),
+    )
+    const responsible = controller.trim() || was.controller
+    const same = JSON.stringify(sections) === JSON.stringify(was.sections) && responsible === was.controller
+    // A notice with nothing in it is not saved, and neither is one nobody has touched.
+    if (sections.length === 0 || (same && !(keepOurs && noticeIsBehind))) return settings
+    return {
+      ...settings,
+      privacy: {
+        // The date moves only when the words do. Saying "ours is still right" is not a change.
+        updatedOn: same ? was.updatedOn : longDate(now),
+        controller: responsible,
+        basedOn: codeNotice.updatedOn,
+        sections,
+      },
+    }
+  }
 
   const setRow = (i: number, changes: Partial<(typeof draft.committee)[number]>) =>
     setDraft({ ...draft, committee: draft.committee.map((row, j) => (i === j ? { ...row, ...changes } : row)) })
@@ -167,22 +279,48 @@ export function SiteSwitches({
    */
   const apply: Record<SectionKey, () => SiteSettings> = {
     switches: () => ({ ...settings, ...Object.fromEntries(SWITCH_KEYS.map((k) => [k, draft[k]])) }),
+    look: () => ({ ...settings, defaultTheme: draft.defaultTheme }),
     words: () => ({ ...settings, text: { ...draft.text } }),
+    social: () => ({
+      ...settings,
+      social: tidySocial(draft.social),
+      volunteerFormUrl: webAddressOr(draft.volunteerFormUrl),
+    }),
+    home: () => ({ ...settings, home: { ...draft.home }, homeOrder: [...draft.homeOrder] }),
+    festivals: () => ({ ...settings, festivals: tidyFestivals(draft.festivals) }),
+    story: () => ({ ...settings, story: storyFromText(story) }),
+    values: () => ({ ...settings, values: tidyValues(draft.values) }),
     committee: () => ({ ...settings, committee: tidyCommittee(draft.committee) }),
-    faq: () => ({ ...settings, faq: tidyFaq(draft.faq) }),
     roll: () => ({ ...settings, members: rollFromText(roll) }),
-    home: () => ({ ...settings, home: { ...draft.home } }),
+    faq: () => ({ ...settings, faq: tidyFaq(draft.faq) }),
+    collage: () => ({
+      ...settings,
+      collage: {
+        // A collage with no name is one a screen reader announces as nothing, so a blanked
+        // label keeps the one it had.
+        label: draft.collage.label.trim() || settings.collage.label,
+        credit: draft.collage.credit.trim(),
+        photos: tidyThemePhotos(draft.collage.photos),
+      },
+    }),
+    privacy: privacyToSave,
+    tools: () => ({ ...settings, tools: tidyTools(draft.tools) }),
   }
 
   /** Whether this section has anything unsaved, which is what lights its own Save. */
-  const dirty = (k: SectionKey) => JSON.stringify(apply[k]()) !== JSON.stringify(settings)
+  const asSaved = JSON.stringify(settings)
+  const dirty = (k: SectionKey) => JSON.stringify(apply[k]()) !== asSaved
 
   const [open, setOpen] = useState<SectionKey[]>(['switches'])
   const [attempted, setAttempted] = useState<SectionKey | null>(null)
   const toggle = (k: SectionKey) => setOpen((now) => (now.includes(k) ? now.filter((x) => x !== k) : [...now, k]))
 
+  /** The sections added when the lists left the files. See `lazy` on `Section`. */
+  const LAZY: SectionKey[] = ['look', 'social', 'festivals', 'story', 'values', 'collage', 'privacy', 'tools']
+
   const sectionProps = (k: SectionKey) => ({
     k,
+    lazy: LAZY.includes(k),
     open: open.includes(k),
     unsaved: dirty(k),
     saving: Boolean(saving) && attempted === k,
@@ -197,6 +335,7 @@ export function SiteSwitches({
 
   return (
     <div className={styles.sections}>
+      <h3 className={styles.groupTitle}>The whole site</h3>
       <Section {...sectionProps('switches')} label="What the public site shows" summary={`${SWITCH_KEYS.filter((k) => draft[k]).length} of ${SWITCH_KEYS.length} switched on`} saveLabel="Save the switches">
         {(Object.keys(SETTING_LABELS) as (keyof typeof SETTING_LABELS)[]).map((key) => (
           <div key={key} className={styles.check}>
@@ -217,10 +356,36 @@ export function SiteSwitches({
         ))}
       </Section>
 
+      <Section {...sectionProps('look')} label="The colours a visitor arrives to" summary={themes.find((t) => t.id === draft.defaultTheme)?.name ?? ''} saveLabel="Save the colours">
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="defaultTheme">
+            The season’s look
+          </label>
+          <select
+            id="defaultTheme"
+            className={styles.input}
+            value={draft.defaultTheme}
+            aria-describedby="defaultTheme-note"
+            onChange={(e) => setDraft({ ...draft, defaultTheme: e.target.value as SiteTheme })}
+          >
+            {themes.map((theme) => (
+              <option key={theme.id} value={theme.id}>
+                {theme.name} — {theme.description}
+              </option>
+            ))}
+          </select>
+          <p id="defaultTheme-note" className={styles.hint}>
+            What somebody sees on a first visit. Anybody who has picked their own colours from the
+            palette in the header keeps them — including you, so if nothing seems to change here,
+            that is why.
+          </p>
+        </div>
+      </Section>
+
       <Section {...sectionProps('words')} label="The words on the public pages" summary={`${SITE_TEXT_KEYS.filter((k) => isPlaceholder(draft.text[k] ?? '')).length} still in brackets`} saveLabel="Save the wording">
         <p className={styles.hint}>
-          Only the lines that change. The captions under the theme photographs still live in the
-          files — ask a developer for those.
+          The single lines. Anything that is a list — the festivals, the story, the channels, the
+          theme’s photographs — has a section of its own on this page.
         </p>
         {SITE_TEXT_KEYS.map((key) => {
           const field = SITE_TEXT_FIELDS[key]
@@ -257,6 +422,110 @@ export function SiteSwitches({
             </div>
           )
         })}
+      </Section>
+
+      <Section {...sectionProps('social')} label="Ways to reach us, and to help" summary={`${tidySocial(draft.social).length} channels`} saveLabel="Save the channels">
+        <p className={styles.hint}>
+          In the footer of every page and on the contact page, in this order. The footer draws only
+          the ones with an address.
+        </p>
+        <SocialEditor rows={draft.social} onChange={(social) => setDraft({ ...draft, social })} />
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="volunteerFormUrl">
+            Form for offers to help
+          </label>
+          <input
+            id="volunteerFormUrl"
+            className={styles.input}
+            inputMode="url"
+            placeholder="https://"
+            value={draft.volunteerFormUrl}
+            aria-invalid={draft.volunteerFormUrl.trim() !== '' && !isWebAddress(draft.volunteerFormUrl) ? true : undefined}
+            aria-describedby="volunteerFormUrl-note"
+            onChange={(e) => setDraft({ ...draft, volunteerFormUrl: e.target.value })}
+          />
+          <p id="volunteerFormUrl-note" className={styles.hint}>
+            Where the Volunteer button on an event’s page goes — a Google Form, say. Empty, or
+            anything that is not a web address, sends people to the contact page instead.
+          </p>
+        </div>
+      </Section>
+
+      <h3 className={styles.groupTitle}>The home page</h3>
+
+      <Section {...sectionProps('home')} label="The home page: its order, and who sees each part" summary={`${draft.homeOrder.length} parts`} saveLabel="Save the home page">
+        <p className={styles.hint}>
+          The order they come in, between the name at the top and the invitation at the bottom.
+          A part that is switched off or has nothing to show takes up no room wherever it is.
+        </p>
+        <OrderEditor order={draft.homeOrder} onChange={(homeOrder) => setDraft({ ...draft, homeOrder })} />
+        <p className={styles.hint}>
+          A section set to the committee is a way of getting something ready where only you can see
+          it. Nothing here makes anything private — it decides what is drawn, not what is sent.
+        </p>
+        <div className={styles.row}>
+          {HOME_SECTIONS.map((section) => (
+            <div key={section} className={styles.field}>
+              <label className={styles.label} htmlFor={`home-${section}`}>
+                {HOME_SECTION_LABELS[section]}
+              </label>
+              <select
+                id={`home-${section}`}
+                className={styles.input}
+                value={draft.home[section]}
+                onChange={(e) =>
+                  setDraft({ ...draft, home: { ...draft.home, [section]: e.target.value as SectionAudience } })
+                }
+              >
+                {AUDIENCES.map((a) => (
+                  <option key={a.value} value={a.value}>
+                    {a.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ))}
+        </div>
+      </Section>
+
+      <Section {...sectionProps('festivals')} label="The year’s festivals" summary={`${tidyFestivals(draft.festivals).length} festivals`} saveLabel="Save the festivals">
+        <p className={styles.hint}>
+          “Our year” on the home page and the filter on the Events page, in this order. To mark one
+          as next up, choose it on the evening itself, under Events. Removing a festival does not
+          remove its evenings — they simply stop being filed under anything.
+        </p>
+        <FestivalEditor rows={draft.festivals} onChange={(festivals) => setDraft({ ...draft, festivals })} />
+      </Section>
+
+      <h3 className={styles.groupTitle}>The About page</h3>
+
+      <Section {...sectionProps('story')} label="Our story" summary={`${storyFromText(story).length} paragraphs, headings and lists`} saveLabel="Save the story">
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="story">
+            The story, as it reads on the About page
+          </label>
+          <textarea
+            id="story"
+            className={styles.textarea}
+            rows={18}
+            value={story}
+            aria-describedby="story-note"
+            onChange={(e) => setStory(e.target.value)}
+          />
+          <p id="story-note" className={styles.hint}>
+            Leave an empty line between paragraphs. Start a line with # to make it a heading, and
+            with - to make it one of a list. Emptied completely, the story and its heading come
+            off the page.
+          </p>
+        </div>
+      </Section>
+
+      <Section {...sectionProps('values')} label="What we stand for" summary={`${tidyValues(draft.values).length} values`} saveLabel="Save the values">
+        <p className={styles.hint}>
+          The cards under the story. One with no heading or no sentence is left out rather than
+          shown half-finished.
+        </p>
+        <ValuesEditor rows={draft.values} onChange={(values) => setDraft({ ...draft, values })} />
       </Section>
 
       <Section {...sectionProps('committee')} label="The committee" summary={`${tidyCommittee(draft.committee).length} people`} saveLabel="Save the committee">
@@ -311,6 +580,27 @@ export function SiteSwitches({
         </div>
       </Section>
 
+      <Section {...sectionProps('roll')} label="The members’ roll" summary={`${rollFromText(roll).length} names`} saveLabel="Save the roll">
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="roll">
+            One name to a line
+          </label>
+          <textarea
+            id="roll"
+            className={styles.textarea}
+            rows={10}
+            value={roll}
+            aria-describedby="roll-note"
+            onChange={(e) => setRoll(e.target.value)}
+          />
+          <p id="roll-note" className={styles.hint}>
+            Names only — nothing here says where anybody lives, how old they are or how to reach
+            them. {rollFromText(roll).length} on the roll. Take a name out the day its owner asks;
+            that used to mean waiting for a developer.
+          </p>
+        </div>
+      </Section>
+
       <Section {...sectionProps('faq')} label="Questions people ask" summary={`${tidyFaq(draft.faq).length} questions`} saveLabel="Save the questions">
         <p className={styles.hint}>
           On the About page, in this order. Anything left in [square brackets] is shown to visitors exactly
@@ -360,55 +650,68 @@ export function SiteSwitches({
         </div>
       </Section>
 
-      <Section {...sectionProps('roll')} label="The members’ roll" summary={`${rollFromText(roll).length} names`} saveLabel="Save the roll">
-        <div className={styles.field}>
-          <label className={styles.label} htmlFor="roll">
-            One name to a line
-          </label>
-          <textarea
-            id="roll"
-            className={styles.textarea}
-            rows={10}
-            value={roll}
-            aria-describedby="roll-note"
-            onChange={(e) => setRoll(e.target.value)}
-          />
-          <p id="roll-note" className={styles.hint}>
-            Names only — nothing here says where anybody lives, how old they are or how to reach
-            them. {rollFromText(roll).length} on the roll. Take a name out the day its owner asks;
-            that used to mean waiting for a developer.
-          </p>
-        </div>
+      <h3 className={styles.groupTitle}>Events</h3>
+
+      <Section {...sectionProps('collage')} label="This year’s theme, in photographs" summary={`${draft.collage.photos.length} photographs`} saveLabel="Save the photographs">
+        <p className={styles.hint}>
+          The black-and-white-into-colour collage on the page of any evening that has a theme. The
+          theme’s own words are set on the evening, under Events; these are the pictures behind it.
+          Taking one out of this list takes it off the page, but does not delete the file.
+        </p>
+        <CollageEditor value={draft.collage} onChange={(collage) => setDraft({ ...draft, collage })} />
       </Section>
 
-      <Section {...sectionProps('home')} label="Who each part of the home page is for" summary={`${HOME_SECTIONS.length} parts`} saveLabel="Save who sees what">
+      <h3 className={styles.groupTitle}>Small print, and the portal</h3>
+
+      <Section {...sectionProps('privacy')} label="The privacy notice" summary={`Last updated ${settings.privacy.updatedOn}`} saveLabel="Save the notice">
         <p className={styles.hint}>
-          A section set to the committee is a way of getting something ready where only you can see
-          it. Nothing here makes anything private — it decides what is drawn, not what is sent.
+          This is a promise about what the site does with people’s details, so it has to stay true.
+          Change the wording freely; do not say the site collects less than it does. The date at the
+          top of the notice moves to today whenever the words change.
         </p>
-        <div className={styles.row}>
-          {HOME_SECTIONS.map((section) => (
-            <div key={section} className={styles.field}>
-              <label className={styles.label} htmlFor={`home-${section}`}>
-                {HOME_SECTION_LABELS[section]}
-              </label>
-              <select
-                id={`home-${section}`}
-                className={styles.input}
-                value={draft.home[section]}
-                onChange={(e) =>
-                  setDraft({ ...draft, home: { ...draft.home, [section]: e.target.value as SectionAudience } })
-                }
+        {noticeIsBehind ? (
+          <div className={styles.warning} role="alert">
+            <p style={{ margin: 0 }}>
+              <strong>The site has changed since this notice was written.</strong> The developer’s
+              version is dated {codeNotice.updatedOn}, and yours was edited from an earlier one —
+              so what the site collects may no longer be what this says. Read theirs, then choose.
+            </p>
+            <div className={styles.actions} style={{ marginTop: 10 }}>
+              <Button
+                variant="line"
+                size="sm"
+                onClick={() => {
+                  setPrivacyRows(privacyRowsOf(codeNotice.sections))
+                  setController(codeNotice.controller)
+                }}
               >
-                {AUDIENCES.map((a) => (
-                  <option key={a.value} value={a.value}>
-                    {a.label}
-                  </option>
-                ))}
-              </select>
+                Start again from the developer’s version
+              </Button>
+              <Button variant="line" size="sm" onClick={() => setKeepOurs(true)}>
+                Ours is still right
+              </Button>
             </div>
-          ))}
-        </div>
+          </div>
+        ) : null}
+        <PrivacyEditor rows={privacyRows} controller={controller} onRows={setPrivacyRows} onController={setController} />
+        {tidyPrivacySections(privacyRows.map((row) => ({ title: row.title, body: paragraphsFromText(row.text) }))).length === 0 ? (
+          <p className={styles.error}>
+            A notice needs at least one section with a heading and something under it, so this
+            cannot be saved as it is.
+          </p>
+        ) : (
+          <p className={styles.hint}>One paragraph to a line under each heading.</p>
+        )}
+      </Section>
+
+      <Section {...sectionProps('tools')} label="Other tools the committee runs" summary={`${tidyTools(draft.tools).length} linked`} saveLabel="Save the tools">
+        <p className={styles.hint}>
+          Links in the portal’s sidebar, shown to the committee only. The first one is the planner
+          the Events screen points at. The addresses themselves are stored with the rest of the
+          site’s settings, which anybody can read if they go looking — so link only to things that
+          ask for a sign-in of their own.
+        </p>
+        <ToolsEditor rows={draft.tools} onChange={(tools) => setDraft({ ...draft, tools })} />
       </Section>
 
     </div>

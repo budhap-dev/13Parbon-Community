@@ -72,6 +72,17 @@ describe('createMockApi', () => {
     expect((await api.festivals.list()).map((f) => f.id)).toEqual(['boishakhi', 'mahalaya', 'saraswati-puja', 'holi'])
   })
 
+  it('lists the festivals the committee saved, not the ones it started with', async () => {
+    // Its own client: saving here must not change the year for every test below.
+    const own = createMockApi({ now, events: testEvents })
+    const settings = await own.settings.get()
+    await own.settings.save(
+      { ...settings, festivals: [{ id: 'holi', name: 'Dol Jatra' }] },
+      { householdId: 'hh-chatterjee', role: 'admin' },
+    )
+    expect(await own.festivals.list()).toEqual([{ id: 'holi', name: 'Dol Jatra' }])
+  })
+
   it('returns only approved media from public albums', async () => {
     const media = await api.gallery.listRecentMedia(10)
     // There are sixty-three approved photographs, so this is the limit doing its job.

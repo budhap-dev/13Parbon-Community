@@ -50,10 +50,12 @@ Two ideas run through everything and explain most of the design:
 household and the Google address it will sign in with; that address gets in and no other does.
 An unrecognised address is turned away and listed for the committee as a knock at the door.
 
-**The committee runs the site, not a developer.** Switches, wording, the committee list, the
-FAQ, the members' roll, events, news, notices, albums and feedback are all editable from the
-back office. Turning the gallery off is a decision somebody makes on the night, not a pull
-request.
+**The committee runs the site, not a developer.** Switches, wording, the order of the home
+page, the season's colours, the festivals, the story, the committee list, the FAQ, the members'
+roll, the social channels, the privacy notice, events, news, notices, albums and feedback are
+all editable from the back office. Turning the gallery off is a decision somebody makes on the
+night, not a pull request. [§9](#9-what-the-committee-controls-without-a-developer) has the
+full list, and the short list of what is deliberately still code.
 
 ### What is intentionally *not* here
 
@@ -283,9 +285,11 @@ both by hand.
 
 Three tabs, each saving independently:
 
-- **The pages** — the site's wording, the committee list, the FAQ, the members' roll, the
-  switches ([§9](#9-what-the-committee-controls-without-a-developer)), and a **gaps** panel
-  that counts unfilled `[bracketed]` placeholders by reading the content itself.
+- **The pages** — everything in [§9](#9-what-the-committee-controls-without-a-developer),
+  grouped by the page each thing changes, and a **gaps** panel that counts unfilled
+  `[bracketed]` placeholders by reading the content itself. The form does not open until the
+  saved settings have been read: opened on the code's own values it would offer to save them
+  over the committee's.
 - **Noticeboard** — short notices with an audience, a publish date, an optional expiry and an
   optional button. Capped at 500 characters: a noticeboard people can read at a glance is the
   whole point of one.
@@ -372,16 +376,32 @@ role.
 [`SiteSettings`](../src/domain/settings.ts) — one row in `portal.site_settings`, edited under
 **Content → The pages**.
 
-**Switches:** `showPhotos`, `showNews`, `showNextEventStrip`, `showFeedback`,
-`showMemberSignIn`.
+| On the screen | Field | What it changes |
+|---|---|---|
+| What the public site shows | `showPhotos`, `showNews`, `showNextEventStrip`, `showFeedback`, `showMemberSignIn` | Whole sections, on or off. |
+| The colours a visitor arrives to | `defaultTheme` | The look a first visit opens in. A visitor's own choice still wins. |
+| The words on the public pages | `text` | The home page title, tagline, mission, the invitation at the foot of the home page, town, venue, address, email, gallery note. |
+| Ways to reach us, and to help | `social`, `volunteerFormUrl` | The footer, the contact page, and where the Volunteer button on an event goes. |
+| The home page | `homeOrder`, `home` | The order of the sections, and who each is for (public / members / committee). |
+| The year's festivals | `festivals` | "Our year" on the home page and the filter on Events. An evening is filed under one in the Event Designer. |
+| Our story, What we stand for | `story`, `values` | The About page. |
+| The committee, the roll, the questions | `committee`, `members`, `faq` | The About page. |
+| This year's theme, in photographs | `collage` | The then-and-now collage on an event's page: photographs, captions, credit. |
+| The privacy notice | `privacy` | The privacy page. See the note below. |
+| Other tools the committee runs | `tools` | Links in the portal's sidebar. |
 
-**Home page section audiences:** each of `notices`, `nextEvent`, `upcoming`, `volunteer`,
-`yearStrip`, `photos`, `feedback` set to public / members / committee-only.
+**Still code, on purpose:** the name, the wordmark and the logo. They are baked into
+`index.html`, the share card and the sitemap, which link previews and search engines read
+without running the app. So are the five colour schemes themselves — the committee chooses
+between them; adding a sixth is a stylesheet.
 
-**Words:** tagline, mission, mission statement, venue, address, email, gallery note.
-**Lists:** the committee, the FAQ, the members' roll.
+**The privacy notice is watched.** It is the one piece of wording that has to be true about the
+code. A saved notice remembers the `updatedOn` date of the developer's notice it was edited
+from (`basedOn`); when [privacy.ts](../src/app/privacy.ts) changes and its date moves on, the
+editor tells the committee their wording describes an older site and offers the new one. So:
+**move `updatedOn` on whenever you change that file.**
 
-Four design decisions here are worth knowing:
+Six design decisions here are worth knowing:
 
 1. **A fixed shape, not a bag of key–value pairs.** A settings table anybody can put anything
    into drifts: a key gets renamed in code and the stale row sits there meaning nothing. A
@@ -392,7 +412,13 @@ Four design decisions here are worth knowing:
 3. **[`site.ts`](../src/app/site.ts) holds the fallbacks**, and every default is the cautious
    answer. A site that loses its database must not start publishing what the committee switched
    off.
-4. **A switch takes the page with it, not just the link.** `SectionGate` makes `/gallery`,
+4. **Addresses are checked on the way out, not only on the way in.** Some of these values end
+   up in an `href`, and the row is JSON any admin can write. `siteContent.ts` hands a page
+   nothing as a link unless it starts with `http(s)://` — a `javascript:` address is a script
+   that runs for whoever presses it.
+5. **A festival's id never changes.** It is what an evening is filed under and what the address
+   bar says. Renaming one keeps its id; a new one takes its id from its name.
+6. **A switch takes the page with it, not just the link.** `SectionGate` makes `/gallery`,
    `/news` and `/feedback` answer as *not found* when their switch is off. Sign-in is
    deliberately excluded — a member already signed in should not be locked out of their own
    household by a switch about a header link.
@@ -486,6 +512,11 @@ Five **public** themes tied to the community's year — Festival, Boishakhi, Sar
 Holi, Mahalaya — each a full set of CSS custom properties in
 [tokens.css](../src/app/theme/tokens.css), a drawn SVG motif behind the hero, and an optional
 photograph. The header's picker stamps `data-theme` on the root and remembers the choice.
+
+Which one a first visit opens in is the committee's (`defaultTheme`, under Content). The
+browser remembers the committee's last answer under its own key, and the inline script in
+`index.html` reads it before the first paint, so a returning visitor does not see Festival red
+flash to Holi magenta while the settings load.
 
 Three **portal** themes — Paper, Linen, Slate — deliberately quiet. Nobody chooses a festival
 palette to spend an hour on a spreadsheet, and the committee's screens used to follow the

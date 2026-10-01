@@ -193,14 +193,17 @@ export function withAuditTrail(base: ApiClient, now: () => Date = () => new Date
       save: async (draft, viewer) => {
         const was = await base.settings.get()
         const saved = await base.settings.save(draft, viewer)
-        // Flattened, because a nested object compared with Object.is is always a change.
-        record(
-          viewer,
-          'settings:save',
-          { kind: 'settings', id: 'site' },
-          { ...was, home: JSON.stringify(was.home) },
-          { ...saved, home: JSON.stringify(saved.home) },
-        )
+        // Flattened, because a nested object compared with Object.is is always a change —
+        // and nearly everything in the settings is a list now. Unflattened, saving one switch
+        // would be recorded as having changed the story, the festivals and the privacy notice.
+        const flat = (settings: typeof was) =>
+          Object.fromEntries(
+            Object.entries(settings).map(([key, value]) => [
+              key,
+              value !== null && typeof value === 'object' ? JSON.stringify(value) : value,
+            ]),
+          )
+        record(viewer, 'settings:save', { kind: 'settings', id: 'site' }, flat(was), flat(saved))
         return saved
       },
     },
