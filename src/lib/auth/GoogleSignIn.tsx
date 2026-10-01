@@ -38,6 +38,34 @@ type Value = { state: SignInState; signIn: () => void; signOut: () => void }
 const GoogleSignInContext = createContext<Value | null>(null)
 
 /**
+ * Read once, when the module loads — not as a default parameter.
+ *
+ * In a production build Vite writes `import.meta.env` out as an object literal wherever it
+ * appears, so as a default parameter it was a new object on every render. The project settings
+ * below are derived from it, the effect that subscribes to Supabase keys on them, and so that
+ * effect re-ran on every render: it dropped the household lookup it had just started, subscribed
+ * again, started the lookup again, and the portal sat on "Signing you in…" for ever. Nothing in
+ * the suite could see it — tests hand the provider one object and keep it, and so does the dev
+ * server, where `import.meta.env` is a real object with a single identity.
+ */
+const runtimeEnv: Record<string, string | undefined> = import.meta.env
+
+/**
+ * The same object for as long as the values in it are the same.
+ *
+ * The effect must key on the project settings — a provider handed a different project should
+ * subscribe to it. It must not re-run because the same settings arrived in a new wrapper, which
+ * is what `runtimeEnv` above guards against at the source; this guards against it from any
+ * caller, so a fresh object per render can never put the sign-in back into a loop.
+ */
+function useSameValue<T>(value: T): T {
+  // The settings are plain data, so a trip through JSON is a copy with one identity per
+  // distinct contents — and a dependency the hook can see, rather than a ref read mid-render.
+  const key = JSON.stringify(value)
+  return useMemo(() => JSON.parse(key) as T, [key])
+}
+
+/**
  * Turns a Google identity into an app session, and refuses one to anybody not invited.
  *
  * It sits between Supabase, which knows who signed in, and the session, which the rest of the
@@ -58,13 +86,13 @@ const GoogleSignInContext = createContext<Value | null>(null)
  */
 export function GoogleSignInProvider({
   children,
-  env = import.meta.env,
+  env = runtimeEnv,
 }: {
   children: ReactNode
   env?: Record<string, string | undefined>
 }) {
-  const config = useMemo(() => readAuthConfig(env), [env])
-  const project = useMemo(() => readSupabaseConfig(env), [env])
+  const config = useSameValue(readAuthConfig(env))
+  const project = useSameValue(readSupabaseConfig(env))
   const { session, signIn: putSession, signOut: dropSession } = useSession()
   const api = useApi()
   const [state, setState] = useState<SignInState>(config ? { status: 'checking' } : { status: 'off' })
@@ -162,6 +190,16 @@ export function GoogleSignInProvider({
         setPublicState((s) => (s.status === 'checking' ? { status: 'ready' } : s))
       })
       stop = () => data.subscription.unsubscribe()
+    }).catch((error: unknown) => {
+      /*
+       * The SDK is fetched on demand, and that fetch can fail — a chunk gone after a deploy,
+       * an extension blocking it, a connection that dropped. Left alone, "checking" would be a
+       * screen nobody ever leaves: the guard waits on it, and no listener is ever going to fire.
+       */
+      if (!live) return
+      const message = error instanceof Error ? error.message : 'Sign-in could not be loaded'
+      setState((s) => (s.status === 'checking' ? { status: 'failed', message } : s))
+      setPublicState((s) => (s.status === 'checking' ? { status: 'failed', message } : s))
     })
 
     return () => {
