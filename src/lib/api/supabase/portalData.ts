@@ -34,7 +34,12 @@ const table = (client: SupabaseClient, name: string) => client.schema(SCHEMA).fr
 function refuse(message: string, error: { code?: string; message: string } | null): never {
   // 45001 is the last-admin guard, which raises a sentence already fit to show somebody. Every
   // other refusal comes back saying a policy was violated, which is not.
-  if (error?.code === '45001') throw new NotAllowed(error.message)
+  //
+  // 45002 is guard_superadmin, and is shown the same way for a different reason. Its sentence
+  // says what cannot be done and not why, which is as much as the app is meant to know: there
+  // is nothing here, or anywhere else in the browser, that can tell which household it is
+  // until somebody tries.
+  if (error?.code === '45001' || error?.code === '45002') throw new NotAllowed(error.message)
   if (error?.code === '42501') throw new NotAllowed(message)
   /*
    * A clash, which is a thing somebody did rather than a thing that went wrong.

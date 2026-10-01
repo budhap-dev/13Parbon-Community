@@ -516,6 +516,7 @@ Exposed schemas.
 | [`feedback.sql`](../supabase/feedback.sql) | Feedback from the public. |
 | [`verify.sql`](../supabase/verify.sql) | Proves the portal rules hold. |
 | [`verify-feedback.sql`](../supabase/verify-feedback.sql) | Proves the feedback rules hold. |
+| [`superadmin.sql`](../supabase/superadmin.sql) | Names the one account the rest of the committee cannot remove or demote. The table and the guard are in `portal.sql`; this is only the address. Nothing in the app can read it. |
 | `*-seed.sql` | Sample content. |
 
 **These are first-run scripts, not migrations.** `create table if not exists` is a no-op

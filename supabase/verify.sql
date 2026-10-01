@@ -1110,6 +1110,231 @@ begin
 end $$;
 
 /*
+ * The account the rest of the committee cannot remove.
+ *
+ * Every admin can demote or remove every other admin, so "an admin nobody can remove" is not a
+ * role — a role is a column, and the committee edits that column. It is an address in
+ * portal.superadmins, a table nothing arriving through the API can read, and a trigger that
+ * knows what to refuse. Three things are being proved: that another admin cannot get rid of
+ * that household by any route, that they cannot find out who is on the list or join it, and
+ * that the account itself is an admin whatever its household row says, or with no row at all.
+ *
+ * Its own households and its own addresses, so that nothing here depends on what the blocks
+ * above did to theirs — and it takes them away again before the last check, which needs the
+ * committee to be standing where it found it.
+ */
+reset role;
+set local request.jwt.claims = '';
+
+-- Is the database actually running the current portal.sql? Said here, where the answer is
+-- "re-run it", rather than twenty lines on as a table that does not exist.
+do $$
+begin
+  if to_regclass('portal.superadmins') is null
+     or to_regprocedure('portal.guard_superadmin()') is null then
+    raise exception 'FAIL: this database has no portal.superadmins or no guard on it. Re-run supabase/portal.sql, then run this file again.';
+  end if;
+end $$;
+
+insert into portal.superadmins (email)
+values ('owner@example.com'), ('owner.unhoused@example.com');
+
+insert into portal.households (id, name, contact_name, email, google_email, role)
+values
+  ('cccccccc-0000-0000-0000-000000000001', 'The Test Owner', 'An Owner', 'owner@example.com', 'owner@example.com', 'admin'),
+  ('cccccccc-0000-0000-0000-000000000002', 'The Test Colleague', 'A Colleague', 'colleague@example.com', 'colleague@example.com', 'admin');
+
+-- Another admin: a full member of the committee, and not on the list.
+set local role authenticated;
+set local request.jwt.claims = '{"email": "colleague@example.com"}';
+
+do $$
+begin
+  begin
+    delete from portal.households where id = 'cccccccc-0000-0000-0000-000000000001';
+    raise exception 'FAIL: another admin removed a superadmin''s household';
+  exception when sqlstate '45002' then
+    null;
+  end;
+
+  begin
+    update portal.households set role = 'member'
+      where id = 'cccccccc-0000-0000-0000-000000000001';
+    raise exception 'FAIL: another admin demoted a superadmin';
+  exception when sqlstate '45002' then
+    null;
+  end;
+
+  -- The quiet way of removing somebody: leave the household, take away the address that
+  -- signs it in.
+  begin
+    update portal.households set google_email = 'somebody.else@example.com'
+      where id = 'cccccccc-0000-0000-0000-000000000001';
+    raise exception 'FAIL: another admin changed the address a superadmin signs in with';
+  exception when sqlstate '45002' then
+    null;
+  end;
+
+  begin
+    update portal.households set google_email = null
+      where id = 'cccccccc-0000-0000-0000-000000000001';
+    raise exception 'FAIL: another admin cleared the address a superadmin signs in with';
+  exception when sqlstate '45002' then
+    null;
+  end;
+
+  -- And the way round all of that: a superadmin with no household yet, and a household
+  -- invited under their address before they have one. As a member.
+  begin
+    insert into portal.households (name, contact_name, email, google_email)
+      values ('The Impostors', 'Someone', 'impostor@example.com', 'owner.unhoused@example.com');
+    raise exception 'FAIL: another admin invited a household under a superadmin''s address';
+  exception when sqlstate '45002' then
+    null;
+  end;
+
+  begin
+    update portal.households set google_email = 'owner.unhoused@example.com'
+      where id = 'cccccccc-0000-0000-0000-000000000002';
+    raise exception 'FAIL: another admin gave their own household a superadmin''s address';
+  exception when sqlstate '45002' then
+    null;
+  end;
+end $$;
+
+-- The list is not theirs to read, to ask about, or to add themselves to. This is what "not
+-- shown in the app" rests on: the app holds this same token and gets these same answers.
+do $$
+begin
+  begin
+    perform 1 from portal.superadmins;
+    raise exception 'FAIL: a signed-in admin read the list of superadmins';
+  exception when insufficient_privilege then
+    null;
+  end;
+
+  begin
+    perform portal.is_superadmin();
+    raise exception 'FAIL: a signed-in account could ask whether it is a superadmin';
+  exception when insufficient_privilege then
+    null;
+  end;
+
+  begin
+    insert into portal.superadmins (email) values ('colleague@example.com');
+    raise exception 'FAIL: an admin added themselves to the list of superadmins';
+  exception when insufficient_privilege then
+    null;
+  end;
+end $$;
+
+-- Everything else about that household is still the committee's to edit.
+update portal.households set phone = '07700 900099'
+  where id = 'cccccccc-0000-0000-0000-000000000001';
+
+reset role;
+set local request.jwt.claims = '';
+
+do $$
+declare
+  owner_row portal.households%rowtype;
+begin
+  select * into owner_row from portal.households where id = 'cccccccc-0000-0000-0000-000000000001';
+  if not found then
+    raise exception 'FAIL: the superadmin''s household is gone';
+  end if;
+  if owner_row.role <> 'admin' or owner_row.google_email is distinct from 'owner@example.com' then
+    raise exception 'FAIL: the superadmin''s household came through as % / %', owner_row.role, coalesce(owner_row.google_email, 'null');
+  end if;
+  if owner_row.phone is distinct from '07700 900099' then
+    raise exception 'FAIL: another admin could not edit an ordinary detail of a superadmin''s household — the guard is refusing more than it should';
+  end if;
+  if exists (select 1 from portal.households where google_email = 'owner.unhoused@example.com') then
+    raise exception 'FAIL: a household is carrying a superadmin''s address that only they could have given it';
+  end if;
+end $$;
+
+-- From here, with no signed-in account, the row may say anything — this is the door the whole
+-- arrangement is managed through. It is also how to set up the case worth checking: a
+-- household row that says 'member' for an account the list says is a superadmin.
+update portal.households set role = 'member'
+  where id = 'cccccccc-0000-0000-0000-000000000001';
+
+set local role authenticated;
+set local request.jwt.claims = '{"email": "owner@example.com"}';
+
+do $$
+declare
+  seen integer;
+begin
+  if not portal.is_admin() then
+    raise exception 'FAIL: a superadmin whose household row says member was not treated as an admin';
+  end if;
+
+  select count(*) into seen from portal.households;
+  if seen < 2 then
+    raise exception 'FAIL: a superadmin can see % household(s) — the policies are not treating them as an admin', seen;
+  end if;
+end $$;
+
+-- Saving their own household puts the row right, so what the app draws agrees with what the
+-- database allows.
+update portal.households set contact_name = 'An Owner, Renamed'
+  where id = 'cccccccc-0000-0000-0000-000000000001';
+
+do $$
+begin
+  if (select role from portal.households where id = 'cccccccc-0000-0000-0000-000000000001') <> 'admin' then
+    raise exception 'FAIL: a superadmin saved their own household and it still says member';
+  end if;
+end $$;
+
+-- And they may do to a colleague what a colleague may not do to them.
+update portal.households set role = 'member'
+  where id = 'cccccccc-0000-0000-0000-000000000002';
+
+do $$
+begin
+  if (select role from portal.households where id = 'cccccccc-0000-0000-0000-000000000002') <> 'member' then
+    raise exception 'FAIL: a superadmin could not demote another admin';
+  end if;
+end $$;
+
+-- With no household at all: still an admin, and the only one who may take the address.
+set local request.jwt.claims = '{"email": "owner.unhoused@example.com"}';
+
+do $$
+begin
+  if not portal.is_admin() then
+    raise exception 'FAIL: a superadmin with no household was not treated as an admin';
+  end if;
+
+  insert into portal.households (id, name, contact_name, email, google_email, role)
+    values ('cccccccc-0000-0000-0000-000000000003', 'The Test Owner, Housed', 'An Owner', 'owner.unhoused@example.com', 'owner.unhoused@example.com', 'member');
+
+  if (select role from portal.households where id = 'cccccccc-0000-0000-0000-000000000003') <> 'admin' then
+    raise exception 'FAIL: a superadmin''s own household was saved as a member';
+  end if;
+end $$;
+
+-- Taken away again, as the owner, so the check below finds the committee as it left it.
+reset role;
+set local request.jwt.claims = '';
+
+delete from portal.households
+  where id in (
+    'cccccccc-0000-0000-0000-000000000001',
+    'cccccccc-0000-0000-0000-000000000002',
+    'cccccccc-0000-0000-0000-000000000003'
+  );
+delete from portal.superadmins
+  where email in ('owner@example.com', 'owner.unhoused@example.com');
+
+set local role authenticated;
+set local request.jwt.claims = '{"email": "admin@example.com"}';
+
+
+/*
  * The committee locking itself out — the one change with no way back through the app.
  *
  * Promoting somebody is admin-only, so the last admin demoting or deleting themselves takes the
@@ -1153,6 +1378,13 @@ end $$;
  * are not reliably visible to that question. A loop makes each demotion its own statement, and
  * each is legitimate because the test admin is still holding the role.
  */
+--
+-- As the owner, not as the test admin. On a real database one of the committee may be a
+-- superadmin, and no other admin can stand that household down — guard_superadmin refuses,
+-- correctly, and this file would report the refusal as a failure of a different rule.
+reset role;
+set local request.jwt.claims = '';
+
 do $$
 declare
   standing_down record;
@@ -1170,6 +1402,9 @@ begin
     raise exception 'FAIL: could not reduce the committee to a single admin for this check; % left', remaining;
   end if;
 end $$;
+
+set local role authenticated;
+set local request.jwt.claims = '{"email": "admin@example.com"}';
 
 -- The last one cannot, by either route.
 do $$
@@ -1219,3 +1454,6 @@ rollback;
 --   4. Drop the sign_in_attempts table in a branch of the project and sign in. Sign-in must
 --      still work: the trigger swallows its own failure on purpose, and this is the only way
 --      to prove it.
+--   5. Sign in with an address that is in portal.superadmins and has no household. You
+--      should be let in, and no row should appear in sign_in_attempts: a superadmin is not
+--      somebody knocking.

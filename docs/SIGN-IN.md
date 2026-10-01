@@ -85,6 +85,7 @@ nothing that runs in a browser, and this app never needs it.
 | `supabase/portal.sql` | Households, people, documents, sign-in attempts, the audit trail, attendance — and every policy |
 | `supabase/verify.sql` | Proves the rules hold. Runs in a transaction and rolls back, so it leaves nothing behind |
 | `supabase/seed.sql` | *Optional.* Eight invented households, so the committee screens have something to show |
+| `supabase/superadmin.sql` | *Once, after the others.* Names the one account the rest of the committee cannot remove — see below |
 
 `verify.sql` should end with a single notice: **All portal rules hold.** Anything beginning
 `FAIL:` names exactly what is wrong — send me the line and I will fix it.
@@ -166,6 +167,34 @@ whoever owns it would be matched to a household and shown its contents.
 5. While signed in as them, open the browser console and try to read another household. You
    should get nothing back. That is the whole point of step 3, and it is the one thing worth
    testing by hand.
+
+## The one account nobody else can remove
+
+Every admin can demote or remove every other admin. That is right for a committee, and wrong for
+the one person who has to be able to put things back when it goes wrong — so one address can be
+put beyond the rest of the committee's reach.
+
+Run [`supabase/superadmin.sql`](../supabase/superadmin.sql) in the SQL editor, with the address
+in it. If the database was set up before 2026-10-01, re-run `supabase/portal.sql` first (it is
+written to be run again), then `supabase/verify.sql`, which should still end with
+**All portal rules hold.**
+
+What that address gets, all of it decided by the database:
+
+- **It is an admin whatever its household row says**, and with no household at all.
+- **No other admin can remove its household, change its role, or change or clear its sign-in
+  address.** They are told *"That household cannot be removed"* — what, not why.
+- **No other admin can invite a household under that address**, which would otherwise be the way
+  round the first two.
+
+And what it does not get is any mention in the app. The list is a table nothing arriving through
+the API can read, so there is no label and no badge: to another admin it is a committee household
+like any other until they try to remove it. The only way on or off the list is the SQL editor,
+which is why there is no screen for it.
+
+Two things it does not do. It does not get anybody past `VITE_MEMBER_ALLOWLIST` — that is the
+app's own door, and the address has to be on it too while the list exists. And it is not a
+second role: on the People screen it reads **Committee**, because that is what it is.
 
 ## Opening it to everybody
 

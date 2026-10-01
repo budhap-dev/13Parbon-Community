@@ -107,6 +107,11 @@ where not exists (select 1 from portal.people p where p.household_id = h.id);
 --
 -- The app will not let the last admin be demoted, so you cannot close the door behind you from
 -- the screen. You can from here, which is why this says it twice.
+--
+-- Since 2026-10-01 there is a second answer to all of the above: supabase/superadmin.sql. An
+-- address named there is an admin whatever its household row says, and no other admin can
+-- remove or demote it. Run that for your own address and the paragraph above stops being a way
+-- to lock yourself out.
 
 
 -- ---------------------------------------------------------------------------

@@ -401,3 +401,105 @@ describe('identifying somebody at sign-in', () => {
     expect(await api().portal.identify('stranger@example.com')).toBeNull()
   })
 })
+
+describe('the one household the rest of the committee cannot remove', () => {
+  /*
+   * Mirrors portal.superadmins and portal.guard_superadmin, block for block with verify.sql.
+   *
+   * The Chatterjees are on the list. The Banerjees are an admin household like any other,
+   * which is the interesting case: everything refused below is something one admin may
+   * ordinarily do to another.
+   */
+  const listed = () => createMockApi({ superadmins: ['d.chatterjee@gmail.com'] })
+  const colleague: Viewer = { householdId: 'hh-banerjee', role: 'admin' }
+  const themselves: Viewer = { householdId: 'hh-chatterjee', role: 'admin' }
+
+  /** The household as it stands, as a draft — what the form sends back when one thing changes. */
+  const asItStands = async (a: ReturnType<typeof createMockApi>, id: string): Promise<HouseholdDraft> => {
+    const h = (await a.portal.getHousehold(id, themselves))!
+    return {
+      name: h.name,
+      contactName: h.contactName,
+      email: h.email,
+      phone: h.phone,
+      people: h.people.map(({ name, ageGroup, age, note }) => ({ name, ageGroup, age, note })),
+      interests: h.interests,
+      googleEmail: h.googleEmail,
+      role: h.role,
+      membershipStatus: h.membership.status,
+      membershipPaidTo: h.membership.paidTo ?? undefined,
+    }
+  }
+
+  it('cannot be removed by another admin', async () => {
+    const a = listed()
+    await expect(a.portal.deleteHousehold('hh-chatterjee', colleague)).rejects.toThrow(/cannot be removed/i)
+    expect(await a.portal.getHousehold('hh-chatterjee', colleague)).not.toBeNull()
+  })
+
+  it('cannot be demoted by another admin', async () => {
+    const a = listed()
+    const draft = await asItStands(a, 'hh-chatterjee')
+    await expect(a.portal.updateHousehold('hh-chatterjee', { ...draft, role: 'member' }, colleague)).rejects.toThrow(
+      /role and sign-in address cannot be changed/i,
+    )
+    expect((await a.portal.getHousehold('hh-chatterjee', colleague))?.role).toBe('admin')
+  })
+
+  it('cannot have the address that signs it in changed or cleared, which is removal by another name', async () => {
+    const a = listed()
+    const draft = await asItStands(a, 'hh-chatterjee')
+    await expect(
+      a.portal.updateHousehold('hh-chatterjee', { ...draft, googleEmail: 'somebody.else@gmail.com' }, colleague),
+    ).rejects.toThrow(/cannot be changed/i)
+    await expect(a.portal.updateHousehold('hh-chatterjee', { ...draft, googleEmail: null }, colleague)).rejects.toThrow(
+      /cannot be changed/i,
+    )
+    expect((await a.portal.getHousehold('hh-chatterjee', colleague))?.googleEmail).toBe('d.chatterjee@gmail.com')
+  })
+
+  it('is still the committee\'s to edit in every other respect', async () => {
+    const a = listed()
+    const draft = await asItStands(a, 'hh-chatterjee')
+    const saved = await a.portal.updateHousehold('hh-chatterjee', { ...draft, phone: '07700 900099' }, colleague)
+    expect(saved.phone).toBe('07700 900099')
+    expect(saved.role).toBe('admin')
+  })
+
+  it('will not let another admin take the address for a household of their own making', async () => {
+    // On the list and with no household yet: the way round everything above would be to
+    // invite one under that address first, as a member.
+    const a = createMockApi({ superadmins: ['not.yet.here@gmail.com'] })
+    const invitation = { ...(await asItStands(a, 'hh-sen')), name: 'The Impostors', googleEmail: 'not.yet.here@gmail.com' }
+    await expect(a.portal.addHousehold(invitation, colleague)).rejects.toThrow(/cannot be used/i)
+    await expect(a.portal.updateHousehold('hh-sen', invitation, colleague)).rejects.toThrow(/cannot be used/i)
+    expect(await a.portal.identify('not.yet.here@gmail.com')).toBeNull()
+  })
+
+  it('may change its own, and stays on the committee whatever it sends', async () => {
+    const a = listed()
+    const draft = await asItStands(a, 'hh-chatterjee')
+    const saved = await a.portal.updateHousehold(
+      'hh-chatterjee',
+      { ...draft, contactName: 'D. Chatterjee, Renamed', role: 'member' },
+      themselves,
+    )
+    expect(saved.contactName).toBe('D. Chatterjee, Renamed')
+    // Written as 'admin' while the address is theirs, so the screen and the policies agree.
+    expect(saved.role).toBe('admin')
+  })
+
+  it('may do to a colleague what a colleague may not do to it', async () => {
+    const a = listed()
+    const draft = await asItStands(a, 'hh-banerjee')
+    const saved = await a.portal.updateHousehold('hh-banerjee', { ...draft, role: 'member' }, themselves)
+    expect(saved.role).toBe('member')
+  })
+
+  it('changes nothing for anybody when nobody is on the list', async () => {
+    const a = createMockApi()
+    const draft = await asItStands(a, 'hh-chatterjee')
+    const saved = await a.portal.updateHousehold('hh-chatterjee', { ...draft, role: 'member' }, colleague)
+    expect(saved.role).toBe('member')
+  })
+})

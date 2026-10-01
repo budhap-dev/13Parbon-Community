@@ -215,3 +215,27 @@ describe('the inbox', () => {
     ).rejects.toThrow(/no such message/)
   })
 })
+
+describe('the household the rest of the committee cannot remove', () => {
+  /*
+   * The database refuses with a sentence of its own, under a code of its own (45002). The
+   * adapter's job is to hand that sentence on untouched: it says what cannot be done and not
+   * why, and the app knows no more than that.
+   */
+  it('hands on the sentence the database gave when a removal is refused', async () => {
+    const { client } = fakeClient({}, { households: { code: '45002', message: 'That household cannot be removed.' } })
+    await expect(householdMethods(async () => client).deleteHousehold('hh-1')).rejects.toThrow(
+      'That household cannot be removed.',
+    )
+  })
+
+  it('does the same when a role or a sign-in address will not change', async () => {
+    const { client } = fakeClient(
+      {},
+      { households: { code: '45002', message: "That household's role and sign-in address cannot be changed." } },
+    )
+    await expect(
+      householdMethods(async () => client).updateHousehold('hh-1', draft, { householdId: 'hh-2', role: 'admin' }),
+    ).rejects.toThrow(/role and sign-in address cannot be changed/)
+  })
+})

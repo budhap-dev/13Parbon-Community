@@ -120,6 +120,28 @@ create table if not exists portal.sign_in_attempts (
 );
 
 
+-- ---------------------------------------------------------------------------
+-- The account the rest of the committee cannot remove
+-- ---------------------------------------------------------------------------
+-- Every admin can demote or remove every other admin, which is right for a committee and
+-- wrong for the one person who has to be able to put things back. An address in this table is
+-- an admin whatever any household row says, and the household carrying that address cannot be
+-- removed, demoted or given a different sign-in address by anybody else. See guard_superadmin.
+--
+-- It is a table and not a column on `households` on purpose. The committee reads and writes
+-- households all day; a `superadmin` column there would be on the People screen's own query,
+-- one click from being shown and one policy from being set. Nothing the app holds can read
+-- this table, so the app cannot show who is in it — there is no label, no badge and no row
+-- for anybody to find. It is filled in from the SQL editor (supabase/superadmin.sql) and from
+-- nowhere else.
+
+create table if not exists portal.superadmins (
+  -- The address they use with Google, lowercased, the same way households.google_email is.
+  email text primary key check (email = lower(email) and email ~ '^[^\s@]+@[^\s@]+\.[^\s@]+$'),
+  added_at timestamptz not null default now()
+);
+
+
 -- ===========================================================================
 -- 2. Who is asking
 -- ===========================================================================
@@ -162,6 +184,21 @@ $$;
 comment on function portal.current_household_id() is
   'The household this account belongs to, or null. Null means signed in but not a member.';
 
+create or replace function portal.is_superadmin()
+  returns boolean
+  language sql
+  stable
+  security definer
+  set search_path = ''
+as $$
+  select exists (
+    select 1 from portal.superadmins s where s.email = portal.auth_email()
+  );
+$$;
+
+comment on function portal.is_superadmin() is
+  'Whether this account is one the rest of the committee cannot remove. Not callable through the API.';
+
 create or replace function portal.is_admin()
   returns boolean
   language sql
@@ -169,7 +206,9 @@ create or replace function portal.is_admin()
   security definer
   set search_path = ''
 as $$
-  select coalesce(
+  -- A superadmin first, and without looking at a household: the point of one is that it does
+  -- not depend on a row somebody else can edit, or on there being a row at all.
+  select portal.is_superadmin() or coalesce(
     (select h.role = 'admin' from portal.households h
        where h.google_email is not null
          and h.google_email = portal.auth_email()
@@ -188,6 +227,11 @@ revoke all on function portal.is_admin() from public, anon;
 grant execute on function portal.auth_email() to authenticated, service_role;
 grant execute on function portal.current_household_id() to authenticated, service_role;
 grant execute on function portal.is_admin() to authenticated, service_role;
+
+-- Not granted to anybody. is_admin() and the trigger that uses this are SECURITY DEFINER, so
+-- they reach it with the owner's rights; a signed-in account asking the API directly is
+-- refused, and so cannot even find out whether it is one.
+revoke all on function portal.is_superadmin() from public, anon, authenticated;
 
 
 -- ===========================================================================
@@ -216,6 +260,11 @@ alter table portal.households enable row level security;
 alter table portal.people enable row level security;
 alter table portal.documents enable row level security;
 alter table portal.sign_in_attempts enable row level security;
+
+-- No grant, and row level security with no policy: two gates, both shut. The functions above
+-- read it as the owner. Nothing that arrives through the API can read or write it at all.
+revoke all on portal.superadmins from public, anon, authenticated;
+alter table portal.superadmins enable row level security;
 
 
 -- ---------------------------------------------------------------------------
@@ -829,6 +878,99 @@ create trigger guard_last_admin
   for each row execute function portal.guard_last_admin();
 
 
+-- ---------------------------------------------------------------------------
+-- The account the rest of the committee cannot remove
+-- ---------------------------------------------------------------------------
+-- guard_last_admin above keeps the committee from being left with nobody. This keeps one
+-- particular somebody: an address in portal.superadmins.
+--
+-- What another admin may not do to that household:
+--   * remove it,
+--   * change its role,
+--   * change the address that signs it in,
+-- and what they may not do with the address itself is give it to a household — otherwise the
+-- way round the first three is to invite a second household under the same address, as a
+-- member, before the real one exists.
+--
+-- Everything else about the household is still the committee's to edit. A phone number is not
+-- a way in.
+--
+-- The superadmin may do all of it to their own, with one exception that is not a refusal: while
+-- the address is theirs the role is written as 'admin', whatever was sent. The app decides what
+-- to draw from the role on the household row, so a row saying 'member' would put the one
+-- account the database trusts most in front of the members' screens with no way to the
+-- committee's.
+--
+-- 45002, for the same reason guard_last_admin has 45001: the sentence is already one a person
+-- can read, and the code is how the adapter knows to show it rather than replace it. The
+-- sentences say what is refused and not why. Nothing here names a superadmin, because nothing
+-- in the app is meant to.
+create or replace function portal.guard_superadmin()
+  returns trigger
+  language plpgsql
+  security definer
+  set search_path = ''
+as $$
+declare
+  -- The row as it stands belongs to a superadmin.
+  held boolean := false;
+  -- The row as it would be saved carries a superadmin's address.
+  claimed boolean := false;
+begin
+  -- No signed-in account means the SQL editor, a migration or a server-side key, exactly as in
+  -- households_guard_protected_columns. That is the door this whole arrangement is managed
+  -- through, so it stays open.
+  if portal.auth_email() is null then
+    return case when tg_op = 'DELETE' then old else new end;
+  end if;
+
+  -- Branches, not one expression: there is no `old` on an insert and no `new` on a delete.
+  if tg_op <> 'INSERT' then
+    held := old.google_email is not null
+      and exists (select 1 from portal.superadmins s where s.email = old.google_email);
+  end if;
+  if tg_op <> 'DELETE' then
+    claimed := new.google_email is not null
+      and exists (select 1 from portal.superadmins s where s.email = new.google_email);
+  end if;
+
+  if not held and not claimed then
+    return case when tg_op = 'DELETE' then old else new end;
+  end if;
+
+  if portal.is_superadmin() then
+    if tg_op <> 'DELETE' and claimed then
+      new.role := 'admin';
+    end if;
+    return case when tg_op = 'DELETE' then old else new end;
+  end if;
+
+  if tg_op = 'DELETE' then
+    raise exception 'That household cannot be removed.' using errcode = '45002';
+  end if;
+
+  if held and (new.role is distinct from old.role or new.google_email is distinct from old.google_email) then
+    raise exception 'That household''s role and sign-in address cannot be changed.' using errcode = '45002';
+  end if;
+
+  -- Not held, so this is an insert under the address or an update moving it onto this row.
+  if claimed and not held then
+    raise exception 'That sign-in address cannot be used.' using errcode = '45002';
+  end if;
+
+  return new;
+end;
+$$;
+
+comment on function portal.guard_superadmin() is
+  'Refuses another admin removing, demoting or re-addressing a superadmin''s household, or taking the address.';
+
+drop trigger if exists guard_superadmin on portal.households;
+create trigger guard_superadmin
+  before insert or update or delete on portal.households
+  for each row execute function portal.guard_superadmin();
+
+
 -- ===========================================================================
 -- 5. The directory — removed
 -- ===========================================================================
@@ -874,6 +1016,13 @@ begin
   end if;
 
   if exists (select 1 from portal.households h where h.google_email = address) then
+    return new;
+  end if;
+
+  -- A superadmin with no household yet is not somebody knocking. Recorded, they would sit on
+  -- the People screen with an "Add household" button beside them that guard_superadmin
+  -- refuses — the one place the app would have shown that there is such an account.
+  if exists (select 1 from portal.superadmins s where s.email = address) then
     return new;
   end if;
 

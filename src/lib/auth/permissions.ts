@@ -18,6 +18,13 @@ import { isAdmin, isMember, type Viewer } from '@/domain/household'
  *
  * Every rule below names the policy it mirrors. When they disagree, the database is right and
  * this file is the bug — `mock/rules.test.ts` and `supabase/verify.sql` exist to notice.
+ *
+ * One rule is left out on purpose. `portal.guard_superadmin` stops the rest of the committee
+ * removing, demoting or re-addressing one particular household, and nothing here mirrors it:
+ * the list of who that is lives in a table the browser cannot read, so this file could not
+ * answer if it wanted to. That is the cost of the account not being shown anywhere — for that
+ * one household the screen offers a button the database then refuses, in a sentence that says
+ * what cannot be done and not why.
  */
 
 export type Action =

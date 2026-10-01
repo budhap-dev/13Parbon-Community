@@ -24,6 +24,15 @@ export type MockApiOptions = {
    * not break every time the committee adds something to the calendar or takes it away.
    */
   events?: Event[]
+  /**
+   * Google addresses whose household the rest of the committee cannot remove, demote or
+   * re-address. Mirrors the table portal.superadmins and the trigger portal.guard_superadmin.
+   *
+   * Empty unless a test says otherwise. The app never passes it, because the app has no way
+   * to know: the real list is a table nothing in the browser can read, and that is the point
+   * of it.
+   */
+  superadmins?: string[]
 }
 
 function delay<T>(value: T, ms: number): Promise<T> {
@@ -168,7 +177,12 @@ function checkDraft(draft: HouseholdDraft, viewer: Viewer, existing?: Household)
   return null
 }
 
-export function createMockApi({ now = () => new Date(), latencyMs = 0, events }: MockApiOptions = {}): ApiClient {
+export function createMockApi({
+  now = () => new Date(),
+  latencyMs = 0,
+  events,
+  superadmins = [],
+}: MockApiOptions = {}): ApiClient {
   const fixtures = buildFixtures()
   /**
    * Each client gets its own events, not the caller's.
@@ -181,6 +195,13 @@ export function createMockApi({ now = () => new Date(), latencyMs = 0, events }:
    */
   const allEvents = (events ?? fixtures.events).map((event) => ({ ...event }))
   const portal = buildPortalFixtures()
+
+  /** On the list. Compared lowercased, as the column is stored. */
+  const listed = (address: string | null | undefined) =>
+    Boolean(address) && superadmins.some((s) => s.toLowerCase() === address!.toLowerCase())
+  /** The person asking is one of them: their own household carries a listed address. */
+  const isSuperadmin = (viewer: Viewer) =>
+    listed(portal.households.find((h) => h.id === viewer?.householdId)?.googleEmail)
   /** What the committee has chosen, starting from what the code says. */
   let saved: SiteSettings = { ...defaultSettings, home: { ...defaultSettings.home } }
 
@@ -665,13 +686,18 @@ export function createMockApi({ now = () => new Date(), latencyMs = 0, events }:
         if (draft.googleEmail && portal.households.some((h) => h.googleEmail === draft.googleEmail)) {
           return Promise.reject(new NotAllowed('that Google address already belongs to a household'))
         }
+        // Otherwise the way round the guard is to invite a second household under the address
+        // before the real one exists. Mirrors portal.guard_superadmin.
+        if (listed(draft.googleEmail) && !isSuperadmin(viewer)) {
+          return Promise.reject(new NotAllowed('that sign-in address cannot be used'))
+        }
         const household: Household = {
           id: `hh-${portal.households.length + 1}-${draft.name.toLowerCase().replace(/[^a-z]+/g, '') || 'new'}`,
           ...shapeOf(draft),
           googleEmail: draft.googleEmail ?? null,
           memberSince: now().toISOString().slice(0, 10),
           membership: { status: draft.membershipStatus ?? 'active', paidTo: draft.membershipPaidTo || null },
-          role: draft.role ?? 'member',
+          role: listed(draft.googleEmail) ? 'admin' : (draft.role ?? 'member'),
         }
         portal.households.push(household)
         return delay(household, latencyMs)
@@ -730,6 +756,10 @@ export function createMockApi({ now = () => new Date(), latencyMs = 0, events }:
         ) {
           return Promise.reject(new NotAllowed('that is the last admin — make somebody else one first'))
         }
+        // Mirrors portal.guard_superadmin, which says what cannot be done and not why.
+        if (listed(portal.households[index].googleEmail) && !isSuperadmin(viewer)) {
+          return Promise.reject(new NotAllowed('that household cannot be removed'))
+        }
 
         portal.households.splice(index, 1)
         return delay(undefined, latencyMs)
@@ -751,10 +781,30 @@ export function createMockApi({ now = () => new Date(), latencyMs = 0, events }:
           return Promise.reject(new NotAllowed('that is the last admin — make somebody else one first'))
         }
 
+        /*
+         * The household another admin cannot be rid of. Mirrors portal.guard_superadmin: its
+         * role and its sign-in address stay as they are unless the account itself is asking,
+         * and nobody else may move a listed address onto a household. Everything else about
+         * it is still the committee's to edit.
+         */
+        if (isAdmin(viewer) && !isSuperadmin(viewer)) {
+          const nextRole = draft.role ?? existing.role
+          const nextAddress = draft.googleEmail ?? null
+          if (listed(existing.googleEmail)) {
+            if (nextRole !== existing.role || nextAddress !== existing.googleEmail) {
+              return Promise.reject(new NotAllowed("that household's role and sign-in address cannot be changed"))
+            }
+          } else if (listed(nextAddress)) {
+            return Promise.reject(new NotAllowed('that sign-in address cannot be used'))
+          }
+        }
+
         Object.assign(existing, shapeOf(draft))
         if (isAdmin(viewer)) {
           existing.googleEmail = draft.googleEmail ?? null
-          existing.role = draft.role ?? existing.role
+          // While the address is a listed one the role is 'admin', whatever was sent — the
+          // database writes it that way so the screen and the policies cannot disagree.
+          existing.role = listed(existing.googleEmail) ? 'admin' : (draft.role ?? existing.role)
           existing.membership = {
             status: draft.membershipStatus ?? existing.membership.status,
             // Absent leaves it alone; empty clears it. `fromDraft` sends the same two answers
