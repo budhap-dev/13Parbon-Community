@@ -11,7 +11,7 @@
  */
 export const privacy = {
   /* Change this whenever anything on this page changes: it is the date the notice took effect. */
-  updatedOn: '21 September 2026',
+  updatedOn: '1 October 2026',
   controller: '13Parbon, Leeds.',
   sections: [
     {
@@ -21,6 +21,7 @@ export const privacy = {
         'When you apply to join: the household name, a contact name, email, phone if you give it, and how many adults and children are in the household.',
         'When you register for an event: who is coming from your household and anything you tell us, such as an offer to volunteer.',
         'When you leave feedback: what you wrote. If you sign in with Google first and tick the box, we also keep your name as your Google account gives it, so that what you said can be attributed to you. We never keep your email address with it, which means we cannot reply to feedback and cannot tie it to anything else we hold about you. Sent without signing in, it carries nothing about you at all.',
+        'When your household answers a poll or plays a quiz in the member area: the choice your household made, your quiz score, and whether you chose to show your household’s name on the leaderboard. If you suggest a quiz question or a poll, we keep what you sent and which household sent it. When somebody plays a quiz on the public website without signing in, we only count that it was played.',
       ],
     },
     {
@@ -28,6 +29,7 @@ export const privacy = {
       body: [
         'To reply to you, to run the events you register for, and to manage membership.',
         'Feedback is read by the committee, and we put some of it on the website — your name and the date, or “Anonymous” if you did not sign it. Nothing goes up until a member of the committee has approved it, and anything you send may simply be read and not published. Ask us and we will take yours down.',
+        'Polls are shown as totals. Unless a poll says before you vote that it is named, nobody — the committee included — can see how your household voted. On the quiz leaderboard your household’s name appears only if you chose that when you played.',
         'We do not sell or share your details with anyone outside the committee, and we do not use them for advertising.',
       ],
     },

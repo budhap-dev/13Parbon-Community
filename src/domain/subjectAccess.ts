@@ -34,6 +34,18 @@ export type HouseholdExport = {
    */
   changes: { action: string; at: string; fields: string[] }[]
   /**
+   * How the household voted in polls.
+   *
+   * Only what the person taking the export can read. A household taking its own sees every
+   * vote it cast; the committee sees votes only on a poll that said it was named, because on
+   * any other poll nobody else can — and an export is not a way round that. VOTES_NOTE says so.
+   */
+  votes: { poll: string; choice: string; votedAt: string }[]
+  /** Quizzes the household played, with its score and whether it chose to be on the leaderboard. */
+  quizScores: { quiz: string; score: number; total: number; shownOnLeaderboard: boolean; playedAt: string }[]
+  /** Quiz questions and polls the household suggested, and what became of them. */
+  suggestions: { kind: 'question' | 'poll'; prompt: string; status: 'pending' | 'approved' | 'rejected'; sentAt: string }[]
+  /**
    * Said out loud rather than left as silence. The privacy page promises to take down any
    * photograph somebody appears in — but nothing records who is in which picture, so no export
    * can answer "which ones am I in?". An export that simply omitted photographs would read as
@@ -50,6 +62,9 @@ export const ATTENDANCE_NOTE =
 
 export const CONTACT_NOTE =
   'Messages are matched to you by email address. Anything sent from an address we do not have for you will not appear above.'
+
+export const VOTES_NOTE =
+  'Votes are listed in full only when you take this copy yourself. On a poll that was not marked as named, nobody else — the committee included — can see how your household voted, so a copy the committee takes for you shows only your votes on named polls.'
 
 /** A filename somebody can find again on their own computer. */
 export function exportFilename(household: Pick<Household, 'name'>, takenAt: string): string {

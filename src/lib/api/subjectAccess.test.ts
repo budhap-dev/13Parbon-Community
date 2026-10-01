@@ -115,3 +115,35 @@ describe('the changes it lists', () => {
     expect(changes).toEqual([])
   })
 })
+
+describe('votes, quiz scores and suggestions', () => {
+  it('a household’s own copy has every vote it cast, its scores and its suggestions', async () => {
+    const a = api()
+    await a.polls.vote('poll-picnic', 1, member)
+    await a.polls.vote('poll-setup', 0, member)
+    await a.quizzes.submit('quiz-words', [0, 1, 0], false, member)
+    await a.suggestions.send({ kind: 'poll', prompt: 'Film night in January?', options: ['Yes', 'No'], note: '', credit: false }, member)
+
+    const copy = await a.portal.exportHousehold('hh-sen', member)
+    expect(copy.votes.map((v) => v.choice).sort()).toEqual(['Sunday 25 October', 'Yes', 'Yes, count us in'].sort())
+    expect(copy.quizScores).toEqual([expect.objectContaining({ quiz: 'Bengali words for children', score: 2, total: 3, shownOnLeaderboard: false })])
+    expect(copy.suggestions).toEqual([expect.objectContaining({ kind: 'poll', prompt: 'Film night in January?', status: 'pending' })])
+  })
+
+  /**
+   * The export is not a way round the poll's promise. On a poll not marked named, nobody but
+   * the household can see its vote — so a copy the committee takes shows only named polls, and
+   * a note says why the list may be short.
+   */
+  it('the committee’s copy shows votes on named polls only, and says so', async () => {
+    const copy = await api().portal.exportHousehold('hh-ghosh', admin)
+    expect(copy.votes.map((v) => v.poll)).toEqual(['Can somebody from your household help set up the hall for Durga Puja?'])
+    expect(copy.notes.some((n) => /nobody else — the committee included/.test(n))).toBe(true)
+    expect(copy.quizScores).toHaveLength(1)
+    expect(copy.suggestions).toHaveLength(2)
+  })
+
+  it('the household’s own copy of the same household has every vote', async () => {
+    expect((await api().portal.exportHousehold('hh-ghosh', ghosh)).votes).toHaveLength(3)
+  })
+})

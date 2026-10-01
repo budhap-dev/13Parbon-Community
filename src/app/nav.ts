@@ -21,6 +21,7 @@ export function publicNav(settings: SiteSettings): NavItem[] {
     { label: 'Events', to: '/events' },
     ...(settings.showPhotos ? [{ label: 'Gallery', to: '/gallery' }] : []),
     ...(settings.showNews ? [{ label: 'News', to: '/news' }] : []),
+    ...(settings.showQuizzes ? [{ label: 'Quizzes', to: '/quizzes' }] : []),
     { label: 'About', to: '/about' },
     ...(settings.showFeedback ? [{ label: 'Feedback', to: '/feedback' }] : []),
     { label: 'Contact', to: '/contact' },

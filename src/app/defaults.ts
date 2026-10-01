@@ -22,6 +22,7 @@ export const defaultSettings: SiteSettings = {
   showNextEventStrip: site.showNextEventStrip,
   showPhotos: site.showPhotos,
   showFeedback: site.showFeedback,
+  showQuizzes: site.showQuizzes,
   home: { ...site.home },
   homeOrder: [...HOME_BLOCKS],
   defaultTheme: 'festival',

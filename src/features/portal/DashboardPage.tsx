@@ -3,7 +3,8 @@ import { Button } from '@/components/Button'
 import { Icon } from '@/components/Icon'
 import { daysUntil, describeCountdown, formatDateWithYear, formatLongDate, formatTime } from '@/domain/dates'
 import { describeSize } from '@/domain/household'
-import { useAnnouncements, useHousehold, useNextEvent } from '@/lib/api'
+import { useAnnouncements, useHousehold, useNextEvent, usePolls, useQuizzes } from '@/lib/api'
+import { stateOf } from '@/domain/polls'
 import { useSignedIn } from '@/lib/auth/session'
 import { useNow } from '@/lib/clock'
 import styles from './Portal.module.css'
@@ -15,6 +16,8 @@ export function DashboardPage() {
   const { data: event } = useNextEvent()
   const { data: household } = useHousehold(who?.householdId)
   const { data: announcements } = useAnnouncements()
+  const { data: polls } = usePolls()
+  const { data: quizzes } = useQuizzes()
 
   const countdown = event ? describeCountdown(daysUntil(event.startsAt, now)) : null
 
@@ -142,6 +145,39 @@ export function DashboardPage() {
               </dl>
             </section>
           ) : null}
+
+          {(() => {
+            /*
+             * Only when there is something to do: a poll this household has not answered, or a
+             * quiz it has not played. A panel saying "nothing open" every visit is a panel
+             * people learn to skip, and then miss the week there is.
+             */
+            const poll = (polls ?? []).find((v) => v.myVote === undefined && stateOf(v.poll, now) === 'open')
+            const quiz = (quizzes ?? []).find((c) => !c.played && stateOf(c.quiz, now) === 'open')
+            if (!poll && !quiz) return null
+            return (
+              <section className={styles.panel} aria-labelledby="say-title">
+                <div className={styles.pad}>
+                  <p className={styles.statLabel}>Have your say</p>
+                  <h2 id="say-title" className={styles.panelTitle} style={{ marginTop: 8 }}>
+                    {poll ? poll.poll.title : quiz!.quiz.title}
+                  </h2>
+                  <p className={`${styles.muted} ${styles.tiny}`} style={{ marginTop: 6 }}>
+                    {poll
+                      ? quiz
+                        ? 'Your household has not voted yet — and there is a quiz to play.'
+                        : 'Your household has not voted yet.'
+                      : `A quiz, ${quiz!.questionCount} questions. One go per household.`}
+                  </p>
+                  <div className={styles.actions} style={{ marginTop: 12 }}>
+                    <Button to={poll ? '/portal/play' : `/portal/play/${quiz!.quiz.id}`} variant="gold" size="sm">
+                      {poll ? 'Vote' : 'Play'}
+                    </Button>
+                  </div>
+                </div>
+              </section>
+            )
+          })()}
 
           <section className={styles.panel} aria-labelledby="help-title">
             <div className={styles.pad}>

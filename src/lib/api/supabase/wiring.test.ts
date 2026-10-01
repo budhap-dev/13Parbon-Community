@@ -9,6 +9,7 @@ import { withSupabaseGallery } from './gallery'
 import { withSupabasePortal } from './portal'
 import { withSupabaseNews } from './news'
 import { withSupabaseSettings } from './settings'
+import { withSupabasePlay } from './play'
 
 /**
  * Which parts of the app talk to the database, and which are still fixtures.
@@ -143,5 +144,18 @@ describe('with a project configured', () => {
     const wired = withSupabaseEvents(base, { url: configured.VITE_SUPABASE_URL, anonKey: configured.VITE_SUPABASE_ANON_KEY })
     const names = Object.keys(base.events) as (keyof typeof base.events)[]
     expect(names.filter((name) => wired.events[name] === base.events[name])).toEqual([])
+  })
+
+  /*
+   * Polls, quizzes and suggestions, every method of all three. Left half on fixtures, a member
+   * on the live site would vote, see their vote counted, and lose it on the next reload — and
+   * the committee would be approving sample suggestions while the real ones waited unseen.
+   */
+  it.each(['polls', 'quizzes', 'suggestions'] as const)('keeps %s in the database', (section) => {
+    const base = createMockApi()
+    const wired = withSupabasePlay(base, { url: configured.VITE_SUPABASE_URL, anonKey: configured.VITE_SUPABASE_ANON_KEY })
+    const names = Object.keys(base[section]) as (keyof (typeof base)[typeof section])[]
+    expect(names.length).toBeGreaterThan(0)
+    expect(names.filter((name) => wired[section][name] === base[section][name])).toEqual([])
   })
 })

@@ -8,6 +8,9 @@ import type { UploadedPhoto } from './uploads'
 import type { AlbumDraft } from '@/domain/gallery'
 import type { AnnouncementDraft, NewsDraft } from '@/domain/news'
 import type { HouseholdDraft, Viewer } from '@/domain/household'
+import type { PollDraft } from '@/domain/polls'
+import type { QuestionDraft, QuizDraft } from '@/domain/quizzes'
+import type { SuggestionDraft, SuggestionStatus } from '@/domain/suggestions'
 import { useSignedIn } from '@/lib/auth/session'
 import { useApi } from './context'
 import type { ApiClient } from './types'
@@ -484,3 +487,134 @@ export function useOpenVolunteerRoles() {
   const api = useApi()
   return useQuery({ queryKey: ['volunteering', 'open'], queryFn: () => api.volunteering.listOpenRoles() })
 }
+
+// ---- polls, quizzes and suggestions ------------------------------------------
+
+export function usePolls() {
+  const api = useApi()
+  const viewer = useViewer()
+  return useQuery({ queryKey: ['polls', 'mine', asks(viewer)], queryFn: () => api.polls.list(viewer) })
+}
+
+export function useAllPolls() {
+  const api = useApi()
+  const viewer = useViewer()
+  return useQuery({ queryKey: ['polls', 'all', asks(viewer)], queryFn: () => api.polls.listAll(viewer) })
+}
+
+/** Writes on polls. The whole tree, because a vote changes the committee's totals too. */
+function usePollWrite<A, R>(run: (api: ApiClient, viewer: Viewer, args: A) => Promise<R>) {
+  const api = useApi()
+  const viewer = useViewer()
+  const queries = useQueryClient()
+  return useMutation({
+    mutationFn: (args: A) => run(api, viewer, args),
+    onSuccess: () => queries.invalidateQueries({ queryKey: ['polls'] }),
+  })
+}
+
+export const useVote = () =>
+  usePollWrite((api, viewer, { pollId, option }: { pollId: string; option: number }) => api.polls.vote(pollId, option, viewer))
+export const useCreatePoll = () => usePollWrite((api, viewer, draft: PollDraft) => api.polls.create(draft, viewer))
+export const useUpdatePoll = () =>
+  usePollWrite((api, viewer, { id, draft }: { id: string; draft: PollDraft }) => api.polls.update(id, draft, viewer))
+export const useRemovePoll = () => usePollWrite((api, viewer, id: string) => api.polls.remove(id, viewer))
+
+export function useQuizzes() {
+  const api = useApi()
+  const viewer = useViewer()
+  return useQuery({ queryKey: ['quizzes', 'list', asks(viewer)], queryFn: () => api.quizzes.list(viewer) })
+}
+
+export function useQuiz(id: string) {
+  const api = useApi()
+  const viewer = useViewer()
+  return useQuery({ queryKey: ['quizzes', 'one', id, asks(viewer)], queryFn: () => api.quizzes.get(id, viewer) })
+}
+
+export function useLeaderboard(id: string, enabled = true) {
+  const api = useApi()
+  const viewer = useViewer()
+  return useQuery({
+    queryKey: ['quizzes', 'leaderboard', id, asks(viewer)],
+    queryFn: () => api.quizzes.leaderboard(id, viewer),
+    enabled,
+  })
+}
+
+export function useAllQuizzes() {
+  const api = useApi()
+  const viewer = useViewer()
+  return useQuery({ queryKey: ['quizzes', 'all', asks(viewer)], queryFn: () => api.quizzes.listAll(viewer) })
+}
+
+export function useQuizAttempts(id: string | undefined) {
+  const api = useApi()
+  const viewer = useViewer()
+  return useQuery({
+    queryKey: ['quizzes', 'attempts', id, asks(viewer)],
+    queryFn: () => api.quizzes.attempts(id ?? '', viewer),
+    enabled: Boolean(id),
+  })
+}
+
+export function useQuestionBank() {
+  const api = useApi()
+  const viewer = useViewer()
+  return useQuery({ queryKey: ['quizzes', 'bank', asks(viewer)], queryFn: () => api.quizzes.bank(viewer) })
+}
+
+/** Writes on quizzes. The whole tree: a play changes a card, the leaderboard and the committee's counts. */
+function useQuizWrite<A, R>(run: (api: ApiClient, viewer: Viewer, args: A) => Promise<R>) {
+  const api = useApi()
+  const viewer = useViewer()
+  const queries = useQueryClient()
+  return useMutation({
+    mutationFn: (args: A) => run(api, viewer, args),
+    onSuccess: () => queries.invalidateQueries({ queryKey: ['quizzes'] }),
+  })
+}
+
+export const useSubmitQuiz = () =>
+  useQuizWrite((api, viewer, { id, answers, showName }: { id: string; answers: number[]; showName: boolean }) =>
+    api.quizzes.submit(id, answers, showName, viewer),
+  )
+export const useCreateQuiz = () => useQuizWrite((api, viewer, draft: QuizDraft) => api.quizzes.create(draft, viewer))
+export const useUpdateQuiz = () =>
+  useQuizWrite((api, viewer, { id, draft }: { id: string; draft: QuizDraft }) => api.quizzes.update(id, draft, viewer))
+export const useRemoveQuiz = () => useQuizWrite((api, viewer, id: string) => api.quizzes.remove(id, viewer))
+export const useCreateQuestion = () =>
+  useQuizWrite((api, viewer, draft: QuestionDraft) => api.quizzes.createQuestion(draft, viewer))
+export const useUpdateQuestion = () =>
+  useQuizWrite((api, viewer, { id, draft }: { id: string; draft: QuestionDraft }) => api.quizzes.updateQuestion(id, draft, viewer))
+export const useRemoveQuestion = () => useQuizWrite((api, viewer, id: string) => api.quizzes.removeQuestion(id, viewer))
+
+export function useMySuggestions() {
+  const api = useApi()
+  const viewer = useViewer()
+  return useQuery({ queryKey: ['suggestions', 'mine', asks(viewer)], queryFn: () => api.suggestions.listMine(viewer) })
+}
+
+export function useAllSuggestions() {
+  const api = useApi()
+  const viewer = useViewer()
+  return useQuery({ queryKey: ['suggestions', 'all', asks(viewer)], queryFn: () => api.suggestions.listAll(viewer) })
+}
+
+function useSuggestionWrite<A, R>(run: (api: ApiClient, viewer: Viewer, args: A) => Promise<R>) {
+  const api = useApi()
+  const viewer = useViewer()
+  const queries = useQueryClient()
+  return useMutation({
+    mutationFn: (args: A) => run(api, viewer, args),
+    onSuccess: () => queries.invalidateQueries({ queryKey: ['suggestions'] }),
+  })
+}
+
+export const useSendSuggestion = () =>
+  useSuggestionWrite((api, viewer, draft: SuggestionDraft) => api.suggestions.send(draft, viewer))
+export const useReviewSuggestion = () =>
+  useSuggestionWrite((api, viewer, { id, status }: { id: string; status: SuggestionStatus }) =>
+    api.suggestions.review(id, status, viewer),
+  )
+export const useRemoveSuggestion = () => useSuggestionWrite((api, viewer, id: string) => api.suggestions.remove(id, viewer))

@@ -91,8 +91,9 @@ Until Supabase is configured the contact page says so and offers another way thr
 4. In Vercel, Project Settings → Environment Variables, add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` for Production and Preview.
 5. Redeploy. The contact form now submits, and rows appear in the Supabase table editor.
 
-The portal tables come next, in [`supabase/portal.sql`](supabase/portal.sql), and feedback
-from the public after that in [`supabase/feedback.sql`](supabase/feedback.sql). Each has a
+The portal tables come next, in [`supabase/portal.sql`](supabase/portal.sql), feedback
+from the public after that in [`supabase/feedback.sql`](supabase/feedback.sql), and polls and
+quizzes last, in [`supabase/polls-quizzes.sql`](supabase/polls-quizzes.sql). Each has a
 `verify` script beside it that proves its rules hold rather than merely having been typed —
 run them; a clean run is silence and a notice. See [Feedback](docs/FEEDBACK.md) for what that
 one switches on, and what it deliberately does not store.

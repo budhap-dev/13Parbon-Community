@@ -8,7 +8,8 @@ import { useThemeScope } from '@/app/theme/ThemeContext'
 import { useGoogleSignIn } from '@/lib/auth/GoogleSignIn'
 import { useSession, useSignedIn } from '@/lib/auth/session'
 import { previewAccounts } from '@/lib/auth/previewAccounts'
-import { useAllFeedback, useSignInAttempts, useViewer } from '@/lib/api'
+import { useAllFeedback, useAllSuggestions, useSignInAttempts, useViewer } from '@/lib/api'
+import { waitingSuggestions } from '@/domain/suggestions'
 import { can } from '@/lib/auth/permissions'
 import { unresolved } from '@/domain/document'
 import { waiting } from '@/domain/feedback'
@@ -27,6 +28,7 @@ function initialsOf(name: string): string {
 const memberNav: Item[] = [
   { label: 'Dashboard', to: '/portal', icon: 'home', end: true },
   { label: 'My household', to: '/portal/household', icon: 'users' },
+  { label: 'Polls and quizzes', to: '/portal/play', icon: 'sparkle' },
 ]
 
 export function PortalLayout() {
@@ -43,6 +45,7 @@ export function PortalLayout() {
   const { data: attempts } = useSignInAttempts()
   const { tools } = useSettings()
   const { data: feedback } = useAllFeedback()
+  const { data: suggestions } = useAllSuggestions()
 
   useEffect(() => {
     if (first.current) {
@@ -70,6 +73,7 @@ export function PortalLayout() {
     // Only what is still waiting, the same as People: a badge counting everything ever sent
     // is a badge that never clears, and one that never clears stops being read.
     { label: 'Feedback', to: '/admin/feedback', icon: 'heart', count: waiting(feedback ?? []).length },
+    { label: 'Polls and quizzes', to: '/admin/play', icon: 'sparkle', count: waitingSuggestions(suggestions ?? []).length },
     { label: 'What has changed', to: '/admin/audit', icon: 'clock' },
   ]
 

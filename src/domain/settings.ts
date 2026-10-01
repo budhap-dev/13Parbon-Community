@@ -186,6 +186,13 @@ export type SiteSettings = {
    * yet, and that is a decision they make piece by piece rather than with a switch.
    */
   showFeedback: boolean
+  /**
+   * Whether quizzes opened to everyone are on the public website.
+   *
+   * Members play quizzes in the portal whatever this says. This is only the public page, and
+   * it starts off so a half-written quiz is never the first thing a visitor finds.
+   */
+  showQuizzes: boolean
   /** Who each home page section is for. */
   home: Record<HomeSection, SectionAudience>
   /**
@@ -290,6 +297,10 @@ export const SETTING_LABELS: Record<keyof Omit<SiteSettings, ContentKey>, { labe
   showFeedback: {
     label: 'Feedback from the public',
     note: 'The feedback page, in the navigation. Nothing anybody sends appears anywhere until the committee has approved it. Turning this off hides the page and everything approved with it.',
+  },
+  showQuizzes: {
+    label: 'Quizzes on the public website',
+    note: 'The Quizzes page, in the navigation, carrying any quiz the committee has opened to everyone. Members play every quiz in the portal whatever this says.',
   },
   showMemberSignIn: {
     label: 'Member sign-in',
@@ -428,6 +439,7 @@ export function mergeSettings(stored: unknown, defaults: SiteSettings): SiteSett
     showNews: bool('showNews'),
     showNextEventStrip: bool('showNextEventStrip'),
     showPhotos: bool('showPhotos'),
+    showQuizzes: bool('showQuizzes'),
     home,
     homeOrder: Array.isArray(row.homeOrder) ? tidyHomeOrder(row.homeOrder) : defaults.homeOrder,
     defaultTheme: isSiteTheme(row.defaultTheme) ? row.defaultTheme : defaults.defaultTheme,

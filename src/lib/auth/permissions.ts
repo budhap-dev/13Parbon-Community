@@ -69,6 +69,12 @@ export type Action =
   | 'feedback:review'
   /** Destroy a piece. Separate from turning one down, the same way deleting a message is. */
   | 'feedback:delete'
+  /** Vote in a poll and play a members' quiz, as their household. */
+  | 'play:vote'
+  /** Suggest a quiz question or a poll for the committee to consider. */
+  | 'play:suggest'
+  /** Write polls, quizzes and questions, and review what members suggest. */
+  | 'play:manage'
 
 /** What the action is about, where the answer depends on which one. */
 export type Resource = { householdId?: string }
@@ -103,6 +109,10 @@ export function can(viewer: Viewer, action: Action, resource?: Resource): boolea
     case 'portal:enter':
     // Mirrors: policy "members read attendance". A count has nobody in it.
     case 'attendance:read':
+    // Mirrors: portal.cast_vote() and portal.submit_quiz(), which take the household from the
+    // token, and the policy "members make suggestions".
+    case 'play:vote':
+    case 'play:suggest':
       return true
 
     // Mirrors: policy "admins add households" / "admins remove households", the
@@ -124,6 +134,7 @@ export function can(viewer: Viewer, action: Action, resource?: Resource): boolea
     case 'feedback:read':
     case 'feedback:review':
     case 'feedback:delete':
+    case 'play:manage':
       return false
   }
 }

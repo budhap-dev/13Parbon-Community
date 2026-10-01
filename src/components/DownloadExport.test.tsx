@@ -31,6 +31,9 @@ const full: HouseholdExport = {
     membership: { status: 'active', paidTo: '2027-03-01' },
     role: 'member',
   },
+  votes: [{ poll: 'Which Sunday for the picnic?', choice: 'Sunday 25 October', votedAt: '2026-09-02T10:00:00.000Z' }],
+  quizScores: [{ quiz: 'Bengali words for children', score: 2, total: 3, shownOnLeaderboard: false, playedAt: '2026-09-03T10:00:00.000Z' }],
+  suggestions: [{ kind: 'question', prompt: 'Which river runs past Kumartuli?', status: 'pending', sentAt: '2026-09-01T10:00:00.000Z' }],
   messages: [
     {
       id: 'cm-1',
@@ -60,6 +63,9 @@ const sparse: HouseholdExport = {
   },
   messages: [],
   signInAttempts: [],
+  votes: [],
+  quizScores: [],
+  suggestions: [],
   changes: [],
   notes: [],
 }
@@ -133,6 +139,17 @@ describe('the report on screen', () => {
     expect(screen.getByText(/phone, interests/)).toBeInTheDocument()
   })
 
+  it('lists the household’s votes, quiz scores and suggestions', () => {
+    render(<DownloadExport data={full} onAsk={() => {}} />)
+    const votes = screen.getByRole('heading', { name: 'Your votes in polls (1)' }).closest('section')!
+    expect(within(votes).getByText(/Sunday 25 October/)).toBeInTheDocument()
+    const quizzes = screen.getByRole('heading', { name: 'Quizzes you played (1)' }).closest('section')!
+    expect(within(quizzes).getByText(/2 \/ 3/)).toBeInTheDocument()
+    expect(within(quizzes).getByText(/kept off the leaderboard by name/)).toBeInTheDocument()
+    const ideas = screen.getByRole('heading', { name: 'Ideas you sent the committee (1)' }).closest('section')!
+    expect(within(ideas).getByText(/quiz question · waiting/)).toBeInTheDocument()
+  })
+
   it('says that a knock at the door was recorded, and how many times', () => {
     render(<DownloadExport data={full} onAsk={() => {}} />)
     expect(screen.getByText(/2 tries, last on 2026-01-04/)).toBeInTheDocument()
@@ -157,8 +174,12 @@ describe('the report on screen', () => {
   it('says plainly when a section is empty rather than leaving a gap', () => {
     render(<DownloadExport data={sparse} onAsk={() => {}} />)
     expect(screen.getByRole('heading', { name: 'Messages you sent us (0)' })).toBeInTheDocument()
-    expect(screen.getByText('None found.')).toBeInTheDocument()
+    // Messages and votes both looked for and found nothing, and both say so.
+    expect(screen.getAllByText('None found.')).toHaveLength(2)
     expect(screen.getByText('None recorded.')).toBeInTheDocument()
+    // Nothing played and nothing suggested: those sections are not drawn.
+    expect(screen.queryByRole('heading', { name: /Quizzes you played/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: /Ideas you sent/ })).not.toBeInTheDocument()
     // Nothing to say about sign-in attempts, so the section is not drawn at all.
     expect(screen.queryByRole('heading', { name: /tried to sign in/i })).not.toBeInTheDocument()
   })

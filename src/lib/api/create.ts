@@ -7,6 +7,7 @@ import { withSupabaseEvents } from './supabase/events'
 import { withSupabaseFeedback } from './supabase/feedback'
 import { withSupabaseGallery } from './supabase/gallery'
 import { withSupabaseNews } from './supabase/news'
+import { withSupabasePlay } from './supabase/play'
 import { withSupabaseSettings } from './supabase/settings'
 import type { ApiClient } from './types'
 
@@ -38,6 +39,7 @@ export function createApi(env: Record<string, string | undefined> = import.meta.
   live = withSupabaseGallery(live, config, env)
   live = withSupabaseFeedback(live, config)
   live = withSupabaseEvents(live, config)
+  live = withSupabasePlay(live, config)
   /*
    * The audit read goes outside the audit wrapper, which keeps its own list in memory and would
    * otherwise answer from it. Its recording stays: the trigger is the guarantee, this is the

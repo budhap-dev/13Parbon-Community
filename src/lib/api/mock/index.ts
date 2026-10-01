@@ -9,10 +9,11 @@ import { inOrder, pinnedCover, type AlbumDraft, type AlbumWithMedia, type Media 
 import { validateSettings, type SiteSettings } from '@/domain/settings'
 import { defaultSettings } from '@/app/defaults'
 import { isAdmin, isMember, isValidHousehold, type Household, type HouseholdDraft, type Person, type Viewer } from '@/domain/household'
-import { ATTENDANCE_NOTE, CONTACT_NOTE, PHOTOGRAPH_NOTE, type HouseholdExport } from '@/domain/subjectAccess'
+import { ATTENDANCE_NOTE, CONTACT_NOTE, PHOTOGRAPH_NOTE, VOTES_NOTE, type HouseholdExport } from '@/domain/subjectAccess'
 import type { ApiClient } from '../types'
 import { buildFixtures } from './fixtures'
 import { buildPortalFixtures } from './portal-fixtures'
+import { createPlayMock } from './play'
 
 export type MockApiOptions = {
   /** Clock used to decide what counts as upcoming. */
@@ -232,6 +233,7 @@ export function createMockApi({
       .sort((a, b) => b.startsAt.localeCompare(a.startsAt))
 
   const sentMessages: ContactMessage[] = []
+  const play = createPlayMock({ now, latencyMs, households: portal.households, NotAllowed })
 
   /**
    * A handful taken at random rather than the first few. Without it the home page shows the
@@ -730,7 +732,8 @@ export function createMockApi({
           // Filled in by withAuditTrail, which is the only thing that holds the trail. The
           // same wrapper writes it, so the same wrapper is what can read it back out.
           changes: [],
-          notes: [ATTENDANCE_NOTE, PHOTOGRAPH_NOTE, CONTACT_NOTE],
+          ...play.exportFor(id, viewer),
+          notes: [ATTENDANCE_NOTE, PHOTOGRAPH_NOTE, CONTACT_NOTE, VOTES_NOTE],
         }
         return delay(result, latencyMs)
       },
@@ -827,6 +830,7 @@ export function createMockApi({
         return delay({ ...saved, home: { ...saved.home } }, latencyMs)
       },
     },
+    ...play.api,
     // Empty here on purpose: recording is withAuditTrail's job, wrapped around the outside.
     audit: { list: () => delay([], latencyMs) },
     volunteering: {

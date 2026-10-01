@@ -12,6 +12,20 @@ import type { SettingsDraft, SiteSettings } from '@/domain/settings'
 import type { HouseholdExport } from '@/domain/subjectAccess'
 import type { Announcement, AnnouncementDraft, NewsDraft, NewsPost, Newsletter } from '@/domain/news'
 import type { VolunteerRole } from '@/domain/volunteer'
+import type { Poll, PollDraft, PollSummary, PollView } from '@/domain/polls'
+import type {
+  BankQuestion,
+  LeaderRow,
+  PlayableQuiz,
+  QuestionDraft,
+  Quiz,
+  QuizAttempt,
+  QuizCard,
+  QuizDraft,
+  QuizResult,
+  QuizStats,
+} from '@/domain/quizzes'
+import type { Suggestion, SuggestionDraft, SuggestionStatus } from '@/domain/suggestions'
 
 /**
  * The contract between the UI and whatever backend we pick.
@@ -315,6 +329,69 @@ export interface ApiClient {
    */
   audit: {
     list(viewer: Viewer, limit?: number): Promise<AuditEntry[]>
+  }
+  /**
+   * Questions the committee asks members, one vote per household.
+   *
+   * Members only. Who voted which way is not known to anybody — the committee included —
+   * unless the poll said it was named before anybody voted. See `supabase/polls-quizzes.sql`.
+   */
+  polls: {
+    /** Every opened poll, open ones first, with this household's vote and the totals they may see. Empty for anybody who is not a member. */
+    list(viewer: Viewer): Promise<PollView[]>
+    /** Records this household's vote, replacing any earlier one, while the poll is open. */
+    vote(pollId: string, option: number, viewer: Viewer): Promise<PollView>
+    /** Every poll, drafts included, with its totals — and, on a named poll, who chose what. Empty for anybody who is not an admin. */
+    listAll(viewer: Viewer): Promise<PollSummary[]>
+    create(draft: PollDraft, viewer: Viewer): Promise<Poll>
+    /** Refused for the choices, and for whether it is named, once anybody has voted. */
+    update(id: string, draft: PollDraft, viewer: Viewer): Promise<Poll>
+    remove(id: string, viewer: Viewer): Promise<void>
+  }
+  /**
+   * Quizzes. The committee writes them; members play them, and visitors play the ones opened
+   * to everyone. The right answers come back only from `submit`.
+   */
+  quizzes: {
+    /** Opened quizzes this viewer may play: public ones for anybody, every one for a member. */
+    list(viewer: Viewer): Promise<QuizCard[]>
+    /** A quiz and its questions, with no answers in them. Null when it is not this viewer's to play. */
+    get(id: string, viewer: Viewer): Promise<PlayableQuiz | null>
+    /**
+     * Marks a set of answers and returns the score with the right answers.
+     *
+     * For a member household this is their one play, kept with their choice about the
+     * leaderboard. For a visitor it is counted and nothing else is kept.
+     */
+    submit(id: string, answers: number[], showName: boolean, viewer: Viewer): Promise<QuizResult>
+    /** Scores, best first, named where the household chose to be. Members and the committee only. */
+    leaderboard(id: string, viewer: Viewer): Promise<LeaderRow[]>
+    /** Every quiz, drafts included, with how many have played. Empty for anybody who is not an admin. */
+    listAll(viewer: Viewer): Promise<QuizStats[]>
+    create(draft: QuizDraft, viewer: Viewer): Promise<Quiz>
+    /** Refused for the list of questions once anybody has played; the title and dates can still change. */
+    update(id: string, draft: QuizDraft, viewer: Viewer): Promise<Quiz>
+    remove(id: string, viewer: Viewer): Promise<void>
+    /** Each member household's play, best first. Admin only. */
+    attempts(id: string, viewer: Viewer): Promise<QuizAttempt[]>
+    /** The question bank, with answers. Empty for anybody who is not an admin. */
+    bank(viewer: Viewer): Promise<BankQuestion[]>
+    createQuestion(draft: QuestionDraft, viewer: Viewer): Promise<BankQuestion>
+    /** Refused for the wording and the answer once anybody has answered it; tags and explanation can still change. */
+    updateQuestion(id: string, draft: QuestionDraft, viewer: Viewer): Promise<BankQuestion>
+    /** Refused while the question is in a quiz. */
+    removeQuestion(id: string, viewer: Viewer): Promise<void>
+  }
+  /** Members' ideas for questions and polls, which the committee approves or declines. */
+  suggestions: {
+    /** Members only. Arrives waiting, whatever was sent. */
+    send(draft: SuggestionDraft, viewer: Viewer): Promise<Suggestion>
+    /** This household's own suggestions, newest first. */
+    listMine(viewer: Viewer): Promise<Suggestion[]>
+    /** Everything, waiting first. Empty for anybody who is not an admin. */
+    listAll(viewer: Viewer): Promise<Suggestion[]>
+    review(id: string, status: SuggestionStatus, viewer: Viewer): Promise<Suggestion>
+    remove(id: string, viewer: Viewer): Promise<void>
   }
   volunteering: {
     /** Roles that still have free slots. */

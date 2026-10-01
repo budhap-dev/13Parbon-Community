@@ -278,6 +278,117 @@ export function withAuditTrail(base: ApiClient, now: () => Date = () => new Date
         record(viewer, 'announcement:remove', { kind: 'announcements', id }, was, {})
       },
     },
+    /*
+     * Polls and quizzes: the committee's work is recorded, the members' is not. A vote, a play
+     * and a suggestion arriving each pass straight through, matching polls-quizzes.sql, which
+     * puts no trigger on poll_votes or quiz_attempts — a line per vote would be the list of who
+     * voted which way that an unnamed poll promises nobody holds.
+     */
+    polls: {
+      ...base.polls,
+      create: async (draft, viewer) => {
+        const poll = await base.polls.create(draft, viewer)
+        record(viewer, 'poll:create', { kind: 'polls', id: poll.id }, {}, { title: poll.title, opensAt: poll.opensAt })
+        return poll
+      },
+      update: async (id, draft, viewer) => {
+        const was = snapshot(
+          (await base.polls.listAll(viewer)).find((s) => s.poll.id === id)?.poll,
+          'title',
+          'opensAt',
+          'closesAt',
+          'results',
+        )
+        const poll = await base.polls.update(id, draft, viewer)
+        record(viewer, 'poll:edit', { kind: 'polls', id }, was, {
+          title: poll.title,
+          opensAt: poll.opensAt,
+          closesAt: poll.closesAt,
+          results: poll.results,
+        })
+        return poll
+      },
+      remove: async (id, viewer) => {
+        const was = snapshot((await base.polls.listAll(viewer)).find((s) => s.poll.id === id)?.poll, 'title')
+        await base.polls.remove(id, viewer)
+        record(viewer, 'poll:remove', { kind: 'polls', id }, was, {})
+      },
+    },
+    quizzes: {
+      ...base.quizzes,
+      create: async (draft, viewer) => {
+        const quiz = await base.quizzes.create(draft, viewer)
+        record(viewer, 'quiz:create', { kind: 'quizzes', id: quiz.id }, {}, { title: quiz.title, audience: quiz.audience })
+        return quiz
+      },
+      update: async (id, draft, viewer) => {
+        const found = (await base.quizzes.listAll(viewer)).find((s) => s.quiz.id === id)?.quiz
+        const was = { ...snapshot(found, 'title', 'audience', 'opensAt', 'closesAt'), questions: found?.questionIds.join(',') }
+        const quiz = await base.quizzes.update(id, draft, viewer)
+        record(viewer, 'quiz:edit', { kind: 'quizzes', id }, was, {
+          title: quiz.title,
+          audience: quiz.audience,
+          opensAt: quiz.opensAt,
+          closesAt: quiz.closesAt,
+          questions: quiz.questionIds.join(','),
+        })
+        return quiz
+      },
+      remove: async (id, viewer) => {
+        const was = snapshot((await base.quizzes.listAll(viewer)).find((s) => s.quiz.id === id)?.quiz, 'title')
+        await base.quizzes.remove(id, viewer)
+        record(viewer, 'quiz:remove', { kind: 'quizzes', id }, was, {})
+      },
+      createQuestion: async (draft, viewer) => {
+        const question = await base.quizzes.createQuestion(draft, viewer)
+        record(viewer, 'question:create', { kind: 'quiz_questions', id: question.id }, {}, { prompt: question.prompt })
+        return question
+      },
+      updateQuestion: async (id, draft, viewer) => {
+        // The answer is left out, as the database leaves quiz_answers out of the trail: a line
+        // saying which option is right is the answer sheet, in a table the committee all read.
+        const was = snapshot(
+          (await base.quizzes.bank(viewer)).find((q) => q.id === id),
+          'prompt',
+          'explanation',
+          'imageUrl',
+        )
+        const question = await base.quizzes.updateQuestion(id, draft, viewer)
+        record(viewer, 'question:edit', { kind: 'quiz_questions', id }, was, {
+          prompt: question.prompt,
+          explanation: question.explanation,
+          imageUrl: question.imageUrl,
+        })
+        return question
+      },
+      removeQuestion: async (id, viewer) => {
+        const was = snapshot((await base.quizzes.bank(viewer)).find((q) => q.id === id), 'prompt')
+        await base.quizzes.removeQuestion(id, viewer)
+        record(viewer, 'question:remove', { kind: 'quiz_questions', id }, was, {})
+      },
+    },
+    suggestions: {
+      ...base.suggestions,
+      review: async (id, status, viewer) => {
+        const was = snapshot((await base.suggestions.listAll(viewer)).find((s) => s.id === id), 'status')
+        const suggestion = await base.suggestions.review(id, status, viewer)
+        record(
+          viewer,
+          status === 'approved' ? 'suggestion:approve' : status === 'rejected' ? 'suggestion:decline' : 'suggestion:reopen',
+          { kind: 'suggestions', id },
+          was,
+          { status: suggestion.status },
+        )
+        return suggestion
+      },
+      remove: async (id, viewer) => {
+        // Never the words, for the reason feedback gives: the trail is the one table nobody
+        // can delete from.
+        const was = snapshot((await base.suggestions.listAll(viewer)).find((s) => s.id === id), 'status', 'kind')
+        await base.suggestions.remove(id, viewer)
+        record(viewer, 'suggestion:remove', { kind: 'suggestions', id }, was, {})
+      },
+    },
     gallery: {
       ...base.gallery,
       createAlbum: async (draft, viewer) => {

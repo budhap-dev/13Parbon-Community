@@ -51,7 +51,7 @@ export function DownloadExport({
     )
   }
 
-  const { household, messages, signInAttempts, changes, notes } = data
+  const { household, messages, signInAttempts, changes, votes, quizScores, suggestions, notes } = data
 
   return (
     <div className={styles.report}>
@@ -102,6 +102,52 @@ export function DownloadExport({
             {signInAttempts.map((a) => (
               <li key={a.email}>
                 {a.email} — {a.attempts} {a.attempts === 1 ? 'try' : 'tries'}, last on {a.lastTriedAt.slice(0, 10)}
+              </li>
+            ))}
+          </ul>
+        </Group>
+      ) : null}
+
+      <Group title={`Your votes in polls (${votes.length})`}>
+        {votes.length === 0 ? (
+          <p className={styles.note}>None found.</p>
+        ) : (
+          <ul className={styles.list}>
+            {votes.map((v, i) => (
+              <li key={i}>
+                <strong>{v.poll}</strong> — {v.choice} <span className={styles.note}>· {v.votedAt.slice(0, 10)}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Group>
+
+      {quizScores.length > 0 ? (
+        <Group title={`Quizzes you played (${quizScores.length})`}>
+          <ul className={styles.list}>
+            {quizScores.map((q, i) => (
+              <li key={i}>
+                <strong>{q.quiz}</strong> — {q.score} / {q.total}
+                <span className={styles.note}>
+                  {' '}
+                  · {q.shownOnLeaderboard ? 'on the leaderboard by name' : 'kept off the leaderboard by name'} · {q.playedAt.slice(0, 10)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </Group>
+      ) : null}
+
+      {suggestions.length > 0 ? (
+        <Group title={`Ideas you sent the committee (${suggestions.length})`}>
+          <ul className={styles.list}>
+            {suggestions.map((s, i) => (
+              <li key={i}>
+                <strong>{s.prompt}</strong>{' '}
+                <span className={styles.note}>
+                  · {s.kind === 'question' ? 'quiz question' : 'poll'} · {s.status === 'pending' ? 'waiting' : s.status === 'approved' ? 'used' : 'not used'} ·{' '}
+                  {s.sentAt.slice(0, 10)}
+                </span>
               </li>
             ))}
           </ul>

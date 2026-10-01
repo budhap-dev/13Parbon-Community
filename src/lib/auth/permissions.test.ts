@@ -61,6 +61,12 @@ const table: Record<Action, Row> = {
   'feedback:read': { visitor: false, own: false, other: false, admin: true },
   'feedback:review': { visitor: false, own: false, other: false, admin: true },
   'feedback:delete': { visitor: false, own: false, other: false, admin: true },
+
+  // A member votes and plays as their own household, which the database takes from the token,
+  // so there is no "other" household to ask about.
+  'play:vote': { visitor: false, own: true, other: true, admin: true },
+  'play:suggest': { visitor: false, own: true, other: true, admin: true },
+  'play:manage': { visitor: false, own: false, other: false, admin: true },
 }
 
 describe('can', () => {

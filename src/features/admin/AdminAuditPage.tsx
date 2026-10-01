@@ -18,6 +18,10 @@ const SUBJECTS: Record<string, string> = {
   news_posts: 'a news piece',
   announcements: 'a notice',
   feedback: 'a piece of feedback',
+  polls: 'a poll',
+  quizzes: 'a quiz',
+  quiz_questions: 'a quiz question',
+  suggestions: 'a member’s suggestion',
 }
 
 const VERBS: Record<string, string> = { insert: 'Added', update: 'Changed', delete: 'Removed' }
@@ -50,6 +54,8 @@ const DOING: Record<string, string> = {
   publish: 'Put on the website',
   decline: 'Turned down',
   withdraw: 'Took off the website',
+  approve: 'Used',
+  reopen: 'Put back in the queue',
 }
 
 const THINGS: Record<string, string> = {
@@ -63,6 +69,10 @@ const THINGS: Record<string, string> = {
   news: 'a piece',
   settings: 'what the site shows',
   feedback: 'a piece of feedback',
+  poll: 'a poll',
+  quiz: 'a quiz',
+  question: 'a quiz question',
+  suggestion: 'a member’s suggestion',
 }
 
 /** What happened, in a sentence, whichever half of the app wrote the line. */

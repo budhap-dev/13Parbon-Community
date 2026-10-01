@@ -221,6 +221,14 @@ A box for the public plus everything the committee has approved. Sign in with Go
 your name to it, or send it anonymously. **Nothing appears until a committee member approves
 it.** Off by default. Full detail in [FEEDBACK.md](FEEDBACK.md).
 
+### Quizzes (`/quizzes`, `/quizzes/:id`)
+
+Quizzes the committee has opened to **everyone**, played one question at a time with no
+sign-in. The score and the right answers come back from the database only once somebody has
+finished — the questions on the page carry no answer to peek at. A visitor's play is counted
+and nothing else about it is kept. A signed-in member who plays here plays as their household,
+exactly as in the portal. Behind the **Quizzes on the public website** switch, off by default.
+
 ### Privacy (`/privacy`) and sign-in (`/login`)
 
 The privacy notice is content, in [src/app/privacy.ts](../src/app/privacy.ts), and must be
@@ -244,6 +252,16 @@ would help with. They may **not** change their role, their sign-in address, or t
 status — those are the committee's, refused by a database trigger rather than merely hidden.
 
 Children's names never leave their own household: no other member can reach them at all.
+
+**Polls and quizzes (`/portal/play`, `/portal/play/:id`)** — the committee's open polls, one
+vote per household and changeable while the poll is open; the quizzes, one go per household,
+with a leaderboard the household chooses whether to appear on by name; and a form to suggest a
+quiz question or a poll, which waits for the committee. The dashboard shows a "Have your say"
+card only while there is a poll the household has not answered or a quiz it has not played.
+
+When members see a poll's totals is the committee's choice per poll: once they have voted,
+once it closes, or never. **Who voted which way is known to nobody** — the committee included —
+unless the poll said it was *named* before anybody voted, and a named poll says so on the card.
 
 ---
 
@@ -315,6 +333,18 @@ saying what actually happened to the photograph.
 
 The review queue: approve, turn down, take back off the website, or delete. See
 [FEEDBACK.md](FEEDBACK.md).
+
+### Polls and quizzes (`/admin/play`)
+
+Four tabs. **Polls**: write, open, close early and delete, with totals on every poll and names
+only on a named one; once anybody has voted, the choices and whether it is named are locked.
+**Quizzes**: built from the bank, for members or for everyone, with dates; plays counted
+(member households and visitors apart) and each household's score. Once anybody has played, the
+questions are locked — **Make a copy** to change them. **Question bank**: questions with their
+answer, an optional explanation and festival picture, and tags so next year's quiz can reuse
+this year's; a question somebody has answered keeps its wording and answer. **Suggestions**:
+what members sent, waiting first. Approving opens the question or poll form filled in, and the
+suggestion is marked used when that is saved. The sidebar badge counts what is waiting.
 
 ### What has changed (`/admin/audit`)
 
@@ -478,6 +508,12 @@ thinning the history behind it. The screen says so and points at taking the expo
 this database — only a headcount crosses, and a count has nobody in it. Feedback keeps no email
 address. Photographs are stripped of EXIF before upload.
 
+**Polls and quizzes.** An unnamed poll's votes are readable by the household that cast them
+and nobody else — no policy gives the committee them, and no line of the audit trail records
+them, because a line naming the household would be the list the poll promises does not exist.
+A visitor who plays a quiz leaves a count and nothing else. The right answers are in a table
+only the committee can read, and a quiz is marked by `portal.submit_quiz()`.
+
 **Analytics.** Vercel Web Analytics: no cookies, no IP addresses, no profile, totals only. The
 privacy page describes exactly this and must be kept matching.
 
@@ -570,8 +606,10 @@ Exposed schemas.
 | [`schema.sql`](../supabase/schema.sql) | Contact messages. Run first. |
 | [`portal.sql`](../supabase/portal.sql) | Households, people, events, albums, media, news, notices, newsletters, settings, attendance, sign-in attempts, the audit log — and every policy. |
 | [`feedback.sql`](../supabase/feedback.sql) | Feedback from the public. |
+| [`polls-quizzes.sql`](../supabase/polls-quizzes.sql) | Polls, votes, the question bank, quizzes, scores and members' suggestions. Votes and plays go only through `cast_vote()` and `submit_quiz()`. Run after `feedback.sql`. |
 | [`verify.sql`](../supabase/verify.sql) | Proves the portal rules hold. |
 | [`verify-feedback.sql`](../supabase/verify-feedback.sql) | Proves the feedback rules hold. |
+| [`verify-polls-quizzes.sql`](../supabase/verify-polls-quizzes.sql) | Proves the poll and quiz rules hold: nobody reads an answer early, one vote and one play per household, no names on an unnamed poll, nothing changes once answered. |
 | [`superadmin.sql`](../supabase/superadmin.sql) | Names the one account the rest of the committee cannot remove or demote. The table and the guard are in `portal.sql`; this is only the address. Nothing in the app can read it. |
 | `*-seed.sql` | Sample content. |
 

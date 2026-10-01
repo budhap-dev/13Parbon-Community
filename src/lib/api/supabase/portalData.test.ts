@@ -239,3 +239,41 @@ describe('the household the rest of the committee cannot remove', () => {
     ).rejects.toThrow(/role and sign-in address cannot be changed/)
   })
 })
+
+describe('the copy a household asks for', () => {
+  const householdRow = {
+    id: 'hh-sen',
+    name: 'The Sens',
+    contact_name: 'Rina Sen',
+    email: 'rina@example.com',
+    phone: null,
+    google_email: 'rina.sen@gmail.com',
+    interests: [],
+    member_since: '2024-03-01',
+    membership_status: 'active',
+    membership_paid_to: null,
+    role: 'member',
+    people: [],
+  }
+
+  it('includes their votes, quiz scores and suggestions, by household', async () => {
+    const { client, calls } = fakeClient({
+      households: householdRow,
+      poll_votes: [
+        { option: 1, voted_at: '2026-09-02T10:00:00Z', polls: { title: 'Which Sunday?', options: ['18th', '25th'] } },
+        { option: 0, voted_at: '2026-09-01T10:00:00Z', polls: null },
+      ],
+      quiz_attempts: [{ score: 2, total: 3, show_name: false, played_at: '2026-09-03T10:00:00Z', quizzes: [{ title: 'Bengali words' }] }],
+      suggestions: [{ kind: 'poll', prompt: 'Film night?', status: 'pending', created_at: '2026-09-01T10:00:00Z' }],
+    })
+    const copy = await householdMethods(async () => client).exportHousehold('hh-sen')
+    expect(copy.votes).toEqual([
+      { poll: 'Which Sunday?', choice: '25th', votedAt: '2026-09-02T10:00:00Z' },
+      { poll: 'A poll since deleted', choice: 'Choice 1', votedAt: '2026-09-01T10:00:00Z' },
+    ])
+    expect(copy.quizScores).toEqual([{ quiz: 'Bengali words', score: 2, total: 3, shownOnLeaderboard: false, playedAt: '2026-09-03T10:00:00Z' }])
+    expect(copy.suggestions).toEqual([{ kind: 'poll', prompt: 'Film night?', status: 'pending', sentAt: '2026-09-01T10:00:00Z' }])
+    for (const table of ['poll_votes', 'quiz_attempts', 'suggestions']) expect(calls).toContain(`${table}.eq(household_id,hh-sen)`)
+    expect(copy.notes.some((n) => /committee included/.test(n))).toBe(true)
+  })
+})

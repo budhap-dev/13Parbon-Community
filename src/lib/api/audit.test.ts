@@ -31,6 +31,9 @@ const READS = [
   'portal.listSignInAttempts', 'portal.exportHousehold', 'portal.listAttendance',
   'audit.list', 'settings.get',
   'volunteering.listOpenRoles', 'volunteering.listRolesForEvent',
+  'polls.list', 'polls.listAll',
+  'quizzes.list', 'quizzes.get', 'quizzes.leaderboard', 'quizzes.listAll', 'quizzes.attempts', 'quizzes.bank',
+  'suggestions.listMine', 'suggestions.listAll',
 ]
 
 /** Writes that leave a line in the trail. */
@@ -43,14 +46,22 @@ const AUDITED = [
   'settings.save', 'events.save', 'events.create', 'events.archive',
   'news.createPost', 'news.updatePost', 'news.removePost',
   'news.createAnnouncement', 'news.updateAnnouncement', 'news.removeAnnouncement',
+  'polls.create', 'polls.update', 'polls.remove',
+  'quizzes.create', 'quizzes.update', 'quizzes.remove',
+  'quizzes.createQuestion', 'quizzes.updateQuestion', 'quizzes.removeQuestion',
+  'suggestions.review', 'suggestions.remove',
 ]
 
 /**
  * Writes that deliberately do not. `send` matches the trigger, which is attached to
  * contact_messages for updates only: a line per visitor using the contact form would say
  * nothing the table does not already say.
+ *
+ * A vote and a quiz play are left out for a stronger reason: a line per vote, naming the
+ * household, is exactly the list of who voted which way that an unnamed poll promises does not
+ * exist. polls-quizzes.sql puts no trigger on poll_votes or quiz_attempts for the same reason.
  */
-const NOT_AUDITED = ['contact.send', 'feedback.send']
+const NOT_AUDITED = ['contact.send', 'feedback.send', 'polls.vote', 'quizzes.submit', 'suggestions.send']
 
 function methodsOf(client: ApiClient): string[] {
   const found: string[] = []
@@ -114,6 +125,17 @@ describe('every audited write', () => {
       // After the update above, which needs the piece to still be there.
       ['news.removePost', () => a.news.removePost(post.id, admin)],
       ['gallery.deleteMedia', () => a.gallery.deleteMedia(album.media[2].id, admin)],
+      ['polls.create', () => a.polls.create({ title: 'Tea or coffee?', detail: '', options: ['Tea', 'Coffee'], named: false, results: 'after_vote', opensAt: '', closesAt: '' }, admin)],
+      ['polls.update', () => a.polls.update('poll-draft', { title: 'Bengali class on Saturdays?', detail: '', options: ['Yes', 'No'], named: false, results: 'after_vote', opensAt: '', closesAt: '' }, admin)],
+      ['polls.remove', () => a.polls.remove('poll-draft', admin)],
+      ['quizzes.createQuestion', () => a.quizzes.createQuestion({ prompt: 'Two plus two?', options: ['3', '4'], correct: 1, explanation: '', tags: [], imageUrl: '', creditedTo: '' }, admin)],
+      ['quizzes.updateQuestion', () => a.quizzes.updateQuestion('q-kojagori', { prompt: 'Kojagori falls on which night?', options: ['The full moon after Durga Puja', 'The new moon of Kartik', 'The first night of Navaratri'], correct: 0, explanation: '', tags: [], imageUrl: '', creditedTo: '' }, admin)],
+      ['quizzes.create', () => a.quizzes.create({ title: 'A new quiz', intro: '', audience: 'members', opensAt: '', closesAt: '', questionIds: [] }, admin)],
+      ['quizzes.update', () => a.quizzes.update('quiz-draft', { title: 'Lakshmi Puja', intro: '', audience: 'members', opensAt: '', closesAt: '', questionIds: [] }, admin)],
+      ['quizzes.removeQuestion', () => a.quizzes.removeQuestion('q-kojagori', admin)],
+      ['quizzes.remove', () => a.quizzes.remove('quiz-draft', admin)],
+      ['suggestions.review', () => a.suggestions.review('sg-1', 'approved', admin)],
+      ['suggestions.remove', () => a.suggestions.remove('sg-2', admin)],
     ]
 
     for (const [name, run] of writes) {
@@ -170,6 +192,14 @@ describe('the audit trail', () => {
   it('does not record a visitor using the contact form', async () => {
     const a = api()
     await a.contact.send({ name: 'A Visitor', email: 'v@example.com', subject: 'Hello', message: 'Long enough to pass.' })
+    expect(await a.audit.list(admin)).toEqual([])
+  })
+
+  it('keeps no line for a vote, a quiz played or a suggestion sent', async () => {
+    const a = api()
+    await a.polls.vote('poll-picnic', 0, member)
+    await a.quizzes.submit('quiz-words', [0, 1, 1], true, member)
+    await a.suggestions.send({ kind: 'poll', prompt: 'Film night in January?', options: ['Yes', 'No'], note: '', credit: false }, member)
     expect(await a.audit.list(admin)).toEqual([])
   })
 

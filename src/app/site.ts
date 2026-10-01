@@ -128,6 +128,11 @@ export const site = {
    */
   showFeedback: false,
   /**
+   * Quizzes opened to everyone, on the public website. Off until the committee has written one
+   * worth finding; members play quizzes in the portal whatever this says.
+   */
+  showQuizzes: false,
+  /**
    * The next-event banner pinned under the wordmark on the home page. Parked for now at the
    * committee's request; the component and its styles are untouched, so setting this to true
    * brings it back exactly as it was.

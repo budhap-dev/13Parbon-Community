@@ -19,7 +19,7 @@ import { NotFoundPage } from '@/features/placeholder'
  * works for anybody who knows the address" — because a member who is already signed in should
  * not be locked out of their own household by a switch about a link in the header.
  */
-export function SectionGate({ setting }: { setting: 'showPhotos' | 'showNews' | 'showFeedback' }) {
+export function SectionGate({ setting }: { setting: 'showPhotos' | 'showNews' | 'showFeedback' | 'showQuizzes' }) {
   const settings = useSettings()
   // Not found rather than a message saying it has been turned off: whether the committee is
   // still getting a section ready is nobody else's business, and a page that says "come back

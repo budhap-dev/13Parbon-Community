@@ -78,6 +78,30 @@ export function createEmptyApi(): ApiClient {
     settings: { get: async () => defaultSettings, save: async () => { throw new Error('not connected') } },
     audit: { list: async () => [] },
     volunteering: { listOpenRoles: async () => [], listRolesForEvent: async () => [] },
+    polls: {
+      list: async () => [], listAll: async () => [],
+      vote: async () => { throw new Error('not connected') },
+      create: async () => { throw new Error('not connected') },
+      update: async () => { throw new Error('not connected') },
+      remove: async () => { throw new Error('not connected') },
+    },
+    quizzes: {
+      list: async () => [], get: async () => null, leaderboard: async () => [], listAll: async () => [],
+      attempts: async () => [], bank: async () => [],
+      submit: async () => { throw new Error('not connected') },
+      create: async () => { throw new Error('not connected') },
+      update: async () => { throw new Error('not connected') },
+      remove: async () => { throw new Error('not connected') },
+      createQuestion: async () => { throw new Error('not connected') },
+      updateQuestion: async () => { throw new Error('not connected') },
+      removeQuestion: async () => { throw new Error('not connected') },
+    },
+    suggestions: {
+      listMine: async () => [], listAll: async () => [],
+      send: async () => { throw new Error('not connected') },
+      review: async () => { throw new Error('not connected') },
+      remove: async () => { throw new Error('not connected') },
+    },
   }
 }
 
@@ -120,6 +144,12 @@ export function createFailingApi(): ApiClient {
     settings: { get: down, save: down },
     audit: { list: down },
     volunteering: { listOpenRoles: down, listRolesForEvent: down },
+    polls: { list: down, vote: down, listAll: down, create: down, update: down, remove: down },
+    quizzes: {
+      list: down, get: down, submit: down, leaderboard: down, listAll: down, create: down, update: down, remove: down,
+      attempts: down, bank: down, createQuestion: down, updateQuestion: down, removeQuestion: down,
+    },
+    suggestions: { send: down, listMine: down, listAll: down, review: down, remove: down },
   }
 }
 

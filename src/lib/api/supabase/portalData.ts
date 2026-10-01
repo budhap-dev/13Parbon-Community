@@ -16,7 +16,7 @@ import {
 } from './rows'
 import type { AttendanceDraft } from '@/domain/attendance'
 import type { ContactMessage } from '@/domain/contact'
-import { ATTENDANCE_NOTE, CONTACT_NOTE, PHOTOGRAPH_NOTE } from '@/domain/subjectAccess'
+import { ATTENDANCE_NOTE, CONTACT_NOTE, PHOTOGRAPH_NOTE, VOTES_NOTE } from '@/domain/subjectAccess'
 
 /** Everything this app owns is in its own schema; the planner has `public`. */
 const SCHEMA = 'portal'
@@ -194,6 +194,22 @@ export function householdMethods(getClient: () => Promise<SupabaseClient>) {
         ? await table(client, 'sign_in_attempts').select('*').in('email', addresses)
         : { data: [] }
 
+      // Votes, scores and suggestions are keyed by household, so these find all of them — as far
+      // as the policies let whoever is asking read. On an unnamed poll that is the household
+      // alone, which VOTES_NOTE explains.
+      const { data: votes } = await table(client, 'poll_votes')
+        .select('option, voted_at, polls(title, options)')
+        .eq('household_id', id)
+        .order('voted_at', { ascending: false })
+      const { data: scores } = await table(client, 'quiz_attempts')
+        .select('score, total, show_name, played_at, quizzes(title)')
+        .eq('household_id', id)
+        .order('played_at', { ascending: false })
+      const { data: suggested } = await table(client, 'suggestions')
+        .select('kind, prompt, status, created_at')
+        .eq('household_id', id)
+        .order('created_at', { ascending: false })
+
       const { data: trail } = await table(client, 'audit_log')
         .select('action,at,changes')
         .eq('subject_kind', 'households')
@@ -218,11 +234,29 @@ export function householdMethods(getClient: () => Promise<SupabaseClient>) {
           at: row.at,
           fields: Object.keys(row.changes ?? {}),
         })),
-        notes: [ATTENDANCE_NOTE, PHOTOGRAPH_NOTE, CONTACT_NOTE],
+        votes: ((votes ?? []) as VoteRow[]).map((v) => {
+          const poll = Array.isArray(v.polls) ? v.polls[0] : v.polls
+          return { poll: poll?.title ?? 'A poll since deleted', choice: poll?.options[v.option] ?? `Choice ${v.option + 1}`, votedAt: v.voted_at }
+        }),
+        quizScores: ((scores ?? []) as ScoreRow[]).map((a) => {
+          const quiz = Array.isArray(a.quizzes) ? a.quizzes[0] : a.quizzes
+          return { quiz: quiz?.title ?? 'A quiz', score: a.score, total: a.total, shownOnLeaderboard: a.show_name, playedAt: a.played_at }
+        }),
+        suggestions: ((suggested ?? []) as SuggestionRow[]).map((s) => ({
+          kind: s.kind,
+          prompt: s.prompt,
+          status: s.status,
+          sentAt: s.created_at,
+        })),
+        notes: [ATTENDANCE_NOTE, PHOTOGRAPH_NOTE, CONTACT_NOTE, VOTES_NOTE],
       }
     },
   }
 }
+
+type VoteRow = { option: number; voted_at: string; polls: { title: string; options: string[] } | { title: string; options: string[] }[] | null }
+type ScoreRow = { score: number; total: number; show_name: boolean; played_at: string; quizzes: { title: string } | { title: string }[] | null }
+type SuggestionRow = { kind: 'question' | 'poll'; prompt: string; status: 'pending' | 'approved' | 'rejected'; created_at: string }
 
 async function reread(client: SupabaseClient, id: string): Promise<Household | null> {
   const { data } = await table(client, 'households').select(HOUSEHOLD_SELECT).eq('id', id).maybeSingle()

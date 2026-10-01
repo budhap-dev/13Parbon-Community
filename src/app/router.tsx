@@ -10,6 +10,7 @@ import { PrivacyPage } from '@/features/privacy'
 import { HomePage } from '@/features/home'
 import { ArticlePage, NewsPage } from '@/features/news'
 import { NotFoundPage } from '@/features/placeholder'
+import { AdminPlayPage, PlayPage, PortalQuizPage, QuizPage, QuizzesPage } from '@/features/play'
 import { SectionGate } from './SectionGate'
 import {
   AdminAuditPage,
@@ -58,6 +59,14 @@ export const routes: RouteObject[] = [
         element: <SectionGate setting="showFeedback" />,
         children: [{ path: 'feedback', Component: FeedbackPage }],
       },
+      {
+        // Quizzes opened to everyone. Members play every quiz in the portal whatever this says.
+        element: <SectionGate setting="showQuizzes" />,
+        children: [
+          { path: 'quizzes', Component: QuizzesPage },
+          { path: 'quizzes/:id', Component: QuizPage },
+        ],
+      },
       { path: 'about', Component: AboutPage },
       { path: 'contact', Component: ContactPage },
       { path: 'login', Component: LoginPage },
@@ -73,6 +82,8 @@ export const routes: RouteObject[] = [
         children: [
           { path: '/portal', Component: DashboardPage },
           { path: '/portal/household', Component: HouseholdPage },
+          { path: '/portal/play', Component: PlayPage },
+          { path: '/portal/play/:id', Component: PortalQuizPage },
         ],
       },
     ],
@@ -90,6 +101,7 @@ export const routes: RouteObject[] = [
           { path: '/admin/media', Component: AdminMediaPage },
           { path: '/admin/messages', Component: AdminMessagesPage },
           { path: '/admin/feedback', Component: AdminFeedbackPage },
+          { path: '/admin/play', Component: AdminPlayPage },
           { path: '/admin/audit', Component: AdminAuditPage },
         ],
       },
