@@ -73,7 +73,7 @@ docs/
 
 Import from `src` with the `@/` alias, for example `import { Button } from '@/components/Button'`.
 
-Themes: five colour schemes tied to the community's year live in `src/app/theme/tokens.css` (Festival, Poila Boishakh, Saraswati Puja, Holi, Mahalaya). The header's theme picker stamps `data-theme` on the root element and remembers the choice in `localStorage`. Each theme also has a drawn motif behind the hero (`src/app/theme/backdrops.tsx`) and can name a `heroImage` in `src/app/theme/themes.ts`, served from `public/brand/themes/`. To add a theme, add a `[data-theme='...']` block with the full token set, register it in `themes.ts`, and give it a backdrop.
+Themes: eight colour schemes tied to the community's year live in `src/app/theme/tokens.css` (Festival, Poila Boishakh, Saraswati Puja, Holi, Mahalaya, Kojagori, Deepavali, Borodin), each with its own background texture and corners as well as colours. The header's theme picker stamps `data-theme` on the root element and remembers the choice in `localStorage`. Each theme also has a drawn motif behind the hero (`src/app/theme/backdrops.tsx`) and can name a `heroImage` in `src/app/theme/themes.ts`, served from `public/brand/themes/`. To add a theme, add a `[data-theme='...']` block with the full token set (and, at the end of `tokens.css`, its texture and corners), add its id to `SITE_THEMES` in `src/domain/siteContent.ts`, register it in `themes.ts`, and give it a backdrop.
 
 Brand assets live in `public/brand/`: the full logo, the round emblem used in the header and favicon, and the three pieces the home page animates together.
 

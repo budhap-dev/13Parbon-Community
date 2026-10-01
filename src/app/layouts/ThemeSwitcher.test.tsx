@@ -33,6 +33,9 @@ describe('ThemeSwitcher', () => {
       'Saraswati PujaBasanti yellow with deep blue',
       'HoliMagenta and bright yellow',
       'MahalayaPre-dawn indigo and shiuli orange',
+      'KojagoriFull-moon blue and pale gold, for Lakshmi Puja',
+      'DeepavaliA dark night lit by diyas, for Kali Puja',
+      'BorodinWinter white, holly green and berry red',
     ])
     expect(screen.getByRole('radio', { name: /Festival/ })).toHaveAttribute('aria-checked', 'true')
   })
@@ -60,5 +63,21 @@ describe('ThemeSwitcher', () => {
     expect(trigger).toHaveAttribute('aria-expanded', 'true')
     await userEvent.click(screen.getByText('outside'))
     expect(trigger).toHaveAttribute('aria-expanded', 'false')
+  })
+
+  it('opens upward when asked, for a switcher near the foot of the screen', () => {
+    render(
+      <ThemeProvider>
+        <ThemeSwitcher align="start" direction="up" />
+      </ThemeProvider>,
+    )
+    const panel = screen.getByRole('radiogroup', { hidden: true })
+    expect(panel.className).toMatch(/panelUp/)
+    expect(panel.className).toMatch(/panelStart/)
+  })
+
+  it('opens downward by default', () => {
+    renderSwitcher()
+    expect(screen.getByRole('radiogroup', { hidden: true }).className).not.toMatch(/panelUp/)
   })
 })

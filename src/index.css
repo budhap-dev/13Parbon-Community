@@ -18,13 +18,22 @@ body {
   min-height: 100vh;
   font-family: var(--font-body);
   color: var(--color-fg);
-  /* A soft accent glow in the top corner over a gentle top-to-bottom shift. Solid colour as the fallback. */
+  /*
+   * The theme's own texture, then a soft accent glow in the top corner over a gentle
+   * top-to-bottom shift. Solid colour as the fallback. The textures are in tokens.css.
+   */
   background-color: var(--color-bg);
   background-image:
+    var(--bg-texture-a, none),
+    var(--bg-texture-b, none),
     radial-gradient(1100px 640px at 88% -8%, var(--color-bg-glow), transparent 65%),
     linear-gradient(180deg, var(--color-bg-top) 0%, var(--color-bg) 45%, var(--color-bg-bottom) 100%);
-  background-repeat: no-repeat;
-  background-size: 100% 100%;
+  background-repeat: repeat, repeat, no-repeat, no-repeat;
+  background-size:
+    var(--bg-texture-a-size, auto),
+    var(--bg-texture-b-size, auto),
+    100% 100%,
+    100% 100%;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   transition:

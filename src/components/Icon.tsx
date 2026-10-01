@@ -32,6 +32,8 @@ export type IconName =
   | 'share'
   | 'image'
   | 'trash'
+  | 'logout'
+  | 'search'
 
 const paths: Record<IconName, ReactElement> = {
   users: (
@@ -184,6 +186,19 @@ const paths: Record<IconName, ReactElement> = {
       <rect x="3" y="5" width="18" height="14" rx="2" />
       <circle cx="8.5" cy="10" r="1.5" />
       <path d="M21 16l-5-5-6 6" />
+    </>
+  ),
+  logout: (
+    <>
+      <path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3" />
+      <path d="M10 17l-5-5 5-5" />
+      <path d="M5 12h11" />
+    </>
+  ),
+  search: (
+    <>
+      <circle cx="11" cy="11" r="6.5" />
+      <path d="M20 20l-4.4-4.4" />
     </>
   ),
   external: (

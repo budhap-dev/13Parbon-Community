@@ -3,11 +3,12 @@ import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { useScrollToTopOn } from '@/app/useScrollToTopOn'
 import { unresolved } from '@/domain/document'
 import { Button } from '@/components/Button'
+import { Icon } from '@/components/Icon'
 import { HouseholdForm } from '@/components/HouseholdForm'
 import { RemoveHousehold } from '@/components/RemoveHousehold'
 import { formatLongDate } from '@/domain/dates'
 import { committeeCsv, committeeCsvFilename } from '@/domain/committeeExport'
-import { describeSize, type Household } from '@/domain/household'
+import { describeSize, householdMatches, type Household } from '@/domain/household'
 import type { HouseholdDraft } from '@/domain/household'
 import {
   useAddHousehold,
@@ -62,6 +63,8 @@ export function AdminPeoplePage() {
     })
 
   const neverSignedIn = households?.filter((h) => !h.googleEmail).length ?? 0
+  const [query, setQuery] = useState('')
+  const shown = (households ?? []).filter((household) => householdMatches(household, query))
 
   const saveList = () => {
     if (!households?.length) return
@@ -228,12 +231,39 @@ export function AdminPeoplePage() {
             {neverSignedIn > 0 ? ` · ${neverSignedIn} never signed in` : ''}
           </span>
         </div>
+        <div className={styles.toolbar}>
+          <div className={styles.search}>
+            <Icon name="search" size={17} className={styles.searchIcon} />
+            <input
+              type="search"
+              className={styles.searchInput}
+              aria-label="Search members"
+              placeholder="Search by household, name, email or phone"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          </div>
+          {query.trim() ? (
+            <span className={`${styles.muted} ${styles.tiny}`} role="status">
+              {shown.length === 1 ? '1 household matches' : `${shown.length} households match`}
+            </span>
+          ) : null}
+        </div>
         {isPending ? (
           <p className={styles.empty} aria-busy="true">
             Loading…
           </p>
+        ) : query.trim() && shown.length === 0 ? (
+          <p className={styles.pad}>
+            <span className={styles.muted}>Nobody matches “{query.trim()}”.</span>{' '}
+            <button type="button" className={styles.inlineButton} onClick={() => setQuery('')}>
+              Clear the search
+            </button>
+          </p>
         ) : (
-          <div className={styles.scroll}>
+          // Its own scroll, with the column labels pinned: forty households is a page of its own,
+          // and the explanation under the table should not need a hunt to find.
+          <div className={styles.boxed} tabIndex={0} role="region" aria-label="Members list">
             <table className={styles.table}>
               <thead>
                 <tr>
@@ -247,7 +277,7 @@ export function AdminPeoplePage() {
                 </tr>
               </thead>
               <tbody>
-                {(households ?? []).map((household) => (
+                {shown.map((household) => (
                   <tr key={household.id}>
                     <td>
                       <strong>{household.name}</strong>

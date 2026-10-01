@@ -328,3 +328,133 @@
     transform: translate(48px, -70px) scale(2.6);
   }
 }
+
+/* Kojagori: cloud crossing the moon, slowly, and the footprints arriving one after another. */
+.cloud {
+  animation: drift 26s ease-in-out infinite alternate;
+}
+
+.cloudSlow {
+  animation: drift 38s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes drift {
+  from {
+    transform: translateX(-30px);
+  }
+  to {
+    transform: translateX(40px);
+  }
+}
+
+/* Each print appears in turn and stays a while, so the walk reads as somebody arriving. */
+.step {
+  opacity: 0;
+  animation: step-in 7s ease-out infinite;
+}
+
+@keyframes step-in {
+  0% {
+    opacity: 0;
+  }
+  8% {
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Deepavali: a flame leans and stretches; it never goes out. */
+.flame {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: flicker 1.6s ease-in-out infinite alternate;
+}
+
+@keyframes flicker {
+  0% {
+    transform: scale(1, 1) skewX(0deg);
+  }
+  35% {
+    transform: scale(0.92, 1.08) skewX(-4deg);
+  }
+  70% {
+    transform: scale(1.04, 0.94) skewX(3deg);
+  }
+  100% {
+    transform: scale(0.96, 1.1) skewX(-2deg);
+  }
+}
+
+/* A firework opens from its centre and fades, then waits for its turn again. */
+.spark {
+  transform-box: fill-box;
+  transform-origin: center;
+  opacity: 0;
+  animation: spark 4s cubic-bezier(0.16, 0.84, 0.44, 1) infinite;
+}
+
+@keyframes spark {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  12% {
+    opacity: 1;
+  }
+  45% {
+    opacity: 0;
+    transform: scale(1.15);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.15);
+  }
+}
+
+/* Borodin: the bulbs take turns, the star turns a little, the snow comes down. */
+.bulb {
+  animation: twinkle 3.2s ease-in-out infinite;
+}
+
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.star {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: star-turn 12s ease-in-out infinite alternate;
+}
+
+@keyframes star-turn {
+  from {
+    transform: rotate(-8deg);
+  }
+  to {
+    transform: rotate(8deg);
+  }
+}
+
+.flake {
+  animation: fall 10s linear infinite;
+}
+
+@keyframes fall {
+  from {
+    transform: translate(0, -10px);
+  }
+  to {
+    transform: translate(18px, 410px);
+  }
+}

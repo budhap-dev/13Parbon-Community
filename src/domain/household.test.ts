@@ -2,6 +2,7 @@ import {
   adults,
   children,
   describeSize,
+  householdMatches,
   isValidHousehold,
   normaliseGoogleEmail,
   validateHousehold,
@@ -125,5 +126,38 @@ describe('normaliseGoogleEmail', () => {
 
   it('refuses something that is not an address, rather than storing it and locking somebody out', () => {
     expect(normaliseGoogleEmail('rina at gmail').error).toBeTruthy()
+  })
+})
+
+describe('householdMatches', () => {
+  it('matches everything when nothing is typed', () => {
+    expect(householdMatches(base, '')).toBe(true)
+    expect(householdMatches(base, '   ')).toBe(true)
+  })
+
+  it('finds a household by its name, contact, addresses, phone or anybody in it', () => {
+    expect(householdMatches(base, 'sens')).toBe(true)
+    expect(householdMatches(base, 'RINA')).toBe(true)
+    expect(householdMatches(base, 'rina@example')).toBe(true)
+    expect(householdMatches(base, 'sen@gmail')).toBe(true)
+    expect(householdMatches(base, '900001')).toBe(true)
+    expect(householdMatches(base, 'mira')).toBe(true)
+  })
+
+  it('needs every word to match something, so two words narrow rather than widen', () => {
+    expect(householdMatches(base, 'mira sen')).toBe(true)
+    expect(householdMatches(base, 'mira das')).toBe(false)
+    expect(householdMatches(base, 'ghosh')).toBe(false)
+  })
+
+  it('ignores accents either way round', () => {
+    expect(householdMatches({ ...base, contactName: 'Rónnie Sen' }, 'ronnie')).toBe(true)
+    expect(householdMatches(base, 'Mîra')).toBe(true)
+  })
+
+  it('copes with what has not been recorded', () => {
+    const sparse: Household = { ...base, email: undefined, phone: undefined, googleEmail: null }
+    expect(householdMatches(sparse, 'example')).toBe(false)
+    expect(householdMatches(sparse, 'arjun')).toBe(true)
   })
 })

@@ -8,14 +8,17 @@ import { SITE_THEMES } from '@/domain/siteContent'
 export const publicThemeNames = SITE_THEMES
 
 /**
- * The portal's own, and deliberately quiet.
+ * The portal's own. The first six are deliberately quiet; the last three are for whoever would
+ * rather they were not, with the colour kept to the frame and the cards still plain.
+ *
+ * The quiet ones, first:
  *
  * Nobody chooses a festival palette to spend an hour in a spreadsheet. These are made to be
  * looked past rather than at: neutral grounds, one restrained accent, and enough contrast to
  * read a table of names in. The festival themes stay where they belong — on the public site,
  * and on an evening being designed.
  */
-export const portalThemeNames = ['paper', 'linen', 'slate'] as const
+export const portalThemeNames = ['paper', 'linen', 'sage', 'mist', 'slate', 'midnight', 'marigold', 'lagoon', 'peacock'] as const
 
 export const themeNames = [...publicThemeNames, ...portalThemeNames] as const
 
@@ -46,12 +49,21 @@ export const themes: ThemeMeta[] = [
   { id: 'saraswati', name: 'Saraswati Puja', description: 'Basanti yellow with deep blue', swatch: ['#fff7d6', '#1f5fbf'] },
   { id: 'holi', name: 'Holi', description: 'Magenta and bright yellow', swatch: ['#8e1a6b', '#ffd60a'] },
   { id: 'mahalaya', name: 'Mahalaya', description: 'Pre-dawn indigo and shiuli orange', swatch: ['#1c1b4a', '#ff9a3c'] },
+  { id: 'kojagori', name: 'Kojagori', description: 'Full-moon blue and pale gold, for Lakshmi Puja', swatch: ['#13294b', '#f2d58a'] },
+  { id: 'deepavali', name: 'Deepavali', description: 'A dark night lit by diyas, for Kali Puja', swatch: ['#1b120c', '#ffb42e'] },
+  { id: 'borodin', name: 'Borodin', description: 'Winter white, holly green and berry red', swatch: ['#f5f8f3', '#1d6b43'] },
 ]
 
 export const portalThemes: ThemeMeta[] = [
   { id: 'paper', name: 'Paper', description: 'Warm white, ink and a deep blue', swatch: ['#f7f7f5', '#1f4e79'] },
   { id: 'linen', name: 'Linen', description: 'Soft oatmeal with muted teal', swatch: ['#f6f3ed', '#2f6b6a'] },
+  { id: 'sage', name: 'Sage', description: 'Pale green-grey with forest green', swatch: ['#f2f5f1', '#346846'] },
+  { id: 'mist', name: 'Mist', description: 'Cool grey with indigo', swatch: ['#f3f4f8', '#4338ca'] },
   { id: 'slate', name: 'Slate', description: 'Blue-grey dark, for long evenings', swatch: ['#16181d', '#6aa9ff'] },
+  { id: 'midnight', name: 'Midnight', description: 'Deep navy with teal, also dark', swatch: ['#0e1726', '#4ecdc4'] },
+  { id: 'marigold', name: 'Marigold', description: 'Colourful: orange into pink, on cream', swatch: ['#fff6ea', '#ea580c'] },
+  { id: 'lagoon', name: 'Lagoon', description: 'Colourful: teal into ocean blue', swatch: ['#ecfaf8', '#0e7490'] },
+  { id: 'peacock', name: 'Peacock', description: 'Colourful: violet and magenta, dark, with gold', swatch: ['#1a0f2e', '#db2777'] },
 ]
 
 export const defaultTheme: ThemeName = 'festival'

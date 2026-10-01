@@ -219,3 +219,29 @@ export function normaliseGoogleEmail(value: string): { email: string | null; err
   if (!EMAIL.test(trimmed)) return { email: null, error: 'Enter the Google address they will sign in with.' }
   return { email: trimmed.toLowerCase() }
 }
+
+/** Lower case, accents off, so "Dasgupta" finds "dasgupta" and "Ronnie" finds "Rónnie". */
+const folded = (text: string) => text.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+
+/**
+ * Whether a household answers to what the committee typed into the search on People.
+ *
+ * Every word must match something — the household's name, the main contact, either address,
+ * the phone, or anybody in it — so "das ruma" finds Ruma in the Dases and not every Das. The
+ * people are in it because the question is usually "which household is Anjali in?".
+ */
+export function householdMatches(household: Household, query: string): boolean {
+  const words = folded(query).split(/\s+/).filter(Boolean)
+  if (words.length === 0) return true
+  const haystack = folded(
+    [
+      household.name,
+      household.contactName,
+      household.email ?? '',
+      household.googleEmail ?? '',
+      household.phone ?? '',
+      ...household.people.map((person) => person.name),
+    ].join('\n'),
+  )
+  return words.every((word) => haystack.includes(word))
+}

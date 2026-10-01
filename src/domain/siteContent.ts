@@ -44,7 +44,16 @@ function records(value: unknown): Record<string, unknown>[] | null {
  * this list on the way out of the database: a theme renamed in the code must fall back, not
  * stamp a name on the page that no stylesheet answers to.
  */
-export const SITE_THEMES = ['festival', 'poila-boishakh', 'saraswati', 'holi', 'mahalaya'] as const
+export const SITE_THEMES = [
+  'festival',
+  'poila-boishakh',
+  'saraswati',
+  'holi',
+  'mahalaya',
+  'kojagori',
+  'deepavali',
+  'borodin',
+] as const
 export type SiteTheme = (typeof SITE_THEMES)[number]
 
 export function isSiteTheme(value: unknown): value is SiteTheme {

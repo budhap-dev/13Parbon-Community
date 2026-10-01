@@ -1,7 +1,7 @@
 .page {
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: 20px;
 }
 
 .top {
@@ -13,11 +13,12 @@
 }
 
 .title {
-  font-size: clamp(26px, 3vw, 34px);
+  font-size: clamp(24px, 2.4vw, 30px);
 }
 
 .sub {
   margin-top: 6px;
+  font-size: 15px;
   color: var(--color-fg-muted);
   /*
    * 62ch was a reading measure, and these are not paragraphs. Nearly every one of them is a
@@ -41,10 +42,15 @@
   color: var(--color-accent);
 }
 
+/*
+ * A panel's corners, border and shadow are the theme's: flat and square in Linen, floating in
+ * Sage, glowing at the edge in Midnight. The fallbacks are what every theme had before.
+ */
 .panel {
   background: var(--color-bg-raised);
-  border: 1px solid var(--color-border-faint);
-  border-radius: 14px;
+  border: 1px solid var(--portal-panel-border, var(--color-border-faint));
+  border-radius: var(--portal-radius, 14px);
+  box-shadow: var(--portal-shadow, none);
   overflow: hidden;
   /*
    * `.page` is a flex column, and a flex item will not shrink below its content unless it is
@@ -62,16 +68,17 @@
   align-items: center;
   justify-content: space-between;
   gap: 10px 16px;
-  padding: 17px 22px;
+  min-height: 58px;
+  padding: 12px 20px;
   border-bottom: 1px solid var(--color-border-faint);
 }
 
 .panelTitle {
-  font-size: 19px;
+  font-size: 17px;
 }
 
 .pad {
-  padding: 22px;
+  padding: 20px;
 }
 
 .two {
@@ -107,7 +114,8 @@
   position: sticky;
   top: 0;
   z-index: 1;
-  background: var(--color-bg-raised);
+  /* Opaque, or the rows show through the labels as they scroll under them. */
+  background: linear-gradient(var(--color-hover-wash), var(--color-hover-wash)), var(--color-bg-raised);
 }
 
 /*
@@ -126,8 +134,9 @@
 
 .table th {
   text-align: left;
-  padding: 11px 22px;
-  font-size: 10px;
+  padding: 10px 20px;
+  background: var(--color-hover-wash);
+  font-size: 10.5px;
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -137,9 +146,18 @@
 }
 
 .table td {
-  padding: 14px 22px;
+  padding: 11px 20px;
   border-bottom: 1px solid var(--color-border-faint);
   vertical-align: middle;
+  font-size: 14.5px;
+}
+
+.table tbody tr {
+  transition: background-color var(--motion-fast) ease;
+}
+
+.table tbody tr:hover {
+  background: var(--color-hover-wash);
 }
 
 .table tbody tr:last-child td {
@@ -212,8 +230,9 @@
   gap: 4px;
   padding: 18px 20px;
   background: var(--color-bg-raised);
-  border: 1px solid var(--color-border-faint);
-  border-radius: 12px;
+  border: 1px solid var(--portal-panel-border, var(--color-border-faint));
+  border-radius: var(--portal-radius, 12px);
+  box-shadow: var(--portal-shadow, none);
 }
 
 .statLabel {
@@ -251,7 +270,8 @@
   padding: 24px;
   background: var(--color-bg-raised);
   border: 1px solid color-mix(in srgb, var(--color-accent) 45%, transparent);
-  border-radius: 14px;
+  border-radius: var(--portal-radius, 14px);
+  box-shadow: var(--portal-shadow, none);
 }
 
 .featureBody {
@@ -272,7 +292,7 @@
   padding: 22px;
   background: var(--color-ink);
   color: var(--color-on-ink);
-  border-radius: 12px;
+  border-radius: calc(var(--portal-radius, 14px) - 2px);
 }
 
 .countValue {
@@ -292,7 +312,7 @@
 
 .note {
   padding: 13px 16px;
-  border-radius: 10px;
+  border-radius: var(--portal-radius, 10px);
   background: color-mix(in srgb, var(--color-accent) 12%, transparent);
   border: 1px solid color-mix(in srgb, var(--color-accent) 34%, transparent);
   font-size: 14px;
@@ -565,4 +585,138 @@
 
 .actionsRight {
   justify-content: flex-end;
+}
+
+/* A text box on a portal screen. It had no style at all and came out as the browser's own. */
+.input {
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--portal-button-radius, 8px);
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font: inherit;
+  font-size: 14.5px;
+}
+
+.input::placeholder {
+  color: var(--color-fg-faint);
+}
+
+.input:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 1px;
+  border-color: var(--color-focus);
+}
+
+/* A row of controls over a list: the search on the left, what it found on the right. */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--color-border-faint);
+}
+
+.search {
+  position: relative;
+  flex: 1 1 280px;
+  max-width: 420px;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 11px;
+  top: 50%;
+  translate: 0 -50%;
+  color: var(--color-fg-faint);
+  pointer-events: none;
+}
+
+.searchInput {
+  composes: input;
+  padding-left: 36px;
+}
+
+/* The search box's own clear button, which the browser draws, is in the wrong colours. */
+.searchInput::-webkit-search-cancel-button {
+  cursor: pointer;
+}
+
+/* A list that can be long: its own scroll, so the page around it stays put. */
+.boxed {
+  max-height: min(62vh, 640px);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.boxed thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: linear-gradient(var(--color-hover-wash), var(--color-hover-wash)), var(--color-bg-raised);
+}
+
+/* A button that is a sentence's next step rather than a control of its own. */
+.inlineButton {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-accent);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+/* An announcement's icon, in a small tile of the accent so the list has a left edge to read down. */
+.listIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  align-self: flex-start;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--color-accent) 13%, transparent);
+  color: var(--color-accent);
+}
+
+/* A few facts as label and value, one to a row. */
+.facts {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.facts > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 11px 20px;
+  border-bottom: 1px solid var(--color-border-faint);
+  font-size: 14px;
+}
+
+.facts > div:last-child {
+  border-bottom: 0;
+}
+
+.facts dt {
+  color: var(--color-fg-muted);
+}
+
+.facts dd {
+  margin: 0;
+  font-weight: 600;
+  text-align: right;
+}
+
+/* Two notes in a row are two things to read, not one long box. */
+.note + .note {
+  margin-top: 10px;
 }

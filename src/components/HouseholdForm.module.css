@@ -45,21 +45,24 @@
   font-weight: 600;
 }
 
+/* Sized for a desk, with the portal theme's corners: this form only ever opens in the portal. */
 .input,
 .select {
-  min-height: 46px;
+  min-height: 40px;
   padding: 0 12px;
-  border: 2px solid var(--line, rgba(0, 0, 0, 0.2));
-  border-radius: 10px;
-  background: transparent;
+  border: 1px solid var(--color-border, rgba(0, 0, 0, 0.2));
+  border-radius: var(--portal-button-radius, 8px);
+  background: var(--color-bg, transparent);
   color: inherit;
   font: inherit;
+  font-size: 15px;
 }
 
 .input:focus-visible,
 .select:focus-visible {
-  outline: 3px solid var(--gold, #c9a227);
+  outline: 2px solid var(--color-focus, #c9a227);
   outline-offset: 1px;
+  border-color: var(--color-focus, #c9a227);
 }
 
 .input[aria-invalid='true'] {
@@ -78,8 +81,8 @@
   flex-direction: column;
   gap: 12px;
   padding: 16px;
-  border: 2px solid var(--line, rgba(0, 0, 0, 0.14));
-  border-radius: 14px;
+  border: 1px solid var(--color-border-faint, rgba(0, 0, 0, 0.14));
+  border-radius: var(--portal-radius, 14px);
 }
 
 .personTop {

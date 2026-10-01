@@ -144,3 +144,12 @@
   left: 0;
   right: auto;
 }
+
+/* Opens upward: for a switcher near the foot of the screen. */
+.panelUp {
+  top: auto;
+  bottom: calc(100% + 10px);
+  /* From the foot of a short window a long list would run off the top; it scrolls instead. */
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+}

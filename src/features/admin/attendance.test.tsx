@@ -87,7 +87,9 @@ describe('recording how many came', () => {
     renderPage()
     const section = await panel()
     const table = await within(section).findByRole('table')
-    expect(within(table).getByText('ev-poila-2026')).toBeInTheDocument()
+    // By the event's title. It showed the database id, which means nothing to anybody reading.
+    expect(await within(table).findByText('Boishakhi programme')).toBeInTheDocument()
+    expect(within(table).queryByText('ev-poila-2026')).not.toBeInTheDocument()
   })
 
   it('is not offered to a member at all', async () => {

@@ -10,111 +10,182 @@
  */
 .shell {
   display: grid;
-  grid-template-columns: 250px minmax(0, 1fr);
+  grid-template-columns: 252px minmax(0, 1fr);
   min-height: 100vh;
-  background: var(--color-bg);
   color: var(--color-fg);
+  /* The theme's own ground: ruled lines, a weave, a dot grid — see the end of tokens.css. */
+  background-color: var(--color-bg);
+  background-image: var(--bg-texture-a, none), var(--bg-texture-b, none);
+  background-size: var(--bg-texture-a-size, auto), var(--bg-texture-b-size, auto);
+  background-attachment: fixed;
+  /*
+   * The portal's buttons: smaller, squarer, with a quieter outline. The public site's pills are
+   * sized for a thumb on a phone; in here they sat in every table row the height of the row
+   * itself, and a screen of them read as a form to fill in rather than a place to work. The
+   * corners are the theme's: square for Linen, pills for Sage.
+   */
+  --button-radius: var(--portal-button-radius, 8px);
+  --button-border: 1px;
+  --button-lift: 0;
+  --button-line-border: var(--color-border);
+  --button-sm-height: 36px;
+  --button-sm-pad: 14px;
+  --button-sm-font: 14px;
+  --button-md-height: 42px;
+  --button-md-pad: 20px;
+  --button-md-font: 15px;
 }
 
+/*
+ * The sidebar holds still while the page scrolls, so the way to the next screen and the person
+ * signed in are always where they were. Only the list of screens scrolls inside it, and only on
+ * a window too short to show it all.
+ */
 .side {
+  position: sticky;
+  top: 0;
   display: flex;
   flex-direction: column;
-  gap: 26px;
-  padding: 22px 16px;
-  background: var(--color-bg-raised);
-  border-right: 1px solid var(--color-border-faint);
+  gap: 18px;
+  height: 100vh;
+  height: 100dvh;
+  padding: 18px 12px 14px;
+  /*
+   * The sidebar's own colours, which a theme may set apart from the page's: Mist puts a dark
+   * sidebar beside a light page. Everything in here paints with these rather than the page's.
+   */
+  --side-fg: var(--portal-side-fg, var(--color-fg));
+  --side-muted: var(--portal-side-muted, var(--color-fg-muted));
+  --side-faint: var(--portal-side-faint, var(--color-fg-faint));
+  --side-border: var(--portal-side-border, var(--color-border-faint));
+  --side-wash: var(--portal-side-wash, var(--color-hover-wash));
+  --side-accent: var(--portal-side-accent, var(--color-accent));
+  --side-on-accent: var(--portal-side-on-accent, var(--color-on-accent));
+  background: var(--portal-side-bg, var(--color-bg-raised));
+  color: var(--side-fg);
+  border-right: 1px solid var(--side-border);
 }
 
 .brand {
   display: flex;
   align-items: center;
   gap: 10px;
-  min-height: 44px;
+  min-height: 40px;
   padding: 0 8px;
-  color: var(--color-fg);
+  color: var(--side-fg);
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: 19px;
+  font-size: 18px;
   letter-spacing: -0.02em;
 }
 
 .brand:hover {
-  color: var(--color-fg);
+  color: var(--side-fg);
 }
 
 .emblem {
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   border: 2px solid var(--color-accent);
   object-fit: cover;
   background: #fff;
 }
 
+.navs {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  margin: 0 -4px;
+  padding: 0 4px;
+}
+
 .group {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
 }
 
 .groupLabel {
-  padding: 0 12px 6px;
-  font-size: 10px;
+  padding: 0 10px 6px;
+  font-size: 10.5px;
   font-weight: 600;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--color-fg-faint);
+  color: var(--side-faint);
 }
 
 .link,
 .linkOn {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 11px;
-  min-height: 44px;
-  padding: 0 12px;
-  border-radius: 9px;
-  color: var(--color-fg);
-  font-weight: 600;
-  font-size: 15px;
+  gap: 10px;
+  min-height: 38px;
+  padding: 0 10px;
+  border-radius: 8px;
+  color: var(--side-muted);
+  font-weight: 500;
+  font-size: 14.5px;
+  transition:
+    background-color var(--motion-fast) ease,
+    color var(--motion-fast) ease;
 }
 
 .link:hover {
-  background: var(--color-hover-wash);
-  color: var(--color-fg);
+  background: var(--side-wash);
+  color: var(--side-fg);
 }
 
+/*
+ * Where you are: a tint and a bar, not a solid block of the accent. The block shouted louder
+ * than anything on the page beside it, and the page is the thing being worked on.
+ */
 .linkOn {
-  background: var(--color-accent);
-  color: var(--color-on-accent);
+  background: var(--portal-nav-on-bg, color-mix(in srgb, var(--color-accent) 13%, transparent));
+  color: var(--portal-nav-on-fg, var(--color-accent));
+  font-weight: 600;
+}
+
+.linkOn::before {
+  content: '';
+  position: absolute;
+  left: -12px;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--portal-nav-on-mark, var(--color-accent));
 }
 
 .linkOn:hover {
-  color: var(--color-on-accent);
+  color: var(--portal-nav-on-fg, var(--color-accent));
 }
 
 .count {
   margin-left: auto;
-  min-width: 22px;
-  height: 22px;
-  padding: 0 7px;
-  border-radius: 11px;
-  background: var(--color-photo-d);
-  color: var(--color-fg);
-  font-size: 12px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: var(--side-accent);
+  color: var(--side-on-accent);
+  font-size: 11.5px;
+  font-weight: 600;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-}
-
-.linkOn .count {
-  background: var(--color-ink);
-  color: var(--color-on-ink);
+  font-variant-numeric: tabular-nums;
 }
 
 .externalMark {
   margin-left: auto;
-  color: var(--color-fg-faint);
+  color: var(--side-faint);
   flex-shrink: 0;
 }
 
@@ -127,71 +198,133 @@
   white-space: nowrap;
 }
 
-/* Under the brand, where a list that opens downward has the whole page to open into. */
-.themeRow {
-  padding: 0 4px;
-}
-
 .who {
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  padding: 14px 12px 4px;
-  border-top: 1px solid var(--color-border-faint);
+  gap: 8px;
+  padding: 12px 4px 0;
+  border-top: 1px solid var(--side-border);
+}
+
+.whoCard {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 4px;
+}
+
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--side-accent);
+  color: var(--side-on-accent);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.whoText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
 }
 
 .whoName {
   font-weight: 600;
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .whoDetail {
-  font-size: 13px;
-  color: var(--color-fg-muted);
+  font-size: 12.5px;
+  color: var(--side-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.whoEmail {
+  padding: 0 4px;
+  font-size: 12px;
+  color: var(--side-faint);
   overflow-wrap: anywhere;
 }
 
 .rolePill {
-  align-self: flex-start;
-  margin-top: 5px;
-  padding: 3px 9px;
-  border-radius: 11px;
+  flex-shrink: 0;
+  padding: 2px 7px;
+  border-radius: 6px;
   font-size: 10px;
   font-weight: 600;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  background: var(--color-hover-wash);
-  color: var(--color-fg-muted);
+  background: var(--side-wash);
+  color: var(--side-muted);
 }
 
 .rolePillAdmin {
   composes: rolePill;
-  background: color-mix(in srgb, var(--color-accent) 22%, transparent);
-  /* The accent reads on every theme's raised surface: marigold on the dark ones, red on the
-     pale ones. On-ink would not — it is chosen against ink, which this no longer sits on. */
-  color: var(--color-accent);
+  background: color-mix(in srgb, var(--side-accent) 16%, transparent);
+  /* The sidebar's accent, which is the page's except where the sidebar is dark on a light page. */
+  color: var(--side-accent);
+}
+
+.whoActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* The theme switcher's own trigger is sized for the public header; in here it is one of a pair. */
+.whoActions [aria-haspopup='true'] {
+  color: var(--side-fg);
+  border-color: var(--side-border);
+  min-height: 34px;
+  padding: 0 10px;
+  border-width: 1px;
+  border-radius: 8px;
+  font-size: 13px;
+  gap: 6px;
+}
+
+.whoActions [aria-haspopup='true'] svg {
+  width: 16px;
+  height: 16px;
 }
 
 .signOut {
   display: inline-flex;
   align-items: center;
-  min-height: 44px;
-  padding: 0 12px;
-  border: 0;
+  gap: 6px;
+  min-height: 34px;
+  margin-left: auto;
+  padding: 0 10px;
+  border: 1px solid var(--side-border);
+  border-radius: 8px;
   background: transparent;
-  color: var(--color-fg-muted);
+  color: var(--side-muted);
   font-weight: 600;
-  font-size: 14px;
-  text-align: left;
+  font-size: 13px;
   cursor: pointer;
 }
 
 .signOut:hover {
-  color: var(--color-fg);
+  background: var(--side-wash);
+  color: var(--side-fg);
 }
 
 .main {
   display: flex;
   flex-direction: column;
+  min-width: 0;
   outline: none;
 }
 
@@ -200,10 +333,10 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 10px 16px;
-  padding: 12px 34px;
-  background: color-mix(in srgb, var(--color-accent) 18%, transparent);
-  border-bottom: 1px solid color-mix(in srgb, var(--color-accent) 40%, transparent);
-  font-size: 14px;
+  padding: 9px 36px;
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-accent) 30%, transparent);
+  font-size: 13.5px;
 }
 
 .previewStrong {
@@ -211,9 +344,13 @@
   color: var(--color-accent);
 }
 
+/* A ceiling on the width, so a big monitor gets margins rather than a table forty inches long. */
 .content {
   flex: 1 0 auto;
-  padding: 28px 34px 56px;
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 28px 36px 56px;
 }
 
 .skip {
@@ -237,9 +374,16 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
+  /* On a phone the sidebar is the top of the page, and scrolls away with it. */
   .side {
+    position: static;
+    height: auto;
     border-right: 0;
     border-bottom: 1px solid var(--color-border-faint);
+  }
+
+  .navs {
+    overflow: visible;
   }
 
   .group {
@@ -252,8 +396,18 @@
     padding-bottom: 2px;
   }
 
-  .who {
-    margin-top: 0;
+  .linkOn::before {
+    display: none;
+  }
+
+  /* The switcher stretches to the full width on a phone; here it shares the row with Sign out. */
+  .whoActions {
+    align-items: flex-start;
+  }
+
+  .whoActions > :first-child {
+    flex: 1 1 auto;
+    min-width: 0;
   }
 
   .content,
@@ -274,11 +428,11 @@
 }
 
 .walkthroughToggle {
-  min-height: 44px;
+  min-height: 32px;
   display: flex;
   align-items: center;
-  padding: 0 12px;
-  color: var(--color-fg-muted);
+  padding: 0 4px;
+  color: var(--side-muted);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -300,29 +454,44 @@
 }
 
 .walkthroughToggle:hover {
-  color: var(--color-fg);
+  color: var(--side-fg);
 }
 
 .walkthroughAccount {
-  composes: signOut;
+  display: flex;
+  width: 100%;
+  min-height: 32px;
+  align-items: center;
+  padding: 0 4px 0 20px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--side-muted);
   font-size: 13px;
   font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+}
+
+.walkthroughAccount:hover {
+  background: var(--side-wash);
+  color: var(--side-fg);
 }
 
 .walkthroughNote {
-  padding: 0 12px 6px;
+  padding: 0 4px 6px 20px;
   margin: 0;
-  color: var(--color-fg-faint);
+  color: var(--side-faint);
   font-size: 12px;
   line-height: 1.5;
 }
 
 .leavePreview {
   margin-left: auto;
-  min-height: 36px;
-  padding: 0 14px;
+  min-height: 32px;
+  padding: 0 12px;
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-pill);
+  border-radius: 8px;
   background: transparent;
   color: var(--color-fg);
   font-weight: 600;

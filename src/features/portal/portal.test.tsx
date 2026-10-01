@@ -191,12 +191,31 @@ describe('member pages', () => {
     expect(await screen.findByRole('heading', { name: 'Active' })).toBeInTheDocument()
   })
 
+  it('puts the household beside the announcements, with a way to its page and to the committee', async () => {
+    renderAt('/portal', member)
+    const household = (await screen.findByRole('heading', { level: 2, name: 'The Sens' })).closest('section')!
+    expect(within(household).getByText('Who is in it')).toBeInTheDocument()
+    expect(within(household).getByText('Rina Sen')).toBeInTheDocument()
+    expect(within(household).getByRole('link', { name: 'View' })).toHaveAttribute('href', '/portal/household')
+    const help = screen.getByRole('heading', { name: 'Something not right?' }).closest('section')!
+    expect(within(help).getByRole('link', { name: 'Message the committee' })).toHaveAttribute('href', '/contact')
+  })
+
+  it('shows the signed-in person with their initials, and signs out from the sidebar', async () => {
+    renderAt('/portal', member)
+    const sidebar = await screen.findByRole('complementary')
+    expect(within(sidebar).getByText('RS')).toBeInTheDocument()
+    expect(within(sidebar).getByRole('button', { name: 'Sign out' })).toBeInTheDocument()
+    expect(within(sidebar).getByRole('button', { name: /^Theme/ })).toBeInTheDocument()
+  })
+
   it('shows the household and its people', async () => {
     renderAt('/portal/household', member)
     expect(await screen.findByRole('heading', { level: 1, name: 'My household' })).toBeInTheDocument()
     expect(screen.getByText('Mira Sen')).toBeInTheDocument()
     expect(screen.getByText('Child, 7')).toBeInTheDocument()
-    expect(screen.getByText('rina.sen@gmail.com')).toBeInTheDocument()
+    // In the page, not just the sidebar's note of who is signed in.
+    expect(within(screen.getByRole('main')).getByText('rina.sen@gmail.com')).toBeInTheDocument()
   })
 
 
@@ -225,6 +244,29 @@ describe('committee pages', () => {
     expect(screen.getByText(/6 have signed in, 2 admins/)).toBeInTheDocument()
   })
 
+  it('finds a member by any word of them, in a list that scrolls on its own', async () => {
+    renderAt('/admin/people', admin)
+    const members = (await screen.findByRole('heading', { name: 'Members' })).closest('section')!
+    const list = await within(members).findByRole('region', { name: 'Members list' })
+    const rowsBefore = within(list).getAllByRole('row').length
+    expect(rowsBefore).toBeGreaterThan(3)
+
+    const search = within(members).getByRole('searchbox', { name: 'Search members' })
+    await userEvent.type(search, 'ruma das')
+    expect(within(members).getByRole('status')).toHaveTextContent('1 household matches')
+    expect(within(list).getByText('The Dases')).toBeInTheDocument()
+    expect(within(list).queryByText('The Banerjees')).not.toBeInTheDocument()
+
+    await userEvent.clear(search)
+    await userEvent.type(search, 'nobody-called-this')
+    expect(within(members).getByText(/Nobody matches/)).toBeInTheDocument()
+    await userEvent.click(within(members).getByRole('button', { name: 'Clear the search' }))
+    expect(search).toHaveValue('')
+    expect(within(within(members).getByRole('region', { name: 'Members list' })).getAllByRole('row')).toHaveLength(
+      rowsBefore,
+    )
+  })
+
   it('shows who tried to sign in and every household with its role', async () => {
     renderAt('/admin/people', admin)
     const attempts = (await screen.findByRole('heading', { name: 'Tried to sign in, not on the list' })).closest('section')!
@@ -239,40 +281,37 @@ describe('committee pages', () => {
     renderAt('/admin/events', admin)
     expect(await screen.findByRole('heading', { level: 1, name: 'Events' })).toBeInTheDocument()
     // No household is named anywhere on this page any more, and the page says why.
-    expect(screen.getByText(/how many came/)).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'How many came' })).toBeInTheDocument()
+    expect(screen.getByText(/keeps the count and nothing about who/)).toBeInTheDocument()
     expect(screen.queryByText('The Roys')).not.toBeInTheDocument()
     expect(screen.queryByText('Wheelchair access needed')).not.toBeInTheDocument()
   })
 
-  it('links the separate event planner once on the page, and says which does what', async () => {
+  it('links the separate event planner from the sidebar only, and says the two do not share evenings', async () => {
     renderAt('/admin/events', admin)
     const sidebar = await screen.findByRole('navigation', { name: 'Other tools' })
     const link = within(sidebar).getByRole('link', { name: /Event planning/ })
     expect(link).toHaveAttribute('href', 'https://13parbon-event-management.vercel.app/')
     expect(link).toHaveAttribute('target', '_blank')
     expect(link).toHaveAttribute('rel', 'noreferrer')
-    const panel = screen.getByRole('heading', { level: 2, name: 'Event planning' }).closest('section')!
-    // It answers "which one do I use?", which is the only reason it is here and not just in
-    // the sidebar — the link used to be on this page four times over.
-    expect(within(panel).getByText('Here')).toBeInTheDocument()
-    expect(within(panel).getByText('In the planner')).toBeInTheDocument()
-    expect(within(panel).getByText(/who is bringing the urn/)).toBeInTheDocument()
+    // The page had a panel of its own with an "Open the planner" button, beside the same link in
+    // the sidebar. The sidebar is enough; the one fact worth keeping is in the page's heading.
+    expect(screen.queryByRole('heading', { name: 'Event planning' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Open the planner/ })).not.toBeInTheDocument()
+    expect(screen.getByText(/does not appear in the other/)).toBeInTheDocument()
   })
 
-  it('does not offer the planner four times over on one screen', async () => {
+  it('does not offer the planner more than once on one screen', async () => {
     renderAt('/admin/events', admin)
     await screen.findAllByRole('table')
 
-    // It was in the header, in a panel, beside "New event", and in the sidebar. Beside
-    // "New event" was the worst of them: two buttons together read as two ways to do one job.
+    // It was in the header, in a panel, beside "New event", and in the sidebar.
     const planner = screen
       .getAllByRole('link')
       .filter((a) => a.getAttribute('href') === 'https://13parbon-event-management.vercel.app/')
-    expect(planner).toHaveLength(2)
+    expect(planner).toHaveLength(1)
 
-    // And in particular, not beside "New event" any more.
     const table = screen.getByRole('heading', { name: 'All events' }).closest('section')!
-    expect(within(table).queryByRole('link', { name: /planner/i })).not.toBeInTheDocument()
     expect(within(table).getByRole('button', { name: 'New event' })).toBeInTheDocument()
   })
 
@@ -650,7 +689,7 @@ describe('walking through the sample data', () => {
 
     // Back to their own, with nothing to say about it.
     await waitFor(() => expect(screen.queryByRole('status')).not.toBeInTheDocument())
-    expect(screen.getByText('Debashis Chatterjee')).toBeInTheDocument()
+    expect(within(screen.getByRole('complementary')).getByText('Debashis Chatterjee')).toBeInTheDocument()
   })
 })
 

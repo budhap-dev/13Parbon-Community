@@ -55,7 +55,7 @@ describe('themes', () => {
   })
 
   it('offers each scope only its own looks', () => {
-    expect(themesFor('portal').map((t) => t.id)).toEqual(['paper', 'linen', 'slate'])
+    expect(themesFor('portal').map((t) => t.id)).toEqual(['paper', 'linen', 'sage', 'mist', 'slate', 'midnight', 'marigold', 'lagoon', 'peacock'])
     expect(themesFor('public').map((t) => t.id)).toContain('festival')
     expect(themesFor('public').map((t) => t.id)).not.toContain('slate')
   })

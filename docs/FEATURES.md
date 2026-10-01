@@ -262,6 +262,9 @@ headcount and what share of households came.
 The whole invitation model. Add a household, record the Google address that will sign them in,
 set roles, mark membership lapsed, remove a household.
 
+- **Search** over the members list: every word typed must match the household's name, the main
+  contact, either address, the phone, or anybody in the household ("das ruma" finds Ruma in
+  the Dases). The list has a fixed height with its own scroll and the column labels pinned.
 - **"Tried to sign in, not on the list"** — Google accounts that knocked. Resolve one when
   you have added them or decided not to; resolved ones stop counting against the badge.
 - **Save the list** downloads a CSV for the caterer or the door. Deliberately thin: no
@@ -277,9 +280,10 @@ animation, the Bengali theme, the running order, booking and performer links, vo
 status and visibility — with a **live preview of the banner drawn beside the form** as it is
 typed. Also records attendance (a headcount, typed in) and files finished evenings as past.
 
-A panel explains which tool to use: *here* is what the public sees; *the planner* is getting it
-to happen. Nothing syncs between them — the title, date and venue are worth keeping the same in
-both by hand.
+The planner is linked from the sidebar's *Other tools* on every committee screen, not from
+this page; a line under the heading says that *here* is what the public sees and the planner
+holds the logistics. Nothing syncs between them — the title, date and venue are worth keeping
+the same in both by hand.
 
 ### Content (`/admin/content`)
 
@@ -508,19 +512,40 @@ offline, for bulk back-catalogue work. See [PHOTOS.md](PHOTOS.md).
 
 ## 13. Themes and look
 
-Five **public** themes tied to the community's year — Festival, Boishakhi, Saraswati Puja,
-Holi, Mahalaya — each a full set of CSS custom properties in
-[tokens.css](../src/app/theme/tokens.css), a drawn SVG motif behind the hero, and an optional
-photograph. The header's picker stamps `data-theme` on the root and remembers the choice.
+Eight **public** themes tied to the community's year — Festival, Boishakhi, Saraswati Puja,
+Holi, Mahalaya, Kojagori (Lakshmi Puja), Deepavali (Kali Puja) and Borodin (Christmas) — each
+a full set of CSS custom properties in [tokens.css](../src/app/theme/tokens.css), a drawn SVG
+motif behind the hero, and an optional photograph. The header's picker stamps `data-theme` on
+the root and remembers the choice.
+
+A theme is more than its colours. The end of `tokens.css` gives each one a character: a faint
+repeating texture under the page (`--bg-texture-a`/`-b`: a gamchha check for Boishakhi, stars
+for Mahalaya, snow for Borodin), its own corners (`--radius-card/panel/tile`) and its own button
+shape (`--button-radius`, a pill when unset).
 
 Which one a first visit opens in is the committee's (`defaultTheme`, under Content). The
 browser remembers the committee's last answer under its own key, and the inline script in
 `index.html` reads it before the first paint, so a returning visitor does not see Festival red
 flash to Holi magenta while the settings load.
 
-Three **portal** themes — Paper, Linen, Slate — deliberately quiet. Nobody chooses a festival
-palette to spend an hour on a spreadsheet, and the committee's screens used to follow the
-public ones, which meant doing the books against a magenta Holi background.
+Nine **portal** themes. Six — Paper, Linen, Sage, Mist, Slate, Midnight — are deliberately quiet. Nobody
+chooses a festival palette to spend an hour on a spreadsheet, and the committee's screens used
+to follow the public ones, which meant doing the books against a magenta Holi background. Each
+is a different kind of quiet rather than the same one recoloured: its own ground (ruled lines,
+a weave, a dot grid, a graph grid, stars), panel corners and shadow (`--portal-radius`,
+`--portal-shadow`), button corners, sidebar (`--portal-side-*`; Mist has a dark sidebar beside
+a light page), highlight for the current screen (`--portal-nav-on-*`), and in Linen, Mist and
+Slate its own heading face.
+
+Three more — Marigold, Lagoon, Peacock — are the colourful ones, for whoever would rather the
+back office were not quiet: a gradient sidebar (orange into pink, teal into blue, violet into
+magenta), a coloured glow behind the page and a strong accent. The colour stays in the frame;
+the cards the work is done on are as plain as in the quiet themes.
+
+The portal's buttons and fields are smaller than the public site's, through variables the
+`Button` reads (`--button-sm-height` and friends) rather than a second set of buttons. The
+sidebar stays put while the page scrolls, with the person signed in, the theme picker and Sign
+out pinned to its foot.
 
 Styling is CSS Modules per component, always through tokens. Shared components live in
 [src/components/](../src/components/): `Button`, `Container`, `Carousel`, `Lightbox`,

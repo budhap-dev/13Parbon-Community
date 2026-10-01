@@ -2,6 +2,7 @@ import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { Button } from '@/components/Button'
 import { Icon } from '@/components/Icon'
 import { daysUntil, describeCountdown, formatDateWithYear, formatLongDate, formatTime } from '@/domain/dates'
+import { describeSize } from '@/domain/household'
 import { useAnnouncements, useHousehold, useNextEvent } from '@/lib/api'
 import { useSignedIn } from '@/lib/auth/session'
 import { useNow } from '@/lib/clock'
@@ -52,7 +53,39 @@ export function DashboardPage() {
         </section>
       ) : null}
 
+      {/*
+        * Announcements are the reading, so they take the wide column; the household's own facts
+        * sit beside them. Before, both stacked down the left two-thirds and the right third of
+        * every screen was empty.
+        */}
       <div className={styles.two}>
+        <section className={styles.panel} aria-labelledby="announce-title">
+          <div className={styles.panelHead}>
+            <h2 id="announce-title" className={styles.panelTitle}>
+              Announcements
+            </h2>
+          </div>
+          {announcements && announcements.length > 0 ? (
+            <div className={styles.list}>
+              {announcements.map((a) => (
+                <div key={a.id} className={styles.listItem}>
+                  <span className={styles.listIcon}>
+                    <Icon name="megaphone" size={17} />
+                  </span>
+                  <div className={styles.listBody}>
+                    <strong>{a.title}</strong>
+                    <span className={`${styles.muted} ${styles.tiny}`}>{a.body}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className={styles.pad}>
+              <p className={styles.empty}>Nothing pinned right now.</p>
+            </div>
+          )}
+        </section>
+
         <div className={styles.stack}>
           {household ? (
             <section className={styles.panel} aria-labelledby="membership-title">
@@ -83,27 +116,48 @@ export function DashboardPage() {
             </section>
           ) : null}
 
-          <section className={styles.panel} aria-labelledby="announce-title">
-            <div className={styles.panelHead}>
-              <h2 id="announce-title" className={styles.panelTitle}>
-                Announcements
-              </h2>
-            </div>
-            {announcements && announcements.length > 0 ? (
-              <div className={styles.list}>
-                {announcements.map((a) => (
-                  <div key={a.id} className={styles.listItem}>
-                    <Icon name="megaphone" size={18} />
-                    <div className={styles.listBody}>
-                      <strong>{a.title}</strong>
-                      <span className={`${styles.muted} ${styles.tiny}`}>{a.body}</span>
-                    </div>
-                  </div>
-                ))}
+          {household ? (
+            <section className={styles.panel} aria-labelledby="household-title">
+              <div className={styles.panelHead}>
+                <h2 id="household-title" className={styles.panelTitle}>
+                  {household.name}
+                </h2>
+                <Button to="/portal/household" variant="line" size="sm">
+                  View
+                </Button>
               </div>
-            ) : (
-              <p className={styles.empty}>Nothing pinned right now.</p>
-            )}
+              <dl className={styles.facts}>
+                <div>
+                  <dt>Who is in it</dt>
+                  <dd>{describeSize(household)}</dd>
+                </div>
+                <div>
+                  <dt>Main contact</dt>
+                  <dd>{household.contactName}</dd>
+                </div>
+                <div>
+                  <dt>Member since</dt>
+                  <dd>{formatDateWithYear(household.memberSince)}</dd>
+                </div>
+              </dl>
+            </section>
+          ) : null}
+
+          <section className={styles.panel} aria-labelledby="help-title">
+            <div className={styles.pad}>
+              <h2 id="help-title" className={styles.panelTitle}>
+                Something not right?
+              </h2>
+              <p className={`${styles.muted} ${styles.tiny}`} style={{ marginTop: 6 }}>
+                A name spelt wrong, a renewal you have paid, a photograph you would rather was not up — the
+                committee would like to know.
+              </p>
+              <div className={styles.actions} style={{ marginTop: 12 }}>
+                <Button to="/contact" variant="line" size="sm">
+                  Message the committee
+                </Button>
+              </div>
+            </div>
           </section>
         </div>
       </div>

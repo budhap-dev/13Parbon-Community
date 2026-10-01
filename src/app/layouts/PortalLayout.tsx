@@ -16,6 +16,14 @@ import styles from './PortalLayout.module.css'
 
 type Item = { label: string; to: string; icon: IconName; end?: boolean; count?: number }
 
+/** Two letters for the avatar: first and last word of the name, or the first two of one word. */
+function initialsOf(name: string): string {
+  const words = name.trim().split(/\s+/).filter(Boolean)
+  if (words.length === 0) return '?'
+  const letters = words.length === 1 ? words[0].slice(0, 2) : words[0][0] + words[words.length - 1][0]
+  return letters.toUpperCase()
+}
+
 const memberNav: Item[] = [
   { label: 'Dashboard', to: '/portal', icon: 'home', end: true },
   { label: 'My household', to: '/portal/household', icon: 'users' },
@@ -75,7 +83,7 @@ export function PortalLayout() {
           end={item.end}
           className={({ isActive }) => (isActive ? styles.linkOn : styles.link)}
         >
-          <Icon name={item.icon} size={19} />
+          <Icon name={item.icon} size={18} />
           {item.label}
           {item.count ? <span className={styles.count}>{item.count}</span> : null}
         </NavLink>
@@ -93,15 +101,7 @@ export function PortalLayout() {
           <img src={site.emblem} alt="" className={styles.emblem} width={34} height={34} />
           <span>{site.wordmark}</span>
         </Link>
-        {/*
-          * The same switcher as the public header, because the portal now paints with the same
-          * tokens — it used to sit on ink whatever the theme, so there was nothing here to switch.
-          * Under the brand rather than at the bottom: the list is wider than this sidebar and
-          * opens downward, and up here it has the whole page to open into on every width.
-          */}
-        <div className={styles.themeRow}>
-          <ThemeSwitcher align="start" />
-        </div>
+        <div className={styles.navs}>
         <nav aria-label="Your household">{renderGroup('Your household', memberNav)}</nav>
         {onTheCommittee ? (
           <>
@@ -120,9 +120,9 @@ export function PortalLayout() {
                     className={styles.link}
                     title={tool.description}
                   >
-                    <Icon name="link" size={19} />
+                    <Icon name="link" size={18} />
                     {tool.name}
-                    <Icon name="external" size={15} className={styles.externalMark} />
+                    <Icon name="external" size={14} className={styles.externalMark} />
                     <span className={styles.srOnly}>opens in a new tab</span>
                   </a>
                 ))}
@@ -131,14 +131,21 @@ export function PortalLayout() {
             ) : null}
           </>
         ) : null}
+        </div>
         <div className={styles.who}>
-          <span className={styles.whoName}>{who.name}</span>
-          <span className={styles.whoDetail}>
-            {who.householdName} · {who.email}
-          </span>
-          <span className={who.role === 'admin' ? styles.rolePillAdmin : styles.rolePill}>
-            {who.role === 'admin' ? 'Admin' : 'Member'}
-          </span>
+          <div className={styles.whoCard}>
+            <span className={styles.avatar} aria-hidden="true">
+              {initialsOf(who.name)}
+            </span>
+            <span className={styles.whoText}>
+              <span className={styles.whoName}>{who.name}</span>
+              <span className={styles.whoDetail}>{who.householdName}</span>
+            </span>
+            <span className={who.role === 'admin' ? styles.rolePillAdmin : styles.rolePill}>
+              {who.role === 'admin' ? 'Admin' : 'Member'}
+            </span>
+          </div>
+          <span className={styles.whoEmail}>{who.email}</span>
           {/*
             * The walkthrough, and only for the committee.
             *
@@ -165,13 +172,17 @@ export function PortalLayout() {
               ))}
             </details>
           ) : null}
-          <button
-            type="button"
-            className={styles.signOut}
-            onClick={signOut}
-          >
-            Sign out
-          </button>
+          {/*
+            * Down here with the person rather than under the brand: it is a preference of theirs,
+            * like signing out, and the list opens upwards so it has the sidebar to open into.
+            */}
+          <div className={styles.whoActions}>
+            <ThemeSwitcher align="start" direction="up" />
+            <button type="button" className={styles.signOut} onClick={signOut}>
+              <Icon name="logout" size={17} />
+              Sign out
+            </button>
+          </div>
         </div>
       </aside>
       <main id="portal-main" ref={mainRef} tabIndex={-1} className={styles.main}>

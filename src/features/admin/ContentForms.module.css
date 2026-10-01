@@ -21,18 +21,23 @@
   font-weight: 600;
 }
 
+/*
+ * Fields sized for a desk rather than a thumb, with the theme's corners. A field is filled with
+ * the page's ground so it reads as a hole in the card it sits on, which is what a field is.
+ */
 .input,
 .textarea {
-  padding: 12px;
-  border: 2px solid var(--line, rgba(0, 0, 0, 0.2));
-  border-radius: 10px;
-  background: transparent;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border, rgba(0, 0, 0, 0.2));
+  border-radius: var(--portal-button-radius, 8px);
+  background: var(--color-bg, transparent);
   color: inherit;
   font: inherit;
+  font-size: 15px;
 }
 
 .input {
-  min-height: 46px;
+  min-height: 40px;
   padding: 0 12px;
 }
 
@@ -54,8 +59,9 @@
 
 .input:focus-visible,
 .textarea:focus-visible {
-  outline: 3px solid var(--gold, #c9a227);
+  outline: 2px solid var(--color-focus, #c9a227);
   outline-offset: 1px;
+  border-color: var(--color-focus, #c9a227);
 }
 
 .input[aria-invalid='true'],

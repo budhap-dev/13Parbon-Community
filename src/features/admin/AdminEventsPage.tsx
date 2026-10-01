@@ -2,7 +2,6 @@ import { useSettings } from '@/app/SettingsContext'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { useScrollToTopOn } from '@/app/useScrollToTopOn'
 import { Button } from '@/components/Button'
-import { Icon } from '@/components/Icon'
 import { formatDateWithYear, formatLongDate, formatTime } from '@/domain/dates'
 import {
   useAllEvents,
@@ -25,14 +24,7 @@ import styles from '@/features/portal/Portal.module.css'
 
 export function AdminEventsPage() {
   useDocumentTitle('Events')
-  /*
-   * The first of the committee's other tools, which is the planner.
-   *
-   * Only the first, because the panel below is about one question — which of the two do I use
-   * for an evening? — and that is a question about the planner, not about whatever else the
-   * committee has since added to the list. The sidebar links all of them.
-   */
-  const planner = useSettings().tools.slice(0, 1)
+  const hasPlanner = useSettings().tools.length > 0
   const { data: event } = useNextEvent()
   const { data: upcoming } = useUpcomingEvents(20)
   const { data: past } = usePastEvents(6)
@@ -41,6 +33,7 @@ export function AdminEventsPage() {
   const record = useRecordAttendance()
   const eventsToCount = [...(past ?? []), ...(upcoming ?? [])]
   const { data: allEvents } = useAllEvents()
+  const titles = new Map([...eventsToCount, ...(allEvents ?? [])].map((e) => [e.id, e.title]))
   const saveEvent = useSaveEvent()
   const createEvent = useCreateEvent()
   const archive = useArchiveEvent()
@@ -105,49 +98,19 @@ export function AdminEventsPage() {
               {formatLongDate(event.startsAt)}, {formatTime(event.startsAt)} · {event.venue}
             </p>
           ) : null}
+          {/*
+            * The planner used to have a panel of its own here, with a button to open it. The
+            * sidebar already links it on every committee screen, so all that is left is the one
+            * thing worth knowing: the two do not share their evenings.
+            */}
+          {hasPlanner ? (
+            <p className={`${styles.muted} ${styles.tiny}`} style={{ marginTop: 6 }}>
+              This is what the public sees. Tasks and logistics live in the planner, under Other tools — an
+              evening added in one does not appear in the other.
+            </p>
+          ) : null}
         </div>
-
       </div>
-
-      {planner.map((tool) => (
-        <section key={tool.href} className={styles.panel} aria-labelledby="planning-title">
-          <div className={styles.panelHead}>
-            <h2 id="planning-title" className={styles.panelTitle}>
-              {tool.name}
-            </h2>
-            <Button href={tool.href} variant="line" size="sm">
-              Open the planner
-              <Icon name="external" size={15} />
-            </Button>
-          </div>
-          <div className={styles.pad}>
-            <p className={styles.muted} style={{ maxWidth: '62ch' }}>
-              {tool.description} It is a separate app with its own sign-in, and it opens in a new tab.
-            </p>
-            {/* The question this answers is "which one do I use?", which is the only reason the
-                panel is here rather than just the link in the sidebar. */}
-            <dl className={styles.grid2} style={{ marginTop: 14, maxWidth: '62ch' }}>
-              <div className={styles.field}>
-                <dt className={styles.label}>Here</dt>
-                <dd className={`${styles.value} ${styles.tiny}`} style={{ margin: 0 }}>
-                  What the public sees. Add an evening, write what it is, choose the cover, put the
-                  booking link on it — and afterwards, how many came.
-                </dd>
-              </div>
-              <div className={styles.field}>
-                <dt className={styles.label}>In the planner</dt>
-                <dd className={`${styles.value} ${styles.tiny}`} style={{ margin: 0 }}>
-                  Getting it to happen. Tasks, who is doing what, deadlines, who is bringing the urn.
-                </dd>
-              </div>
-            </dl>
-            <p className={`${styles.muted} ${styles.tiny}`} style={{ marginTop: 12, maxWidth: '62ch' }}>
-              An evening added here does not appear in the planner, and one planned there does not
-              appear here. The title, the date and the venue are worth keeping the same in both.
-            </p>
-          </div>
-        </section>
-      ))}
 
       <section className={styles.panel} aria-labelledby="all-events-title">
         <div className={styles.panelHead}>
@@ -166,6 +129,9 @@ export function AdminEventsPage() {
                 <th>When</th>
                 <th>Registration</th>
                 <th>Status</th>
+                <th>
+                  <span className="sr-only">Actions</span>
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -251,7 +217,8 @@ export function AdminEventsPage() {
                 {attendance.map((year) => (
                   <tr key={year.eventId}>
                     <td>
-                      <strong>{year.eventId}</strong>
+                      {/* The title, where we know it: the id is a database key, not a name. */}
+                      <strong>{titles.get(year.eventId) ?? year.eventId}</strong>
                     </td>
                     <td className={styles.muted}>{formatDateWithYear(year.heldOn)}</td>
                     <td className={`${styles.num} ${styles.muted}`}>{year.households}</td>

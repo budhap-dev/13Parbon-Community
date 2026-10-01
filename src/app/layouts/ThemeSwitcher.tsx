@@ -10,8 +10,13 @@ import styles from './ThemeSwitcher.module.css'
  * `align` says which edge the list hangs from. The header puts the switcher at its right edge,
  * so the list hangs right and opens leftwards over the page; the portal's sidebar is narrower
  * than the list, so from there it has to hang left and open over the content instead.
+ * `direction` is for a switcher near the foot of the screen, like the one at the bottom of
+ * the portal's sidebar, where opening downward would put the list off the page.
  */
-export function ThemeSwitcher({ align = 'end' }: { align?: 'end' | 'start' } = {}) {
+export function ThemeSwitcher({
+  align = 'end',
+  direction = 'down',
+}: { align?: 'end' | 'start'; direction?: 'down' | 'up' } = {}) {
   // The list comes from the context, so this draws the festivals on the public site and the
   // committee's own quiet set inside the portal, without knowing which is which.
   const { theme, setTheme, options: themes } = useTheme()
@@ -62,7 +67,9 @@ export function ThemeSwitcher({ align = 'end' }: { align?: 'end' | 'start' } = {
 
       <div
         id={panelId}
-        className={align === 'start' ? `${styles.panel} ${styles.panelStart}` : styles.panel}
+        className={[styles.panel, align === 'start' && styles.panelStart, direction === 'up' && styles.panelUp]
+          .filter(Boolean)
+          .join(' ')}
         hidden={!open}
         role="radiogroup"
         aria-label="Theme"

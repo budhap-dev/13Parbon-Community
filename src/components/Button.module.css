@@ -3,8 +3,13 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  border: 2px solid transparent;
-  border-radius: var(--radius-pill);
+  /*
+   * Sizes and shape come through variables so a part of the site can quieten them without a
+   * second set of buttons. The portal does: pills the size of a thumb are right for a phone on
+   * the public pages, and wrong in a table of forty households with an Edit on every row.
+   */
+  border: var(--button-border, 2px) solid transparent;
+  border-radius: var(--button-radius, var(--radius-pill));
   font-family: var(--font-body);
   font-weight: 600;
   white-space: nowrap;
@@ -16,7 +21,7 @@
 }
 
 .button:hover {
-  transform: translateY(-1px);
+  transform: translateY(var(--button-lift, -1px));
 }
 
 /*
@@ -34,15 +39,15 @@
 }
 
 .md {
-  min-height: 56px;
-  padding: 0 30px;
-  font-size: 19px;
+  min-height: var(--button-md-height, 56px);
+  padding: 0 var(--button-md-pad, 30px);
+  font-size: var(--button-md-font, 19px);
 }
 
 .sm {
-  min-height: 46px;
-  padding: 0 22px;
-  font-size: 17px;
+  min-height: var(--button-sm-height, 46px);
+  padding: 0 var(--button-sm-pad, 22px);
+  font-size: var(--button-sm-font, 17px);
 }
 
 .gold {
@@ -65,7 +70,7 @@
 
 .line {
   background: transparent;
-  border-color: var(--color-fg);
+  border-color: var(--button-line-border, var(--color-fg));
   color: var(--color-fg);
 }
 .line:hover {
