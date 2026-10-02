@@ -36,6 +36,13 @@ export type ThemeMeta = {
   /** Background and accent, for swatches in the picker. */
   swatch: [background: string, accent: string]
   /**
+   * The colour of the portal's frame — its menu, header and footer — where it is the thing that
+   * tells one portal theme from another. The picker rings the swatch in it, and a phone's own
+   * bar takes it, so the strip above the page matches the header under it. Absent on the two
+   * themes whose frame is the page's own colour, completely light and completely dark.
+   */
+  frame?: string
+  /**
    * Optional photo or illustration shown faintly behind the hero, on top of the drawn motif.
    * Put the file in public/brand/themes/ and reference it here, e.g. '/brand/themes/saraswati.jpg'.
    */
@@ -54,16 +61,21 @@ export const themes: ThemeMeta[] = [
   { id: 'borodin', name: 'Borodin', description: 'Winter white, holly green and berry red', swatch: ['#f5f8f3', '#1d6b43'] },
 ]
 
+/*
+ * One completely light and one completely dark — Paper and Slate, the page and its frame alike —
+ * and every other with its menu, header and footer in a colour of its own around the page.
+ */
 export const portalThemes: ThemeMeta[] = [
-  { id: 'paper', name: 'Paper', description: 'Warm white, ink and a deep blue', swatch: ['#f7f7f5', '#1f4e79'] },
-  { id: 'linen', name: 'Linen', description: 'Soft oatmeal with muted teal', swatch: ['#f6f3ed', '#2f6b6a'] },
-  { id: 'sage', name: 'Sage', description: 'Pale green-grey with forest green', swatch: ['#f2f5f1', '#346846'] },
-  { id: 'mist', name: 'Mist', description: 'Cool grey with indigo', swatch: ['#f3f4f8', '#4338ca'] },
-  { id: 'slate', name: 'Slate', description: 'Blue-grey dark, for long evenings', swatch: ['#16181d', '#6aa9ff'] },
-  { id: 'midnight', name: 'Midnight', description: 'Deep navy with teal, also dark', swatch: ['#0e1726', '#4ecdc4'] },
-  { id: 'marigold', name: 'Marigold', description: 'Colourful: orange into pink, on cream', swatch: ['#fff6ea', '#ea580c'] },
-  { id: 'lagoon', name: 'Lagoon', description: 'Colourful: teal into ocean blue', swatch: ['#ecfaf8', '#0e7490'] },
-  { id: 'peacock', name: 'Peacock', description: 'Colourful: violet and magenta, dark, with gold', swatch: ['#1a0f2e', '#db2777'] },
+  { id: 'paper', name: 'Paper', description: 'Completely light: warm white throughout, with a deep blue', swatch: ['#f7f7f5', '#1f4e79'] },
+  { id: 'linen', name: 'Linen', description: 'Soft oatmeal, with a deep wine-red menu', swatch: ['#f6f3ed', '#8c2f39'], frame: '#6b2230' },
+  // Once Sage, and green. Kept under its old id so a choice already saved still finds it.
+  { id: 'sage', name: 'Denim', description: 'Pale blue-grey, with a denim-blue menu', swatch: ['#f1f4f8', '#2f5d8a'], frame: '#1f3a5a' },
+  { id: 'mist', name: 'Mist', description: 'Cool grey, with a dark indigo menu', swatch: ['#f3f4f8', '#4338ca'], frame: '#1a1b2e' },
+  { id: 'slate', name: 'Slate', description: 'Completely dark: blue-grey throughout, for long evenings', swatch: ['#16181d', '#6aa9ff'] },
+  { id: 'midnight', name: 'Midnight', description: 'Deep navy, with a teal menu', swatch: ['#0e1726', '#4ecdc4'], frame: '#115e59' },
+  { id: 'marigold', name: 'Marigold', description: 'Colourful: cream, with an orange-into-pink menu', swatch: ['#fff6ea', '#ea580c'], frame: '#c2410c' },
+  { id: 'lagoon', name: 'Lagoon', description: 'Colourful: pale teal, with a teal-into-blue menu', swatch: ['#ecfaf8', '#0e7490'], frame: '#0f766e' },
+  { id: 'peacock', name: 'Peacock', description: 'Colourful: dark violet, with a violet-and-magenta menu and gold', swatch: ['#1a0f2e', '#db2777'], frame: '#6d28d9' },
 ]
 
 export const defaultTheme: ThemeName = 'festival'
@@ -112,7 +124,9 @@ export function applyTheme(name: ThemeName, root: HTMLElement = document.documen
   root.dataset.theme = name
   // The browser's own colour — the strip above the page on a phone — to match, rather than
   // the Festival red written into index.html whatever the page underneath is wearing.
-  const ground = [...themes, ...portalThemes].find((meta) => meta.id === name)?.swatch[0]
+  // In the portal, the frame's colour: the header is what sits under the browser's bar there.
+  const meta = [...themes, ...portalThemes].find((theme) => theme.id === name)
+  const ground = meta?.frame ?? meta?.swatch[0]
   if (ground) root.ownerDocument.querySelector('meta[name="theme-color"]')?.setAttribute('content', ground)
 }
 

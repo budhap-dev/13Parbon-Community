@@ -44,7 +44,7 @@
 
 /*
  * A panel's corners, border and shadow are the theme's: flat and square in Linen, floating in
- * Sage, glowing at the edge in Midnight. The fallbacks are what every theme had before.
+ * Denim, glowing at the edge in Midnight. The fallbacks are what every theme had before.
  */
 .panel {
   background: var(--color-bg-raised);

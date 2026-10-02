@@ -339,7 +339,7 @@
   --color-bg: #f6f3ed;
   --color-bg-top: #faf8f4;
   --color-bg-bottom: #efeae1;
-  --color-bg-glow: rgba(47, 107, 106, 0.06);
+  --color-bg-glow: rgba(140, 47, 57, 0.05);
   --color-bg-raised: #fffdf9;
   --color-bg-raised-hover: #f3efe7;
   --color-ink: #23211d;
@@ -351,12 +351,12 @@
   --color-border: rgba(35, 33, 29, 0.24);
   --color-border-faint: rgba(35, 33, 29, 0.12);
   --color-hover-wash: rgba(35, 33, 29, 0.05);
-  --color-accent: #2f6b6a;
-  --color-accent-hover: #234f4e;
+  --color-accent: #8c2f39;
+  --color-accent-hover: #6e2430;
   --color-on-accent: #fffdf9;
-  --color-focus: #2f6b6a;
+  --color-focus: #8c2f39;
   --color-green: #33684a;
-  --error: #9d2a1e;
+  --error: #b4441c;
   --color-photo-a: #d8d2c6;
   --color-photo-b: #e4dfd4;
   --color-photo-c: #cbc4b5;
@@ -395,36 +395,36 @@
   --color-photo-d: #3d4450;
 }
 
-/* Sage: a pale green-grey with forest green. Paper's calm, outdoors. */
+/* Denim (id 'sage', its name when it was green): pale blue-grey with a denim blue. */
 [data-theme='sage'] {
   --color-scheme: light;
   --logo-lineart-filter: none;
   --logo-lineart-blend: multiply;
-  --color-bg: #f2f5f1;
-  --color-bg-top: #f7f9f6;
-  --color-bg-bottom: #eaefe8;
-  --color-bg-glow: rgba(52, 104, 70, 0.05);
+  --color-bg: #f1f4f8;
+  --color-bg-top: #f7f9fb;
+  --color-bg-bottom: #e8edf3;
+  --color-bg-glow: rgba(47, 93, 138, 0.05);
   --color-bg-raised: #ffffff;
-  --color-bg-raised-hover: #eef3ec;
-  --color-ink: #1b231d;
-  --color-ink-hover: #0c110d;
-  --color-on-ink: #f2f5f1;
-  --color-fg: #1b231d;
-  --color-fg-muted: rgba(27, 35, 29, 0.72);
-  --color-fg-faint: rgba(27, 35, 29, 0.45);
-  --color-border: rgba(27, 35, 29, 0.24);
-  --color-border-faint: rgba(27, 35, 29, 0.12);
-  --color-hover-wash: rgba(27, 35, 29, 0.05);
-  --color-accent: #346846;
-  --color-accent-hover: #264f35;
+  --color-bg-raised-hover: #eaf0f6;
+  --color-ink: #1a2330;
+  --color-ink-hover: #0c111a;
+  --color-on-ink: #f1f4f8;
+  --color-fg: #1a2330;
+  --color-fg-muted: rgba(26, 35, 48, 0.72);
+  --color-fg-faint: rgba(26, 35, 48, 0.45);
+  --color-border: rgba(26, 35, 48, 0.24);
+  --color-border-faint: rgba(26, 35, 48, 0.12);
+  --color-hover-wash: rgba(26, 35, 48, 0.05);
+  --color-accent: #2f5d8a;
+  --color-accent-hover: #244a6f;
   --color-on-accent: #ffffff;
-  --color-focus: #346846;
+  --color-focus: #2f5d8a;
   --color-green: #2f6b46;
   --error: #a5251b;
-  --color-photo-a: #cfdacf;
-  --color-photo-b: #dde5dc;
-  --color-photo-c: #c1cfc2;
-  --color-photo-d: #e6ece5;
+  --color-photo-a: #cfd8e3;
+  --color-photo-b: #dde4ec;
+  --color-photo-c: #c2cedb;
+  --color-photo-d: #e6ecf2;
 }
 
 /* Mist: cool grey with indigo. The crispest of the light ones. */
@@ -614,24 +614,51 @@
   --portal-button-radius: 4px;
   --portal-shadow: none;
   --portal-panel-border: rgba(35, 33, 29, 0.2);
-  --portal-side-bg: #efe9de;
-  --portal-nav-on-bg: var(--color-bg-raised);
-  --portal-nav-on-fg: var(--color-fg);
-  --portal-nav-on-mark: var(--color-accent);
+  /* The frame in the theme's own wine red, deep enough that pale writing reads on it. */
+  --portal-side-bg: #6b2230;
+  --portal-side-fg: #f8efe8;
+  --portal-side-muted: rgba(248, 239, 232, 0.82);
+  --portal-side-faint: rgba(248, 239, 232, 0.56);
+  --portal-side-border: rgba(248, 239, 232, 0.18);
+  --portal-side-wash: rgba(255, 255, 255, 0.08);
+  --portal-side-accent: #f3dcd3;
+  --portal-side-on-accent: #6b2230;
+  --portal-nav-on-bg: rgba(255, 255, 255, 0.14);
+  --portal-nav-on-fg: #ffffff;
+  --portal-nav-on-mark: #f3dcd3;
+  --portal-side-danger: #fecaca;
+  --portal-side-danger-bg: rgba(220, 38, 38, 0.26);
+  --portal-side-danger-border: rgba(254, 202, 202, 0.45);
+  --portal-side-danger-hover: #dc2626;
+  --portal-side-danger-hover-fg: #ffffff;
 }
 
-/* Sage: a dot grid, pill buttons and soft floating cards. A garden office. */
+/* Denim (stored as 'sage', its old name, so a saved choice carries over): a dot grid, pill
+   buttons and soft floating cards, in pale blue-grey with a denim frame. */
 [data-theme='sage'] {
-  --bg-texture-a: radial-gradient(circle, rgba(52, 104, 70, 0.14) 1px, transparent 1.5px);
+  --bg-texture-a: radial-gradient(circle, rgba(47, 93, 138, 0.14) 1px, transparent 1.5px);
   --bg-texture-a-size: 22px 22px;
   --portal-radius: 18px;
   --portal-button-radius: 999px;
-  --portal-shadow: 0 6px 22px rgba(27, 35, 29, 0.07);
+  --portal-shadow: 0 6px 22px rgba(26, 35, 48, 0.07);
   --portal-panel-border: transparent;
-  --portal-side-bg: #e6ede4;
-  --portal-nav-on-bg: var(--color-accent);
-  --portal-nav-on-fg: var(--color-on-accent);
+  /* The frame in denim blue; the screen you are on is a pale pill in it, this theme's own shape. */
+  --portal-side-bg: #1f3a5a;
+  --portal-side-fg: #eef3f9;
+  --portal-side-muted: rgba(238, 243, 249, 0.82);
+  --portal-side-faint: rgba(238, 243, 249, 0.56);
+  --portal-side-border: rgba(238, 243, 249, 0.18);
+  --portal-side-wash: rgba(255, 255, 255, 0.09);
+  --portal-side-accent: #cddcee;
+  --portal-side-on-accent: #1f3a5a;
+  --portal-nav-on-bg: #eef3f9;
+  --portal-nav-on-fg: #1f3a5a;
   --portal-nav-on-mark: transparent;
+  --portal-side-danger: #fecaca;
+  --portal-side-danger-bg: rgba(220, 38, 38, 0.26);
+  --portal-side-danger-border: rgba(254, 202, 202, 0.45);
+  --portal-side-danger-hover: #dc2626;
+  --portal-side-danger-hover-fg: #ffffff;
 }
 
 /* Mist: a fine graph grid, a system face and layered shadows. A modern app. */
@@ -689,10 +716,18 @@
   --portal-button-radius: 10px;
   --portal-shadow: 0 0 0 1px rgba(78, 205, 196, 0.06), 0 12px 32px rgba(0, 0, 0, 0.35);
   --portal-panel-border: rgba(78, 205, 196, 0.14);
-  --portal-side-bg: linear-gradient(180deg, #111c2f 0%, #0a121f 100%);
-  --portal-nav-on-bg: linear-gradient(90deg, rgba(78, 205, 196, 0.2), rgba(78, 205, 196, 0.04));
-  --portal-nav-on-fg: #e6edf5;
-  --portal-nav-on-mark: var(--color-accent);
+  /* Teal round a navy page. Navy on navy made a second all-dark theme, which Slate already is. */
+  --portal-side-bg: linear-gradient(180deg, #115e59 0%, #134e4a 100%);
+  --portal-side-fg: #ecfeff;
+  --portal-side-muted: rgba(236, 254, 255, 0.82);
+  --portal-side-faint: rgba(236, 254, 255, 0.58);
+  --portal-side-border: rgba(236, 254, 255, 0.2);
+  --portal-side-wash: rgba(255, 255, 255, 0.1);
+  --portal-side-accent: #ccfbf1;
+  --portal-side-on-accent: #134e4a;
+  --portal-nav-on-bg: rgba(255, 255, 255, 0.16);
+  --portal-nav-on-fg: #ffffff;
+  --portal-nav-on-mark: #ccfbf1;
   --portal-side-danger: #fecaca;
   --portal-side-danger-bg: rgba(220, 38, 38, 0.26);
   --portal-side-danger-border: rgba(254, 202, 202, 0.45);
@@ -746,9 +781,9 @@
   --portal-button-radius: 999px;
   --portal-shadow: 0 8px 24px rgba(194, 65, 12, 0.08);
   --portal-panel-border: rgba(234, 88, 12, 0.14);
-  --portal-side-bg: linear-gradient(170deg, #f97316 0%, #ea580c 38%, #db2777 100%);
+  --portal-side-bg: linear-gradient(170deg, #c2410c 0%, #b9370f 38%, #be185d 100%);
   --portal-side-fg: #ffffff;
-  --portal-side-muted: rgba(255, 255, 255, 0.86);
+  --portal-side-muted: rgba(255, 255, 255, 0.95);
   --portal-side-faint: rgba(255, 255, 255, 0.66);
   --portal-side-border: rgba(255, 255, 255, 0.28);
   --portal-side-wash: rgba(255, 255, 255, 0.14);
@@ -803,9 +838,9 @@
   --portal-button-radius: 10px;
   --portal-shadow: 0 6px 20px rgba(14, 116, 144, 0.09);
   --portal-panel-border: rgba(14, 116, 144, 0.14);
-  --portal-side-bg: linear-gradient(170deg, #0d9488 0%, #0e7490 45%, #2563eb 100%);
+  --portal-side-bg: linear-gradient(170deg, #0f766e 0%, #155e75 45%, #1e40af 100%);
   --portal-side-fg: #ffffff;
-  --portal-side-muted: rgba(255, 255, 255, 0.86);
+  --portal-side-muted: rgba(255, 255, 255, 0.95);
   --portal-side-faint: rgba(255, 255, 255, 0.66);
   --portal-side-border: rgba(255, 255, 255, 0.26);
   --portal-side-wash: rgba(255, 255, 255, 0.13);

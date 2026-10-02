@@ -98,8 +98,9 @@ describe('the app taking over', () => {
     meta.name = 'theme-color'
     meta.content = '#7a1a12'
     document.head.append(meta)
-    applyTheme('slate')
-    expect(meta.content).toBe('#16181d')
+    // In the portal, the frame's colour: the strip above the page matches the header under it.
+    applyTheme('mist')
+    expect(meta.content).toBe('#1a1b2e')
     applyTheme('festival')
     expect(meta.content).toBe('#7a1a12')
     meta.remove()

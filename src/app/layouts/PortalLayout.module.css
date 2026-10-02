@@ -24,7 +24,7 @@
    * The portal's buttons: smaller, squarer, with a quieter outline. The public site's pills are
    * sized for a thumb on a phone; in here they sat in every table row the height of the row
    * itself, and a screen of them read as a form to fill in rather than a place to work. The
-   * corners are the theme's: square for Linen, pills for Sage.
+   * corners are the theme's: square for Linen, pills for Denim.
    */
   --button-radius: var(--portal-button-radius, 8px);
   --button-border: 1px;

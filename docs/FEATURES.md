@@ -564,7 +564,7 @@ browser remembers the committee's last answer under its own key, and the inline 
 `index.html` reads it before the first paint, so a returning visitor does not see Festival red
 flash to Holi magenta while the settings load.
 
-Nine **portal** themes. Six — Paper, Linen, Sage, Mist, Slate, Midnight — are deliberately quiet. Nobody
+Nine **portal** themes. Six — Paper, Linen, Denim, Mist, Slate, Midnight — are deliberately quiet. Nobody
 chooses a festival palette to spend an hour on a spreadsheet, and the committee's screens used
 to follow the public ones, which meant doing the books against a magenta Holi background. Each
 is a different kind of quiet rather than the same one recoloured: its own ground (ruled lines,

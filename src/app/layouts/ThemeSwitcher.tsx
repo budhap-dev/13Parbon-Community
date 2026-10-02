@@ -90,7 +90,8 @@ export function ThemeSwitcher({
             >
               <span
                 className={styles.swatch}
-                style={{ background: option.swatch[0], borderColor: option.swatch[1] }}
+                // Ringed in the portal's frame where a theme has one: that is what sets it apart.
+                style={{ background: option.swatch[0], borderColor: option.frame ?? option.swatch[1] }}
                 aria-hidden="true"
               >
                 <span className={styles.swatchDot} style={{ background: option.swatch[1] }} />
