@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
+import { useOpenFromAddress } from '@/app/useOpenFromAddress'
 import { useSettings } from '@/app/SettingsContext'
 import { Button } from '@/components/Button'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
@@ -82,6 +83,22 @@ export function AdminPlayPage() {
   const bank = useQuestionBank()
   const suggestions = useAllSuggestions()
   const attempts = useQuizAttempts(scoresFor ?? undefined)
+
+  // `?open=` names a poll or a quiz, and the tab it came with says which. Locked the way the
+  // Edit buttons below lock it, so arriving from the search cannot change what members answered.
+  const openable =
+    tab === 'polls'
+      ? polls.data?.map(({ poll, tally }) => ({
+          id: poll.id,
+          open: () => setEditing({ kind: 'poll', poll, locked: tally.some((n) => n > 0) }),
+        }))
+      : tab === 'quizzes'
+        ? quizzes.data?.map(({ quiz, locked }) => ({ id: quiz.id, open: () => setEditing({ kind: 'quiz', quiz, locked }) }))
+        : []
+  useOpenFromAddress(openable, (item) => {
+    setDone(null)
+    item.open()
+  })
 
   const createPoll = useCreatePoll()
   const updatePoll = useUpdatePoll()

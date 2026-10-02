@@ -150,6 +150,8 @@
   min-height: 56px;
   padding: 12px 16px;
   cursor: pointer;
+  /* Room above it when the search brings it into view, rather than flush with the window. */
+  scroll-margin-top: 24px;
 }
 
 .sectionHead:hover {

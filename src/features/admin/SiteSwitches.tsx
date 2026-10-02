@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router'
 import { Button } from '@/components/Button'
 import {
   HOME_SECTIONS,
@@ -43,28 +44,13 @@ import {
   type PrivacyRow,
 } from './SettingsEditors'
 import styles from './ContentForms.module.css'
+import { isSectionKey, SITE_SECTIONS, type SectionKey } from './siteSections'
 
 const AUDIENCES: { value: SectionAudience; label: string }[] = [
   { value: 'public', label: 'Anybody' },
   { value: 'members', label: 'Members, once signed in' },
   { value: 'admins', label: 'The committee only' },
 ]
-
-type SectionKey =
-  | 'switches'
-  | 'look'
-  | 'words'
-  | 'social'
-  | 'home'
-  | 'festivals'
-  | 'story'
-  | 'values'
-  | 'committee'
-  | 'roll'
-  | 'faq'
-  | 'collage'
-  | 'privacy'
-  | 'tools'
 
 /** The date a notice took effect, as the privacy page prints it: 21 September 2026. */
 const longDate = (when: Date) =>
@@ -151,6 +137,7 @@ function Section({
     >
       <button
         type="button"
+        id={`section-head-${k}`}
         className={styles.sectionHead}
         aria-expanded={open}
         aria-controls={`section-${k}`}
@@ -315,6 +302,37 @@ export function SiteSwitches({
   const [attempted, setAttempted] = useState<SectionKey | null>(null)
   const toggle = (k: SectionKey) => setOpen((now) => (now.includes(k) ? now.filter((x) => x !== k) : [...now, k]))
 
+  /*
+   * `?section=` opens one section and brings it into view: how the portal's search lands on
+   * "The year's festivals" rather than at the top of a page of fourteen closed ones. Taken out of
+   * the address once done, the same as `?open=` elsewhere, so closing the section stays closed.
+   */
+  const [params, setParams] = useSearchParams()
+  const asked = params.get('section')
+  // Opened while rendering, the moment the address asks, so the section is already drawn by the
+  // time the effect below goes looking for it.
+  const [answered, setAnswered] = useState<string | null>(null)
+  if (asked !== answered) {
+    setAnswered(asked)
+    if (asked && isSectionKey(asked) && !open.includes(asked)) setOpen([...open, asked])
+  }
+  useEffect(() => {
+    if (!asked) return
+    if (isSectionKey(asked)) {
+      const head = document.getElementById(`section-head-${asked}`)
+      head?.scrollIntoView?.({ block: 'start' })
+      head?.focus({ preventScroll: true })
+    }
+    setParams(
+      (now) => {
+        const next = new URLSearchParams(now)
+        next.delete('section')
+        return next
+      },
+      { replace: true, preventScrollReset: true },
+    )
+  }, [asked, setParams])
+
   /** The sections added when the lists left the files. See `lazy` on `Section`. */
   const LAZY: SectionKey[] = ['look', 'social', 'festivals', 'story', 'values', 'collage', 'privacy', 'tools']
 
@@ -336,7 +354,7 @@ export function SiteSwitches({
   return (
     <div className={styles.sections}>
       <h3 className={styles.groupTitle}>The whole site</h3>
-      <Section {...sectionProps('switches')} label="What the public site shows" summary={`${SWITCH_KEYS.filter((k) => draft[k]).length} of ${SWITCH_KEYS.length} switched on`} saveLabel="Save the switches">
+      <Section {...sectionProps('switches')} label={SITE_SECTIONS.switches} summary={`${SWITCH_KEYS.filter((k) => draft[k]).length} of ${SWITCH_KEYS.length} switched on`} saveLabel="Save the switches">
         {(Object.keys(SETTING_LABELS) as (keyof typeof SETTING_LABELS)[]).map((key) => (
           <div key={key} className={styles.check}>
             <input
@@ -356,7 +374,7 @@ export function SiteSwitches({
         ))}
       </Section>
 
-      <Section {...sectionProps('look')} label="The colours a visitor arrives to" summary={themes.find((t) => t.id === draft.defaultTheme)?.name ?? ''} saveLabel="Save the colours">
+      <Section {...sectionProps('look')} label={SITE_SECTIONS.look} summary={themes.find((t) => t.id === draft.defaultTheme)?.name ?? ''} saveLabel="Save the colours">
         <div className={styles.field}>
           <label className={styles.label} htmlFor="defaultTheme">
             The season’s look
@@ -382,7 +400,7 @@ export function SiteSwitches({
         </div>
       </Section>
 
-      <Section {...sectionProps('words')} label="The words on the public pages" summary={`${SITE_TEXT_KEYS.filter((k) => isPlaceholder(draft.text[k] ?? '')).length} still in brackets`} saveLabel="Save the wording">
+      <Section {...sectionProps('words')} label={SITE_SECTIONS.words} summary={`${SITE_TEXT_KEYS.filter((k) => isPlaceholder(draft.text[k] ?? '')).length} still in brackets`} saveLabel="Save the wording">
         <p className={styles.hint}>
           The single lines. Anything that is a list — the festivals, the story, the channels, the
           theme’s photographs — has a section of its own on this page.
@@ -424,7 +442,7 @@ export function SiteSwitches({
         })}
       </Section>
 
-      <Section {...sectionProps('social')} label="Ways to reach us, and to help" summary={`${tidySocial(draft.social).length} channels`} saveLabel="Save the channels">
+      <Section {...sectionProps('social')} label={SITE_SECTIONS.social} summary={`${tidySocial(draft.social).length} channels`} saveLabel="Save the channels">
         <p className={styles.hint}>
           In the footer of every page and on the contact page, in this order. The footer draws only
           the ones with an address.
@@ -453,7 +471,7 @@ export function SiteSwitches({
 
       <h3 className={styles.groupTitle}>The home page</h3>
 
-      <Section {...sectionProps('home')} label="The home page: its order, and who sees each part" summary={`${draft.homeOrder.length} parts`} saveLabel="Save the home page">
+      <Section {...sectionProps('home')} label={SITE_SECTIONS.home} summary={`${draft.homeOrder.length} parts`} saveLabel="Save the home page">
         <p className={styles.hint}>
           The order they come in, between the name at the top and the invitation at the bottom.
           A part that is switched off or has nothing to show takes up no room wherever it is.
@@ -488,7 +506,7 @@ export function SiteSwitches({
         </div>
       </Section>
 
-      <Section {...sectionProps('festivals')} label="The year’s festivals" summary={`${tidyFestivals(draft.festivals).length} festivals`} saveLabel="Save the festivals">
+      <Section {...sectionProps('festivals')} label={SITE_SECTIONS.festivals} summary={`${tidyFestivals(draft.festivals).length} festivals`} saveLabel="Save the festivals">
         <p className={styles.hint}>
           “Our year” on the home page and the filter on the Events page, in this order. To mark one
           as next up, choose it on the evening itself, under Events. Removing a festival does not
@@ -499,7 +517,7 @@ export function SiteSwitches({
 
       <h3 className={styles.groupTitle}>The About page</h3>
 
-      <Section {...sectionProps('story')} label="Our story" summary={`${storyFromText(story).length} paragraphs, headings and lists`} saveLabel="Save the story">
+      <Section {...sectionProps('story')} label={SITE_SECTIONS.story} summary={`${storyFromText(story).length} paragraphs, headings and lists`} saveLabel="Save the story">
         <div className={styles.field}>
           <label className={styles.label} htmlFor="story">
             The story, as it reads on the About page
@@ -520,7 +538,7 @@ export function SiteSwitches({
         </div>
       </Section>
 
-      <Section {...sectionProps('values')} label="What we stand for" summary={`${tidyValues(draft.values).length} values`} saveLabel="Save the values">
+      <Section {...sectionProps('values')} label={SITE_SECTIONS.values} summary={`${tidyValues(draft.values).length} values`} saveLabel="Save the values">
         <p className={styles.hint}>
           The cards under the story. One with no heading or no sentence is left out rather than
           shown half-finished.
@@ -528,7 +546,7 @@ export function SiteSwitches({
         <ValuesEditor rows={draft.values} onChange={(values) => setDraft({ ...draft, values })} />
       </Section>
 
-      <Section {...sectionProps('committee')} label="The committee" summary={`${tidyCommittee(draft.committee).length} people`} saveLabel="Save the committee">
+      <Section {...sectionProps('committee')} label={SITE_SECTIONS.committee} summary={`${tidyCommittee(draft.committee).length} people`} saveLabel="Save the committee">
         <p className={styles.hint}>
           As shown on the About page, in this order — which is not a ranking. It changes at the AGM
           every year, which is exactly the sort of thing that should not need a developer.
@@ -580,7 +598,7 @@ export function SiteSwitches({
         </div>
       </Section>
 
-      <Section {...sectionProps('roll')} label="The members’ roll" summary={`${rollFromText(roll).length} names`} saveLabel="Save the roll">
+      <Section {...sectionProps('roll')} label={SITE_SECTIONS.roll} summary={`${rollFromText(roll).length} names`} saveLabel="Save the roll">
         <div className={styles.field}>
           <label className={styles.label} htmlFor="roll">
             One name to a line
@@ -601,7 +619,7 @@ export function SiteSwitches({
         </div>
       </Section>
 
-      <Section {...sectionProps('faq')} label="Questions people ask" summary={`${tidyFaq(draft.faq).length} questions`} saveLabel="Save the questions">
+      <Section {...sectionProps('faq')} label={SITE_SECTIONS.faq} summary={`${tidyFaq(draft.faq).length} questions`} saveLabel="Save the questions">
         <p className={styles.hint}>
           On the About page, in this order. Anything left in [square brackets] is shown to visitors exactly
           as it appears, so finish a sentence before you save it.
@@ -652,7 +670,7 @@ export function SiteSwitches({
 
       <h3 className={styles.groupTitle}>Events</h3>
 
-      <Section {...sectionProps('collage')} label="This year’s theme, in photographs" summary={`${draft.collage.photos.length} photographs`} saveLabel="Save the photographs">
+      <Section {...sectionProps('collage')} label={SITE_SECTIONS.collage} summary={`${draft.collage.photos.length} photographs`} saveLabel="Save the photographs">
         <p className={styles.hint}>
           The black-and-white-into-colour collage on the page of any evening that has a theme. The
           theme’s own words are set on the evening, under Events; these are the pictures behind it.
@@ -663,7 +681,7 @@ export function SiteSwitches({
 
       <h3 className={styles.groupTitle}>Small print, and the portal</h3>
 
-      <Section {...sectionProps('privacy')} label="The privacy notice" summary={`Last updated ${settings.privacy.updatedOn}`} saveLabel="Save the notice">
+      <Section {...sectionProps('privacy')} label={SITE_SECTIONS.privacy} summary={`Last updated ${settings.privacy.updatedOn}`} saveLabel="Save the notice">
         <p className={styles.hint}>
           This is a promise about what the site does with people’s details, so it has to stay true.
           Change the wording freely; do not say the site collects less than it does. The date at the
@@ -704,7 +722,7 @@ export function SiteSwitches({
         )}
       </Section>
 
-      <Section {...sectionProps('tools')} label="Other tools the committee runs" summary={`${tidyTools(draft.tools).length} linked`} saveLabel="Save the tools">
+      <Section {...sectionProps('tools')} label={SITE_SECTIONS.tools} summary={`${tidyTools(draft.tools).length} linked`} saveLabel="Save the tools">
         <p className={styles.hint}>
           Links in the portal’s sidebar, shown to the committee only. The first one is the planner
           the Events screen points at. The addresses themselves are stored with the rest of the

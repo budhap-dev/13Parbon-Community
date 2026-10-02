@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useSettings } from '@/app/SettingsContext'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
+import { useOpenFromAddress } from '@/app/useOpenFromAddress'
 import { Button } from '@/components/Button'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { Icon } from '@/components/Icon'
@@ -39,6 +40,10 @@ export function AdminFeedbackPage() {
   const mayDelete = can(viewer, 'feedback:delete')
   const [openId, setOpenId] = useState<string | null>(null)
   const [confirming, setConfirming] = useState(false)
+  useOpenFromAddress(feedback, (item) => {
+    setOpenId(item.id)
+    setConfirming(false)
+  })
 
   const list = feedback ?? []
   const open = list.find((item) => item.id === openId) ?? list[0]

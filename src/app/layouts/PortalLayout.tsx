@@ -3,6 +3,7 @@ import { Link, NavLink, Outlet, ScrollRestoration, useLocation } from 'react-rou
 import { site } from '@/app/site'
 import { useSettings } from '@/app/SettingsContext'
 import { Icon, type IconName } from '@/components/Icon'
+import { PortalSearch, type SearchScreen } from '@/features/admin/search/PortalSearch'
 import { ThemeSwitcher } from './ThemeSwitcher'
 import { useThemeScope } from '@/app/theme/ThemeContext'
 import { useGoogleSignIn } from '@/lib/auth/GoogleSignIn'
@@ -31,6 +32,24 @@ const memberNav: Item[] = [
   { label: 'Polls and quizzes', to: '/portal/play', icon: 'sparkle' },
 ]
 
+const committeeScreens: Item[] = [
+  { label: 'Overview', to: '/admin', icon: 'grid', end: true },
+  { label: 'People', to: '/admin/people', icon: 'users' },
+  { label: 'Events', to: '/admin/events', icon: 'calendar' },
+  { label: 'Content', to: '/admin/content', icon: 'layout' },
+  { label: 'Photographs', to: '/admin/media', icon: 'image' },
+  { label: 'Messages', to: '/admin/messages', icon: 'message' },
+  { label: 'Feedback', to: '/admin/feedback', icon: 'heart' },
+  { label: 'Polls and quizzes', to: '/admin/play', icon: 'sparkle' },
+  { label: 'What has changed', to: '/admin/audit', icon: 'clock' },
+]
+
+/** Every screen, for the search to jump to. The member ones say whose they are. */
+const searchScreens: SearchScreen[] = [
+  ...committeeScreens,
+  ...memberNav.map((item) => ({ ...item, label: item.label === 'Polls and quizzes' ? 'Polls and quizzes, as a member' : item.label })),
+]
+
 export function PortalLayout() {
   const who = useSignedIn()
   // The same answer that guards the routes, so the navigation cannot offer a door that shuts.
@@ -56,26 +75,25 @@ export function PortalLayout() {
     // the top of the page up behind the sticky header on every navigation. Getting back to
     // the top is ScrollRestoration's job, below — and for a long time nothing did it here,
     // so every move inside the portal kept whatever scroll position you arrived with.
-    mainRef.current?.focus({ preventScroll: true })
+    //
+    // Unless the screen arrived at has put the focus somewhere itself — the section the search
+    // opened on Content, say. Taking it back to the top would lose exactly the place it was sent.
+    const main = mainRef.current
+    if (main && document.activeElement !== main && main.contains(document.activeElement)) return
+    main?.focus({ preventScroll: true })
   }, [pathname])
 
   if (!who) return null
 
-  const committeeNav: Item[] = [
-    { label: 'Overview', to: '/admin', icon: 'grid', end: true },
-    // The ones still wanting an answer, which is what the screen itself shows. Counting all
-    // of them meant the badge never cleared once somebody had been dealt with.
-    { label: 'People', to: '/admin/people', icon: 'users', count: unresolved(attempts).length },
-    { label: 'Events', to: '/admin/events', icon: 'calendar' },
-    { label: 'Content', to: '/admin/content', icon: 'layout' },
-    { label: 'Photographs', to: '/admin/media', icon: 'image' },
-    { label: 'Messages', to: '/admin/messages', icon: 'message' },
-    // Only what is still waiting, the same as People: a badge counting everything ever sent
-    // is a badge that never clears, and one that never clears stops being read.
-    { label: 'Feedback', to: '/admin/feedback', icon: 'heart', count: waiting(feedback ?? []).length },
-    { label: 'Polls and quizzes', to: '/admin/play', icon: 'sparkle', count: waitingSuggestions(suggestions ?? []).length },
-    { label: 'What has changed', to: '/admin/audit', icon: 'clock' },
-  ]
+  // The ones still wanting an answer, which is what each screen itself shows. Counting all of
+  // them meant the badge never cleared once somebody had been dealt with — and a badge that
+  // never clears stops being read.
+  const counts: Record<string, number> = {
+    '/admin/people': unresolved(attempts).length,
+    '/admin/feedback': waiting(feedback ?? []).length,
+    '/admin/play': waitingSuggestions(suggestions ?? []).length,
+  }
+  const committeeNav: Item[] = committeeScreens.map((item) => ({ ...item, count: counts[item.to] }))
 
   const renderGroup = (label: string, items: Item[]) => (
     <div className={styles.group}>
@@ -105,6 +123,7 @@ export function PortalLayout() {
           <img src={site.emblem} alt="" className={styles.emblem} width={34} height={34} />
           <span>{site.wordmark}</span>
         </Link>
+        {onTheCommittee ? <PortalSearch screens={searchScreens} /> : null}
         <div className={styles.navs}>
         <nav aria-label="Your household">{renderGroup('Your household', memberNav)}</nav>
         {onTheCommittee ? (

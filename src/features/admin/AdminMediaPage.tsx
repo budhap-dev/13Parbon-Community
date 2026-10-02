@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
+import { useOpenFromAddress } from '@/app/useOpenFromAddress'
 import { useScrollToTopOn } from '@/app/useScrollToTopOn'
 import { Button } from '@/components/Button'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
@@ -26,6 +27,10 @@ export function AdminMediaPage() {
   const [editing, setEditing] = useState<AlbumDraft | null>(null)
   // Opening an album, and opening the album form, are both swaps rather than navigations.
   useScrollToTopOn(`${openId ?? ''}|${editing ? 'form' : ''}`)
+  useOpenFromAddress(albums, (album) => {
+    setEditing(null)
+    setOpenId(album.id)
+  })
 
   const create = useCreateAlbum()
   const update = useUpdateAlbum()

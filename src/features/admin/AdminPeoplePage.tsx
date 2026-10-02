@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
+import { useOpenFromAddress } from '@/app/useOpenFromAddress'
 import { useScrollToTopOn } from '@/app/useScrollToTopOn'
 import { unresolved } from '@/domain/document'
 import { Button } from '@/components/Button'
@@ -48,6 +49,7 @@ export function AdminPeoplePage() {
     setPrefill(from)
     setOpenRaw(next)
   }
+  useOpenFromAddress(households, (household) => setOpen(household))
 
   /**
    * Turning a knock into an invitation. Google told us the address and the name it is under,

@@ -1,3 +1,5 @@
+import { folded, matchesEvery, searchWords } from './search'
+
 export type Role = 'member' | 'admin'
 
 export type MembershipStatus = 'active' | 'lapsed'
@@ -220,9 +222,6 @@ export function normaliseGoogleEmail(value: string): { email: string | null; err
   return { email: trimmed.toLowerCase() }
 }
 
-/** Lower case, accents off, so "Dasgupta" finds "dasgupta" and "Ronnie" finds "Rónnie". */
-const folded = (text: string) => text.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
-
 /**
  * Whether a household answers to what the committee typed into the search on People.
  *
@@ -231,9 +230,14 @@ const folded = (text: string) => text.normalize('NFD').replace(/[̀-ͯ]/g, '').t
  * people are in it because the question is usually "which household is Anjali in?".
  */
 export function householdMatches(household: Household, query: string): boolean {
-  const words = folded(query).split(/\s+/).filter(Boolean)
+  const words = searchWords(query)
   if (words.length === 0) return true
-  const haystack = folded(
+  return matchesEvery(words, householdText(household))
+}
+
+/** Everything a household can be found by, folded. Shared with the portal's search. */
+export function householdText(household: Household): string {
+  return folded(
     [
       household.name,
       household.contactName,
@@ -243,5 +247,4 @@ export function householdMatches(household: Household, query: string): boolean {
       ...household.people.map((person) => person.name),
     ].join('\n'),
   )
-  return words.every((word) => haystack.includes(word))
 }

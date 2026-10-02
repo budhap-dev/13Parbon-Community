@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
+import { useOpenFromAddress } from '@/app/useOpenFromAddress'
 import { useScrollToTopOn } from '@/app/useScrollToTopOn'
 import { formatLongDate } from '@/domain/dates'
 import { Button } from '@/components/Button'
@@ -142,6 +143,17 @@ export function AdminContentPage() {
   >(null)
   // Opening or leaving a form replaces the page without changing the address.
   useScrollToTopOn(editing)
+  // `?open=` names a piece or a notice, and the tab it came with says which of the two.
+  const openable =
+    tab === 'writing'
+      ? posts?.map((post) => ({ id: post.id, open: () => setEditing({ kind: 'post', post }) }))
+      : tab === 'notices'
+        ? announcements?.map((notice) => ({ id: notice.id, open: () => setEditing({ kind: 'notice', notice }) }))
+        : []
+  useOpenFromAddress(openable, (item) => {
+    setPosted(null)
+    item.open()
+  })
 
   const postForm =
     editing?.kind === 'post' ? (

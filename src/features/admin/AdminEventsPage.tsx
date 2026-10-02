@@ -1,5 +1,6 @@
 import { useSettings } from '@/app/SettingsContext'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
+import { useOpenFromAddress } from '@/app/useOpenFromAddress'
 import { useScrollToTopOn } from '@/app/useScrollToTopOn'
 import { Button } from '@/components/Button'
 import { formatDateWithYear, formatLongDate, formatTime } from '@/domain/dates'
@@ -42,6 +43,7 @@ export function AdminEventsPage() {
   const [designing, setDesigning] = useState<Event | 'new' | null>(null)
   // The designer replaces the list in place.
   useScrollToTopOn(designing)
+  useOpenFromAddress(allEvents, setDesigning)
 
 
   if (designing) {

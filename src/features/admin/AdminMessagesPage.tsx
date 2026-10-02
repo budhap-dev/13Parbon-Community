@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
+import { useOpenFromAddress } from '@/app/useOpenFromAddress'
 import { Button } from '@/components/Button'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { Icon } from '@/components/Icon'
@@ -21,6 +22,10 @@ export function AdminMessagesPage() {
   const [openId, setOpenId] = useState<string | null>(null)
   const [note, setNote] = useState('')
   const [confirming, setConfirming] = useState(false)
+  useOpenFromAddress(messages, (message) => {
+    setOpenId(message.id)
+    setConfirming(false)
+  })
 
   const list = messages ?? []
   const open = list.find((m) => m.id === openId) ?? list[0]
