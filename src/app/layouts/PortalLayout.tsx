@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState } from 'react'
 import { Link, NavLink, Outlet, ScrollRestoration, useLocation } from 'react-router'
 import { site } from '@/app/site'
 import { useSettings } from '@/app/SettingsContext'
+import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { Icon, type IconName } from '@/components/Icon'
 import { PortalSearch, SearchButton, type SearchScreen } from '@/features/admin/search/PortalSearch'
 import { ThemeSwitcher } from './ThemeSwitcher'
@@ -85,6 +86,8 @@ export function PortalLayout() {
   }, [pathname])
 
   const [searching, setSearching] = useState(false)
+  // Signing out asks first: it sits beside Theme, a thumb's width away on a phone.
+  const [leaving, setLeaving] = useState(false)
 
   /*
    * On a phone the sidebar is a drawer, out from the left where it sits on a wider screen.
@@ -316,10 +319,25 @@ export function PortalLayout() {
             */}
           <div className={styles.whoActions}>
             <ThemeSwitcher align="start" direction="up" />
-            <button type="button" className={styles.signOut} onClick={signOut}>
+            <button type="button" className={styles.signOut} onClick={() => setLeaving(true)}>
               <Icon name="logout" size={17} />
               Sign out
             </button>
+            <ConfirmDialog
+              open={leaving}
+              title="Sign out?"
+              confirmLabel="Sign out"
+              cancelLabel="Stay signed in"
+              onCancel={() => setLeaving(false)}
+              onConfirm={() => {
+                setLeaving(false)
+                signOut()
+              }}
+            >
+              {who.preview
+                ? 'This leaves the sample household and signs you out of the portal.'
+                : 'You will need your Google account to get back into the portal. Anything you have not saved on this screen will be lost.'}
+            </ConfirmDialog>
           </div>
         </div>
       </aside>

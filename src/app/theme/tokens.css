@@ -656,6 +656,11 @@
   --portal-nav-on-bg: rgba(255, 255, 255, 0.12);
   --portal-nav-on-fg: #ffffff;
   --portal-nav-on-mark: #a5b4fc;
+  --portal-side-danger: #fecaca;
+  --portal-side-danger-bg: rgba(220, 38, 38, 0.26);
+  --portal-side-danger-border: rgba(254, 202, 202, 0.45);
+  --portal-side-danger-hover: #dc2626;
+  --portal-side-danger-hover-fg: #ffffff;
 }
 
 /* Slate: plain, square and flat. Nothing to look at but the work. */
@@ -667,6 +672,11 @@
   --portal-side-bg: #101216;
   --portal-nav-on-bg: color-mix(in srgb, var(--color-accent) 14%, transparent);
   --portal-nav-on-fg: var(--color-accent);
+  --portal-side-danger: #fecaca;
+  --portal-side-danger-bg: rgba(220, 38, 38, 0.26);
+  --portal-side-danger-border: rgba(254, 202, 202, 0.45);
+  --portal-side-danger-hover: #dc2626;
+  --portal-side-danger-hover-fg: #ffffff;
 }
 
 /* Midnight: a few faint stars, glowing cards, rounded. The night shift. */
@@ -683,6 +693,11 @@
   --portal-nav-on-bg: linear-gradient(90deg, rgba(78, 205, 196, 0.2), rgba(78, 205, 196, 0.04));
   --portal-nav-on-fg: #e6edf5;
   --portal-nav-on-mark: var(--color-accent);
+  --portal-side-danger: #fecaca;
+  --portal-side-danger-bg: rgba(220, 38, 38, 0.26);
+  --portal-side-danger-border: rgba(254, 202, 202, 0.45);
+  --portal-side-danger-hover: #dc2626;
+  --portal-side-danger-hover-fg: #ffffff;
 }
 
 /* ===========================================================================
@@ -742,6 +757,11 @@
   --portal-nav-on-bg: rgba(255, 255, 255, 0.22);
   --portal-nav-on-fg: #ffffff;
   --portal-nav-on-mark: #ffffff;
+  --portal-side-danger: #ffffff;
+  --portal-side-danger-bg: rgba(127, 29, 29, 0.5);
+  --portal-side-danger-border: rgba(255, 255, 255, 0.4);
+  --portal-side-danger-hover: #991b1b;
+  --portal-side-danger-hover-fg: #ffffff;
 }
 
 /* Lagoon: teal into ocean blue, with bright sea light behind the page. */
@@ -794,6 +814,11 @@
   --portal-nav-on-bg: rgba(255, 255, 255, 0.2);
   --portal-nav-on-fg: #ffffff;
   --portal-nav-on-mark: #a7f3e4;
+  --portal-side-danger: #ffffff;
+  --portal-side-danger-bg: rgba(127, 29, 29, 0.5);
+  --portal-side-danger-border: rgba(255, 255, 255, 0.4);
+  --portal-side-danger-hover: #991b1b;
+  --portal-side-danger-hover-fg: #ffffff;
 }
 
 /* Peacock: violet into magenta on a deep plum night, with gold. Dark. */
@@ -846,4 +871,9 @@
   --portal-nav-on-bg: rgba(255, 255, 255, 0.2);
   --portal-nav-on-fg: #ffffff;
   --portal-nav-on-mark: #fcd34d;
+  --portal-side-danger: #ffffff;
+  --portal-side-danger-bg: rgba(127, 29, 29, 0.5);
+  --portal-side-danger-border: rgba(255, 255, 255, 0.4);
+  --portal-side-danger-hover: #991b1b;
+  --portal-side-danger-hover-fg: #ffffff;
 }

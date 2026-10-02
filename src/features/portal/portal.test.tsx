@@ -173,8 +173,26 @@ describe('portal access', () => {
     expect(screen.getByRole('navigation', { name: 'Your household' })).toBeInTheDocument()
     expect(screen.getByRole('navigation', { name: 'Committee' })).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Sign out' }))
+    // Asked first.
+    const asking = await screen.findByRole('dialog', { name: 'Sign out?' })
+    await userEvent.click(within(asking).getByRole('button', { name: 'Sign out' }))
     expect(await screen.findByRole('heading', { level: 1, name: 'Member sign-in' })).toBeInTheDocument()
     expect(router.state.location.pathname).toBe('/login')
+  })
+
+  it('asks before signing out, and staying keeps you where you were', async () => {
+    const router = renderAt('/admin', admin)
+    await screen.findByRole('heading', { level: 1, name: 'Committee overview' })
+    const button = screen.getByRole('button', { name: 'Sign out' })
+    await userEvent.click(button)
+
+    const asking = await screen.findByRole('dialog', { name: 'Sign out?' })
+    expect(within(asking).getByRole('button', { name: 'Stay signed in' })).toHaveFocus()
+    await userEvent.click(within(asking).getByRole('button', { name: 'Stay signed in' }))
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(router.state.location.pathname).toBe('/admin')
+    expect(button).toHaveFocus()
   })
 })
 

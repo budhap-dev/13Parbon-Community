@@ -300,6 +300,11 @@
   height: 16px;
 }
 
+/*
+ * Red, as leaving is: the one button down here that ends something. On a light sidebar that is
+ * red writing in a red outline; on a dark or colourful one, where red writing would not read,
+ * a deeper red to stand on with light writing. A theme with its own sidebar says which.
+ */
 .signOut {
   display: inline-flex;
   align-items: center;
@@ -307,10 +312,10 @@
   min-height: 34px;
   margin-left: auto;
   padding: 0 10px;
-  border: 1px solid var(--side-border);
+  border: 1px solid var(--portal-side-danger-border, color-mix(in srgb, var(--error) 55%, transparent));
   border-radius: 8px;
-  background: transparent;
-  color: var(--side-muted);
+  background: var(--portal-side-danger-bg, color-mix(in srgb, var(--error) 8%, transparent));
+  color: var(--portal-side-danger, var(--error));
   font-weight: 600;
   font-size: 13px;
   /* Two words on two lines read as a button that had been squashed, which it had. */
@@ -319,8 +324,9 @@
 }
 
 .signOut:hover {
-  background: var(--side-wash);
-  color: var(--side-fg);
+  background: var(--portal-side-danger-hover, var(--error));
+  border-color: var(--portal-side-danger-hover, var(--error));
+  color: var(--portal-side-danger-hover-fg, var(--color-bg-raised));
 }
 
 .main {
