@@ -22,11 +22,10 @@ function renderAt(path: string, session: Session = admin) {
   return router
 }
 
-/** The sidebar's Search. A phone has another in its bar, with the same name. */
-const searchButton = async () =>
-  within(await screen.findByRole('complementary', { name: 'Portal menu' })).getByRole('button', { name: 'Search' })
+/** The Search in the header — the one place it is, at every width. */
+const searchButton = async () => within(await screen.findByRole('banner')).getByRole('button', { name: 'Search' })
 
-/** Opens the search from the sidebar and types into it. */
+/** Opens the search from the header and types into it. */
 async function search(text: string) {
   await userEvent.click(await searchButton())
   const box = within(await screen.findByRole('dialog', { name: 'Search the portal' })).getByRole('combobox')
@@ -37,7 +36,7 @@ async function search(text: string) {
 const option = (name: RegExp | string) => screen.findByRole('option', { name })
 
 describe('the committee’s search', () => {
-  it('is in the sidebar for the committee, and not for a member', async () => {
+  it('is in the header for the committee', async () => {
     renderAt('/admin')
     expect(await searchButton()).toBeInTheDocument()
   })

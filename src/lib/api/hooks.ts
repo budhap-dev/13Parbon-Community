@@ -366,6 +366,16 @@ export function useArchiveEvent() {
   })
 }
 
+export function useRemoveEvent() {
+  const api = useApi()
+  const viewer = useViewer()
+  const queries = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => api.events.remove(id, viewer),
+    onSuccess: () => queries.invalidateQueries({ queryKey: ['events'] }),
+  })
+}
+
 export function useSaveEvent() {
   const api = useApi()
   const viewer = useViewer()

@@ -392,7 +392,7 @@ create index if not exists events_starts_at_idx on portal.events (starts_at desc
 alter table portal.events enable row level security;
 
 grant select on portal.events to anon, authenticated;
-grant insert, update on portal.events to authenticated;
+grant insert, update, delete on portal.events to authenticated;
 
 -- Anything published, whatever its date: a past evening keeps its page, and so does a cancelled
 -- one. A draft is the committee's alone.
@@ -419,6 +419,12 @@ drop policy if exists "admins edit events" on portal.events;
 create policy "admins edit events"
   on portal.events for update to authenticated
   using (portal.is_admin()) with check (portal.is_admin());
+
+-- Deleting, for an evening that should never have been there. Refused by guard_event_delete,
+-- further down, once it has a headcount or an album filed under it. See event-delete.sql.
+drop policy if exists "admins delete events" on portal.events;
+create policy "admins delete events"
+  on portal.events for delete to authenticated using (portal.is_admin());
 
 
 -- ---------------------------------------------------------------------------
@@ -1186,10 +1192,10 @@ drop trigger if exists record_change on portal.contact_messages;
 create trigger record_change after update or delete on portal.contact_messages
   for each row execute function portal.record_change();
 
--- Publishing and cancelling are both worth a line: "when did that go up?" and "who cancelled
--- it?" are the two questions asked about an evening after the fact.
+-- Publishing, cancelling and deleting are all worth a line: "when did that go up?", "who
+-- cancelled it?" and "where did it go?" are the questions asked about an evening afterwards.
 drop trigger if exists record_change on portal.events;
-create trigger record_change after insert or update on portal.events
+create trigger record_change after insert or update or delete on portal.events
   for each row execute function portal.record_change();
 
 -- Taking a photograph down is the line somebody asks about later.
@@ -1271,6 +1277,32 @@ create trigger record_change after insert or update or delete on portal.event_at
 comment on table portal.event_attendance is
   'How many came to each event. Typed in by the committee; nobody is named, so it is kept for good.';
 
+
+
+-- An evening with a headcount, or an album filed under it, is not deleted: that is history
+-- somebody else is holding. 45003, with a sentence fit to show. Same as event-delete.sql.
+create or replace function portal.guard_event_delete() returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if exists (select 1 from portal.event_attendance where event_slug in (old.slug, old.id::text)) then
+    raise exception 'This evening has a headcount recorded, so it stays. Archive it instead.'
+      using errcode = '45003';
+  end if;
+  if exists (select 1 from portal.albums where event_slug in (old.slug, old.id::text)) then
+    raise exception 'A photo album is filed under this evening. Move the album to another evening, or delete it, first.'
+      using errcode = '45003';
+  end if;
+  return old;
+end;
+$$;
+
+drop trigger if exists guard_event_delete on portal.events;
+create trigger guard_event_delete
+  before delete on portal.events
+  for each row execute function portal.guard_event_delete();
 
 -- ===========================================================================
 -- Not here yet

@@ -718,6 +718,11 @@ because jsdom does not paint — that one belongs in a browser.
       *not found*, a stranger cannot add to the list, and the public site's own reads still answer.
       Who is on the list, and that `verify.sql` ended cleanly, cannot be seen from there — those are
       on the word of whoever ran it
+- [x] **Run `supabase/event-delete.sql` on the live project** — lets the committee delete an evening,
+      refused where a headcount or an album still hangs on it. Run 2026-10-02. Checked from outside
+      with the anon key: a stranger's delete answers *permission denied*, and the public reads still
+      answer. That an admin can delete, and that the two refusals fire, is proven against PGlite and
+      not yet against the live project — try it on the branch preview with a test evening
 - [ ] Decide the release gate: does `showMemberSignIn` go `true` on merge, or does this land dark?
 - [ ] Ask before pushing, before the PR, and before the merge
 

@@ -1,9 +1,8 @@
-/* The button at the top of the sidebar: one of the sidebar's own, with an outline to say "type here". */
+/* The button in the header: in the frame's own colours, with an outline to say "type here". */
 .trigger {
   display: flex;
   align-items: center;
   gap: 10px;
-  width: 100%;
   min-height: 38px;
   padding: 0 8px 0 10px;
   border: 1px solid var(--side-border);
@@ -23,29 +22,6 @@
 }
 
 .trigger:focus-visible {
-  outline: 3px solid var(--color-focus);
-  outline-offset: 2px;
-}
-
-/* Just the glass, in the phone's bar beside the menu button and the same size as it. */
-.compact {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  border: 0;
-  border-radius: var(--radius-pill);
-  background: transparent;
-  color: var(--color-fg);
-  cursor: pointer;
-}
-
-.compact:hover {
-  background: var(--color-hover-wash);
-}
-
-.compact:focus-visible {
   outline: 3px solid var(--color-focus);
   outline-offset: 2px;
 }
@@ -263,5 +239,31 @@
   from {
     opacity: 0;
     transform: translateY(6px);
+  }
+}
+
+/* On a phone the header has room for the glass and nothing else. */
+@media (max-width: 900px) {
+  .trigger {
+    justify-content: center;
+    width: 44px;
+    min-height: 44px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-pill);
+    color: inherit;
+  }
+
+  .label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .kbd {
+    display: none;
   }
 }

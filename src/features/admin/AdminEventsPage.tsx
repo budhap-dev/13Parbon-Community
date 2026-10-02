@@ -3,10 +3,13 @@ import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { useOpenFromAddress } from '@/app/useOpenFromAddress'
 import { useScrollToTopOn } from '@/app/useScrollToTopOn'
 import { Button } from '@/components/Button'
+import { ConfirmDialog } from '@/components/ConfirmDialog'
+import { Icon } from '@/components/Icon'
 import { formatDateWithYear, formatLongDate, formatTime } from '@/domain/dates'
 import {
   useAllEvents,
   useArchiveEvent,
+  useRemoveEvent,
   useAttendance,
   useCreateEvent,
   useNextEvent,
@@ -23,6 +26,13 @@ import { AttendanceForm } from './AttendanceForm'
 import { EventDesigner } from './EventDesigner'
 import styles from '@/features/portal/Portal.module.css'
 
+const STATUS_WORDS: Record<Event['status'], string> = {
+  draft: 'Draft',
+  published: 'Published',
+  cancelled: 'Cancelled',
+  past: 'Past',
+}
+
 export function AdminEventsPage() {
   useDocumentTitle('Events')
   const hasPlanner = useSettings().tools.length > 0
@@ -38,6 +48,9 @@ export function AdminEventsPage() {
   const saveEvent = useSaveEvent()
   const createEvent = useCreateEvent()
   const archive = useArchiveEvent()
+  const remove = useRemoveEvent()
+  /** The evening being asked about, before it is deleted. */
+  const [deleting, setDeleting] = useState<Event | null>(null)
   const now = useNow()
   // null is closed, 'new' is a blank evening, an event is that one being designed.
   const [designing, setDesigning] = useState<Event | 'new' | null>(null)
@@ -150,7 +163,9 @@ export function AdminEventsPage() {
                   </td>
                   <td>
                     <span className={e.status === 'published' ? styles.pillLive : styles.pillPast}>
-                      {e.status === 'published' ? 'Published' : e.status === 'past' ? 'Past' : 'Draft'}
+                      {/* Cancelled said Draft, which is the one thing a cancelled evening is not:
+                          it is still up, saying so. */}
+                      {STATUS_WORDS[e.status]}
                     </span>
                   </td>
                   <td>
@@ -169,6 +184,17 @@ export function AdminEventsPage() {
                           Archive
                         </Button>
                       ) : null}
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        aria-label={`Delete ${e.title}`}
+                        onClick={() => {
+                          remove.reset()
+                          setDeleting(e)
+                        }}
+                      >
+                        <Icon name="trash" size={15} />
+                      </Button>
                     </span>
                   </td>
                 </tr>
@@ -176,6 +202,30 @@ export function AdminEventsPage() {
             </tbody>
           </table>
         </div>
+        <ConfirmDialog
+          open={deleting !== null}
+          title="Delete this event?"
+          confirmLabel="Delete"
+          busyLabel="Deleting…"
+          busy={remove.isPending}
+          error={remove.isError ? remove.error.message : undefined}
+          onCancel={() => setDeleting(null)}
+          onConfirm={() => deleting && remove.mutate(deleting.id, { onSuccess: () => setDeleting(null) })}
+        >
+          {deleting ? (
+            <>
+              <strong>{deleting.title}</strong>, {formatDateWithYear(deleting.startsAt)}, goes for good — off the website and
+              out of this list. A line stays in What has changed saying you deleted it.
+              {deleting.status !== 'draft' ? (
+                <>
+                  {' '}
+                  <strong>It is on the website now</strong>, so anybody following a link to it will find nothing there.
+                </>
+              ) : null}{' '}
+              To take it off the website and keep it, set it to Draft in Design instead.
+            </>
+          ) : null}
+        </ConfirmDialog>
       </section>
       <section className={styles.panel} aria-labelledby="attendance-title">
         <div className={styles.panelHead}>

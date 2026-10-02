@@ -3,7 +3,7 @@ import { isValidAttendance, type EventAttendance } from '@/domain/attendance'
 import { isValidContact, type ContactMessage } from '@/domain/contact'
 import { forReview, isValidFeedback, type Feedback, type FeedbackStatus } from '@/domain/feedback'
 import { isLive, isValid, slugFrom, validateAnnouncement, validateNews, type Announcement, type AnnouncementDraft, type NewsDraft, type NewsPost } from '@/domain/news'
-import { isValidEvent, tidyProgramme, type Event, type EventDraft } from '@/domain/event'
+import { isValidEvent, shapeOfEvent, type Event } from '@/domain/event'
 import { uniqueSlug } from '@/domain/slug'
 import { inOrder, pinnedCover, type AlbumDraft, type AlbumWithMedia, type Media } from '@/domain/gallery'
 import { validateSettings, type SiteSettings } from '@/domain/settings'
@@ -101,39 +101,6 @@ function shapeOfAnnouncement(draft: AnnouncementDraft, fallbackPublishAt: string
   }
 }
 
-/** The draft, with the empty strings turned back into absent fields. */
-function shapeOfEvent(draft: EventDraft) {
-  const text = (value: string) => (value.trim() ? value.trim() : undefined)
-  const programme = tidyProgramme(draft.programme)
-  return {
-    title: draft.title.trim(),
-    summary: draft.summary.trim(),
-    startsAt: draft.startsAt,
-    endsAt: text(draft.endsAt),
-    venue: draft.venue.trim(),
-    venueAddress: text(draft.venueAddress),
-    coordinates: draft.coordinates ?? undefined,
-    festivalId: text(draft.festivalId),
-    coverImageUrl: text(draft.coverImageUrl),
-    coverAnimation: draft.coverAnimation,
-    // An empty theme is absent rather than three empty strings, or the page draws a blank kicker.
-    theme: draft.theme.bengali.trim()
-      ? {
-          bengali: draft.theme.bengali.trim(),
-          bengaliSubtitle: text(draft.theme.bengaliSubtitle),
-          english: text(draft.theme.english),
-        }
-      : undefined,
-    programme: programme.length > 0 ? programme : undefined,
-    registrationUrl: text(draft.registrationUrl),
-    performerFormUrl: text(draft.performerFormUrl),
-    registrationOpen: draft.registrationOpen,
-    volunteerCall: text(draft.volunteerCall),
-    performerCall: text(draft.performerCall),
-    status: draft.status,
-    isPublic: draft.isPublic,
-  }
-}
 
 /** An album needs a name people can read, and nothing else the form does not already give it. */
 function checkAlbum(draft: AlbumDraft): NotAllowed | null {
@@ -300,6 +267,25 @@ export function createMockApi({
         if (!event) return Promise.reject(new NotAllowed('no such event'))
         event.status = 'past'
         return delay(event, latencyMs)
+      },
+
+      // The same refusals as guard_event_delete, in the same words. Headcounts and albums name
+      // their evening by its id here and by its slug in the database, so either counts.
+      remove: (id, viewer) => {
+        if (!isAdmin(viewer)) return Promise.reject(new NotAllowed('only the committee can do that'))
+        const at = allEvents.findIndex((e) => e.id === id)
+        if (at < 0) return Promise.reject(new NotAllowed('no such event'))
+        const names = [allEvents[at].id, allEvents[at].slug]
+        if (portal.attendance.some((a) => names.includes(a.eventId))) {
+          return Promise.reject(new NotAllowed('This evening has a headcount recorded, so it stays. Archive it instead.'))
+        }
+        if (fixtures.albums.some((album) => album.eventId && names.includes(album.eventId))) {
+          return Promise.reject(
+            new NotAllowed('A photo album is filed under this evening. Move the album to another evening, or delete it, first.'),
+          )
+        }
+        allEvents.splice(at, 1)
+        return delay(undefined, latencyMs)
       },
 
       save: (id, draft, viewer) => {

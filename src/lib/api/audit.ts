@@ -168,6 +168,16 @@ export function withAuditTrail(base: ApiClient, now: () => Date = () => new Date
         record(viewer, 'event:archive', { kind: 'events', id }, was, { status: event.status })
         return event
       },
+      remove: async (id, viewer) => {
+        const was = snapshot(
+          await base.events.listAll(viewer).then((all) => all.find((e) => e.id === id)),
+          'title',
+          'startsAt',
+          'status',
+        )
+        await base.events.remove(id, viewer)
+        record(viewer, 'event:remove', { kind: 'events', id }, was, {})
+      },
       save: async (id, draft, viewer) => {
         const was = snapshot(
           await base.events.listAll(viewer).then((all) => all.find((e) => e.id === id)),

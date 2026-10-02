@@ -204,6 +204,16 @@ export function eventMethods(getClient: () => Promise<SupabaseClient>, now = () 
       if (!data) throw new NotAllowed('no such event')
       return reread(id)
     },
+
+    remove: async (id: string) => {
+      const { error, data } = await table(await getClient()).delete().eq('id', id).select('id').maybeSingle()
+      // 45003 is guard_event_delete, refusing an evening with a headcount or an album filed
+      // under it. Its sentence says which, and what to do instead, so it is shown as it is.
+      if (error?.code === '45003') throw new NotAllowed(error.message)
+      if (error) refuse('only the committee can do that', error)
+      // The policy matched nothing, so there was nothing there to delete — as far as you know.
+      if (!data) throw new NotAllowed('no such event')
+    },
   }
 }
 

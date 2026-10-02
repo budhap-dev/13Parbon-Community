@@ -68,27 +68,24 @@ export function PortalSearch({
   return open ? <SearchDialog screens={screens} onClose={() => setOpen(false)} /> : null
 }
 
-/** What opens the search: a box-shaped button in the sidebar, or just the glass in the bar. */
-export function SearchButton({ onClick, compact, className }: { onClick: () => void; compact?: boolean; className?: string }) {
+/**
+ * What opens the search, in the header: a box that says Search and ⌘K on a wide screen, and on a
+ * phone just the glass — the same button, so it has one name to a screen reader either way.
+ */
+export function SearchButton({ onClick, className }: { onClick: () => void; className?: string }) {
   return (
     <button
       type="button"
-      className={[compact ? styles.compact : styles.trigger, className].filter(Boolean).join(' ')}
+      className={[styles.trigger, className].filter(Boolean).join(' ')}
       aria-haspopup="dialog"
       aria-keyshortcuts="Meta+K Control+K"
       onClick={onClick}
     >
-      <Icon name="search" size={compact ? 22 : 17} />
-      {compact ? (
-        <span className={styles.srOnly}>Search</span>
-      ) : (
-        <>
-          <span>Search</span>
-          <kbd className={styles.kbd} aria-hidden="true">
-            {onAMac() ? '⌘K' : 'Ctrl K'}
-          </kbd>
-        </>
-      )}
+      <Icon name="search" size={18} />
+      <span className={styles.label}>Search</span>
+      <kbd className={styles.kbd} aria-hidden="true">
+        {onAMac() ? '⌘K' : 'Ctrl K'}
+      </kbd>
     </button>
   )
 }

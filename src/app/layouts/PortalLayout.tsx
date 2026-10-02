@@ -9,6 +9,7 @@ import { ThemeSwitcher } from './ThemeSwitcher'
 import { useSwipeToClose } from './useSwipeToClose'
 import { useThemeScope } from '@/app/theme/ThemeContext'
 import { useGoogleSignIn } from '@/lib/auth/GoogleSignIn'
+import { useNow } from '@/lib/clock'
 import { useSession, useSignedIn } from '@/lib/auth/session'
 import { previewAccounts } from '@/lib/auth/previewAccounts'
 import { useAllFeedback, useAllSuggestions, useSignInAttempts, useViewer } from '@/lib/api'
@@ -46,6 +47,25 @@ const committeeScreens: Item[] = [
   { label: 'What has changed', to: '/admin/audit', icon: 'clock' },
 ]
 
+/**
+ * Which screen this is, and which part of the portal, for the header: the screen whose address
+ * is the longest start of this one, so a quiz under /portal/play is still Polls and quizzes.
+ */
+function whereIs(pathname: string): { group: string; label: string } {
+  const groups = [
+    { group: 'Committee', items: committeeScreens },
+    { group: 'Your household', items: memberNav },
+  ]
+  let best = { group: 'Portal', label: 'Home', length: 0 }
+  for (const { group, items } of groups) {
+    for (const item of items) {
+      const matches = pathname === item.to || pathname.startsWith(`${item.to}/`)
+      if (matches && item.to.length > best.length) best = { group, label: item.label, length: item.to.length }
+    }
+  }
+  return { group: best.group, label: best.label }
+}
+
 /** Every screen, for the search to jump to. The member ones say whose they are. */
 const searchScreens: SearchScreen[] = [
   ...committeeScreens,
@@ -64,7 +84,8 @@ export function PortalLayout() {
   const mainRef = useRef<HTMLElement>(null)
   const first = useRef(true)
   const { data: attempts } = useSignInAttempts()
-  const { tools } = useSettings()
+  const { tools, text } = useSettings()
+  const year = useNow().getFullYear()
   const { data: feedback } = useAllFeedback()
   const { data: suggestions } = useAllSuggestions()
 
@@ -167,6 +188,7 @@ export function PortalLayout() {
     '/admin/play': waitingSuggestions(suggestions ?? []).length,
   }
   const committeeNav: Item[] = committeeScreens.map((item) => ({ ...item, count: counts[item.to] }))
+  const where = whereIs(pathname)
 
   const renderGroup = (label: string, items: Item[]) => (
     <div className={styles.group}>
@@ -191,7 +213,7 @@ export function PortalLayout() {
       <a href="#portal-main" className={styles.skip}>
         Skip to content
       </a>
-      {/* The phone's bar. Hidden on a wider screen, where the sidebar is always there. */}
+      {/* The header, in the frame's colours. On a phone it carries the menu and the name too. */}
       <header className={styles.bar} inert={menuOpen || undefined}>
         <button
           ref={menuButton}
@@ -208,8 +230,23 @@ export function PortalLayout() {
           <img src={site.emblem} alt="" className={styles.emblem} width={30} height={30} />
           <span>{site.wordmark}</span>
         </Link>
-        {onTheCommittee ? <SearchButton compact className={styles.barSearch} onClick={() => setSearching(true)} /> : null}
+        <p className={styles.crumbs} aria-label="You are in">
+          <span className={styles.crumbGroup}>{where.group}</span>
+          <span className={styles.crumbSep} aria-hidden="true">
+            /
+          </span>
+          <span className={styles.crumbHere}>{where.label}</span>
+        </p>
+        <div className={styles.barEnd}>
+          {onTheCommittee ? <SearchButton className={styles.barSearch} onClick={() => setSearching(true)} /> : null}
+          <a href="/" target="_blank" rel="noreferrer" className={styles.siteLink}>
+            View the website
+            <Icon name="external" size={14} />
+            <span className={styles.srOnly}>, opens in a new tab</span>
+          </a>
+        </div>
       </header>
+      {onTheCommittee ? <PortalSearch screens={searchScreens} open={searching} setOpen={setSearching} /> : null}
 
       <div
         ref={scrimRef}
@@ -236,12 +273,6 @@ export function PortalLayout() {
             <span className={styles.srOnly}>Close menu</span>
           </button>
         </div>
-        {onTheCommittee ? (
-          <>
-            <SearchButton className={styles.sideSearch} onClick={() => setSearching(true)} />
-            <PortalSearch screens={searchScreens} open={searching} setOpen={setSearching} />
-          </>
-        ) : null}
         <div className={styles.navs}>
         <nav aria-label="Your household">{renderGroup('Your household', memberNav)}</nav>
         {onTheCommittee ? (
@@ -377,6 +408,20 @@ export function PortalLayout() {
           <Outlet />
         </div>
       </main>
+      {/* Outside main, so it is the page's own footer to a screen reader rather than a box in the content. */}
+      <footer className={styles.foot} inert={menuOpen || undefined}>
+        <span>
+          © {year} {site.name}
+          {text.town ? ` · ${text.town}` : ''}
+        </span>
+        <span className={styles.footLinks}>
+          <span>Portal v{__APP_VERSION__}</span>
+          <Link to="/privacy">Privacy notice</Link>
+          <a href="/" target="_blank" rel="noreferrer">
+            The website<span className={styles.srOnly}>, opens in a new tab</span>
+          </a>
+        </span>
+      </footer>
       <ScrollRestoration />
     </div>
   )

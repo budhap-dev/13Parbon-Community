@@ -6,7 +6,7 @@ import { blankEvent } from '@/domain/event'
 function fakeClient(rows: unknown[] = [], errors: { code: string; message: string } | null = null) {
   const calls: string[] = []
   const chain: Record<string, unknown> = {}
-  for (const method of ['select', 'eq', 'order', 'insert', 'update']) {
+  for (const method of ['select', 'eq', 'order', 'insert', 'update', 'delete']) {
     chain[method] = (...args: unknown[]) => {
       calls.push(`${method}(${args.map((a) => (typeof a === 'string' ? a : '…')).join(',')})`)
       return chain
@@ -120,5 +120,25 @@ describe("between the database's words and the app's", () => {
       programme: [{ time: '19:00', what: 'Dinner' }, { time: '18:00', what: 'Doors' }, { time: '', what: '  ' }],
     }).programme
     expect(programme).toEqual([{ time: '18:00', what: 'Doors' }, { time: '19:00', what: 'Dinner' }])
+  })
+})
+
+describe('deleting one', () => {
+  it('deletes the evening it was asked about', async () => {
+    const fake = fakeClient([{ id: 'ev-1' }])
+    await eventMethods(async () => fake.client).remove('ev-1', admin)
+    expect(fake.calls).toContain('delete()')
+    expect(fake.calls).toContain('eq(id,ev-1)')
+  })
+
+  it('shows the database’s own sentence when it refuses, which says what to do instead', async () => {
+    const sentence = 'This evening has a headcount recorded, so it stays. Archive it instead.'
+    const fake = fakeClient([], { code: '45003', message: sentence })
+    await expect(eventMethods(async () => fake.client).remove('ev-1', admin)).rejects.toThrow(sentence)
+  })
+
+  it('does not pretend to have deleted an evening the policy hid', async () => {
+    const fake = fakeClient([])
+    await expect(eventMethods(async () => fake.client).remove('ev-9', admin)).rejects.toThrow(/no such event/)
   })
 })

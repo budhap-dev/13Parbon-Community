@@ -137,3 +137,29 @@ describe('the portal’s menu on a phone', () => {
     expect(within(screen.getByRole('banner')).queryByRole('button', { name: 'Search' })).not.toBeInTheDocument()
   })
 })
+
+describe('the portal’s header and footer', () => {
+  it('says where you are, down to the screen inside a section', async () => {
+    renderAt('/admin/events')
+    const here = await screen.findByLabelText('You are in')
+    expect(here).toHaveTextContent('Committee/Events')
+
+    renderAt('/portal/play')
+    expect((await screen.findAllByLabelText('You are in')).at(-1)).toHaveTextContent('Your household/Polls and quizzes')
+  })
+
+  it('offers the public site, in a new tab, from every screen', async () => {
+    renderAt('/admin')
+    const link = within(await screen.findByRole('banner')).getByRole('link', { name: /View the website/ })
+    expect(link).toHaveAttribute('href', '/')
+    expect(link).toHaveAttribute('target', '_blank')
+  })
+
+  it('ends every page with whose it is, the year, and which version is running', async () => {
+    renderAt('/admin')
+    const footer = await screen.findByRole('contentinfo')
+    expect(footer).toHaveTextContent(`© ${new Date().getFullYear()} 13Parbon Community`)
+    expect(footer).toHaveTextContent(`Portal v${__APP_VERSION__}`)
+    expect(within(footer).getByRole('link', { name: 'Privacy notice' })).toHaveAttribute('href', '/privacy')
+  })
+})

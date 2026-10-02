@@ -32,6 +32,7 @@ export function createEmptyApi(): ApiClient {
       listUpcoming: async () => [], listPast: async () => [], getNext: async () => null, getBySlug: async () => null,
       listAll: async () => [], save: async () => { throw new Error('not connected') },
       create: async () => { throw new Error('not connected') }, archive: async () => { throw new Error('not connected') },
+      remove: async () => { throw new Error('not connected') },
     },
     festivals: { list: async () => [] },
     gallery: {
@@ -115,7 +116,7 @@ export function createFailingApi(): ApiClient {
   }
   return {
     delivers: false,
-    events: { listUpcoming: down, listPast: down, getNext: down, getBySlug: down, listAll: down, save: down, create: down, archive: down },
+    events: { listUpcoming: down, listPast: down, getNext: down, getBySlug: down, listAll: down, save: down, create: down, archive: down, remove: down },
     festivals: { list: down },
     gallery: {
       listRecentMedia: down, listAlbums: down, getAlbum: down, listAllAlbums: down,

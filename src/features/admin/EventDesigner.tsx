@@ -4,10 +4,12 @@ import { Button } from '@/components/Button'
 import { CoverImage } from '@/components/CoverImage'
 import { PhotoUpload } from '@/components/PhotoUpload'
 import { Icon } from '@/components/Icon'
-import { COVER_ANIMATIONS, type CoverAnimation } from '@/domain/cover'
+import { COVER_ANIMATIONS, COVER_KINDS, type CoverAnimation } from '@/domain/cover'
 import { daysUntil, describeCountdown, formatLongDate, formatTime, forDateTimeInput, fromDateTimeInput } from '@/domain/dates'
-import { blankEvent, tidyProgramme, validateEvent, type Event, type EventDraft, type EventErrors } from '@/domain/event'
+import { blankEvent, previewOfDraft, tidyProgramme, validateEvent, type Event, type EventDraft, type EventErrors } from '@/domain/event'
 import { useNow } from '@/lib/clock'
+import { useReducedMotion } from '@/lib/useReducedMotion'
+import { EventPreview } from './EventPreview'
 import { readUploadConfig, uploadPhoto, UploadNotConfigured } from '@/lib/api/uploads'
 import { slugFrom } from '@/domain/slug'
 import styles from './ContentForms.module.css'
@@ -76,6 +78,15 @@ export function EventDesigner({
    * address. Only for the preview: what is saved is the address, and there is not one yet.
    */
   const [chosenCover, setChosenCover] = useState<string | null>(null)
+  /** The full page, open over the designer. */
+  const [previewing, setPreviewing] = useState(false)
+  /** Bumped by "Play again", to draw the small preview's cover afresh and restart its movement. */
+  const [replay, setReplay] = useState(0)
+  const reduced = useReducedMotion()
+  const cover = draft.coverImageUrl || chosenCover || ''
+  const moves = draft.coverAnimation !== 'none' && Boolean(cover)
+  // The real page cannot be drawn without the two things it is built around.
+  const canPreviewPage = Boolean(draft.title.trim() && draft.startsAt)
   const { festivals } = useSettings()
   const now = useNow()
   // Null where no bucket is configured, which the upload says out loud rather than failing.
@@ -252,10 +263,21 @@ export function EventDesigner({
             aria-describedby="coverAnimation-note"
             onChange={(e) => set('coverAnimation', e.target.value as CoverAnimation)}
           >
-            {COVER_ANIMATIONS.map((a) => (
+            {/* Still on its own, then the two kinds under their own headings, so the menu
+                says which ones stop and which carry on. */}
+            {COVER_ANIMATIONS.filter((a) => a.kind === 'still').map((a) => (
               <option key={a.value} value={a.value}>
                 {a.label}
               </option>
+            ))}
+            {COVER_KINDS.map((group) => (
+              <optgroup key={group.kind} label={group.label}>
+                {COVER_ANIMATIONS.filter((a) => a.kind === group.kind).map((a) => (
+                  <option key={a.value} value={a.value}>
+                    {a.label}
+                  </option>
+                ))}
+              </optgroup>
             ))}
           </select>
           <p id="coverAnimation-note" className={styles.hint}>
@@ -425,6 +447,15 @@ export function EventDesigner({
             query says "desktop" however narrow this column happens to be — so the phone view is
             a class, and it is the real width of a phone rather than an impression of one.
           */}
+          <Button
+            variant="line"
+            size="sm"
+            onClick={() => setPreviewing(true)}
+            disabled={!canPreviewPage}
+            title={canPreviewPage ? undefined : 'Give it a name and a start time first'}
+          >
+            Preview the page
+          </Button>
           <div className={design.devices} role="group" aria-label="Preview width">
             {(['desktop', 'phone'] as const).map((which) => (
               <button
@@ -446,7 +477,8 @@ export function EventDesigner({
                 seeing the preview unchanged reads as the choice not having taken. The note
                 below says which of the two this is. */}
             <CoverImage
-              src={draft.coverImageUrl || chosenCover || ''}
+              key={replay}
+              src={cover}
               animation={draft.coverAnimation}
               ratio={device === 'phone' ? '4 / 3' : '16 / 9'}
             />
@@ -493,6 +525,25 @@ export function EventDesigner({
             </div>
           </div>
         </div>
+
+        {moves ? (
+          <div className={design.motion}>
+            <Button variant="line" size="sm" onClick={() => setReplay((n) => n + 1)}>
+              ▶ Play again
+            </Button>
+            {reduced ? (
+              <span className={design.standIn}>
+                This computer is set to reduce motion, so the cover stands still here — as it does for any visitor who has
+                asked for the same.
+              </span>
+            ) : null}
+          </div>
+        ) : null}
+        {!canPreviewPage ? (
+          <p className={design.standIn}>Give it a name and a start time to preview the whole page.</p>
+        ) : null}
+
+        {previewing ? <EventPreview event={previewOfDraft(draft, chosenCover ?? undefined)} onClose={() => setPreviewing(false)} /> : null}
 
         {/* Greyed text is a stand-in, not a value that will be saved. Saying so is cheaper than
             somebody publishing an evening called Boishakhi 2027 that they never typed. */}

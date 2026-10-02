@@ -11,6 +11,8 @@
 .shell {
   display: grid;
   grid-template-columns: 252px minmax(0, 1fr);
+  /* The header and the footer their own heights, and the page the rest. */
+  grid-template-rows: auto 1fr auto;
   min-height: 100vh;
   color: var(--color-fg);
   /* The theme's own ground: ruled lines, a weave, a dot grid — see the end of tokens.css. */
@@ -34,6 +36,17 @@
   --button-md-height: 42px;
   --button-md-pad: 20px;
   --button-md-font: 15px;
+  /*
+   * The frame's colours — sidebar, header and footer — which a theme may set apart from the
+   * page's: Mist puts a dark frame around a light page. Everything in the frame paints with these.
+   */
+  --side-fg: var(--portal-side-fg, var(--color-fg));
+  --side-muted: var(--portal-side-muted, var(--color-fg-muted));
+  --side-faint: var(--portal-side-faint, var(--color-fg-faint));
+  --side-border: var(--portal-side-border, var(--color-border-faint));
+  --side-wash: var(--portal-side-wash, var(--color-hover-wash));
+  --side-accent: var(--portal-side-accent, var(--color-accent));
+  --side-on-accent: var(--portal-side-on-accent, var(--color-on-accent));
 }
 
 /*
@@ -49,18 +62,9 @@
   gap: 18px;
   height: 100vh;
   height: 100dvh;
-  padding: 18px 12px 14px;
-  /*
-   * The sidebar's own colours, which a theme may set apart from the page's: Mist puts a dark
-   * sidebar beside a light page. Everything in here paints with these rather than the page's.
-   */
-  --side-fg: var(--portal-side-fg, var(--color-fg));
-  --side-muted: var(--portal-side-muted, var(--color-fg-muted));
-  --side-faint: var(--portal-side-faint, var(--color-fg-faint));
-  --side-border: var(--portal-side-border, var(--color-border-faint));
-  --side-wash: var(--portal-side-wash, var(--color-hover-wash));
-  --side-accent: var(--portal-side-accent, var(--color-accent));
-  --side-on-accent: var(--portal-side-on-accent, var(--color-on-accent));
+  padding: 0 12px 14px;
+  grid-column: 1;
+  grid-row: 1 / span 3;
   background: var(--portal-side-bg, var(--color-bg-raised));
   color: var(--side-fg);
   border-right: 1px solid var(--side-border);
@@ -330,6 +334,8 @@
 }
 
 .main {
+  grid-column: 2;
+  grid-row: 2;
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -382,44 +388,171 @@
   composes: side;
 }
 
+/*
+ * The name at the top of the sidebar, the same height as the header beside it and ruled off at
+ * the same line, so the two read as one band across the top of the screen.
+ */
 .sideHead {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  min-height: var(--portal-bar-height, 60px);
+  margin: 0 -12px;
+  padding: 0 12px 0 14px;
+  border-bottom: 1px solid var(--side-border);
 }
 
-/* Only a phone has these: the bar across the top, the drawer's own close, the shade behind it. */
-.bar,
+/* Only a phone has these: the drawer's own close, the shade behind it, the menu button and the
+   name in the bar (on a wider screen the sidebar carries the name). */
 .drawerClose,
 .scrim,
-.scrimOn {
+.scrimOn,
+.menuButton,
+.barBrand {
   display: none;
+}
+
+/*
+ * The header, in the frame's colours. Where you are on the left; the search and the way out to
+ * the public site on the right. Sticky, so both are there however far down a long table goes.
+ */
+.bar {
+  grid-column: 2;
+  grid-row: 1;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: var(--portal-bar-height, 60px);
+  padding: 0 24px 0 36px;
+  background: var(--portal-side-bg, var(--color-bg-raised));
+  color: var(--side-fg);
+  border-bottom: 1px solid var(--side-border);
+}
+
+.crumbs {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  font-size: 14.5px;
+}
+
+.crumbGroup {
+  color: var(--side-muted);
+  white-space: nowrap;
+}
+
+.crumbSep {
+  color: var(--side-faint);
+}
+
+.crumbHere {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.barEnd {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.barSearch {
+  width: auto;
+  min-width: 240px;
+}
+
+.siteLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 0 12px;
+  border-radius: 8px;
+  color: var(--side-muted);
+  font-size: 13.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.siteLink:hover {
+  background: var(--side-wash);
+  color: var(--side-fg);
+}
+
+/* The foot of every page, in the frame's colours: whose this is, which version, and the way out. */
+.foot {
+  grid-column: 2;
+  grid-row: 3;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 16px;
+  padding: 14px 36px;
+  background: var(--portal-side-bg, var(--color-bg-raised));
+  color: var(--side-muted);
+  border-top: 1px solid var(--side-border);
+  font-size: 12.5px;
+}
+
+.footLinks {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 14px;
+}
+
+.foot a {
+  color: var(--side-muted);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.foot a:hover {
+  color: var(--side-fg);
 }
 
 @media (max-width: 900px) {
   .shell {
     grid-template-columns: minmax(0, 1fr);
-    /* The bar its own height and the page the rest, rather than the two sharing the window. */
-    grid-template-rows: auto 1fr;
   }
 
   /*
    * The bar: the menu, the name, and the search. Sticky, because on a phone the way to another
    * screen is otherwise a scroll back up a long table away.
    */
+  .bar,
+  .main,
+  .foot {
+    grid-column: 1;
+  }
+
   .bar {
-    position: sticky;
-    top: 0;
-    z-index: 40;
-    display: flex;
-    align-items: center;
     gap: 4px;
     min-height: 56px;
     padding: 0 8px;
-    background: var(--portal-side-bg, var(--color-bg-raised));
-    color: var(--portal-side-fg, var(--color-fg));
-    border-bottom: 1px solid var(--portal-side-border, var(--color-border-faint));
+  }
+
+  .crumbs,
+  .siteLink {
+    display: none;
+  }
+
+  .barSearch {
+    min-width: 0;
+  }
+
+  .foot {
+    padding: 14px 16px;
   }
 
   .menuButton,
@@ -471,10 +604,6 @@
     height: 30px;
   }
 
-  .barSearch {
-    margin-left: auto;
-    color: inherit;
-  }
 
   /*
    * The sidebar, as a drawer out from the left. Kept in the document when shut so the movement
@@ -526,11 +655,6 @@
   .navs {
     flex: none;
     overflow: visible;
-  }
-
-  /* The bar has the search; a second one an inch below it in the drawer is a duplicate. */
-  .sideSearch {
-    display: none;
   }
 
   /*

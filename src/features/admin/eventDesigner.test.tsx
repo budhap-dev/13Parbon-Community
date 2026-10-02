@@ -203,7 +203,10 @@ describe('the preview', () => {
     const picker = screen.getByLabelText('How it moves')
     expect(within(picker).getByRole('option', { name: 'Still' })).toBeInTheDocument()
     expect(within(picker).getByRole('option', { name: 'Slow zoom' })).toBeInTheDocument()
-    expect(within(picker).getAllByRole('option').length).toBeLessThanOrEqual(6)
+    expect(within(picker).getAllByRole('option').length).toBeLessThanOrEqual(7)
+    // Grouped by whether a movement stops or carries on, so the choice says what it commits to.
+    expect(within(picker).getByRole('group', { name: 'Once, as the page opens' })).toHaveTextContent('Fade in')
+    expect(within(picker).getByRole('group', { name: 'Keeps moving, slowly' })).toHaveTextContent('Ken Burns')
   })
 
   it('says what the chosen movement does, and changes as the choice does', async () => {
@@ -214,7 +217,7 @@ describe('the preview', () => {
     expect(screen.getByText(/Suits a wide photograph/)).toBeInTheDocument()
 
     await userEvent.selectOptions(screen.getByLabelText('How it moves'), 'colour')
-    expect(screen.getByText(/Starts black and white/)).toBeInTheDocument()
+    expect(screen.getByText(/the colour sweeps across it from the left/)).toBeInTheDocument()
   })
 
   it('promises that somebody asking for less movement gets none', async () => {

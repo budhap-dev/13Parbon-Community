@@ -2,7 +2,7 @@ import { createBrowserRouter, type RouteObject } from 'react-router'
 import { RouteError } from '@/components/RouteError'
 import { AboutPage } from '@/features/about'
 import { ContactPage } from '@/features/contact'
-import { EventPage, EventsPage } from '@/features/events'
+import { EventPage, EventPreviewPage, EventsPage } from '@/features/events'
 import { FeedbackPage } from '@/features/feedback'
 import { AlbumPage, GalleryPage } from '@/features/gallery'
 import { LoginPage } from '@/features/membership'
@@ -36,6 +36,7 @@ export const routes: RouteObject[] = [
       { index: true, Component: HomePage },
       { path: 'events', Component: EventsPage },
       { path: 'events/:slug', Component: EventPage },
+      { path: 'preview/event', Component: EventPreviewPage },
       {
         // Both sections answer as though they were not there while their switch is off, which
         // is what the switch says it does. See SectionGate.

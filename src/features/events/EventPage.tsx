@@ -11,7 +11,7 @@ import { ShareButton } from '@/components/ShareButton'
 import { ThenNowCollage } from '@/components/ThenNowCollage'
 import { VenueMap } from '@/components/VenueMap'
 import { daysUntil, describeCountdown, formatLongDate, formatTime } from '@/domain/dates'
-import { isCancelled } from '@/domain/event'
+import { isCancelled, type Event } from '@/domain/event'
 import { NotFoundPage } from '@/features/placeholder'
 import { useEvent } from '@/lib/api'
 import { useNow } from '@/lib/clock'
@@ -23,12 +23,8 @@ function sameDay(a: string, b: string): boolean {
 }
 
 export function EventPage() {
-  const { social, collage, volunteerFormUrl } = useSettings()
-  // By its mark rather than its name: the committee may call the channel "Facebook group".
-  const facebook = social.find((channel) => channel.icon === 'facebook' && channel.href)
   const { slug = '' } = useParams()
   const { data: event, isPending, isError, refetch } = useEvent(slug)
-  const now = useNow()
   useDocumentTitle(event?.title)
 
   if (isPending) {
@@ -47,6 +43,20 @@ export function EventPage() {
     )
   }
   if (!event) return <NotFoundPage />
+  return <EventView event={event} />
+}
+
+/**
+ * An evening's page, drawn from the event it is given.
+ *
+ * Apart from the fetching so the event designer can show a draft on the real page, in its full
+ * preview, rather than on an impression of it that could drift from what visitors see.
+ */
+export function EventView({ event }: { event: Event }) {
+  const { social, collage, volunteerFormUrl } = useSettings()
+  // By its mark rather than its name: the committee may call the channel "Facebook group".
+  const facebook = social.find((channel) => channel.icon === 'facebook' && channel.href)
+  const now = useNow()
 
   const days = daysUntil(event.startsAt, now)
   /* A form is only worth offering while registration is open; otherwise the page has nothing to book. */

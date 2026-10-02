@@ -154,6 +154,52 @@ export function isCancelled(event: Pick<Event, 'status'>): boolean {
   return event.status === 'cancelled'
 }
 
+/** The draft, with the empty strings turned back into absent fields. */
+export function shapeOfEvent(draft: EventDraft) {
+  const text = (value: string) => (value.trim() ? value.trim() : undefined)
+  const programme = tidyProgramme(draft.programme)
+  return {
+    title: draft.title.trim(),
+    summary: draft.summary.trim(),
+    startsAt: draft.startsAt,
+    endsAt: text(draft.endsAt),
+    venue: draft.venue.trim(),
+    venueAddress: text(draft.venueAddress),
+    coordinates: draft.coordinates ?? undefined,
+    festivalId: text(draft.festivalId),
+    coverImageUrl: text(draft.coverImageUrl),
+    coverAnimation: draft.coverAnimation,
+    // An empty theme is absent rather than three empty strings, or the page draws a blank kicker.
+    theme: draft.theme.bengali.trim()
+      ? {
+          bengali: draft.theme.bengali.trim(),
+          bengaliSubtitle: text(draft.theme.bengaliSubtitle),
+          english: text(draft.theme.english),
+        }
+      : undefined,
+    programme: programme.length > 0 ? programme : undefined,
+    registrationUrl: text(draft.registrationUrl),
+    performerFormUrl: text(draft.performerFormUrl),
+    registrationOpen: draft.registrationOpen,
+    volunteerCall: text(draft.volunteerCall),
+    performerCall: text(draft.performerCall),
+    status: draft.status,
+    isPublic: draft.isPublic,
+  }
+}
+
+/**
+ * The draft as the public page would show it once saved, for the designer's full-page preview.
+ *
+ * Shaped by the same function that shapes a save, so the preview cannot show a field the page
+ * would not. A photograph chosen but not yet in the bucket is shown too, from this machine, or
+ * choosing one and previewing would look as though the choice had not taken.
+ */
+export function previewOfDraft(draft: EventDraft, localCover?: string): Event {
+  const shaped = shapeOfEvent(draft)
+  return { id: 'preview', slug: 'preview', ...shaped, coverImageUrl: shaped.coverImageUrl ?? (localCover || undefined) }
+}
+
 export function blankEvent(): EventDraft {
   return {
     title: '',

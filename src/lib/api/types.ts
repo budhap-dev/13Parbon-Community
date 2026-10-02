@@ -70,6 +70,13 @@ export interface ApiClient {
      * would be its own small annoyance. The screen offers; a person decides.
      */
     archive(id: string, viewer: Viewer): Promise<Event>
+    /**
+     * Deletes an evening that should never have been there — a test, or one typed twice.
+     *
+     * Refused, with a sentence to show, once it has a headcount recorded or an album filed under
+     * it: that is history somebody else is holding, and archiving is the way to put it away.
+     */
+    remove(id: string, viewer: Viewer): Promise<void>
   }
   festivals: {
     list(): Promise<Festival[]>

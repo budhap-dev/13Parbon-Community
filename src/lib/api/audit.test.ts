@@ -43,7 +43,7 @@ const AUDITED = [
   'portal.addHousehold', 'portal.updateHousehold', 'portal.deleteHousehold', 'portal.resolveSignInAttempt', 'portal.recordAttendance',
   'gallery.createAlbum', 'gallery.updateAlbum', 'gallery.addMedia', 'gallery.setCover', 'gallery.setCaption',
   'gallery.reorder', 'gallery.deleteMedia',
-  'settings.save', 'events.save', 'events.create', 'events.archive',
+  'settings.save', 'events.save', 'events.create', 'events.archive', 'events.remove',
   'news.createPost', 'news.updatePost', 'news.removePost',
   'news.createAnnouncement', 'news.updateAnnouncement', 'news.removeAnnouncement',
   'polls.create', 'polls.update', 'polls.remove',

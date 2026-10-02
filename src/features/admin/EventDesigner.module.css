@@ -258,3 +258,11 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Under the small preview: play a one-off movement again, and say why it may not move at all. */
+.motion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
