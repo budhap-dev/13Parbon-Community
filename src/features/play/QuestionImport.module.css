@@ -1,0 +1,139 @@
+.paste {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13.5px;
+  line-height: 1.5;
+  /* A pasted sheet is wider than the box; it scrolls rather than wrapping each row into soup. */
+  white-space: pre;
+  overflow-x: auto;
+}
+
+.example {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--color-bg-raised);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12.5px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.fileRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+}
+
+/* A file input wears the portal's line button; the browser's own control is hidden inside it. */
+.fileButton {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--button-sm-height, 36px);
+  padding: 0 var(--button-sm-pad, 14px);
+  border: 1px solid var(--button-line-border, var(--color-border));
+  border-radius: var(--button-radius, 8px);
+  color: var(--color-fg);
+  font-size: var(--button-sm-font, 14px);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.fileButton:hover {
+  background: var(--color-hover-wash);
+}
+
+.fileButton:focus-within {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.fileInput {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.preview {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--color-border-faint);
+  border-radius: var(--portal-radius, 10px);
+}
+
+.summary {
+  margin: 0;
+  font-size: 15px;
+}
+
+.note {
+  margin: 0;
+  font-size: 14px;
+  color: var(--error, #b3261e);
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  /* A long import is a long list; it scrolls in its own box rather than pushing Import off the page. */
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.ready,
+.problem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--color-hover-wash);
+  font-size: 14px;
+}
+
+.problem {
+  background: color-mix(in srgb, var(--error, #b3261e) 9%, transparent);
+  border-left: 3px solid var(--error, #b3261e);
+}
+
+.where {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--error, #b3261e);
+}
+
+.why {
+  margin: 0;
+  padding: 0;
+  color: var(--color-fg);
+}
+
+.answers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+
+.answer {
+  color: var(--color-fg-muted);
+}
+
+.right {
+  color: var(--color-green, #2e7d4f);
+  font-weight: 600;
+}
+
+.meta {
+  font-size: 12.5px;
+  color: var(--color-fg-faint);
+}

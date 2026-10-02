@@ -32,6 +32,7 @@ import { useNow } from '@/lib/clock'
 import portal from '@/features/portal/Portal.module.css'
 import { Tally } from './PollCard'
 import { PollForm, QuestionForm, QuizForm } from './PlayForms'
+import { QuestionImport } from './QuestionImport'
 import styles from './Play.module.css'
 
 type Tab = 'polls' | 'quizzes' | 'bank' | 'suggestions'
@@ -48,6 +49,7 @@ type Editing =
   | { kind: 'poll'; poll?: Poll; start?: Partial<PollDraft>; locked?: boolean; fromSuggestion?: string }
   | { kind: 'quiz'; quiz?: Quiz; start?: Partial<QuizDraft>; locked?: boolean }
   | { kind: 'question'; question?: BankQuestion; start?: Partial<BankQuestion>; fromSuggestion?: string }
+  | { kind: 'import' }
 
 type Removing = { kind: 'poll' | 'quiz' | 'question' | 'suggestion'; id: string; title: string }
 
@@ -468,7 +470,22 @@ export function AdminPlayPage() {
 
         {/* ---- Question bank ------------------------------------------- */}
         {tab === 'bank' ? (
-          editing?.kind === 'question' ? (
+          editing?.kind === 'import' ? (
+            <section className={portal.panel} aria-labelledby="import-title">
+              <div className={portal.panelHead}>
+                <h2 id="import-title" className={portal.panelTitle}>
+                  Import questions
+                </h2>
+              </div>
+              <div className={portal.pad}>
+                <QuestionImport
+                  bankPrompts={questions.map((q) => q.prompt)}
+                  onCancel={() => setEditing(null)}
+                  onDone={(message) => finish(message)()}
+                />
+              </div>
+            </section>
+          ) : editing?.kind === 'question' ? (
             <section className={portal.panel} aria-labelledby="question-form-title">
               <div className={portal.panelHead}>
                 <h2 id="question-form-title" className={portal.panelTitle}>
@@ -500,6 +517,9 @@ export function AdminPlayPage() {
               <div className={styles.row} style={{ justifyContent: 'flex-start' }}>
                 <Button variant="gold" size="sm" onClick={() => setEditing({ kind: 'question' })}>
                   New question
+                </Button>
+                <Button variant="line" size="sm" onClick={() => setEditing({ kind: 'import' })}>
+                  Import questions
                 </Button>
                 {tags.length > 0 ? (
                   <select className={portal.input} aria-label="Filter by tag" value={tag} onChange={(e) => setTag(e.target.value)} style={{ maxWidth: 220 }}>
