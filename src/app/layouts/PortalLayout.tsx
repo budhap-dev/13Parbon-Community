@@ -1,10 +1,11 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { Link, NavLink, Outlet, ScrollRestoration, useLocation } from 'react-router'
 import { site } from '@/app/site'
 import { useSettings } from '@/app/SettingsContext'
 import { Icon, type IconName } from '@/components/Icon'
-import { PortalSearch, type SearchScreen } from '@/features/admin/search/PortalSearch'
+import { PortalSearch, SearchButton, type SearchScreen } from '@/features/admin/search/PortalSearch'
 import { ThemeSwitcher } from './ThemeSwitcher'
+import { useSwipeToClose } from './useSwipeToClose'
 import { useThemeScope } from '@/app/theme/ThemeContext'
 import { useGoogleSignIn } from '@/lib/auth/GoogleSignIn'
 import { useSession, useSignedIn } from '@/lib/auth/session'
@@ -56,7 +57,7 @@ export function PortalLayout() {
   const onTheCommittee = can(useViewer(), 'admin:enter')
   const { signOut } = useGoogleSignIn()
   const { enterPreview, leavePreview } = useSession()
-  const { pathname } = useLocation()
+  const { pathname, key } = useLocation()
   // Everything below here wears the committee's own looks, not the community's festivals.
   useThemeScope('portal')
   const mainRef = useRef<HTMLElement>(null)
@@ -82,6 +83,75 @@ export function PortalLayout() {
     if (main && document.activeElement !== main && main.contains(document.activeElement)) return
     main?.focus({ preventScroll: true })
   }, [pathname])
+
+  const [searching, setSearching] = useState(false)
+
+  /*
+   * On a phone the sidebar is a drawer, out from the left where it sits on a wider screen.
+   *
+   * It used to stack above the page instead, and on a phone that was the whole first screen:
+   * fourteen links, the person, the theme and the walkthrough, with the screen somebody had
+   * just asked for starting below the fold. While the drawer is open it owns the screen —
+   * Escape, the close button and a tap on the page behind all shut it, the page does not
+   * scroll underneath, and nothing behind it can be tabbed to.
+   */
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuButton = useRef<HTMLButtonElement>(null)
+  const sideRef = useRef<HTMLElement>(null)
+  const drawerId = useId()
+  /** Whether shutting it should put the focus back on the menu button: yes, unless by going somewhere. */
+  const backToButton = useRef(false)
+  const closeMenu = () => {
+    backToButton.current = true
+    setMenuOpen(false)
+  }
+  /*
+   * Always from the top. Shut, the drawer is still in the page — that is how it slides — so it
+   * kept wherever its own scroll was left, and opened again halfway down its list with the
+   * name and the first screens out of sight. Put back before it moves, so it never shows it.
+   */
+  const openMenu = () => {
+    if (sideRef.current) sideRef.current.scrollTop = 0
+    setMenuOpen(true)
+  }
+  const scrimRef = useRef<HTMLDivElement>(null)
+  const swipe = useSwipeToClose({ panel: sideRef, shade: scrimRef, open: menuOpen, onClose: closeMenu })
+
+  // Shut by going anywhere, including to the screen you are already on: the key changes on
+  // every navigation, where the pathname would not for a tap on the current screen's link.
+  const [lastKey, setLastKey] = useState(key)
+  if (lastKey !== key) {
+    setLastKey(key)
+    setMenuOpen(false)
+  }
+
+  useEffect(() => {
+    if (!menuOpen) {
+      // Only now: until this render the bar was inert, and an inert button cannot take the focus.
+      if (backToButton.current) menuButton.current?.focus({ preventScroll: true })
+      backToButton.current = false
+      return
+    }
+    const keys = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape' || event.defaultPrevented) return
+      closeMenu()
+    }
+    // Widened past the phone layout with the drawer open, it would leave the page locked.
+    const wide = window.matchMedia?.('(min-width: 901px)')
+    const widened = () => {
+      if (wide?.matches) setMenuOpen(false)
+    }
+    document.addEventListener('keydown', keys)
+    wide?.addEventListener?.('change', widened)
+    const { overflow } = document.body.style
+    document.body.style.overflow = 'hidden'
+    sideRef.current?.querySelector<HTMLElement>('[data-drawer-close]')?.focus({ preventScroll: true })
+    return () => {
+      document.removeEventListener('keydown', keys)
+      wide?.removeEventListener?.('change', widened)
+      document.body.style.overflow = overflow
+    }
+  }, [menuOpen])
 
   if (!who) return null
 
@@ -118,12 +188,57 @@ export function PortalLayout() {
       <a href="#portal-main" className={styles.skip}>
         Skip to content
       </a>
-      <aside className={styles.side}>
-        <Link to="/" className={styles.brand}>
-          <img src={site.emblem} alt="" className={styles.emblem} width={34} height={34} />
+      {/* The phone's bar. Hidden on a wider screen, where the sidebar is always there. */}
+      <header className={styles.bar} inert={menuOpen || undefined}>
+        <button
+          ref={menuButton}
+          type="button"
+          className={styles.menuButton}
+          aria-expanded={menuOpen}
+          aria-controls={drawerId}
+          onClick={openMenu}
+        >
+          <Icon name="menu" size={24} />
+          <span className={styles.srOnly}>Open menu</span>
+        </button>
+        <Link to="/" className={styles.barBrand}>
+          <img src={site.emblem} alt="" className={styles.emblem} width={30} height={30} />
           <span>{site.wordmark}</span>
         </Link>
-        {onTheCommittee ? <PortalSearch screens={searchScreens} /> : null}
+        {onTheCommittee ? <SearchButton compact className={styles.barSearch} onClick={() => setSearching(true)} /> : null}
+      </header>
+
+      <div
+        ref={scrimRef}
+        className={menuOpen ? styles.scrimOn : styles.scrim}
+        aria-hidden="true"
+        onClick={menuOpen ? closeMenu : undefined}
+        {...swipe}
+      />
+
+      <aside
+        id={drawerId}
+        ref={sideRef}
+        className={menuOpen ? styles.sideOpen : styles.side}
+        aria-label="Portal menu"
+        {...swipe}
+      >
+        <div className={styles.sideHead}>
+          <Link to="/" className={styles.brand}>
+            <img src={site.emblem} alt="" className={styles.emblem} width={34} height={34} />
+            <span>{site.wordmark}</span>
+          </Link>
+          <button type="button" className={styles.drawerClose} data-drawer-close onClick={closeMenu}>
+            <Icon name="close" size={22} />
+            <span className={styles.srOnly}>Close menu</span>
+          </button>
+        </div>
+        {onTheCommittee ? (
+          <>
+            <SearchButton className={styles.sideSearch} onClick={() => setSearching(true)} />
+            <PortalSearch screens={searchScreens} open={searching} setOpen={setSearching} />
+          </>
+        ) : null}
         <div className={styles.navs}>
         <nav aria-label="Your household">{renderGroup('Your household', memberNav)}</nav>
         {onTheCommittee ? (
@@ -208,7 +323,7 @@ export function PortalLayout() {
           </div>
         </div>
       </aside>
-      <main id="portal-main" ref={mainRef} tabIndex={-1} className={styles.main}>
+      <main id="portal-main" ref={mainRef} tabIndex={-1} className={styles.main} inert={menuOpen || undefined}>
         {/*
           * Three states, and they used to be told as one.
           *

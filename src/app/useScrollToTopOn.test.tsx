@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { useState } from 'react'
+import { StrictMode, useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import { useScrollToTopOn } from './useScrollToTopOn'
 
@@ -16,6 +16,17 @@ describe('getting back to the top when a screen swaps what it shows', () => {
     window.scrollTo = scrollTo as never
     render(<Screen />)
     // Including restoring where somebody was when they pressed Back, which this must not fight.
+    expect(scrollTo).not.toHaveBeenCalled()
+  })
+
+  it('does nothing on arrival in development either, where React runs effects twice', () => {
+    const scrollTo = vi.fn()
+    window.scrollTo = scrollTo as never
+    render(
+      <StrictMode>
+        <Screen />
+      </StrictMode>,
+    )
     expect(scrollTo).not.toHaveBeenCalled()
   })
 

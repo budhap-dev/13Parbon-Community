@@ -80,6 +80,19 @@ export const THEME_STORAGE_KEY = '13parbon:theme'
 export const SITE_THEME_STORAGE_KEY = '13parbon:site-theme'
 export const PORTAL_THEME_STORAGE_KEY = '13parbon:portal-theme'
 
+/**
+ * Which set of looks an address belongs to: the committee's quiet ones under /portal and /admin,
+ * the festivals everywhere else.
+ *
+ * Read from the address so that a reload in the portal starts in the portal's colours. The
+ * portal's layout says so too, but only once it is on screen — after the sign-in has been
+ * checked, which with Google is long enough to see — and until then a reload showed Festival
+ * red. The script at the top of index.html makes the same test, before any of this has loaded.
+ */
+export function scopeForPath(pathname: string): ThemeScope {
+  return /^\/(portal|admin)(\/|$)/.test(pathname) ? 'portal' : 'public'
+}
+
 export const themesFor = (scope: ThemeScope): ThemeMeta[] => (scope === 'portal' ? portalThemes : themes)
 export const defaultFor = (scope: ThemeScope): ThemeName => (scope === 'portal' ? defaultPortalTheme : defaultTheme)
 const keyFor = (scope: ThemeScope) => (scope === 'portal' ? PORTAL_THEME_STORAGE_KEY : THEME_STORAGE_KEY)
@@ -97,6 +110,10 @@ export function isThemeName(value: unknown): value is ThemeName {
 /** Sets the active theme by stamping `data-theme` on the root element. */
 export function applyTheme(name: ThemeName, root: HTMLElement = document.documentElement): void {
   root.dataset.theme = name
+  // The browser's own colour — the strip above the page on a phone — to match, rather than
+  // the Festival red written into index.html whatever the page underneath is wearing.
+  const ground = [...themes, ...portalThemes].find((meta) => meta.id === name)?.swatch[0]
+  if (ground) root.ownerDocument.querySelector('meta[name="theme-color"]')?.setAttribute('content', ground)
 }
 
 /** The theme the viewer chose last time, if any. Storage may be unavailable; that is fine. */

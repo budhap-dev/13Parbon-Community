@@ -58,6 +58,12 @@
 
 .option,
 .optionSelected {
+  /*
+   * Never squeezed. The list is a flex column with a ceiling on its height, and rows allowed to
+   * shrink were pressed shorter than their own two lines, which then printed over each other.
+   * Held at their size, the list scrolls instead.
+   */
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: 14px;
@@ -152,4 +158,12 @@
   /* From the foot of a short window a long list would run off the top; it scrolls instead. */
   max-height: calc(100vh - 120px);
   overflow-y: auto;
+}
+
+/* Where the list opens in the flow of the page there is no foot of the screen to run off. */
+@media (max-width: 960px) {
+  .panelUp {
+    max-height: none;
+    overflow-y: visible;
+  }
 }

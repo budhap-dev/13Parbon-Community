@@ -97,6 +97,24 @@
 /* Tables */
 .scroll {
   overflow-x: auto;
+  /*
+   * A box for anything positioned inside to be measured from. The hidden "Actions" label over a
+   * table's last column is absolutely positioned, and with nothing here to hold it, it was placed
+   * against the page instead — past the right edge on a phone, so the whole screen scrolled
+   * sideways by the width the table was clipping.
+   */
+  position: relative;
+  /*
+   * A shade at whichever edge has more table beyond it. On a phone the last columns — Status,
+   * and the Edit button — are past the right edge, and a table cut cleanly at the border reads
+   * as a table that ends there. The covers scroll with the table and the shades stay put, so a
+   * shade shows only while there is something on that side to scroll to.
+   */
+  background:
+    linear-gradient(to right, var(--color-bg-raised) 40%, transparent) left / 32px 100% no-repeat local,
+    linear-gradient(to left, var(--color-bg-raised) 40%, transparent) right / 32px 100% no-repeat local,
+    radial-gradient(farthest-side at 0 50%, rgba(0, 0, 0, 0.24), transparent) left / 14px 100% no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%, rgba(0, 0, 0, 0.24), transparent) right / 14px 100% no-repeat scroll;
 }
 
 /*
@@ -105,6 +123,7 @@
  * rather than against the window, which already has the portal's own header stuck to it.
  */
 .tall {
+  position: relative;
   max-height: 68vh;
   overflow: auto;
   overscroll-behavior: contain;

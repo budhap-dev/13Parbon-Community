@@ -34,6 +34,7 @@ export type IconName =
   | 'trash'
   | 'logout'
   | 'search'
+  | 'info'
 
 const paths: Record<IconName, ReactElement> = {
   users: (
@@ -199,6 +200,13 @@ const paths: Record<IconName, ReactElement> = {
     <>
       <circle cx="11" cy="11" r="6.5" />
       <path d="M20 20l-4.4-4.4" />
+    </>
+  ),
+  info: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 11v5.5" />
+      <path d="M12 7.6v.01" />
     </>
   ),
   external: (

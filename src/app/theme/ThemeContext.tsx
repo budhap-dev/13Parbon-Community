@@ -5,6 +5,7 @@ import {
   defaultFor,
   readSiteTheme,
   readStoredTheme,
+  scopeForPath,
   storeSiteTheme,
   storeTheme,
   themesFor,
@@ -45,7 +46,11 @@ type Props = {
  * through without ever overwriting a person's.
  */
 export function ThemeProvider({ initialTheme, children }: Props) {
-  const [scope, setScope] = useState<ThemeScope>('public')
+  // From the address to begin with, so the first paint of a reload in the portal is the
+  // portal's. The layouts keep it right from then on.
+  const [scope, setScope] = useState<ThemeScope>(() =>
+    typeof window === 'undefined' ? 'public' : scopeForPath(window.location.pathname),
+  )
   const [chosen, setChosen] = useState<{ public: ThemeName | null; portal: ThemeName }>(() => ({
     public: readStoredTheme('public') ?? initialTheme ?? null,
     portal: readStoredTheme('portal') ?? defaultFor('portal'),

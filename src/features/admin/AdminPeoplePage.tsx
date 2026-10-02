@@ -4,8 +4,10 @@ import { useOpenFromAddress } from '@/app/useOpenFromAddress'
 import { useScrollToTopOn } from '@/app/useScrollToTopOn'
 import { unresolved } from '@/domain/document'
 import { Button } from '@/components/Button'
+import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { Icon } from '@/components/Icon'
 import { HouseholdForm } from '@/components/HouseholdForm'
+import { InfoNote } from '@/components/InfoNote'
 import { RemoveHousehold } from '@/components/RemoveHousehold'
 import { formatLongDate } from '@/domain/dates'
 import { committeeCsv, committeeCsvFilename } from '@/domain/committeeExport'
@@ -68,13 +70,20 @@ export function AdminPeoplePage() {
   const [query, setQuery] = useState('')
   const shown = (households ?? []).filter((household) => householdMatches(household, query))
 
+  /*
+   * Asked first, and said what it is. The button used to download on the spot, so a press meant
+   * to see what it did left a file of every household in Downloads — one that gets forwarded.
+   */
+  const [askingToSave, setAskingToSave] = useState(false)
+  const filename = committeeCsvFilename(new Date().toISOString())
   const saveList = () => {
+    setAskingToSave(false)
     if (!households?.length) return
     const blob = new Blob([committeeCsv(households)], { type: 'text/csv;charset=utf-8' })
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = committeeCsvFilename(new Date().toISOString())
+    link.download = filename
     link.click()
     setTimeout(() => URL.revokeObjectURL(url), 0)
   }
@@ -150,9 +159,28 @@ export function AdminPeoplePage() {
           </p>
         </div>
         <div className={styles.actions}>
-          <Button variant="line" size="sm" onClick={saveList} disabled={!households?.length}>
+          <Button variant="line" size="sm" onClick={() => setAskingToSave(true)} disabled={!households?.length}>
             Save the list
           </Button>
+          <ConfirmDialog
+            open={askingToSave}
+            title="Download the list for Excel?"
+            confirmLabel="Download"
+            cancelLabel="Not now"
+            tone="plain"
+            onCancel={() => setAskingToSave(false)}
+            onConfirm={saveList}
+          >
+            <p>
+              A spreadsheet file, <strong>{filename}</strong>, that opens in Excel — or Numbers or Google
+              Sheets. One row for each of the {households?.length ?? 0} households: the main contact, their
+              email and phone, how many adults and children, and their membership.
+            </p>
+            <p style={{ marginTop: 10 }}>
+              It has no children’s names, no notes about anybody and no sign-in addresses. It does have
+              everybody’s contact details, so keep it to the committee.
+            </p>
+          </ConfirmDialog>
           <Button variant="gold" size="sm" onClick={() => setOpen('new')}>
             Add a household
           </Button>
@@ -318,16 +346,20 @@ export function AdminPeoplePage() {
             </table>
           </div>
         )}
-        <div className={styles.pad} style={{ paddingTop: 14 }}>
-          <p className={styles.note}>
-            A household can only sign in with the Google address recorded here. Only an admin can change a role, and
-            the portal will not let you remove your own admin rights if you are the last one.
-          </p>
-          <p className={styles.note}>
-            “Save the list” gives you a spreadsheet of households and headcounts — the numbers a caterer or a
-            treasurer asks for. It carries no children’s names, no notes about anybody, and no sign-in addresses,
-            because a file like that gets forwarded.
-          </p>
+        <div className={styles.pad} style={{ paddingTop: 8, paddingBottom: 10 }}>
+          <InfoNote summary="Who can sign in, and who can change roles">
+            <p>
+              A household can only sign in with the Google address recorded here. Only an admin can change a role,
+              and the portal will not let you remove your own admin rights if you are the last one.
+            </p>
+          </InfoNote>
+          <InfoNote summary="What “Save the list” puts in the file">
+            <p>
+              A spreadsheet for Excel: each household’s main contact, email and phone, its headcounts and its
+              membership — what a caterer or a treasurer asks for. It carries no children’s names, no notes about
+              anybody, and no sign-in addresses, because a file like that gets forwarded.
+            </p>
+          </InfoNote>
         </div>
       </section>
     </div>

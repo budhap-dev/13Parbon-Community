@@ -28,6 +28,7 @@ export function ConfirmDialog({
   cancelLabel = 'Keep it',
   busy,
   error,
+  tone = 'danger',
   onConfirm,
   onCancel,
 }: {
@@ -41,6 +42,12 @@ export function ConfirmDialog({
   cancelLabel?: string
   busy?: boolean
   error?: string
+  /**
+   * Red for what cannot be undone, which is what this was made for. `plain` is for a question
+   * that is only "are you sure this is what you meant?" — saving a file — where a red button
+   * would say there is a danger that there is not.
+   */
+  tone?: 'danger' | 'plain'
   onConfirm: () => void
   onCancel: () => void
 }) {
@@ -116,7 +123,7 @@ export function ConfirmDialog({
           <Button variant="line" size="sm" data-confirm-cancel onClick={onCancel} disabled={busy}>
             {cancelLabel}
           </Button>
-          <Button variant="danger" size="sm" onClick={onConfirm} disabled={busy}>
+          <Button variant={tone === 'danger' ? 'danger' : 'gold'} size="sm" onClick={onConfirm} disabled={busy}>
             {busy ? (busyLabel ?? confirmLabel) : confirmLabel}
           </Button>
         </div>

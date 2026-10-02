@@ -32,8 +32,11 @@ export function ThemeSwitcher({
       if (!rootRef.current?.contains(event.target as Node)) setOpen(false)
     }
     document.addEventListener('pointerdown', onPointerDown)
+    // Where the list opens in the flow — a phone's menu drawer, near its foot — it can open below
+    // the bottom of the screen, and a tap that seems to do nothing gets tapped again, shutting it.
+    document.getElementById(panelId)?.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' })
     return () => document.removeEventListener('pointerdown', onPointerDown)
-  }, [open])
+  }, [open, panelId])
 
   const choose = (name: ThemeName) => {
     setTheme(name)

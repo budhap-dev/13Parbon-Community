@@ -154,6 +154,13 @@
   scroll-margin-top: 24px;
 }
 
+/* On a phone the portal's bar is stuck across the top, and the section would land under it. */
+@media (max-width: 900px) {
+  .sectionHead {
+    scroll-margin-top: 76px;
+  }
+}
+
 .sectionHead:hover {
   background: var(--color-hover-wash);
 }

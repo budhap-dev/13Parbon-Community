@@ -41,12 +41,19 @@ const onAMac = () => typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(
  * and takes you to it already open.
  *
  * Committee only, by where it is put rather than by anything in here — the portal's member
- * screens are three, and there is nothing of theirs to look for. It opens from the button at
- * the top of the sidebar or from ⌘K / Ctrl+K anywhere in the portal.
+ * screens are three, and there is nothing of theirs to look for. It opens from ⌘K / Ctrl+K
+ * anywhere in the portal, or from a `SearchButton`: the one at the top of the sidebar, or on a
+ * phone the one in the bar, where the sidebar is a drawer and two taps away.
  */
-export function PortalSearch({ screens }: { screens: readonly SearchScreen[] }) {
-  const [open, setOpen] = useState(false)
-
+export function PortalSearch({
+  screens,
+  open,
+  setOpen,
+}: {
+  screens: readonly SearchScreen[]
+  open: boolean
+  setOpen: (next: boolean | ((now: boolean) => boolean)) => void
+}) {
   useEffect(() => {
     const keys = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && !event.altKey && event.key.toLowerCase() === 'k') {
@@ -56,25 +63,33 @@ export function PortalSearch({ screens }: { screens: readonly SearchScreen[] }) 
     }
     window.addEventListener('keydown', keys)
     return () => window.removeEventListener('keydown', keys)
-  }, [])
+  }, [setOpen])
 
+  return open ? <SearchDialog screens={screens} onClose={() => setOpen(false)} /> : null
+}
+
+/** What opens the search: a box-shaped button in the sidebar, or just the glass in the bar. */
+export function SearchButton({ onClick, compact, className }: { onClick: () => void; compact?: boolean; className?: string }) {
   return (
-    <>
-      <button
-        type="button"
-        className={styles.trigger}
-        aria-haspopup="dialog"
-        aria-keyshortcuts="Meta+K Control+K"
-        onClick={() => setOpen(true)}
-      >
-        <Icon name="search" size={17} />
-        <span>Search</span>
-        <kbd className={styles.kbd} aria-hidden="true">
-          {onAMac() ? '⌘K' : 'Ctrl K'}
-        </kbd>
-      </button>
-      {open ? <SearchDialog screens={screens} onClose={() => setOpen(false)} /> : null}
-    </>
+    <button
+      type="button"
+      className={[compact ? styles.compact : styles.trigger, className].filter(Boolean).join(' ')}
+      aria-haspopup="dialog"
+      aria-keyshortcuts="Meta+K Control+K"
+      onClick={onClick}
+    >
+      <Icon name="search" size={compact ? 22 : 17} />
+      {compact ? (
+        <span className={styles.srOnly}>Search</span>
+      ) : (
+        <>
+          <span>Search</span>
+          <kbd className={styles.kbd} aria-hidden="true">
+            {onAMac() ? '⌘K' : 'Ctrl K'}
+          </kbd>
+        </>
+      )}
+    </button>
   )
 }
 

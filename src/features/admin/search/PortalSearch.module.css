@@ -27,6 +27,29 @@
   outline-offset: 2px;
 }
 
+/* Just the glass, in the phone's bar beside the menu button and the same size as it. */
+.compact {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-fg);
+  cursor: pointer;
+}
+
+.compact:hover {
+  background: var(--color-hover-wash);
+}
+
+.compact:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
 .kbd {
   margin-left: auto;
   padding: 1px 6px;

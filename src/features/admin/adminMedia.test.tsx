@@ -6,6 +6,9 @@ import { previewAccounts } from '@/lib/auth/previewAccounts'
 import { createTestApi, TestDataProviders } from '@/test/render'
 
 const admin = previewAccounts[1]
+
+/** The photographs' own buttons. Inside the page, so the portal's "Open menu" is not one of them. */
+const photos = () => within(screen.getByRole('main')).getAllByRole('button', { name: /^Open / })
 const member = previewAccounts[0]
 
 function renderAt(path: string, session = admin) {
@@ -104,7 +107,7 @@ describe('inside an album', () => {
     renderAt('/admin/media')
     await openAlbum(/Boishakhi 2026/)
 
-    const before = screen.getAllByRole('button', { name: /^Open / }).map((b) => b.getAttribute('aria-label'))
+    const before = photos().map((b) => b.getAttribute('aria-label'))
     const cards = document.querySelectorAll('li[draggable="true"]')
     expect(cards.length).toBeGreaterThan(2)
 
@@ -126,7 +129,7 @@ describe('inside an album', () => {
     fireEvent.drop(cards[2], { dataTransfer })
 
     await waitFor(() => {
-      const after = screen.getAllByRole('button', { name: /^Open / }).map((b) => b.getAttribute('aria-label'))
+      const after = photos().map((b) => b.getAttribute('aria-label'))
       expect(after[2]).toBe(before[0])
     })
     // The drag is over: neither mark should be left behind on any card.
@@ -137,12 +140,12 @@ describe('inside an album', () => {
     renderAt('/admin/media')
     await openAlbum(/Boishakhi 2026/)
 
-    const before = screen.getAllByRole('button', { name: /^Open / }).map((b) => b.getAttribute('aria-label'))
-    screen.getAllByRole('button', { name: /^Open / })[0].focus()
+    const before = photos().map((b) => b.getAttribute('aria-label'))
+    photos()[0].focus()
     await userEvent.keyboard('{ArrowRight}')
 
     await waitFor(() => {
-      const after = screen.getAllByRole('button', { name: /^Open / }).map((b) => b.getAttribute('aria-label'))
+      const after = photos().map((b) => b.getAttribute('aria-label'))
       expect(after[1]).toBe(before[0])
     })
   })
@@ -151,11 +154,11 @@ describe('inside an album', () => {
     renderAt('/admin/media')
     await openAlbum(/Boishakhi 2026/)
 
-    const before = screen.getAllByRole('button', { name: /^Open / }).map((b) => b.getAttribute('aria-label'))
-    screen.getAllByRole('button', { name: /^Open / })[0].focus()
+    const before = photos().map((b) => b.getAttribute('aria-label'))
+    photos()[0].focus()
     await userEvent.keyboard('{ArrowLeft}')
 
-    const after = screen.getAllByRole('button', { name: /^Open / }).map((b) => b.getAttribute('aria-label'))
+    const after = photos().map((b) => b.getAttribute('aria-label'))
     expect(after).toEqual(before)
   })
 
@@ -247,14 +250,14 @@ describe('opening a photograph', () => {
     renderAt('/admin/media')
     await openAlbum(/Boishakhi 2026/)
 
-    await userEvent.click(screen.getAllByRole('button', { name: /^Open / })[0])
+    await userEvent.click(photos()[0])
     expect(await screen.findByRole('dialog')).toBeInTheDocument()
   })
 
   it('moves through the album from there', async () => {
     renderAt('/admin/media')
     await openAlbum(/Boishakhi 2026/)
-    await userEvent.click(screen.getAllByRole('button', { name: /^Open / })[0])
+    await userEvent.click(photos()[0])
 
     const dialog = await screen.findByRole('dialog')
     expect(within(dialog).getByRole('button', { name: /next/i })).toBeInTheDocument()
@@ -264,9 +267,9 @@ describe('opening a photograph', () => {
   it('deletes from the viewer, once it has asked', async () => {
     renderAt('/admin/media')
     await openAlbum(/Boishakhi 2026/)
-    const before = screen.getAllByRole('button', { name: /^Open / }).length
+    const before = photos().length
 
-    await userEvent.click(screen.getAllByRole('button', { name: /^Open / })[0])
+    await userEvent.click(photos()[0])
     const dialog = await screen.findByRole('dialog')
     await userEvent.click(within(dialog).getByRole('button', { name: /Delete this photograph/ }))
 
@@ -274,6 +277,6 @@ describe('opening a photograph', () => {
     expect(within(dialog).getByText(/cannot be undone/)).toBeInTheDocument()
     await userEvent.click(within(dialog).getByRole('button', { name: /^Delete$/ }))
 
-    await waitFor(() => expect(screen.getAllByRole('button', { name: /^Open / })).toHaveLength(before - 1))
+    await waitFor(() => expect(photos()).toHaveLength(before - 1))
   })
 })

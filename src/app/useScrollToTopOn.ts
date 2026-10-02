@@ -13,13 +13,14 @@ import { useEffect, useRef } from 'react'
  * including restoring where somebody was when they pressed Back, and this should not fight it.
  */
 export function useScrollToTopOn(key: unknown): void {
-  const first = useRef(true)
+  // What it was showing last time, rather than "is this the first run": React runs an effect
+  // twice on arrival in development, and the second run used to count as a change — which threw
+  // away the place the portal's search had just scrolled to.
+  const last = useRef(key)
 
   useEffect(() => {
-    if (first.current) {
-      first.current = false
-      return
-    }
+    if (Object.is(last.current, key)) return
+    last.current = key
     // `scrollTo` rather than `scrollIntoView`: there is nothing to scroll *to* yet, and the
     // sticky header would be scrolled behind anyway.
     window.scrollTo({ top: 0 })

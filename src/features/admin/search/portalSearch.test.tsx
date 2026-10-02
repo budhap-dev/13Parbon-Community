@@ -22,9 +22,13 @@ function renderAt(path: string, session: Session = admin) {
   return router
 }
 
+/** The sidebar's Search. A phone has another in its bar, with the same name. */
+const searchButton = async () =>
+  within(await screen.findByRole('complementary', { name: 'Portal menu' })).getByRole('button', { name: 'Search' })
+
 /** Opens the search from the sidebar and types into it. */
 async function search(text: string) {
-  await userEvent.click(await screen.findByRole('button', { name: /^Search/ }))
+  await userEvent.click(await searchButton())
   const box = within(await screen.findByRole('dialog', { name: 'Search the portal' })).getByRole('combobox')
   await userEvent.type(box, text)
   return box
@@ -35,7 +39,7 @@ const option = (name: RegExp | string) => screen.findByRole('option', { name })
 describe('the committee’s search', () => {
   it('is in the sidebar for the committee, and not for a member', async () => {
     renderAt('/admin')
-    expect(await screen.findByRole('button', { name: /^Search/ })).toBeInTheDocument()
+    expect(await searchButton()).toBeInTheDocument()
   })
 
   it('is not offered to a member, who has nothing of the committee’s to look for', async () => {
@@ -46,7 +50,7 @@ describe('the committee’s search', () => {
 
   it('opens from the keyboard, and Escape gives the focus back', async () => {
     renderAt('/admin')
-    const trigger = await screen.findByRole('button', { name: /^Search/ })
+    const trigger = await searchButton()
     trigger.focus()
     await userEvent.keyboard('{Control>}k{/Control}')
     const box = within(await screen.findByRole('dialog')).getByRole('combobox')
@@ -59,7 +63,7 @@ describe('the committee’s search', () => {
 
   it('lists the screens before anything is typed', async () => {
     renderAt('/admin')
-    await userEvent.click(await screen.findByRole('button', { name: /^Search/ }))
+    await userEvent.click(await searchButton())
     expect(await option(/^Photographs/)).toBeInTheDocument()
     expect(screen.getByRole('option', { name: /^What has changed/ })).toBeInTheDocument()
   })
