@@ -144,6 +144,16 @@ export function GoogleSignInProvider({
         return
       }
       if (!identity) {
+        /*
+         * Google says nobody is here, so the app must not go on saying somebody is.
+         *
+         * The app's session lives in this tab's sessionStorage, and Supabase's token lives
+         * beside every other tab's. Signing out in one tab tells the rest through this
+         * listener, and so does a refresh that failed — and if this only set "ready", the
+         * other tab carried on showing the portal, and whatever households it had already
+         * loaded, to whoever sat down at the computer next. Previews were dealt with above.
+         */
+        if (current.role !== 'visitor') dropSession()
         if (live) setState({ status: 'ready' })
         return
       }

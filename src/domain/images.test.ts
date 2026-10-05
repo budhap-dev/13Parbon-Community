@@ -113,18 +113,49 @@ describe('finding metadata that should not be there', () => {
     expect(hasJpegMetadata(jpeg(block(0xe0), block(0xdb), block(0xe1)))).toBe(true)
   })
 
-  it('stops at the picture, so image bytes are never read as segments', () => {
-    // Everything after start-of-scan is the photograph, and will contain 0xff bytes that are
-    // not markers. Reading on would report metadata on a perfectly clean file.
-    const withScan = new Uint8Array([...jpeg(block(0xe0)), 0xff, 0xe1, 0x00, 0x08, 1, 2, 3, 4, 5, 6])
-    expect(hasJpegMetadata(withScan)).toBe(false)
+  it('walks past the picture, so its own bytes are never read as segments', () => {
+    // After start-of-scan comes the photograph, full of 0xff bytes that are not markers:
+    // 0xff 0x00 is a stuffed byte and 0xff 0xd0 a restart. Neither is metadata.
+    const clean = new Uint8Array([0xff, 0xd8, 0xff, 0xda, 0x00, 0x02, 0x11, 0xff, 0x00, 0xe1, 0xff, 0xd0, 0x22, 0xff, 0xd9])
+    expect(metadataMarkers(clean)).toEqual([])
   })
 
-  it('says nothing is wrong with something that is not a JPEG at all', () => {
-    // A PNG is re-encoded to JPEG before this ever sees it; this must not throw on one.
-    expect(hasJpegMetadata(new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))).toBe(false)
-    expect(hasJpegMetadata(new Uint8Array([]))).toBe(false)
-    expect(hasJpegMetadata(new Uint8Array([0xff]))).toBe(false)
+  /*
+   * Each of these got a camera file past the check on the server, which used to stop at the
+   * first thing it did not understand and call what it had seen so far clean.
+   */
+  describe('the ways round it', () => {
+    it('refuses something that is not a JPEG at all, a PNG with its own EXIF chunk included', () => {
+      expect(hasJpegMetadata(new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))).toBe(true)
+      expect(metadataMarkers(new Uint8Array([]))).toEqual(['something that is not a well-formed JPEG'])
+      expect(hasJpegMetadata(new Uint8Array([0xff]))).toBe(true)
+    })
+
+    it('finds EXIF behind padding bytes', () => {
+      // Any number of 0xff before a marker is legal JPEG, and used to end the walk.
+      const padded = new Uint8Array([0xff, 0xd8, 0xff, 0xff, 0xff, 0xe1, 0x00, 0x04, 0x41, 0x41, 0xff, 0xda, 0x00, 0x02, 0x11, 0xff, 0xd9])
+      expect(metadataMarkers(padded)).toEqual(['EXIF (may include GPS)'])
+    })
+
+    it('refuses a stray byte between segments, which used to hide whatever came after it', () => {
+      const stray = new Uint8Array([0xff, 0xd8, 0x00, 0xff, 0xe1, 0x00, 0x04, 0x41, 0x41, 0xff, 0xda, 0x00, 0x02, 0x11, 0xff, 0xd9])
+      expect(hasJpegMetadata(stray)).toBe(true)
+    })
+
+    it('finds EXIF put after the first scan', () => {
+      const late = new Uint8Array([0xff, 0xd8, 0xff, 0xda, 0x00, 0x02, 0x11, 0xff, 0xe1, 0x00, 0x04, 0x41, 0x41, 0xff, 0xda, 0x00, 0x02, 0x22, 0xff, 0xd9])
+      expect(metadataMarkers(late)).toEqual(['EXIF (may include GPS)'])
+    })
+
+    it('refuses anything written after the end of the picture, but not padding', () => {
+      const appended = new Uint8Array([...jpeg(block(0xe0)), 0xff, 0xe1, 0x00, 0x08, 1, 2, 3, 4, 5, 6])
+      expect(hasJpegMetadata(appended)).toBe(true)
+      expect(hasJpegMetadata(new Uint8Array([...jpeg(block(0xe0)), 0x00, 0x00]))).toBe(false)
+    })
+
+    it('refuses a file that stops before the end of the picture', () => {
+      expect(hasJpegMetadata(jpeg(block(0xe0)).slice(0, -2))).toBe(true)
+    })
   })
 
   it('does not run off the end of a truncated file', () => {

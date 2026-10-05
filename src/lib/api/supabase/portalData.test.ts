@@ -96,6 +96,77 @@ describe('saving the people of a household', () => {
     expect(remove).toBeGreaterThan(insert)
   })
 
+  /**
+   * None of the three steps used to be checked. A read that failed looked like nobody, so
+   * nothing old was deleted; a delete that failed or matched nothing did the same; and either
+   * way everybody was listed twice under a screen that said it had saved.
+   */
+  describe('when a step fails', () => {
+    type Outcome = { data?: unknown; error?: { code?: string; message: string } | null }
+    function peopleClient(outcomes: { read?: Outcome; insert?: Outcome; remove?: Outcome[] }) {
+      const deletes: unknown[][] = []
+      const removes = [...(outcomes.remove ?? [])]
+      const chain = (tableName: string) => {
+        let verb = ''
+        let ids: unknown[] = []
+        const self: Record<string, unknown> = {}
+        for (const method of ['select', 'eq', 'order', 'insert', 'update', 'delete']) {
+          self[method] = () => {
+            verb ||= method
+            return self
+          }
+        }
+        self.in = (_column: string, values: unknown[]) => {
+          ids = values
+          return self
+        }
+        const answer = (): Outcome => {
+          if (tableName === 'households') return { data: { id: 'hh-1' } }
+          if (verb === 'select') return outcomes.read ?? { data: [{ id: 'p-old' }] }
+          if (verb === 'insert') return outcomes.insert ?? { data: [{ id: 'p-new' }] }
+          if (verb === 'delete') {
+            deletes.push(ids)
+            return removes.shift() ?? { data: ids.map((id) => ({ id })) }
+          }
+          return { data: null }
+        }
+        self.maybeSingle = async () => ({ error: null, ...answer() })
+        self.single = self.maybeSingle
+        self.then = (resolve: (v: unknown) => unknown) => resolve({ error: null, ...answer() })
+        return self
+      }
+      const client = { schema: () => ({ from: chain }) } as unknown as SupabaseClient
+      return { client, deletes }
+    }
+    const save = (client: SupabaseClient) =>
+      householdMethods(async () => client).updateHousehold('hh-1', draft, { householdId: 'hh-1', role: 'member' })
+
+    it('stops before writing anything when the people cannot be read', async () => {
+      const { client, deletes } = peopleClient({ read: { data: null, error: { message: 'JWT expired' } } })
+      await expect(save(client)).rejects.toThrow(/JWT expired/)
+      expect(deletes).toEqual([])
+    })
+
+    it('takes the new people back out when the old ones will not go', async () => {
+      const { client, deletes } = peopleClient({ remove: [{ data: null, error: { message: 'connection failure' } }] })
+      await expect(save(client)).rejects.toThrow(/connection failure/)
+      expect(deletes).toEqual([['p-old'], ['p-new']])
+    })
+
+    it('treats a delete the policy matched nothing of as a failure, not a success', async () => {
+      const { client, deletes } = peopleClient({ remove: [{ data: [] }] })
+      await expect(save(client)).rejects.toThrow(/could not be saved/)
+      expect(deletes).toEqual([['p-old'], ['p-new']])
+    })
+
+    it('says plainly when even putting it back fails', async () => {
+      const { client } = peopleClient({
+        remove: [{ data: null, error: { message: 'connection failure' } }, { error: { message: 'still down' } }],
+      })
+      await expect(save(client)).rejects.toThrow(/listed twice\. Reload to check/)
+    })
+  })
+
   it('refuses a household with nobody grown up in it before asking the database', async () => {
     const { client, calls } = fakeClient()
     const children: HouseholdDraft = { ...draft, people: [{ name: 'Mira', ageGroup: 'child', age: 7 }] }

@@ -10,8 +10,7 @@ import { blankEvent, previewOfDraft, tidyProgramme, validateEvent, type Event, t
 import { useNow } from '@/lib/clock'
 import { useReducedMotion } from '@/lib/useReducedMotion'
 import { EventPreview } from './EventPreview'
-import { readUploadConfig, uploadPhoto, UploadNotConfigured } from '@/lib/api/uploads'
-import { slugFrom } from '@/domain/slug'
+import { photoKey, readUploadConfig, uploadPhoto, UploadNotConfigured } from '@/lib/api/uploads'
 import styles from './ContentForms.module.css'
 import design from './EventDesigner.module.css'
 import { readSupabaseConfig } from '@/lib/api/supabase'
@@ -241,7 +240,7 @@ export function EventDesigner({
           label="Choose a cover photograph"
           onSend={async (prepared, name) => {
             if (!uploads) throw new UploadNotConfigured()
-            const key = `${slugFrom(draft.title) || 'event'}-cover-${slugFrom(name.replace(/\.[^.]+$/, '')) || 'photo'}`
+            const key = photoKey(draft.title || 'event', 'cover', name.replace(/\.[^.]+$/, ''))
             // The function asks the database whether this person is on the committee, with
             // their own token, before it signs anything.
             const token = supabase ? await accessToken(supabase) : null

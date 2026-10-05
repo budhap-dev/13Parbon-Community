@@ -273,15 +273,32 @@ async function reread(client: SupabaseClient, id: string): Promise<Household | n
  * those a person can fix from the screen in a minute. The other is gone.
  *
  * An RPC would do both atomically and should, before this carries anybody's real details.
+ *
+ * Until then every step is checked, because none of them used to be. A read that failed came
+ * back as nobody, so nothing old was deleted and everyone was listed twice; a delete that
+ * failed did the same; and in both cases the screen said it had saved. Now a failed read stops
+ * before anything is written, and a failed delete takes the new rows back out again, so the
+ * household is left as it was and the screen says so.
  */
 async function savePeople(client: SupabaseClient, householdId: string, draft: HouseholdDraft): Promise<void> {
-  const { data: existing } = await table(client, 'people').select('id').eq('household_id', householdId)
+  const { data: existing, error: readError } = await table(client, 'people').select('id').eq('household_id', householdId)
+  if (readError) refuse('those people could not be saved', readError)
   const oldIds = ((existing ?? []) as { id: string }[]).map((row) => row.id)
 
-  const { error } = await table(client, 'people').insert(peopleRows(householdId, draft))
+  const { data: inserted, error } = await table(client, 'people').insert(peopleRows(householdId, draft)).select('id')
   if (error) refuse('those people could not be saved', error)
+  if (oldIds.length === 0) return
 
-  if (oldIds.length > 0) await table(client, 'people').delete().in('id', oldIds)
+  // Selected back, because a delete the policy did not match is no rows and no error.
+  const { data: removed, error: removeError } = await table(client, 'people').delete().in('id', oldIds).select('id')
+  if (!removeError && (removed ?? []).length > 0) return
+
+  const newIds = ((inserted ?? []) as { id: string }[]).map((row) => row.id)
+  const { error: undoError } = newIds.length > 0 ? await table(client, 'people').delete().in('id', newIds) : { error: null }
+  if (undoError) {
+    throw new Error('Those people were added but the old list could not be taken out, so some may be listed twice. Reload to check.')
+  }
+  refuse('those people could not be saved', removeError ?? { code: '42501', message: 'nothing was removed' })
 }
 
 

@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
-import { deletePhoto, keyOf, readUploadConfig, uploadPhoto, UploadNotConfigured } from './uploads'
+import { KEY } from '@/server/photos'
+import { deletePhoto, keyOf, photoKey, readUploadConfig, uploadPhoto, UploadNotConfigured } from './uploads'
 
 const config = { signUrl: 'https://site.example/api/sign', publicUrl: 'https://photos.example' }
 const prepared = { full: new Blob(['f']), thumb: new Blob(['t']), width: 1600, height: 1200 }
@@ -20,6 +21,28 @@ describe('whether uploading is switched on', () => {
 
   it('says what to do instead when it is off', () => {
     expect(new UploadNotConfigured().message).toMatch(/prepare-photos\.mjs/)
+  })
+})
+
+/*
+ * Every screen used to name its own uploads, and every one could repeat — the second file took
+ * the first one's place, and deleting either row took down the picture both pointed at.
+ */
+describe('naming a new photograph', () => {
+  it('never gives the same name twice, even for the same event and the same file', () => {
+    const names = new Set(Array.from({ length: 200 }, () => photoKey('Durga Puja', 'cover', 'poster')))
+    expect(names.size).toBe(200)
+  })
+
+  it('keeps the part a person can read, and ends in something nobody could guess', () => {
+    expect(photoKey('boishakhi-2026', 'IMG_1234')).toMatch(/^boishakhi-2026-img-1234-[a-z0-9]{12}$/)
+  })
+
+  it('always makes a key the server will take, however long or odd what it is given', () => {
+    for (const parts of [['x'.repeat(200)], ['', ''], ['শারদোৎসব'], ['A long event title with — dashes', 'cover', 'WhatsApp Image 2026-10-05 at 21.14.03']]) {
+      const key = photoKey(...parts)
+      expect(KEY.test(key), key).toBe(true)
+    }
   })
 })
 

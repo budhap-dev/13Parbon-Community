@@ -1,4 +1,5 @@
 import type { Prepared } from '@/lib/images/prepare'
+import { slugFrom } from '@/domain/slug'
 
 export type UploadConfig = {
   /** Where the browser asks for permission to put a file in the bucket. */
@@ -33,6 +34,29 @@ export class UploadNotConfigured extends Error {
 
 /** Both sizes of one photograph, under the keys the gallery already expects. */
 export type UploadedPhoto = { url: string; thumbnailUrl: string }
+
+/** The random end of every key. Twelve characters of base 36 is about 62 bits. */
+const SUFFIX = 12
+
+/**
+ * The key to upload a new photograph under: something a person can read, then something random.
+ *
+ * Each screen used to build its own from what was to hand, and every one could repeat. An
+ * event cover was its title and the file's name, so next year's "Durga Puja" from poster.jpg
+ * replaced this year's; a theme photograph was the file's name alone; an album photograph was
+ * the album's count plus one, which comes round again after a deletion. The second upload took
+ * the first one's place in the bucket, and deleting either row took down the file both used.
+ *
+ * Random also means unguessable. The bucket serves whatever it holds to anybody with the
+ * address, and an album kept for members only was a run of numbers anybody could count through.
+ */
+export function photoKey(...parts: string[]): string {
+  const random = new Uint8Array(SUFFIX)
+  crypto.getRandomValues(random)
+  const suffix = Array.from(random, (byte) => (byte % 36).toString(36)).join('')
+  const stem = slugFrom(parts.join(' ')).slice(0, 80 - SUFFIX - 1).replace(/-+$/, '') || 'photo'
+  return `${stem}-${suffix}`
+}
 
 /**
  * Puts a prepared photograph in the bucket.
@@ -69,9 +93,10 @@ export async function uploadPhoto(
    * Now ask the server what actually landed.
    *
    * Everything above this line happens in the browser, including the check that the photograph
-   * carries no location — and the browser is the thing being defended against. This reads both
-   * objects back where nothing here can reach them, and takes them out of the bucket if they
-   * carry anything. Until it has said yes, no row is written, so a refused photograph is not in
+   * carries no location — and the browser is the thing being defended against. What was sent
+   * went to a waiting area nothing serves from; this reads both objects back where nothing here
+   * can reach them, and only if they carry nothing does the server publish them under `full/`
+   * and `thumb/`. Until it has said yes, no row is written, so a refused photograph is not in
    * the album and not at a URL.
    */
   const checked = await fetchImpl(`${config.signUrl}?key=${encodeURIComponent(key)}&verify=1`, {

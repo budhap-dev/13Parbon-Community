@@ -25,7 +25,17 @@ export function withSupabaseSettings(base: ApiClient, config: SupabaseConfig): A
    */
   const load = async (): Promise<SiteSettings> => {
     const defaults = await base.settings.get()
-    const { data } = await (await table()).select('value').eq('id', true).maybeSingle()
+    const { data, error } = await (await table()).select('value').eq('id', true).maybeSingle()
+    /*
+     * A read that failed is not a read that found nothing, and must not look like one.
+     *
+     * Answered with the code's values, a dropped connection or an expired token read as "the
+     * committee has saved nothing" — the Content page took that as loaded, opened the form on
+     * the defaults, and the next Save wrote them over the story, the privacy notice and every
+     * link the committee had saved. Thrown, the settings stay unloaded and the form stays shut;
+     * the public site still draws on the code's values, which `SettingsProvider` falls back to.
+     */
+    if (error) throw new Error(`The site's settings could not be read: ${error.message}`)
     // No row is the ordinary state of a new project, not a failure: nobody has changed anything
     // yet, so the code's own values are the right answer.
     return mergeSettings((data as { value: unknown } | null)?.value, defaults)
@@ -33,9 +43,14 @@ export function withSupabaseSettings(base: ApiClient, config: SupabaseConfig): A
 
   return {
     ...base,
-    // The year's occasions are a field of the same row. Left on the base client they would be
-    // the code's four for ever, whatever the committee had saved.
-    festivals: { list: async () => (await load()).festivals },
+    /*
+     * The year's occasions are a field of the same row. Left on the base client they would be
+     * the code's four for ever, whatever the committee had saved.
+     *
+     * Only ever drawn on the public pages, never saved back, so a failed read falls back to the
+     * code's four rather than leaving the home page's strip of the year empty.
+     */
+    festivals: { list: async () => (await load().catch(() => base.settings.get())).festivals },
     settings: {
       get: load,
       save: async (draft, viewer: Viewer) => {

@@ -166,6 +166,7 @@ describe('laying saved settings over what the code says', () => {
 
 const upsert = vi.fn(async () => ({ error: null as { code?: string; message: string } | null }))
 let stored: unknown = undefined
+let readError: { message: string } | null = null
 
 const client = {
   schema: () => ({
@@ -173,7 +174,8 @@ const client = {
       select: () => ({
         eq: () => ({
           // No row is the ordinary state of a new project, so undefined is the default here.
-          maybeSingle: async () => ({ data: stored === undefined ? null : { value: stored } }),
+          maybeSingle: async () =>
+            readError ? { data: null, error: readError } : { data: stored === undefined ? null : { value: stored }, error: null },
         }),
       }),
       upsert,
@@ -191,6 +193,7 @@ const wired = () => withSupabaseSettings(createMockApi(), config)
 
 beforeEach(() => {
   stored = undefined
+  readError = null
   upsert.mockClear()
   upsert.mockResolvedValue({ error: null })
 })
@@ -226,6 +229,22 @@ describe('reading the switches', () => {
     expect(settings.showNews).toBe(defaultSettings.showNews)
     expect(settings.home.photos).toBe(defaultSettings.home.photos)
     expect(settings.committee).toEqual(defaultSettings.committee)
+  })
+
+  /**
+   * The other half of "no row is not a failure": a failure is not "no row". Answered with the
+   * defaults, the Content page took them for what was saved and its next Save wrote them over
+   * the committee's story, privacy notice and links.
+   */
+  it('fails, rather than passing the defaults off as what was saved, when the read fails', async () => {
+    stored = { showNews: true }
+    readError = { message: 'JWT expired' }
+    await expect(wired().settings.get()).rejects.toThrow(/could not be read: JWT expired/)
+  })
+
+  it('still draws the code’s festivals on the public pages when the read fails', async () => {
+    readError = { message: 'Failed to fetch' }
+    expect(await wired().festivals.list()).toEqual(defaultSettings.festivals)
   })
 })
 

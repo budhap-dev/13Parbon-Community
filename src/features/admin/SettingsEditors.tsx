@@ -17,9 +17,8 @@ import {
   type ValueCard,
   type ValueIcon,
 } from '@/domain/siteContent'
-import { slugFrom } from '@/domain/slug'
 import { readSupabaseConfig } from '@/lib/api/supabase'
-import { readUploadConfig, uploadPhoto, UploadNotConfigured } from '@/lib/api/uploads'
+import { photoKey, readUploadConfig, uploadPhoto, UploadNotConfigured } from '@/lib/api/uploads'
 import { accessToken } from '@/lib/auth/supabaseAuth'
 import styles from './ContentForms.module.css'
 
@@ -493,7 +492,7 @@ export function CollageEditor({ value, onChange }: { value: ThemeCollage; onChan
         label="Add a photograph for the theme"
         onSend={async (prepared, name) => {
           if (!uploads) throw new UploadNotConfigured()
-          const key = `theme-${slugFrom(name.replace(/\.[^.]+$/, '')) || 'photo'}`
+          const key = photoKey('theme', name.replace(/\.[^.]+$/, ''))
           // The function asks the database whether this person is on the committee, with
           // their own token, before it signs anything.
           const token = supabase ? await accessToken(supabase) : null

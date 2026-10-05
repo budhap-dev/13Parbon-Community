@@ -44,26 +44,67 @@ export function scaleTo(width: number, height: number, max: number): { width: nu
 
 type Segment = { marker: number; start: number; end: number }
 
-/** Every JPEG segment in order, so metadata can be told apart from the picture itself. */
-function* segments(data: Uint8Array): Generator<Segment> {
-  if (data.length < 4 || data[0] !== 0xff || data[1] !== 0xd8) return
+/** A restart marker, which sits inside the picture's own bytes and carries no length. */
+const isRestart = (marker: number) => marker >= 0xd0 && marker <= 0xd7
+
+/**
+ * Every JPEG segment in order, and whether the file was a JPEG from end to end.
+ *
+ * Strict, because this used to stop at the first thing it did not understand and report
+ * whatever it had seen by then — so a check built on it could be walked round. A PNG was not a
+ * JPEG, so it had no segments and no metadata. A padding byte before the EXIF ended the walk
+ * early and hid it. Metadata put after the first scan, or anything written after the end of
+ * the picture, was never reached. Every one of those is now `wellFormed: false`, and the
+ * callers refuse a file that is not well formed rather than calling it clean.
+ */
+function scan(data: Uint8Array): { segments: Segment[]; wellFormed: boolean } {
+  const segments: Segment[] = []
+  const malformed = { segments, wellFormed: false }
+  if (data.length < 4 || data[0] !== 0xff || data[1] !== 0xd8) return malformed
   let i = 2
-  while (i < data.length - 1 && data[i] === 0xff) {
-    const marker = data[i + 1]
-    // Standalone markers carry no length.
-    if (marker === 0xd8 || marker === 0xd9 || (marker >= 0xd0 && marker <= 0xd7)) {
-      yield { marker, start: i, end: i + 2 }
-      i += 2
+  while (i < data.length) {
+    if (data[i] !== 0xff) return malformed
+    const start = i
+    // Any number of 0xff may pad the gap before a marker; the marker is the first byte that is not one.
+    while (i < data.length && data[i] === 0xff) i += 1
+    if (i >= data.length) return malformed
+    const marker = data[i]
+    i += 1
+    if (marker === 0x00 || marker === 0xd8) return malformed
+    if (marker === 0xd9) {
+      segments.push({ marker, start, end: i })
+      // Nothing may follow the end of the picture except padding: a whole second file can sit there.
+      for (; i < data.length; i += 1) if (data[i] !== 0x00) return malformed
+      return { segments, wellFormed: true }
+    }
+    if (isRestart(marker) || marker === 0x01) {
+      segments.push({ marker, start, end: i })
       continue
     }
-    if (i + 3 >= data.length) return
-    const length = (data[i + 2] << 8) | data[i + 3]
-    if (length < 2) return
-    yield { marker, start: i, end: i + 2 + length }
-    // Everything after the start of scan is the picture.
-    if (marker === 0xda) return
-    i += 2 + length
+    if (i + 1 >= data.length) return malformed
+    const length = (data[i] << 8) | data[i + 1]
+    if (length < 2 || i + length > data.length) return malformed
+    segments.push({ marker, start, end: i + length })
+    i += length
+    if (marker !== 0xda) continue
+    /*
+     * After a start of scan comes the picture itself, which is full of 0xff bytes that are not
+     * markers: 0xff 0x00 is a stuffed byte and 0xff 0xd0..d7 a restart. Walked past here rather
+     * than given up on, because a progressive JPEG has more segments after its first scan and
+     * an APP1 can be put there as easily as anywhere.
+     */
+    while (i < data.length) {
+      if (data[i] !== 0xff) {
+        i += 1
+        continue
+      }
+      const next = data[i + 1]
+      if (next === 0x00 || (next !== undefined && isRestart(next))) i += 2
+      else if (next === 0xff) i += 1
+      else break
+    }
   }
+  return malformed
 }
 
 /** `ICC_PROFILE\0`, the signature an ICC segment always opens with. */
@@ -109,18 +150,24 @@ const isMetadata = (data: Uint8Array, segment: Segment) =>
  * before anything is sent, so the guarantee does not rest on the encoder having behaved.
  */
 export function hasJpegMetadata(data: Uint8Array): boolean {
-  for (const segment of segments(data)) if (isMetadata(data, segment)) return true
-  return false
+  return metadataMarkers(data).length > 0
 }
 
-/** Which segments they are, for saying what was found rather than only that something was. */
+/**
+ * Which segments they are, for saying what was found rather than only that something was.
+ *
+ * A file that is not a well-formed JPEG is reported as one, so it is refused like metadata is:
+ * whatever could not be read is exactly where a location could be hiding.
+ */
 export function metadataMarkers(data: Uint8Array): string[] {
+  const { segments, wellFormed } = scan(data)
   const found: string[] = []
-  for (const segment of segments(data)) {
+  for (const segment of segments) {
     if (!isMetadata(data, segment)) continue
     if (segment.marker === 0xfe) found.push('comment')
     else if (segment.marker === 0xe1) found.push('EXIF (may include GPS)')
     else found.push(`APP${segment.marker - 0xe0}`)
   }
+  if (!wellFormed) found.push('something that is not a well-formed JPEG')
   return found
 }

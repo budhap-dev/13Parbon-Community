@@ -12,9 +12,8 @@ import { describeMedia, type AlbumDraft, type AlbumWithMedia } from '@/domain/ga
 import { formatLongDate } from '@/domain/dates'
 import { useAddMedia, useAllAlbums, useCreateAlbum, useDeleteMedia, useReorderMedia, useSetCaption, useUpdateAlbum } from '@/lib/api'
 import { readSupabaseConfig } from '@/lib/api/supabase'
-import { readUploadConfig, uploadPhoto, UploadNotConfigured } from '@/lib/api/uploads'
+import { photoKey, readUploadConfig, uploadPhoto, UploadNotConfigured } from '@/lib/api/uploads'
 import { accessToken } from '@/lib/auth/supabaseAuth'
-import { slugFrom } from '@/domain/slug'
 import styles from '@/features/portal/Portal.module.css'
 import media from './AdminMedia.module.css'
 
@@ -324,23 +323,19 @@ function AlbumPage({
             canSend={Boolean(uploads && supabase)}
             label="Add photographs"
             multiple
-            onSend={async (prepared, name, index) => {
+            onSend={async (prepared, name) => {
               if (!uploads || !supabase) throw new UploadNotConfigured()
               // The function asks the database whether this person is on the committee, with
               // their own token, before it signs anything.
               const token = await accessToken(supabase)
               if (!token) throw new Error('Sign in first.')
               /*
-               * The album's address and the next number in it. Keys are what the bucket is
-               * organised by and what a takedown names, so they are made here rather than taken
-               * from the filename — two phones both offering IMG_0042.jpg would otherwise have
-               * the second quietly overwrite the first.
-               *
-               * `index` is what makes a batch safe. The album has not grown by the time the
-               * second photograph is signed, so counting from its length alone would hand the
-               * same number to every picture in the drop, and the bucket would keep the last.
+               * The album's address, the file's name, and something random. Keys are what the
+               * bucket is organised by and what a takedown names, and they used to be the
+               * album's count plus one — which comes round again after a deletion, so the new
+               * photograph replaced an old one that another row still pointed at.
                */
-              const key = `${album.slug}-${String(album.media.length + 1 + index).padStart(2, '0')}-${slugFrom(name.replace(/\.[^.]+$/, '')).slice(0, 24) || 'photo'}`
+              const key = photoKey(album.slug, name.replace(/\.[^.]+$/, '').slice(0, 24))
               return uploadPhoto(uploads, key, prepared, token)
             }}
             onDone={(url) =>

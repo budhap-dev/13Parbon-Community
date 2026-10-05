@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Button } from '@/components/Button'
 import { PhotoUpload } from '@/components/PhotoUpload'
 import { forDateTimeInput, fromDateTimeInput } from '@/domain/dates'
-import { isValid, slugFrom, type ContentErrors } from '@/domain/news'
+import { isValid, type ContentErrors } from '@/domain/news'
 import {
   POLL_OPTIONS_MAX,
   POLL_RESULTS,
@@ -34,7 +34,7 @@ import {
 } from '@/domain/quizzes'
 import { validateSuggestion, type SuggestionDraft, type SuggestionKind } from '@/domain/suggestions'
 import { readSupabaseConfig } from '@/lib/api'
-import { readUploadConfig, uploadPhoto, UploadNotConfigured } from '@/lib/api/uploads'
+import { photoKey, readUploadConfig, uploadPhoto, UploadNotConfigured } from '@/lib/api/uploads'
 import { accessToken } from '@/lib/auth/supabaseAuth'
 import { Field } from '@/features/admin/ContentForms'
 import { outstanding } from '@/features/admin/outstanding'
@@ -340,8 +340,7 @@ export function QuestionForm({
         label="Choose a picture"
         onSend={async (prepared, name) => {
           if (!uploads) throw new UploadNotConfigured()
-          const stem = slugFrom(draft.prompt).slice(0, 40) || slugFrom(name.replace(/\.[^.]+$/, '')).slice(0, 40) || 'picture'
-          const key = `quiz-${stem}-${Date.now().toString(36)}`.replace(/-+/g, '-')
+          const key = photoKey('quiz', (draft.prompt.trim() || name.replace(/\.[^.]+$/, '')).slice(0, 40))
           const token = supabase ? await accessToken(supabase) : null
           if (!token) throw new Error('Sign in first.')
           return uploadPhoto(uploads, key, prepared, token)
