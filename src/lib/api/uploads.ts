@@ -26,7 +26,7 @@ export function readUploadConfig(env: Record<string, string | undefined>): Uploa
 export class UploadNotConfigured extends Error {
   constructor() {
     super(
-      'Uploading is not switched on yet: this build has no bucket to put photographs in. Prepare them with scripts/prepare-photos.mjs and upload them by hand for now.',
+      'Uploading is not switched on yet, so photographs cannot be added from here. Ask whoever looks after the website to switch it on.',
     )
     this.name = 'UploadNotConfigured'
   }
@@ -78,7 +78,7 @@ export async function uploadPhoto(
     method: 'POST',
     headers: { authorization: `Bearer ${token}` },
   })
-  if (!signed.ok) throw new Error(`The bucket would not let us in (${signed.status}).`)
+  if (!signed.ok) throw new Error(`The upload was refused (${signed.status}). Try again in a moment, or sign out and back in.`)
   const { full, thumb } = (await signed.json()) as { full: string; thumb: string }
 
   const put = async (url: string, body: Blob) => {
@@ -105,7 +105,7 @@ export async function uploadPhoto(
   })
   if (!checked.ok) {
     const said = (await checked.json().catch(() => null)) as { error?: string } | null
-    throw new Error(said?.error ?? `What arrived in the bucket could not be checked (${checked.status}).`)
+    throw new Error(said?.error ?? `The photograph uploaded but could not be checked (${checked.status}), so it was not added. Try again.`)
   }
 
   return {
@@ -127,7 +127,7 @@ export async function deletePhoto(config: UploadConfig, key: string, token: stri
     method: 'DELETE',
     headers: { authorization: `Bearer ${token}` },
   })
-  if (!response.ok) throw new Error(`The bucket would not take that photograph down (${response.status}).`)
+  if (!response.ok) throw new Error(`The photograph could not be deleted from storage (${response.status}). Try again in a moment.`)
 }
 
 /**

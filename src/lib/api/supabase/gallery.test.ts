@@ -127,7 +127,7 @@ describe('taking a photograph down', () => {
   it('will not delete the row alone when there is no bucket to remove the picture from', async () => {
     const { client, calls } = fakeClient({ media: [mediaRow()] })
     const d = deps(calls, { uploads: null })
-    await expect(galleryMethods(async () => client, d).deleteMedia('m-1', admin)).rejects.toThrow(/bucket is not configured/)
+    await expect(galleryMethods(async () => client, d).deleteMedia('m-1', admin)).rejects.toThrow(/photo storage is not switched on/)
     expect(calls.some((c) => c.startsWith('media.delete'))).toBe(false)
   })
 

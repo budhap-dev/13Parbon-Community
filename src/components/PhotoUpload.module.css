@@ -77,11 +77,89 @@
 }
 
 /*
- * Dropping photographs on. There is no keyboard path through a drag, which is why the button
- * did not go away: it is the same door, and it is the one a keyboard and a screen reader use.
+ * Where photographs are dropped. Big enough to aim at, and it says so before anybody tries:
+ * there is no keyboard path through a drag, which is why the button sits in the middle of it —
+ * the same door, and the one a keyboard and a screen reader use.
  */
+.zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 160px;
+  padding: 24px 16px;
+  text-align: center;
+  border: 2px dashed var(--color-border, rgba(0, 0, 0, 0.22));
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--color-accent, #f7b733) 4%, transparent);
+  transition:
+    border-color var(--motion-fast, 160ms) ease-out,
+    background-color var(--motion-fast, 160ms) ease-out;
+}
+
+/* An album takes a whole evening at once, so its box is the biggest thing on the screen. */
+.zoneLarge {
+  min-height: 240px;
+  padding: 36px 20px;
+}
+
+.zoneIcon {
+  display: inline-grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  color: var(--color-accent, #f7b733);
+  background: color-mix(in srgb, var(--color-accent, #f7b733) 14%, transparent);
+}
+
+.zoneTitle {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.zoneLarge .zoneTitle {
+  font-size: 18px;
+}
+
+.zoneOr {
+  margin: 0;
+  font-size: 13px;
+  opacity: 0.7;
+}
+
 .dragging {
-  outline: 3px dashed var(--color-accent, #f7b733);
-  outline-offset: 6px;
-  border-radius: 12px;
+  border-style: solid;
+  border-color: var(--color-accent, #f7b733);
+  background: color-mix(in srgb, var(--color-accent, #f7b733) 14%, transparent);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .dragging .zoneIcon {
+    animation: lift 900ms ease-in-out infinite;
+  }
+}
+
+@keyframes lift {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+/* A phone has no files to drag: there, the box is the button and nothing claims otherwise. */
+@media (hover: none) and (pointer: coarse) {
+  .zoneTitle,
+  .zoneOr {
+    display: none;
+  }
+
+  .zoneLarge {
+    min-height: 180px;
+  }
 }

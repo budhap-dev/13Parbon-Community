@@ -38,7 +38,7 @@ describe('the albums', () => {
     // The members-only album is not on the public gallery, and is here.
     expect(screen.getByText('Committee dinner')).toBeInTheDocument()
     expect(screen.getAllByText('On the website').length).toBeGreaterThan(0)
-    expect(screen.getByText('Members only')).toBeInTheDocument()
+    expect(screen.getByText('Not published yet')).toBeInTheDocument()
   })
 
   it('says what the upload will take, before anybody tries', async () => {
@@ -67,13 +67,15 @@ describe('the albums', () => {
     expect(screen.getByText(/never\s+leave your computer/)).toBeInTheDocument()
   })
 
-  it('makes a new album', async () => {
+  it('makes a new album, kept off the website until it is published', async () => {
     renderAt('/admin/media')
     await userEvent.click(await screen.findByRole('button', { name: 'New album' }))
     await userEvent.type(screen.getByLabelText('Name'), 'Holi 2027')
+    expect(screen.getByLabelText('Published')).toHaveValue('members')
     await userEvent.click(screen.getByRole('button', { name: 'Make the album' }))
 
     expect(await screen.findByText('Holi 2027')).toBeInTheDocument()
+    expect(screen.getAllByText('Not published yet')).toHaveLength(2)
   })
 
   it('refuses one with no name and stays on the form', async () => {
@@ -84,10 +86,10 @@ describe('the albums', () => {
     expect(await screen.findByText(/needs a name/i)).toBeInTheDocument()
   })
 
-  it('offers members-only as the way to hide a picture without destroying it', async () => {
+  it('says how an album goes on the website once its photographs are checked', async () => {
     renderAt('/admin/media')
     await userEvent.click(await screen.findByRole('button', { name: 'New album' }))
-    expect(screen.getByText(/without destroying it/)).toBeInTheDocument()
+    expect(screen.getByText(/choose Yes to put the\s+album on the website/)).toBeInTheDocument()
   })
 })
 
@@ -179,7 +181,7 @@ describe('inside an album', () => {
     const confirm = await screen.findByRole('dialog')
     expect(confirm).toHaveAccessibleName('Delete this photograph?')
     // The address stopping working is the point, and it is what the privacy page promises.
-    expect(confirm).toHaveTextContent(/goes from the bucket/)
+    expect(confirm).toHaveTextContent(/deleted from storage first/)
     expect(confirm).toHaveTextContent(/cannot be undone/)
     // Focus lands on the way out, not on the way through.
     expect(within(confirm).getByRole('button', { name: 'Keep it' })).toHaveFocus()
@@ -223,7 +225,7 @@ describe('inside an album', () => {
       gallery: {
         ...api.gallery,
         deleteMedia: async () => {
-          throw new Error('The bucket would not let us in (403).')
+          throw new Error('The upload was refused (403).')
         },
       },
     }
@@ -239,7 +241,7 @@ describe('inside an album', () => {
     await userEvent.click(screen.getByRole('button', { name: /^Delete$/ }))
 
     expect(await screen.findByText(/has not been taken down/)).toBeInTheDocument()
-    expect(screen.getByText(/would not let us in/)).toBeInTheDocument()
+    expect(screen.getByText(/upload was refused/)).toBeInTheDocument()
     // And the photograph is still there, because it is.
     expect(screen.getAllByRole('button', { name: /^Delete / })).toHaveLength(before)
   })

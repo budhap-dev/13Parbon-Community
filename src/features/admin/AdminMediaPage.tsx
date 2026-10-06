@@ -17,7 +17,8 @@ import { accessToken } from '@/lib/auth/supabaseAuth'
 import styles from '@/features/portal/Portal.module.css'
 import media from './AdminMedia.module.css'
 
-const emptyDraft: AlbumDraft = { title: '', description: '', visibility: 'public' }
+// A new album starts unpublished, so its photographs can be checked before anybody else sees them.
+const emptyDraft: AlbumDraft = { title: '', description: '', visibility: 'members' }
 
 export function AdminMediaPage() {
   useDocumentTitle('Photographs')
@@ -63,8 +64,8 @@ export function AdminMediaPage() {
         <div>
           <h1 className={styles.title}>Photographs</h1>
           <p className={styles.sub}>
-            The albums on the website. Photographs are kept in the bucket, never in the code, so that
-            deleting one really deletes it.
+            Your albums of photographs. They are kept in the site's own photo storage, so deleting
+            one really deletes it.
           </p>
         </div>
         <Button variant="gold" size="sm" onClick={() => { setOpenId(null); setEditing({ ...emptyDraft }) }}>
@@ -95,7 +96,7 @@ export function AdminMediaPage() {
                     {formatLongDate(album.publishedAt)}
                   </span>
                   <span className={album.visibility === 'public' ? styles.pillLive : styles.pillWait}>
-                    {album.visibility === 'public' ? 'On the website' : 'Members only'}
+                    {album.visibility === 'public' ? 'On the website' : 'Not published yet'}
                   </span>
                 </span>
               </button>
@@ -174,19 +175,20 @@ function AlbumForm({
           </label>
 
           <label className={media.field}>
-            <span className={media.label}>Who can see it</span>
+            <span className={media.label}>Published</span>
             <select
               className={media.input}
               value={draft.visibility}
               onChange={(e) => onChange({ ...draft, visibility: e.target.value as AlbumDraft['visibility'] })}
             >
-              <option value="public">Anybody — it goes on the website</option>
-              <option value="members">Members only — signed in, and not in search results</option>
+              <option value="members">Not yet — only in the portal while it is checked</option>
+              <option value="public">Yes — on the public website for anybody to see</option>
             </select>
           </label>
           <p className={`${styles.muted} ${styles.tiny}`}>
-            Members only is how a picture is kept off the website without destroying it. Taking a
-            photograph down for good is done from the album itself.
+            Upload the photographs, look through them here, then come back and choose Yes to put the
+            album on the website. Switching it back to Not yet takes it off again. Taking a photograph
+            down for good is done from the album itself.
           </p>
 
           <div className={styles.actions}>
@@ -260,7 +262,7 @@ function AlbumPage({
         setConfirming(null)
         setTaken({
           ok: true,
-          text: 'Taken down. It is out of the bucket, so its address stops working for everybody who had it.',
+          text: 'Taken down. It has been deleted from storage, so its address stops working for everybody who had it.',
         })
         afterwards?.()
       },
@@ -347,7 +349,7 @@ function AlbumPage({
           />
           {add.isError ? (
             <p className={`${styles.muted} ${styles.tiny}`} role="alert">
-              It reached the bucket but the album did not take it. {add.error.message}
+              It uploaded, but could not be added to the album. {add.error.message}
             </p>
           ) : null}
         </div>
@@ -443,7 +445,7 @@ function AlbumPage({
                 onCancel={() => setConfirming(null)}
                 onConfirm={() => takeDown(item.id)}
               >
-                It goes from the bucket first, so the address stops working for everybody who has it.
+                It is deleted from storage first, so the address stops working for everybody who has it.
                 This cannot be undone.
               </ConfirmDialog>
             </li>

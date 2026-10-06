@@ -20,7 +20,7 @@ describe('whether uploading is switched on', () => {
   })
 
   it('says what to do instead when it is off', () => {
-    expect(new UploadNotConfigured().message).toMatch(/prepare-photos\.mjs/)
+    expect(new UploadNotConfigured().message).toMatch(/Ask whoever looks after the website/)
   })
 })
 
@@ -108,7 +108,7 @@ describe('putting a photograph in the bucket', () => {
 
   it('says so plainly when the bucket refuses', async () => {
     const fetchImpl = vi.fn(async () => new Response(null, { status: 403 }))
-    await expect(uploadPhoto(config, 'x', prepared, 'admin-token', fetchImpl as unknown as typeof fetch)).rejects.toThrow(/would not let us in \(403\)/)
+    await expect(uploadPhoto(config, 'x', prepared, 'admin-token', fetchImpl as unknown as typeof fetch)).rejects.toThrow(/upload was refused \(403\)/)
   })
 
   it('fails if either size fails, because half a photograph is a gap in the grid', async () => {
@@ -147,7 +147,7 @@ describe('taking a photograph out of the bucket', () => {
 
   it('says so plainly when the bucket refuses, so the row is not deleted on a false yes', async () => {
     const fetchImpl = vi.fn(async (_url: string | URL | Request, _init?: RequestInit) => new Response(null, { status: 403 }))
-    await expect(deletePhoto(config, 'x', 'the-token', fetchImpl as unknown as typeof fetch)).rejects.toThrow(/would not take that photograph down \(403\)/)
+    await expect(deletePhoto(config, 'x', 'the-token', fetchImpl as unknown as typeof fetch)).rejects.toThrow(/could not be deleted from storage \(403\)/)
   })
 
   it('knows which photographs are ours to remove from the bucket, and which are not', () => {

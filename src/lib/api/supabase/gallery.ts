@@ -251,7 +251,7 @@ export function galleryMethods(getClient: () => Promise<SupabaseClient>, deps: G
       } else if (!deps.uploads && /\/full\/[a-z0-9-]+\.jpg$/.test(media.url)) {
         // It looks like one of ours and there is no bucket configured to remove it from.
         // Deleting the row alone would be the broken promise, so: refuse, and say why.
-        throw new NotAllowed('the bucket is not configured, so this photograph cannot be taken down from here')
+        throw new NotAllowed('photo storage is not switched on, so this photograph cannot be taken down from here')
       }
 
       const { data: gone, error } = await table(client, 'media').delete().eq('id', id).select('id').maybeSingle()

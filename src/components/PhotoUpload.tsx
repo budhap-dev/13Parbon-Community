@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { Button } from './Button'
 import { CoverImage } from './CoverImage'
+import { Icon } from './Icon'
 import { ACCEPTED, ACCEPTED_LABEL } from '@/domain/images'
 import { prepareImage, type Prepared } from '@/lib/images/prepare'
 import styles from './PhotoUpload.module.css'
@@ -148,7 +149,7 @@ export function PhotoUpload({
 
   return (
     <div
-      className={`${styles.upload} ${dragging ? styles.dragging : ''}`}
+      className={styles.upload}
       onDragOver={(e) => {
         // Without this the browser navigates to the file, which loses whatever was on the page.
         e.preventDefault()
@@ -215,8 +216,8 @@ export function PhotoUpload({
                     */}
                   {!canSend ? (
                     <span className={styles.note} role="status">
-                      Nowhere to put it: this build has no bucket configured, so it cannot be
-                      saved and nothing will use it yet.
+                      Nowhere to put it: uploading is not switched on for this copy of the site,
+                      so it cannot be saved and nothing will use it yet.
                     </span>
                   ) : null}
                 </div>
@@ -226,19 +227,35 @@ export function PhotoUpload({
         ),
       )}
 
-      <div className={styles.actions}>
+      {canSend && readyCount > 0 ? (
+        <div className={styles.actions}>
+          <Button variant="gold" size="sm" disabled={busy} onClick={() => void send()}>
+            {readyCount === 1 ? 'Upload it' : `Upload all ${readyCount}`}
+          </Button>
+        </div>
+      ) : null}
+
+      {/*
+        * The place to drop them, drawn big enough to aim at. The whole component still takes a
+        * drop, so missing the box by a little is not missing it. The button stays in the middle
+        * of it: a drag has no keyboard path, and the button is the same door for everybody.
+        */}
+      <div className={`${styles.zone} ${multiple ? styles.zoneLarge : ''} ${dragging ? styles.dragging : ''}`}>
+        <span className={styles.zoneIcon} aria-hidden="true">
+          <Icon name="image" size={multiple ? 30 : 24} />
+        </span>
+        <p className={styles.zoneTitle}>
+          {multiple
+            ? dragging ? 'Let go to add them' : 'Drag photographs here'
+            : dragging ? 'Let go to add it' : 'Drag a photograph here'}
+        </p>
+        <p className={styles.zoneOr}>or</p>
         <Button variant="line" size="sm" disabled={busy} aria-describedby={dropId} onClick={() => input.current?.click()}>
           {busy ? 'Working…' : label}
         </Button>
         <span className={styles.note} id={dropId}>
           {ACCEPTED_LABEL}
-          {multiple ? ' · or drop them here' : ''}
         </span>
-        {canSend && readyCount > 0 ? (
-          <Button variant="gold" size="sm" disabled={busy} onClick={() => void send()}>
-            {readyCount === 1 ? 'Put it in the bucket' : `Put all ${readyCount} in the bucket`}
-          </Button>
-        ) : null}
       </div>
 
     </div>

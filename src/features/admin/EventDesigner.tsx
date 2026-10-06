@@ -232,7 +232,7 @@ export function EventDesigner({
           'coverImageUrl',
           'Cover photograph',
           {},
-          'The address it is served from. Putting a chosen file in the bucket fills this in.',
+          'The address it is served from. Uploading a chosen photograph fills this in.',
         )}
 
         <PhotoUpload
@@ -551,7 +551,7 @@ export function EventDesigner({
         ) : null}
         {!draft.coverImageUrl && chosenCover ? (
           <p className={design.standIn}>
-            That photograph is only on this machine so far. Put it in the bucket and the cover
+            That photograph is only on this machine so far. Press Upload it and the cover
             photograph field fills in — until then the event saves without one.
           </p>
         ) : null}

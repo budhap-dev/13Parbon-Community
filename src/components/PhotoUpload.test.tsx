@@ -89,7 +89,7 @@ describe('once it is ready', () => {
     render(<PhotoUpload canSend onSend={onSend} onDone={onDone} />)
     await userEvent.upload(document.querySelector('input[type="file"]') as HTMLInputElement, jpeg())
 
-    await userEvent.click(await screen.findByRole('button', { name: 'Put it in the bucket' }))
+    await userEvent.click(await screen.findByRole('button', { name: 'Upload it' }))
     await waitFor(() => expect(onDone).toHaveBeenCalledWith('https://photos.example/full/x.jpg'))
   })
 })
@@ -108,7 +108,7 @@ describe('a whole evening at once', () => {
     const input = document.querySelector('input[type="file"]') as HTMLInputElement
     await userEvent.upload(input, [named('one.jpg'), named('two.jpg'), named('three.jpg')])
 
-    await userEvent.click(await screen.findByRole('button', { name: 'Put all 3 in the bucket' }))
+    await userEvent.click(await screen.findByRole('button', { name: 'Upload all 3' }))
     await waitFor(() => expect(onDone).toHaveBeenCalledTimes(3))
 
     /*
@@ -134,7 +134,7 @@ describe('a whole evening at once', () => {
 
     const input = document.querySelector('input[type="file"]') as HTMLInputElement
     await userEvent.upload(input, [named('one.jpg'), named('two.jpg'), named('three.jpg')])
-    await userEvent.click(await screen.findByRole('button', { name: 'Put all 3 in the bucket' }))
+    await userEvent.click(await screen.findByRole('button', { name: 'Upload all 3' }))
 
     // The two that worked are gone from the list; the one that did not says so and stays.
     await waitFor(() => expect(onDone).toHaveBeenCalledTimes(2))
@@ -159,7 +159,7 @@ describe('when there is nowhere to put it', () => {
     await userEvent.upload(document.querySelector('input[type="file"]') as HTMLInputElement, jpeg())
 
     const ready = await screen.findByText(/No location, camera or date/)
-    expect(screen.queryByRole('button', { name: 'Put it in the bucket' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Upload it' })).not.toBeInTheDocument()
     /*
      * Said beside the picture rather than at the foot of the component. On the event designer
      * the choose-a-file row sits below this one, so a notice under that was off the bottom of
