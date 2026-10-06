@@ -1,6 +1,6 @@
 import { screen, within } from '@testing-library/react'
 import { createMockApi } from '@/lib/api'
-import { renderWithProviders, TEST_NOW } from '@/test/render'
+import { createFailingApi, renderWithProviders, TEST_NOW } from '@/test/render'
 import { EventsPage } from './EventsPage'
 
 describe('EventsPage', () => {
@@ -71,5 +71,32 @@ describe('EventsPage', () => {
     renderWithProviders(<EventsPage />, { route: '/events?festival=holi', api: createMockApi({ now: () => TEST_NOW }) })
     await screen.findByRole('link', { name: 'All' })
     expect(screen.queryByRole('complementary', { name: 'More of the year to come' })).not.toBeInTheDocument()
+  })
+
+  it('does not claim every occasion is unscheduled when the calendar fails to load', async () => {
+    const base = createMockApi({ now: () => TEST_NOW })
+    const failing = { ...base, events: { ...createFailingApi().events, listPast: base.events.listPast } }
+    renderWithProviders(<EventsPage />, { route: '/events', api: failing })
+    expect(await screen.findByText(/could not load the calendar/i)).toBeInTheDocument()
+    // The festivals arrive, so the filters do; the note about them must not.
+    await screen.findByRole('link', { name: 'Holi' })
+    expect(screen.queryByRole('complementary', { name: 'More of the year to come' })).not.toBeInTheDocument()
+  })
+
+  it('says so when the earlier evenings fail to load, rather than leaving them out', async () => {
+    const base = createMockApi({ now: () => TEST_NOW })
+    const failing = {
+      ...base,
+      events: {
+        ...base.events,
+        listPast: async () => {
+          throw new Error('down')
+        },
+      },
+    }
+    renderWithProviders(<EventsPage />, { route: '/events', api: failing })
+    const past = await screen.findByRole('region', { name: 'Earlier this year' })
+    expect(within(past).getByText(/could not load the earlier evenings/i)).toBeInTheDocument()
+    expect(within(past).getByRole('button', { name: 'Try again' })).toBeInTheDocument()
   })
 })

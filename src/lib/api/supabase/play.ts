@@ -185,9 +185,16 @@ export function playMethods(
   const rpc = (client: SupabaseClient, name: string, args: Record<string, unknown>) => client.schema('portal').rpc(name, args)
   /** The household this viewer votes as. An admin with no household of their own has none. */
   const householdOf = (viewer: Viewer) => viewer?.householdId || null
+  /** A read that failed, said as one. Answered as no rows it would look like nothing there. */
+  const unread = (what: string, error: Failure) => {
+    if (error) throw new Error(`${what} could not be read: ${error.message}`)
+  }
 
   async function tallyOf(client: SupabaseClient, pollId: string): Promise<number[] | undefined> {
-    const { data } = await rpc(client, 'poll_results', { p_poll: pollId })
+    const { data, error } = await rpc(client, 'poll_results', { p_poll: pollId })
+    // Results the viewer may not see yet come back as no rows, not as an error, so a failure
+    // here is a real one rather than a poll keeping its counts to itself.
+    unread("The poll's results", error)
     const rows = (data ?? []) as { option: number; votes: number }[]
     if (rows.length === 0) return undefined
     return [...rows].sort((a, b) => a.option - b.option).map((row) => row.votes)
@@ -197,10 +204,12 @@ export function playMethods(
     const household = householdOf(viewer)
     const mine = new Map<string, number>()
     if (household && polls.length > 0) {
-      const { data } = await from(client, 'poll_votes')
+      const { data, error } = await from(client, 'poll_votes')
         .select('poll_id, option')
         .eq('household_id', household)
         .in('poll_id', polls.map((p) => p.id))
+      // Without it every poll would offer a vote again to a household that has already cast one.
+      unread('Your votes', error)
       for (const row of (data ?? []) as { poll_id: string; option: number }[]) mine.set(row.poll_id, row.option)
     }
     return Promise.all(
@@ -225,6 +234,11 @@ export function playMethods(
       from(client, 'quiz_attempts').select('quiz_id'),
       from(client, 'quiz_public_plays').select('quiz_id, plays'),
     ])
+    unread('The questions', questions.error)
+    // These two decide which questions are locked, so a gap in either would unlock a question
+    // somebody has already answered.
+    unread('The quizzes', items.error)
+    unread("The quizzes' plays", attempts.error ?? plays.error)
     const played = new Set([
       ...((attempts.data ?? []) as { quiz_id: string }[]).map((a) => a.quiz_id),
       ...((plays.data ?? []) as { quiz_id: string; plays: number }[]).filter((p) => p.plays > 0).map((p) => p.quiz_id),
@@ -259,6 +273,8 @@ export function playMethods(
   })
 
   async function reviewerName(client: SupabaseClient, viewer: Viewer): Promise<string> {
+    // Its error is left alone on purpose: the name is a courtesy, and a decision that fell back
+    // to "The committee" is better than one the committee could not make at all.
     const { data } = await from(client, 'households').select('name').eq('id', viewer?.householdId ?? '').maybeSingle()
     return (data as { name: string } | null)?.name ?? 'The committee'
   }
@@ -268,7 +284,8 @@ export function playMethods(
       list: async (viewer) => {
         if (!viewer) return []
         const client = await getClient()
-        const { data } = await from(client, 'polls').select('*').not('opens_at', 'is', null).lte('opens_at', now().toISOString())
+        const { data, error } = await from(client, 'polls').select('*').not('opens_at', 'is', null).lte('opens_at', now().toISOString())
+        unread('The polls', error)
         const polls = byState(((data ?? []) as PollRow[]).map(toPoll), now())
         return viewsOf(client, polls, viewer)
       },
@@ -277,7 +294,8 @@ export function playMethods(
         const client = await getClient()
         const { error } = await rpc(client, 'cast_vote', { p_poll: pollId, p_option: option })
         if (error) refuse('only members can vote', error)
-        const { data } = await from(client, 'polls').select('*').eq('id', pollId).maybeSingle()
+        const { data, error: readError } = await from(client, 'polls').select('*').eq('id', pollId).maybeSingle()
+        unread('The poll', readError)
         if (!data) throw new NotAllowed('no such poll')
         const [view] = await viewsOf(client, [toPoll(data as PollRow)], viewer)
         return view
@@ -286,12 +304,14 @@ export function playMethods(
       listAll: async (viewer) => {
         if (!isAdmin(viewer)) return []
         const client = await getClient()
-        const { data } = await from(client, 'polls').select('*')
+        const { data, error } = await from(client, 'polls').select('*')
+        unread('The polls', error)
         const polls = byState(((data ?? []) as PollRow[]).map(toPoll), now())
         const named = polls.filter((p) => p.named).map((p) => p.id)
         const voters = new Map<string, { household: string; option: number }[]>()
         if (named.length > 0) {
-          const { data: rows } = await from(client, 'poll_votes').select('poll_id, option, households(name)').in('poll_id', named)
+          const { data: rows, error: votesError } = await from(client, 'poll_votes').select('poll_id, option, households(name)').in('poll_id', named)
+          unread('Who voted', votesError)
           for (const row of (rows ?? []) as { poll_id: string; option: number; households: { name: string } | { name: string }[] | null }[]) {
             const list = voters.get(row.poll_id) ?? []
             list.push({ household: one(row.households)?.name ?? 'A household', option: row.option })
@@ -334,15 +354,17 @@ export function playMethods(
     quizzes: {
       list: async (viewer) => {
         const client = await getClient()
-        const { data } = await from(client, 'quizzes')
+        const { data, error } = await from(client, 'quizzes')
           .select('*, quiz_items(question_id, position)')
           .not('opens_at', 'is', null)
           .lte('opens_at', now().toISOString())
+        unread('The quizzes', error)
         const quizzes = byState(((data ?? []) as QuizRow[]).map(toQuiz), now())
         const household = householdOf(viewer)
         const mine = new Map<string, { score: number; total: number }>()
         if (household && quizzes.length > 0) {
-          const { data: rows } = await from(client, 'quiz_attempts').select('quiz_id, score, total').eq('household_id', household)
+          const { data: rows, error: attemptsError } = await from(client, 'quiz_attempts').select('quiz_id, score, total').eq('household_id', household)
+          unread('Your scores', attemptsError)
           for (const row of (rows ?? []) as { quiz_id: string; score: number; total: number }[]) {
             mine.set(row.quiz_id, { score: row.score, total: row.total })
           }
@@ -355,10 +377,11 @@ export function playMethods(
 
       get: async (id) => {
         const client = await getClient()
-        const { data } = await from(client, 'quizzes')
+        const { data, error } = await from(client, 'quizzes')
           .select('*, quiz_items(question_id, position, quiz_questions(*))')
           .eq('id', id)
           .maybeSingle()
+        unread('The quiz', error)
         if (!data) return null
         const row = data as QuizRow & { quiz_items: (ItemRow & { quiz_questions: QuestionRow | QuestionRow[] | null })[] | null }
         const questions = [...(row.quiz_items ?? [])]
@@ -379,7 +402,8 @@ export function playMethods(
 
       leaderboard: async (id, viewer) => {
         if (!viewer) return []
-        const { data } = await rpc(await getClient(), 'quiz_leaderboard', { p_quiz: id })
+        const { data, error } = await rpc(await getClient(), 'quiz_leaderboard', { p_quiz: id })
+        unread('The scores', error)
         return ((data ?? []) as { household: string | null; score: number; total: number }[]).map((row) => ({
           ...(row.household ? { household: row.household } : {}),
           score: row.score,
@@ -395,6 +419,9 @@ export function playMethods(
           from(client, 'quiz_attempts').select('quiz_id'),
           from(client, 'quiz_public_plays').select('quiz_id, plays'),
         ])
+        unread('The quizzes', quizzes.error)
+        // The plays decide which quizzes are locked against changes, so they are not optional.
+        unread("The quizzes' plays", attempts.error ?? plays.error)
         const count = new Map<string, number>()
         for (const a of (attempts.data ?? []) as { quiz_id: string }[]) count.set(a.quiz_id, (count.get(a.quiz_id) ?? 0) + 1)
         const visitors = new Map(((plays.data ?? []) as { quiz_id: string; plays: number }[]).map((p) => [p.quiz_id, p.plays]))
@@ -429,11 +456,12 @@ export function playMethods(
 
       attempts: async (id, viewer) => {
         if (!isAdmin(viewer)) return []
-        const { data } = await from(await getClient(), 'quiz_attempts')
+        const { data, error } = await from(await getClient(), 'quiz_attempts')
           .select('score, total, show_name, played_at, households(name)')
           .eq('quiz_id', id)
           .order('score', { ascending: false })
           .order('played_at', { ascending: true })
+        unread('The scores', error)
         return ((data ?? []) as { score: number; total: number; show_name: boolean; played_at: string; households: { name: string } | { name: string }[] | null }[]).map(
           (row) => ({
             household: one(row.households)?.name ?? 'A household since erased',
@@ -497,16 +525,18 @@ export function playMethods(
       listMine: async (viewer) => {
         const household = householdOf(viewer)
         if (!household) return []
-        const { data } = await from(await getClient(), 'suggestions')
+        const { data, error } = await from(await getClient(), 'suggestions')
           .select('*')
           .eq('household_id', household)
           .order('created_at', { ascending: false })
+        unread('Your suggestions', error)
         return ((data ?? []) as SuggestionRow[]).map(toSuggestion)
       },
 
       listAll: async (viewer) => {
         if (!isAdmin(viewer)) return []
-        const { data } = await from(await getClient(), 'suggestions').select('*, households(name)')
+        const { data, error } = await from(await getClient(), 'suggestions').select('*, households(name)')
+        unread('The suggestions', error)
         return suggestionsForReview(((data ?? []) as SuggestionRow[]).map(toSuggestion))
       },
 

@@ -164,6 +164,18 @@ describe('the committee’s queue', () => {
     expect(calls).toHaveLength(0)
   })
 
+  it('says the feedback could not be read, rather than that there is none, when the read fails', async () => {
+    const { feedback } = api({}, { feedback: { code: '', message: 'fetch failed' } })
+    await expect(feedback.listAll(admin)).rejects.toThrow('The feedback could not be read: fetch failed')
+    await expect(feedback.listApproved()).rejects.toThrow('The feedback could not be read: fetch failed')
+  })
+
+  it('still answers an empty queue when nobody has written yet', async () => {
+    const { feedback } = api()
+    expect(await feedback.listAll(admin)).toEqual([])
+    expect(await feedback.listApproved()).toEqual([])
+  })
+
   it('comes back with what is waiting first', async () => {
     const { feedback } = api({
       feedback: [

@@ -4,6 +4,7 @@ import { useOpenFromAddress } from '@/app/useOpenFromAddress'
 import { Button } from '@/components/Button'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { Icon } from '@/components/Icon'
+import { LoadFailed } from '@/components/LoadFailed'
 import { formatLongDate, formatTime } from '@/domain/dates'
 import { paragraphs } from '@/domain/news'
 import { TAKEDOWN_PROMISE } from '@/domain/contact'
@@ -13,7 +14,7 @@ import styles from '@/features/portal/Portal.module.css'
 
 export function AdminMessagesPage() {
   useDocumentTitle('Messages')
-  const { data: messages, isPending } = useContactMessages()
+  const { data: messages, isPending, isError, refetch } = useContactMessages()
   const markHandled = useMarkMessageHandled()
   const removeMessage = useDeleteMessage()
   const viewer = useViewer()
@@ -45,6 +46,8 @@ export function AdminMessagesPage() {
         <p className={styles.empty} aria-busy="true">
           Loading…
         </p>
+      ) : isError ? (
+        <LoadFailed what="the messages" onRetry={() => void refetch()} />
       ) : list.length === 0 ? (
         <p className={styles.empty}>No messages yet.</p>
       ) : (
@@ -167,7 +170,12 @@ export function AdminMessagesPage() {
                   confirmLabel="Delete"
                   busyLabel="Deleting…"
                   busy={removeMessage.isPending}
-                  onCancel={() => setConfirming(false)}
+                  // In the dialog, which stays open when it fails: behind it, nobody would see it.
+                  error={removeMessage.isError ? `That did not delete. ${removeMessage.error.message}` : undefined}
+                  onCancel={() => {
+                    setConfirming(false)
+                    removeMessage.reset()
+                  }}
                   onConfirm={() =>
                     removeMessage.mutate(open.id, {
                       onSuccess: () => {
@@ -183,11 +191,6 @@ export function AdminMessagesPage() {
                   stays in the audit trail saying you deleted it. To keep it and clear the unread count,
                   mark it handled instead.
                 </ConfirmDialog>
-                {removeMessage.isError ? (
-                  <p className={`${styles.muted} ${styles.tiny}`} role="alert">
-                    That did not delete. {removeMessage.error.message}
-                  </p>
-                ) : null}
                 {markHandled.isError ? (
                   <p className={`${styles.muted} ${styles.tiny}`} role="alert">
                     That did not save. {markHandled.error.message}

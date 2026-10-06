@@ -40,6 +40,8 @@ describe('writing a piece', () => {
     const row = await screen.findByRole('row', { name: /How the evening went/ })
     // Off by default: nothing reaches the website until somebody says so.
     expect(within(row).getByText('Draft')).toBeInTheDocument()
+    // And it says it saved, and where it is — not on the website yet.
+    expect(screen.getByText('Saved. It is not on the website yet.')).toHaveAttribute('role', 'status')
   })
 
   /*

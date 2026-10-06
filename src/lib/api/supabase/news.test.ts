@@ -125,6 +125,23 @@ describe('reading what the committee has written', () => {
     expect((await news.listAnnouncements(null)).map((a) => a.id)).toEqual(['pinned', 'newest', 'old'])
   })
 
+  it('says the news could not be read, rather than that there is none, when the read fails', async () => {
+    const failed = { code: '', message: 'fetch failed' }
+    const { news } = api({}, { news_posts: failed, announcements: failed, newsletters: failed })
+    await expect(news.listPosts()).rejects.toThrow('The news could not be read: fetch failed')
+    await expect(news.getPost('a-first-piece')).rejects.toThrow('The piece could not be read: fetch failed')
+    await expect(news.listAnnouncements(null)).rejects.toThrow('The notices could not be read: fetch failed')
+    await expect(news.listNewsletters()).rejects.toThrow('The newsletters could not be read: fetch failed')
+  })
+
+  it('still answers empty when there is genuinely nothing written yet', async () => {
+    const { news } = api()
+    expect(await news.listPosts()).toEqual([])
+    expect(await news.getPost('nothing')).toBeNull()
+    expect(await news.listAnnouncements(null)).toEqual([])
+    expect(await news.listNewsletters()).toEqual([])
+  })
+
   it('gives somebody who is not on the committee an empty list, not the published ones', async () => {
     const { news } = api({ news_posts: [postRow()] })
     expect(await news.listAllPosts({ householdId: 'h', role: 'member' })).toEqual([])

@@ -19,6 +19,14 @@ function renderAt(path: string, session = admin) {
   )
 }
 
+function renderWith(api: ReturnType<typeof createTestApi>) {
+  render(
+    <TestDataProviders session={admin} api={api}>
+      <RouterProvider router={createMemoryRouter(routes, { initialEntries: ['/admin/media'] })} />
+    </TestDataProviders>,
+  )
+}
+
 async function openAlbum(name: RegExp) {
   await userEvent.click(await screen.findByRole('button', { name }))
   return screen.findByRole('heading', { level: 1 })
@@ -240,10 +248,91 @@ describe('inside an album', () => {
     await userEvent.click(screen.getAllByRole('button', { name: /^Delete / })[0])
     await userEvent.click(screen.getByRole('button', { name: /^Delete$/ }))
 
-    expect(await screen.findByText(/has not been taken down/)).toBeInTheDocument()
-    expect(screen.getByText(/upload was refused/)).toBeInTheDocument()
+    // Said in the question that is still open: behind the modal, nobody would see it.
+    const asking = screen.getByRole('dialog')
+    expect(await within(asking).findByRole('alert')).toHaveTextContent(/has not been taken down/)
+    expect(within(asking).getByRole('alert')).toHaveTextContent(/upload was refused/)
     // And the photograph is still there, because it is.
     expect(screen.getAllByRole('button', { name: /^Delete / })).toHaveLength(before)
+
+    // Backing out takes the failure with it, so the next question starts clean.
+    await userEvent.click(within(asking).getByRole('button', { name: 'Keep it' }))
+    expect(screen.queryByText(/has not been taken down/)).not.toBeInTheDocument()
+  })
+
+  it('says so in the viewer when a delete from there fails', async () => {
+    const api = createTestApi()
+    renderWith({
+      ...api,
+      gallery: { ...api.gallery, deleteMedia: async () => { throw new Error('The upload was refused (403).') } },
+    })
+    await openAlbum(/Boishakhi 2026/)
+    await userEvent.click(photos()[0])
+    const viewer = await screen.findByRole('dialog')
+    await userEvent.click(within(viewer).getByRole('button', { name: /Delete this photograph/ }))
+    await userEvent.click(within(viewer).getByRole('button', { name: /^Delete$/ }))
+
+    expect(await within(viewer).findByRole('alert')).toHaveTextContent(/has not been taken down/)
+  })
+
+  it('says under the box when a caption did not save', async () => {
+    const api = createTestApi()
+    renderWith({
+      ...api,
+      gallery: { ...api.gallery, setCaption: async () => { throw new Error('The server did not answer.') } },
+    })
+    await openAlbum(/Boishakhi 2026/)
+
+    const [caption] = screen.getAllByLabelText('Caption')
+    await userEvent.type(caption, 'The lamps going up')
+    await userEvent.tab()
+
+    const card = caption.closest('li')!
+    expect(await within(card).findByRole('alert')).toHaveTextContent('That caption did not save. The server did not answer.')
+    // Only that one: the other photographs' boxes say nothing.
+    expect(screen.getAllByText(/That caption did not save/)).toHaveLength(1)
+  })
+
+  it('says a caption saved', async () => {
+    renderAt('/admin/media')
+    await openAlbum(/Boishakhi 2026/)
+    const [caption] = screen.getAllByLabelText('Caption')
+    await userEvent.type(caption, 'The lamps going up')
+    await userEvent.tab()
+    expect(await within(caption.closest('li')!).findByRole('status')).toHaveTextContent('Saved.')
+  })
+
+  it('says a new order was not saved, and leaves the photographs where they were', async () => {
+    const api = createTestApi()
+    renderWith({
+      ...api,
+      gallery: { ...api.gallery, reorder: async () => { throw new Error('The server did not answer.') } },
+    })
+    await openAlbum(/Boishakhi 2026/)
+    const before = photos().map((b) => b.getAttribute('aria-label'))
+    photos()[0].focus()
+    await userEvent.keyboard('{ArrowRight}')
+
+    expect(await screen.findByText(/The new order was not saved/)).toHaveAttribute('role', 'alert')
+    expect(photos().map((b) => b.getAttribute('aria-label'))).toEqual(before)
+  })
+})
+
+describe('saying an album saved', () => {
+  it('says so once the details of an album are saved', async () => {
+    renderAt('/admin/media')
+    await openAlbum(/Boishakhi 2026/)
+    await userEvent.click(screen.getByRole('button', { name: 'Edit album' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Save the album' }))
+    expect(await screen.findByText('The album is saved.')).toHaveAttribute('role', 'status')
+  })
+
+  it('says so once a new album is made', async () => {
+    renderAt('/admin/media')
+    await userEvent.click(await screen.findByRole('button', { name: 'New album' }))
+    await userEvent.type(screen.getByLabelText('Name'), 'Holi 2027')
+    await userEvent.click(screen.getByRole('button', { name: 'Make the album' }))
+    expect(await screen.findByText(/Holi 2027 is made/)).toHaveAttribute('role', 'status')
   })
 })
 

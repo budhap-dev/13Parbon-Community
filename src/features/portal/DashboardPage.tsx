@@ -1,6 +1,7 @@
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { Button } from '@/components/Button'
 import { Icon } from '@/components/Icon'
+import { LoadFailed } from '@/components/LoadFailed'
 import { daysUntil, describeCountdown, formatDateWithYear, formatLongDate, formatTime } from '@/domain/dates'
 import { describeSize } from '@/domain/household'
 import { useAnnouncements, useHousehold, useNextEvent, usePolls, useQuizzes } from '@/lib/api'
@@ -13,9 +14,11 @@ export function DashboardPage() {
   useDocumentTitle('Dashboard')
   const who = useSignedIn()
   const now = useNow()
-  const { data: event } = useNextEvent()
-  const { data: household } = useHousehold(who?.householdId)
-  const { data: announcements } = useAnnouncements()
+  const next = useNextEvent()
+  const event = next.data
+  const { data: household, isError: householdFailed, refetch: refetchHousehold } = useHousehold(who?.householdId)
+  const announced = useAnnouncements()
+  const announcements = announced.data
   const { data: polls } = usePolls()
   const { data: quizzes } = useQuizzes()
 
@@ -30,7 +33,13 @@ export function DashboardPage() {
         </div>
       </div>
 
-      {event && countdown ? (
+      {next.isError ? (
+        <section className={styles.panel} aria-label="Next event">
+          <div className={styles.pad}>
+            <LoadFailed what="the next event" onRetry={() => void next.refetch()} />
+          </div>
+        </section>
+      ) : event && countdown ? (
         <section className={styles.feature} aria-labelledby="next-title">
           <div className={styles.featureBody}>
             <p className={styles.eyebrow}>Next event</p>
@@ -68,7 +77,17 @@ export function DashboardPage() {
               Announcements
             </h2>
           </div>
-          {announcements && announcements.length > 0 ? (
+          {announced.isPending ? (
+            <div className={styles.pad}>
+              <p className={styles.empty} aria-busy="true">
+                Loading…
+              </p>
+            </div>
+          ) : announced.isError ? (
+            <div className={styles.pad}>
+              <LoadFailed what="the announcements" onRetry={() => void announced.refetch()} />
+            </div>
+          ) : announcements && announcements.length > 0 ? (
             <div className={styles.list}>
               {announcements.map((a) => (
                 <div key={a.id} className={styles.listItem}>
@@ -90,6 +109,14 @@ export function DashboardPage() {
         </section>
 
         <div className={styles.stack}>
+          {householdFailed ? (
+            <section className={styles.panel} aria-label="Your household">
+              <div className={styles.pad}>
+                <LoadFailed what="your household" onRetry={() => void refetchHousehold()} />
+              </div>
+            </section>
+          ) : null}
+
           {household ? (
             <section className={styles.panel} aria-labelledby="membership-title">
               <div className={styles.pad}>

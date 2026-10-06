@@ -124,12 +124,14 @@ export function newsMethods(getClient: () => Promise<SupabaseClient>, now = () =
   }
 
   const posts = async (): Promise<NewsPost[]> => {
-    const { data } = await table(await getClient(), 'news_posts').select('*').order('published_at', { ascending: false })
+    const { data, error } = await table(await getClient(), 'news_posts').select('*').order('published_at', { ascending: false })
+    if (error) throw new Error(`The news could not be read: ${error.message}`)
     return ((data ?? []) as PostRow[]).map(toPost)
   }
 
   const rereadPost = async (id: string): Promise<NewsPost> => {
-    const { data } = await table(await getClient(), 'news_posts').select('*').eq('id', id).maybeSingle()
+    const { data, error } = await table(await getClient(), 'news_posts').select('*').eq('id', id).maybeSingle()
+    if (error) throw new Error(`The piece could not be read: ${error.message}`)
     if (!data) throw new NotAllowed('no such piece')
     return toPost(data as PostRow)
   }
@@ -138,7 +140,8 @@ export function newsMethods(getClient: () => Promise<SupabaseClient>, now = () =
       listPosts: async (limit = 20) => (await posts()).filter((p) => p.publishedAt && !p.hidden).slice(0, limit),
 
       getPost: async (slug) => {
-        const { data } = await table(await getClient(), 'news_posts').select('*').eq('slug', slug).maybeSingle()
+        const { data, error } = await table(await getClient(), 'news_posts').select('*').eq('slug', slug).maybeSingle()
+        if (error) throw new Error(`The piece could not be read: ${error.message}`)
         const post = data ? toPost(data as PostRow) : null
         // A draft reaching this by its address is not a published piece. The policy already
         // refuses it to anybody but the committee; this is so an admin's own preview of a
@@ -158,16 +161,18 @@ export function newsMethods(getClient: () => Promise<SupabaseClient>, now = () =
          * notice` admits drafts and expired ones, so without this an admin visiting the public
          * page would see notices nobody else could, including ones not published yet.
          */
-        const { data } = await table(await getClient(), 'announcements')
+        const { data, error } = await table(await getClient(), 'announcements')
           .select('*')
           .in('audience', isMember(viewer) ? ['public', 'members'] : ['public'])
           .lte('publish_at', 'now')
           .or('expires_at.is.null,expires_at.gt.now')
+        if (error) throw new Error(`The notices could not be read: ${error.message}`)
         return ((data ?? []) as NoticeRow[]).map(toNotice).sort(byPinnedThenNewest)
       },
 
       listNewsletters: async () => {
-        const { data } = await table(await getClient(), 'newsletters').select('*').order('issued_on', { ascending: false })
+        const { data, error } = await table(await getClient(), 'newsletters').select('*').order('issued_on', { ascending: false })
+        if (error) throw new Error(`The newsletters could not be read: ${error.message}`)
         return ((data ?? []) as NewsletterRow[]).map(
           (row): Newsletter => ({ id: row.id, title: row.title, fileUrl: row.file_url, issuedOn: row.issued_on }),
         )
@@ -177,7 +182,8 @@ export function newsMethods(getClient: () => Promise<SupabaseClient>, now = () =
 
       listAllAnnouncements: async (viewer: Viewer) => {
         if (!isAdmin(viewer)) return []
-        const { data } = await table(await getClient(), 'announcements').select('*')
+        const { data, error } = await table(await getClient(), 'announcements').select('*')
+        if (error) throw new Error(`The notices could not be read: ${error.message}`)
         return ((data ?? []) as NoticeRow[]).map(toNotice).sort(byPinnedThenNewest)
       },
 
@@ -227,7 +233,8 @@ export function newsMethods(getClient: () => Promise<SupabaseClient>, now = () =
 
       updateAnnouncement: async (id: string, draft: AnnouncementDraft) => {
         if (!isValid(validateAnnouncement(draft))) throw new NotAllowed('that notice is not ready')
-        const { data: before } = await table(await getClient(), 'announcements').select('publish_at').eq('id', id).maybeSingle()
+        const { data: before, error: readError } = await table(await getClient(), 'announcements').select('publish_at').eq('id', id).maybeSingle()
+        if (readError) throw new Error(`The notice could not be read: ${readError.message}`)
         if (!before) throw new NotAllowed('no such notice')
         const { data, error } = await table(await getClient(), 'announcements')
           .update(fromNotice(draft, (before as { publish_at: string }).publish_at))

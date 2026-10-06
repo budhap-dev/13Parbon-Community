@@ -76,7 +76,10 @@ export const routes: RouteObject[] = [
     ],
   },
   {
+    // The portal's own failures — a screen that would not render, a route that broke — answer
+    // with the same panel as the public site rather than the router's bare default.
     Component: RequireSession,
+    ErrorBoundary: RouteError,
     children: [
       {
         Component: PortalLayout,
@@ -92,6 +95,7 @@ export const routes: RouteObject[] = [
   },
   {
     element: <RequireSession role="admin" />,
+    ErrorBoundary: RouteError,
     children: [
       {
         Component: PortalLayout,

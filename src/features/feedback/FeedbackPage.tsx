@@ -3,6 +3,7 @@ import { useSettings } from '@/app/SettingsContext'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { Button } from '@/components/Button'
 import { Container } from '@/components/Container'
+import { LoadFailed } from '@/components/LoadFailed'
 import { SectionHeading } from '@/components/SectionHeading'
 import { formatLongDate } from '@/domain/dates'
 import { FEEDBACK_MAX, attributionOf, nameForSignature, validateFeedback, type FeedbackErrors } from '@/domain/feedback'
@@ -27,7 +28,7 @@ export function FeedbackPage() {
   const id = useId()
   const { text } = useSettings()
   const { delivers } = useApi()
-  const { data: approved, isPending } = useApprovedFeedback()
+  const { data: approved, isPending, isError, refetch } = useApprovedFeedback()
   const send = useSendFeedback()
   const google = usePublicSignIn()
 
@@ -223,6 +224,8 @@ export function FeedbackPage() {
           <p className={styles.empty} aria-busy="true">
             Loading…
           </p>
+        ) : isError ? (
+          <LoadFailed what="what people have told us" onRetry={() => void refetch()} />
         ) : pieces.length === 0 ? (
           <p className={styles.empty}>
             Nothing up here yet. Yours could be the first — the committee puts these up as they come in.

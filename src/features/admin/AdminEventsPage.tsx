@@ -5,6 +5,7 @@ import { useScrollToTopOn } from '@/app/useScrollToTopOn'
 import { Button } from '@/components/Button'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { Icon } from '@/components/Icon'
+import { LoadFailed } from '@/components/LoadFailed'
 import { formatDateWithYear, formatLongDate, formatTime } from '@/domain/dates'
 import {
   useAllEvents,
@@ -36,14 +37,25 @@ const STATUS_WORDS: Record<Event['status'], string> = {
 export function AdminEventsPage() {
   useDocumentTitle('Events')
   const hasPlanner = useSettings().tools.length > 0
-  const { data: event } = useNextEvent()
-  const { data: upcoming } = useUpcomingEvents(20)
-  const { data: past } = usePastEvents(6)
-
-  const { data: attendance } = useAttendance()
+  const { data: event, isError: nextFailed } = useNextEvent()
+  const upcomingQuery = useUpcomingEvents(20)
+  const pastQuery = usePastEvents(6)
+  const attendanceQuery = useAttendance()
+  const upcoming = upcomingQuery.data
+  const past = pastQuery.data
+  const attendance = attendanceQuery.data
   const record = useRecordAttendance()
   const eventsToCount = [...(past ?? []), ...(upcoming ?? [])]
-  const { data: allEvents } = useAllEvents()
+  /*
+   * The count form needs all three: the evenings to choose from, and what is already recorded
+   * for them, which it starts from. Opened without the second it would look like nothing had
+   * been counted yet.
+   */
+  const countQueries = [pastQuery, upcomingQuery, attendanceQuery]
+  const countPending = countQueries.some((q) => q.isPending)
+  const countFailed = countQueries.some((q) => q.isError)
+  const retryCount = () => countQueries.filter((q) => q.isError).forEach((q) => void q.refetch())
+  const { data: allEvents, isPending: allPending, isError: allFailed, refetch: refetchAll } = useAllEvents()
   const titles = new Map([...eventsToCount, ...(allEvents ?? [])].map((e) => [e.id, e.title]))
   const saveEvent = useSaveEvent()
   const createEvent = useCreateEvent()
@@ -53,7 +65,13 @@ export function AdminEventsPage() {
   const [deleting, setDeleting] = useState<Event | null>(null)
   const now = useNow()
   // null is closed, 'new' is a blank evening, an event is that one being designed.
-  const [designing, setDesigning] = useState<Event | 'new' | null>(null)
+  const [designing, setDesigningRaw] = useState<Event | 'new' | null>(null)
+  /** What the last save did, said on the list it lands back on. */
+  const [saved, setSaved] = useState<string | null>(null)
+  const setDesigning = (next: Event | 'new' | null) => {
+    setSaved(null)
+    setDesigningRaw(next)
+  }
   // The designer replaces the list in place.
   useScrollToTopOn(designing)
   useOpenFromAddress(allEvents, setDesigning)
@@ -88,11 +106,18 @@ export function AdminEventsPage() {
                     : undefined
               }
               onCancel={() => setDesigning(null)}
-              onSave={(draft) =>
-                adding
-                  ? createEvent.mutate(draft, { onSuccess: () => setDesigning(null) })
-                  : saveEvent.mutate({ id: designing.id, draft }, { onSuccess: () => setDesigning(null) })
-              }
+              onSave={(draft) => {
+                const done = (evening: Event) => {
+                  setDesigning(null)
+                  setSaved(
+                    evening.status === 'draft'
+                      ? `${evening.title} is saved as a draft, so it is not on the website yet.`
+                      : `${evening.title} is saved.`,
+                  )
+                }
+                if (adding) createEvent.mutate(draft, { onSuccess: done })
+                else saveEvent.mutate({ id: designing.id, draft }, { onSuccess: done })
+              }}
             />
           </div>
         </section>
@@ -104,7 +129,7 @@ export function AdminEventsPage() {
     <div className={styles.page}>
       <div className={styles.top}>
         <div>
-          <p className={styles.eyebrow}>Events · {event?.title ?? 'No event open'}</p>
+          <p className={styles.eyebrow}>{nextFailed ? 'Events' : `Events · ${event?.title ?? 'No event open'}`}</p>
           <h1 className={styles.title} style={{ marginTop: 6 }}>
             Events
           </h1>
@@ -126,6 +151,12 @@ export function AdminEventsPage() {
           ) : null}
         </div>
       </div>
+
+      {saved ? (
+        <p className={styles.said} role="status">
+          {saved}
+        </p>
+      ) : null}
 
       <section className={styles.panel} aria-labelledby="all-events-title">
         <div className={styles.panelHead}>
@@ -150,7 +181,27 @@ export function AdminEventsPage() {
               </tr>
             </thead>
             <tbody>
-              {(allEvents ?? [...(upcoming ?? []), ...(past ?? [])]).map((e) => (
+              {/* In the table rather than instead of it, so the columns say what will be here. */}
+              {allPending ? (
+                <tr>
+                  <td colSpan={5} className={styles.muted} aria-busy="true">
+                    Loading…
+                  </td>
+                </tr>
+              ) : allFailed ? (
+                <tr>
+                  <td colSpan={5}>
+                    <LoadFailed what="the events" onRetry={() => void refetchAll()} />
+                  </td>
+                </tr>
+              ) : !allEvents?.length ? (
+                <tr>
+                  <td colSpan={5} className={styles.muted}>
+                    No events yet. Add the first with New event.
+                  </td>
+                </tr>
+              ) : null}
+              {(allEvents ?? []).map((e) => (
                 <tr key={e.id}>
                   <td>
                     <strong>{e.title}</strong>
@@ -202,6 +253,13 @@ export function AdminEventsPage() {
             </tbody>
           </table>
         </div>
+        {archive.isError ? (
+          <div className={styles.pad} style={{ paddingTop: 12 }}>
+            <p className={`${styles.muted} ${styles.tiny}`} role="alert">
+              That did not archive, so it is still in the list as it was. {archive.error.message}
+            </p>
+          </div>
+        ) : null}
         <ConfirmDialog
           open={deleting !== null}
           title="Delete this event?"
@@ -239,7 +297,15 @@ export function AdminEventsPage() {
             is — this keeps the count and nothing about who, which is all the history and the
             caterer ever need.
           </p>
-          {eventsToCount.length > 0 ? (
+          {countPending ? (
+            <p className={styles.empty} aria-busy="true">
+              Loading the events…
+            </p>
+          ) : countFailed ? (
+            <LoadFailed what="the events and their counts" onRetry={retryCount} />
+          ) : eventsToCount.length === 0 ? (
+            <p className={styles.empty}>No events to count yet. Once there is one, its numbers go in here.</p>
+          ) : (
             <AttendanceForm
               events={eventsToCount}
               existing={attendance ?? []}
@@ -247,10 +313,6 @@ export function AdminEventsPage() {
               error={record.isError ? record.error.message : undefined}
               onSave={(draft) => record.mutate(draft)}
             />
-          ) : (
-            <p className={styles.empty} aria-busy="true">
-              Loading the events…
-            </p>
           )}
         </div>
 

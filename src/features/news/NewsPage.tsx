@@ -16,9 +16,9 @@ export function NewsPage() {
   useDocumentTitle('News & announcements')
   const [params] = useSearchParams()
   const tag = params.get('tag')
-  const { data: announcements } = useAnnouncements()
+  const { data: announcements, isError: noticesFailed, refetch: refetchNotices } = useAnnouncements()
   const { data: posts, isPending, isError, refetch } = useNewsPosts()
-  const { data: newsletters } = useNewsletters()
+  const { data: newsletters, isError: newslettersFailed, refetch: refetchNewsletters } = useNewsletters()
 
   const tags = [...new Set((posts ?? []).flatMap((p) => p.tags))].sort()
   const shown = (posts ?? []).filter((p) => !tag || p.tags.includes(tag))
@@ -30,7 +30,11 @@ export function NewsPage() {
         <p className={styles.intro}>Short, pinned, and impossible to miss. What the committee wants every household to know.</p>
       </header>
 
-      {announcements && announcements.length > 0 ? (
+      {noticesFailed ? (
+        <section className={styles.notices} aria-label="Announcements">
+          <LoadFailed what="the announcements" onRetry={() => void refetchNotices()} />
+        </section>
+      ) : announcements && announcements.length > 0 ? (
         <section className={styles.notices} aria-label="Announcements">
           {announcements.map((a) => (
             <article key={a.id} className={a.pinned ? styles.noticePinned : styles.notice}>
@@ -100,7 +104,14 @@ export function NewsPage() {
         </section>
 
         <aside className={styles.side}>
-          {newsletters && newsletters.length > 0 ? (
+          {newslettersFailed ? (
+            <section className={styles.sideBlock} aria-labelledby="newsletters-title">
+              <h2 id="newsletters-title" className={styles.sideTitle}>
+                Newsletters
+              </h2>
+              <LoadFailed what="the newsletters" onRetry={() => void refetchNewsletters()} />
+            </section>
+          ) : newsletters && newsletters.length > 0 ? (
             <section className={styles.sideBlock} aria-labelledby="newsletters-title">
               <h2 id="newsletters-title" className={styles.sideTitle}>
                 Newsletters

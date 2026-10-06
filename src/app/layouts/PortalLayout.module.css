@@ -358,6 +358,13 @@
   color: var(--color-accent);
 }
 
+.previewLink {
+  color: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 /* A ceiling on the width, so a big monitor gets margins rather than a table forty inches long. */
 .content {
   flex: 1 0 auto;

@@ -130,4 +130,21 @@ describe('what the committee has approved', () => {
     renderPage(withFeedbackOn({ feedback: { ...base.feedback, listApproved: async () => [] } }))
     expect(await screen.findByText(/Yours could be the first/i)).toBeInTheDocument()
   })
+
+  it('says it could not load them, rather than that there are none, when the list fails', async () => {
+    const base = createMockApi()
+    renderPage(
+      withFeedbackOn({
+        feedback: {
+          ...base.feedback,
+          listApproved: async () => {
+            throw new Error('down')
+          },
+        },
+      }),
+    )
+    expect(await screen.findByText(/could not load what people have told us/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument()
+    expect(screen.queryByText(/Yours could be the first/i)).not.toBeInTheDocument()
+  })
 })

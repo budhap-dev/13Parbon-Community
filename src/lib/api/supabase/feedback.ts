@@ -61,11 +61,12 @@ export function feedbackMethods(getClient: () => Promise<SupabaseClient>): ApiCl
 
   return {
     listApproved: async (limit = 20) => {
-      const { data } = await table(await getClient())
+      const { data, error } = await table(await getClient())
         .select('*')
         .eq('status', 'approved')
         .order('created_at', { ascending: false })
         .limit(limit)
+      if (error) throw new Error(`The feedback could not be read: ${error.message}`)
       return ((data ?? []) as FeedbackRow[]).map(toFeedback)
     },
 
@@ -99,7 +100,8 @@ export function feedbackMethods(getClient: () => Promise<SupabaseClient>): ApiCl
       // contract ("empty for anybody who is not an admin") holds rather than quietly becoming
       // "the approved ones", which is what the read policies would otherwise hand back.
       if (!isAdmin(viewer)) return []
-      const { data } = await table(await getClient()).select('*')
+      const { data, error } = await table(await getClient()).select('*')
+      if (error) throw new Error(`The feedback could not be read: ${error.message}`)
       return forReview(((data ?? []) as FeedbackRow[]).map(toFeedback))
     },
 
@@ -109,6 +111,8 @@ export function feedbackMethods(getClient: () => Promise<SupabaseClient>): ApiCl
       // Who decided, by name. The screen prints this column straight out, so a household id
       // here shows a reader "approved by 7f3a-…". A member gets no row back from this lookup,
       // and none from the update either, so both halves refuse the same way.
+      // Its error is left alone on purpose: the name is a courtesy, and a decision that fell back
+      // to "The committee" is better than one the committee could not make at all.
       const { data: who } = await client
         .schema('portal')
         .from('households')

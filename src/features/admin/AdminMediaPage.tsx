@@ -6,6 +6,7 @@ import { Button } from '@/components/Button'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { Icon } from '@/components/Icon'
 import { Lightbox, type LightboxItem } from '@/components/Lightbox'
+import { LoadFailed } from '@/components/LoadFailed'
 import { PhotoUpload } from '@/components/PhotoUpload'
 import { ACCEPTED_LABEL } from '@/domain/images'
 import { describeMedia, type AlbumDraft, type AlbumWithMedia } from '@/domain/gallery'
@@ -22,9 +23,11 @@ const emptyDraft: AlbumDraft = { title: '', description: '', visibility: 'member
 
 export function AdminMediaPage() {
   useDocumentTitle('Photographs')
-  const { data: albums, isPending } = useAllAlbums()
+  const { data: albums, isPending, isError, refetch } = useAllAlbums()
   const [openId, setOpenId] = useState<string | null>(null)
   const [editing, setEditing] = useState<AlbumDraft | null>(null)
+  /** What the last album save did, said on the screen it lands on. */
+  const [saved, setSaved] = useState<string | null>(null)
   // Opening an album, and opening the album form, are both swaps rather than navigations.
   useScrollToTopOn(`${openId ?? ''}|${editing ? 'form' : ''}`)
   useOpenFromAddress(albums, (album) => {
@@ -38,8 +41,13 @@ export function AdminMediaPage() {
   const open = albums?.find((a) => a.id === openId) ?? null
 
   const saveAlbum = (draft: AlbumDraft) => {
-    if (open) update.mutate({ id: open.id, draft }, { onSuccess: () => setEditing(null) })
-    else create.mutate(draft, { onSuccess: () => setEditing(null) })
+    setSaved(null)
+    const done = (text: string) => () => {
+      setEditing(null)
+      setSaved(text)
+    }
+    if (open) update.mutate({ id: open.id, draft }, { onSuccess: done('The album is saved.') })
+    else create.mutate(draft, { onSuccess: done(`${draft.title.trim() || 'The album'} is made. Open it to add the photographs.`) })
   }
 
   if (editing) {
@@ -56,7 +64,22 @@ export function AdminMediaPage() {
     )
   }
 
-  if (open) return <AlbumPage album={open} onBack={() => setOpenId(null)} onEdit={() => setEditing(draftOf(open))} />
+  if (open) {
+    return (
+      <AlbumPage
+        album={open}
+        saved={saved}
+        onBack={() => {
+          setSaved(null)
+          setOpenId(null)
+        }}
+        onEdit={() => {
+          setSaved(null)
+          setEditing(draftOf(open))
+        }}
+      />
+    )
+  }
 
   return (
     <div className={styles.page}>
@@ -68,22 +91,37 @@ export function AdminMediaPage() {
             one really deletes it.
           </p>
         </div>
-        <Button variant="gold" size="sm" onClick={() => { setOpenId(null); setEditing({ ...emptyDraft }) }}>
+        <Button variant="gold" size="sm" onClick={() => { setOpenId(null); setSaved(null); setEditing({ ...emptyDraft }) }}>
           New album
         </Button>
       </div>
+
+      {saved ? (
+        <p className={media.tookDown} role="status">
+          {saved}
+        </p>
+      ) : null}
 
       {isPending ? (
         <p className={styles.empty} aria-busy="true">
           Loading…
         </p>
+      ) : isError ? (
+        <LoadFailed what="the albums" onRetry={() => void refetch()} />
       ) : !albums?.length ? (
         <p className={styles.empty}>No albums yet.</p>
       ) : (
         <ul className={media.albums}>
           {albums.map((album) => (
             <li key={album.id}>
-              <button type="button" className={media.albumCard} onClick={() => setOpenId(album.id)}>
+              <button
+                type="button"
+                className={media.albumCard}
+                onClick={() => {
+                  setSaved(null)
+                  setOpenId(album.id)
+                }}
+              >
                 {album.cover ? (
                   <img src={album.cover.thumbnailUrl} alt="" className={media.albumThumb} loading="lazy" />
                 ) : (
@@ -209,10 +247,13 @@ function AlbumForm({
 
 function AlbumPage({
   album,
+  saved,
   onBack,
   onEdit,
 }: {
   album: AlbumWithMedia
+  /** Said once the album's details have just been saved. */
+  saved?: string | null
   onBack: () => void
   onEdit: () => void
 }) {
@@ -229,11 +270,20 @@ function AlbumPage({
   /** The photograph being dragged, and the one it is currently over. */
   const [dragging, setDragging] = useState<number | null>(null)
   const [over, setOver] = useState<number | null>(null)
+  /**
+   * Photographs that uploaded but did not make it into the album. Counted from each call's own
+   * promise: several go at once, and the mutation's own error only remembers the last of them,
+   * so one failure followed by a success would otherwise vanish.
+   */
+  const [notAdded, setNotAdded] = useState<{ count: number; why: string } | null>(null)
 
   const ids = album.media.map((m) => m.id)
 
   const move = (from: number, to: number) => {
     if (to < 0 || to >= ids.length || from === to) return
+    // The grid only moves once the new order is saved, so a second move before then would be
+    // worked out from the old one and undo the first.
+    if (reorder.isPending) return
     const next = [...ids]
     const [moved] = next.splice(from, 1)
     next.splice(to, 0, moved)
@@ -255,6 +305,12 @@ function AlbumPage({
    * the privacy page makes a promise about, a silent failure reads exactly like success — and
    * the person walks away believing a picture came down that did not.
    */
+  const stopAsking = () => {
+    setConfirming(null)
+    // A failure belongs to the question it answered, not to the next one.
+    if (taken && !taken.ok) setTaken(null)
+  }
+
   const takeDown = (id: string, afterwards?: () => void) => {
     setTaken(null)
     remove.mutate(id, {
@@ -308,9 +364,22 @@ function AlbumPage({
         </span>
       </div>
 
-      {taken ? (
-        <p className={taken.ok ? media.tookDown : media.error} role={taken.ok ? 'status' : 'alert'}>
+      {saved ? (
+        <p className={media.tookDown} role="status">
+          {saved}
+        </p>
+      ) : null}
+
+      {/* A failure is said in the question that is still open, where it can be seen. */}
+      {taken?.ok ? (
+        <p className={media.tookDown} role="status">
           {taken.text}
+        </p>
+      ) : null}
+
+      {reorder.isError ? (
+        <p className={media.error} role="alert">
+          The new order was not saved, so the photographs are still in the order they were. {reorder.error.message}
         </p>
       ) : null}
 
@@ -340,16 +409,32 @@ function AlbumPage({
               const key = photoKey(album.slug, name.replace(/\.[^.]+$/, '').slice(0, 24))
               return uploadPhoto(uploads, key, prepared, token)
             }}
-            onDone={(url) =>
-              add.mutate({
-                albumId: album.id,
-                photo: { url, thumbnailUrl: url.replace('/full/', '/thumb/') },
-              })
-            }
+            onDone={(url) => {
+              setNotAdded(null)
+              add
+                .mutateAsync({
+                  albumId: album.id,
+                  photo: { url, thumbnailUrl: url.replace('/full/', '/thumb/') },
+                })
+                .catch((error: unknown) =>
+                  setNotAdded((was) => ({
+                    count: (was?.count ?? 0) + 1,
+                    why: error instanceof Error ? error.message : 'Something went wrong.',
+                  })),
+                )
+            }}
           />
-          {add.isError ? (
+          {add.isPending ? (
+            <p className={`${styles.muted} ${styles.tiny}`} role="status">
+              Adding it to the album…
+            </p>
+          ) : null}
+          {notAdded ? (
             <p className={`${styles.muted} ${styles.tiny}`} role="alert">
-              It uploaded, but could not be added to the album. {add.error.message}
+              {notAdded.count === 1
+                ? 'It uploaded, but could not be added to the album.'
+                : `${notAdded.count} photographs uploaded, but could not be added to the album.`}{' '}
+              {notAdded.why}
             </p>
           ) : null}
         </div>
@@ -433,6 +518,19 @@ function AlbumPage({
                   }
                 }}
               />
+              {/* Under the box it belongs to: the caption saves on its own as somebody moves on,
+                  so a failure anywhere else would be read as being about something else. */}
+              {setCaption.variables?.mediaId === item.id ? (
+                setCaption.isError ? (
+                  <span className={media.error} role="alert">
+                    That caption did not save. {setCaption.error.message}
+                  </span>
+                ) : setCaption.isSuccess ? (
+                  <span className={`${styles.muted} ${styles.tiny}`} role="status">
+                    Saved.
+                  </span>
+                ) : null
+              ) : null}
 
               <ConfirmDialog
                 // Not while the viewer is open: that one asks in its own action bar, because a
@@ -442,7 +540,8 @@ function AlbumPage({
                 confirmLabel="Delete"
                 busyLabel="Removing…"
                 busy={remove.isPending}
-                onCancel={() => setConfirming(null)}
+                error={taken && !taken.ok ? taken.text : undefined}
+                onCancel={stopAsking}
                 onConfirm={() => takeDown(item.id)}
               >
                 It is deleted from storage first, so the address stops working for everybody who has it.
@@ -459,7 +558,7 @@ function AlbumPage({
         onChange={setOpen}
         onClose={() => {
           setOpen(null)
-          setConfirming(null)
+          stopAsking()
         }}
         renderAction={(item) => {
           const index = album.media.findIndex((m) => m.id === item.id)
@@ -473,7 +572,7 @@ function AlbumPage({
           return (
             <span className={styles.actions}>
               <span className={media.confirmText}>Delete this photograph? This cannot be undone.</span>
-              <Button variant="line" size="sm" onClick={() => setConfirming(null)}>
+              <Button variant="line" size="sm" disabled={remove.isPending} onClick={stopAsking}>
                 Keep it
               </Button>
               <Button
@@ -484,6 +583,11 @@ function AlbumPage({
               >
                 {remove.isPending ? 'Removing…' : 'Delete'}
               </Button>
+              {taken && !taken.ok ? (
+                <span className={media.error} role="alert">
+                  {taken.text}
+                </span>
+              ) : null}
             </span>
           )
         }}

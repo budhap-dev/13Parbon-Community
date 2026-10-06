@@ -5,14 +5,15 @@ import { describe, expect, it } from 'vitest'
 import { routes } from '@/app/router'
 import { previewAccounts } from '@/lib/auth/previewAccounts'
 import type { Session } from '@/lib/auth/session'
-import { TestDataProviders } from '@/test/render'
+import type { ApiClient } from '@/lib/api'
+import { createTestApi, TestDataProviders } from '@/test/render'
 
 const member: Session = previewAccounts[0]
 const admin: Session = previewAccounts[1]
 
-function renderAt(path: string, session?: Session) {
+function renderAt(path: string, session?: Session, api?: ApiClient) {
   render(
-    <TestDataProviders session={session}>
+    <TestDataProviders session={session} api={api}>
       <RouterProvider router={createMemoryRouter(routes, { initialEntries: [path] })} />
     </TestDataProviders>,
   )
@@ -58,6 +59,21 @@ describe('deleting a message', () => {
     await userEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Delete' }))
 
     await waitFor(async () => expect(await screen.findAllByRole('listitem')).toHaveLength(before - 1))
+  })
+
+  it('says in the dialog when it did not delete, and keeps the message', async () => {
+    const api = createTestApi()
+    renderAt('/admin/messages', admin, {
+      ...api,
+      contact: { ...api.contact, deleteMessage: async () => { throw new Error('Permission denied.') } },
+    })
+    const before = (await screen.findAllByRole('listitem')).length
+    await userEvent.click(screen.getByRole('button', { name: /Delete/ }))
+    const asking = await screen.findByRole('dialog')
+    await userEvent.click(within(asking).getByRole('button', { name: 'Delete' }))
+
+    expect(await within(asking).findByRole('alert')).toHaveTextContent('That did not delete. Permission denied.')
+    expect(screen.getAllByRole('listitem')).toHaveLength(before)
   })
 
   it('is not offered to a member, who cannot reach the inbox at all', async () => {

@@ -161,6 +161,19 @@ describe('deleting a piece', () => {
       expect(after).toHaveLength(before - 1)
     })
   })
+
+  it('says in the dialog when it did not delete', async () => {
+    const base = withFeedbackOn()
+    renderAt('/admin/feedback', admin, {
+      ...base,
+      feedback: { ...base.feedback, remove: async () => { throw new Error('Permission denied.') } },
+    })
+    await userEvent.click(await screen.findByRole('button', { name: /Delete/ }))
+    const asking = await screen.findByRole('dialog')
+    await userEvent.click(within(asking).getByRole('button', { name: 'Delete' }))
+
+    expect(await within(asking).findByRole('alert')).toHaveTextContent('That did not delete. Permission denied.')
+  })
 })
 
 /**

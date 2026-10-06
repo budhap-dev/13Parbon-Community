@@ -6,6 +6,7 @@ import { useSettings } from '@/app/SettingsContext'
 import { Button } from '@/components/Button'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { Icon } from '@/components/Icon'
+import { LoadFailed } from '@/components/LoadFailed'
 import { formatLongDate } from '@/domain/dates'
 import { pollDraftOf, stateOf, votesLabel, type Poll, type PollDraft, type PollState } from '@/domain/polls'
 import { quizDraftOf, scoreLine, type BankQuestion, type Quiz, type QuizDraft } from '@/domain/quizzes'
@@ -79,6 +80,7 @@ export function AdminPlayPage() {
   const [scoresFor, setScoresFor] = useState<string | null>(null)
   const [tag, setTag] = useState('')
   const [openSuggestion, setOpenSuggestion] = useState<string | null>(null)
+  const [approveError, setApproveError] = useState<string | null>(null)
 
   const polls = useAllPolls()
   const quizzes = useAllQuizzes()
@@ -120,6 +122,7 @@ export function AdminPlayPage() {
     setParams(p, { replace: true })
     setEditing(then ?? null)
     setDone(null)
+    setApproveError(null)
   }
 
   const waiting = waitingSuggestions(suggestions.data ?? []).length
@@ -131,11 +134,16 @@ export function AdminPlayPage() {
   const finish = (message: string) => () => {
     setEditing(null)
     setDone(message)
+    setApproveError(null)
   }
 
-  /** Approving a suggestion is part of saving what it became, so the two land together. */
+  /**
+   * Approving a suggestion is part of saving what it became, so the two land together. If the
+   * approval fails it says so here, beside the "saved" line, rather than only on the
+   * Suggestions tab nobody is looking at.
+   */
   const approve = (id: string | undefined) => {
-    if (id) review.mutate({ id, status: 'approved' })
+    if (id) review.mutate({ id, status: 'approved' }, { onError: (error) => setApproveError(error.message) })
   }
 
   const confirmRemove = () => {
@@ -183,6 +191,11 @@ export function AdminPlayPage() {
           {done}
         </p>
       ) : null}
+      {approveError ? (
+        <p className={portal.note} role="alert">
+          The suggestion it came from could not be marked as used, so it still shows as waiting under Suggestions. {approveError}
+        </p>
+      ) : null}
 
       <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`} className={portal.page}>
         {/* ---- Polls ---------------------------------------------------- */}
@@ -226,6 +239,8 @@ export function AdminPlayPage() {
                 <p className={portal.empty} aria-busy="true">
                   Loading…
                 </p>
+              ) : polls.isError ? (
+                <LoadFailed what="the polls" onRetry={() => void polls.refetch()} />
               ) : (polls.data ?? []).length === 0 ? (
                 <p className={portal.empty}>No polls yet.</p>
               ) : (
@@ -372,6 +387,8 @@ export function AdminPlayPage() {
                   <p className={portal.empty} aria-busy="true">
                     Loading…
                   </p>
+                ) : quizzes.isError ? (
+                  <LoadFailed what="the quizzes" onRetry={() => void quizzes.refetch()} />
                 ) : (quizzes.data ?? []).length === 0 ? (
                   <p className={portal.empty}>No quizzes yet. Write some questions in the bank, then make one here.</p>
                 ) : (
@@ -440,28 +457,38 @@ export function AdminPlayPage() {
                       Scores: {(quizzes.data ?? []).find((s) => s.quiz.id === scoresFor)?.quiz.title}
                     </h2>
                   </div>
-                  <div className={portal.scroll}>
-                    <table className={portal.table}>
-                      <thead>
-                        <tr>
-                          <th>Household</th>
-                          <th>Score</th>
-                          <th>On the leaderboard</th>
-                          <th>Played</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {(attempts.data ?? []).map((a) => (
-                          <tr key={`${a.household}-${a.playedAt}`}>
-                            <td>{a.household}</td>
-                            <td>{scoreLine(a.score, a.total)}</td>
-                            <td className={portal.tiny}>{a.showName ? 'By name' : 'As “a household”'}</td>
-                            <td className={`${portal.muted} ${portal.tiny}`}>{formatLongDate(a.playedAt)}</td>
+                  {attempts.isPending ? (
+                    <p className={portal.empty} aria-busy="true">
+                      Loading…
+                    </p>
+                  ) : attempts.isError ? (
+                    <LoadFailed what="the scores" onRetry={() => void attempts.refetch()} />
+                  ) : attempts.data.length === 0 ? (
+                    <p className={portal.empty}>Nobody has played it yet.</p>
+                  ) : (
+                    <div className={portal.scroll}>
+                      <table className={portal.table}>
+                        <thead>
+                          <tr>
+                            <th>Household</th>
+                            <th>Score</th>
+                            <th>On the leaderboard</th>
+                            <th>Played</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                        </thead>
+                        <tbody>
+                          {attempts.data.map((a) => (
+                            <tr key={`${a.household}-${a.playedAt}`}>
+                              <td>{a.household}</td>
+                              <td>{scoreLine(a.score, a.total)}</td>
+                              <td className={portal.tiny}>{a.showName ? 'By name' : 'As “a household”'}</td>
+                              <td className={`${portal.muted} ${portal.tiny}`}>{formatLongDate(a.playedAt)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                 </section>
               ) : null}
             </>
@@ -537,12 +564,18 @@ export function AdminPlayPage() {
                   <h2 id="bank-title" className={portal.panelTitle}>
                     Question bank
                   </h2>
-                  <span className={`${portal.muted} ${portal.tiny}`}>{questions.length} questions</span>
+                  {bank.isSuccess ? (
+                    <span className={`${portal.muted} ${portal.tiny}`}>
+                      {questions.length} {questions.length === 1 ? 'question' : 'questions'}
+                    </span>
+                  ) : null}
                 </div>
                 {bank.isPending ? (
                   <p className={portal.empty} aria-busy="true">
                     Loading…
                   </p>
+                ) : bank.isError ? (
+                  <LoadFailed what="the question bank" onRetry={() => void bank.refetch()} />
                 ) : questions.length === 0 ? (
                   <p className={portal.empty}>The bank is empty. Every quiz is built from the questions here.</p>
                 ) : (
@@ -599,6 +632,8 @@ export function AdminPlayPage() {
           <Suggestions
             list={suggestions.data ?? []}
             loading={suggestions.isPending}
+            failed={suggestions.isError}
+            onRetry={() => void suggestions.refetch()}
             openId={openSuggestion}
             onOpen={setOpenSuggestion}
             reviewing={review.isPending}
@@ -629,6 +664,7 @@ export function AdminPlayPage() {
         confirmLabel="Delete"
         busyLabel="Deleting…"
         busy={removeBusy}
+        error={removeError}
         onCancel={() => setRemoving(null)}
         onConfirm={confirmRemove}
       >
@@ -639,11 +675,6 @@ export function AdminPlayPage() {
             : removing?.kind === 'question'
               ? 'The question goes from the bank for good. A question that is in a quiz has to be taken out of it first.'
               : 'The suggestion goes for good. To keep the record, decline it instead.'}
-        {removeError ? (
-          <span role="alert" style={{ display: 'block', marginTop: 12 }}>
-            {removeError}
-          </span>
-        ) : null}
       </ConfirmDialog>
     </div>
   )
@@ -652,6 +683,8 @@ export function AdminPlayPage() {
 function Suggestions({
   list,
   loading,
+  failed,
+  onRetry,
   openId,
   onOpen,
   reviewing,
@@ -664,6 +697,8 @@ function Suggestions({
 }: {
   list: Suggestion[]
   loading: boolean
+  failed: boolean
+  onRetry: () => void
   openId: string | null
   onOpen: (id: string) => void
   reviewing: boolean
@@ -681,6 +716,7 @@ function Suggestions({
       </p>
     )
   }
+  if (failed) return <LoadFailed what="the suggestions" onRetry={onRetry} />
   if (list.length === 0) return <p className={portal.empty}>No suggestions yet. Members send them from Polls and quizzes in the portal.</p>
   const open = list.find((s) => s.id === openId) ?? list[0]
   return (

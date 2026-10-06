@@ -173,12 +173,46 @@ export function GoogleSignInProvider({
           return
         }
         // Out of Google too, not just out of the app: a refused address should keep nothing.
-        await signOutOfGoogle(config)
+        // A sign-out that fails is still a refusal: the screen must say so rather than sit on
+        // "checking", and the app's session goes either way.
+        await signOutOfGoogle(config).catch(() => {})
         dropSession()
         if (live) setState({ status: 'refused', email: identity.email })
         return
       }
-      const household = await findHousehold(api, identity.email)
+      let household: Awaited<ReturnType<typeof findHousehold>>
+      try {
+        household = await findHousehold(api, identity.email)
+      } catch (error) {
+        console.error('The household lookup failed during sign-in:', error)
+        /*
+         * Somebody already in, checked again. Supabase asks this question on every token
+         * refresh — about hourly — and signing a member out mid-form over one dropped request
+         * would be the cure worse than the disease. The household was found when they signed
+         * in; that answer stands until a lookup actually says otherwise.
+         */
+        if (current.role !== 'visitor' && current.householdId && current.email.toLowerCase() === identity.email.toLowerCase()) {
+          if (live) setState({ status: 'signedIn' })
+          return
+        }
+        /*
+         * A lookup that failed is not a lookup that found nobody. Answered as no household, it
+         * put the person in as "No household yet" and the portal told them the committee had
+         * never recorded them — over a dropped connection.
+         *
+         * Out of Google as well, the same as a refusal, so nobody is left half in: a token in
+         * storage and no app session behind it. Signing in again asks the question again.
+         * The state is set after the sign-out, because the sign-out's own "nobody is here"
+         * passes through this listener on the way and would otherwise have the last word.
+         */
+        // In words for the sign-in page, which puts its own "did not go through" in front; the
+        // database's own reason went to the console above.
+        const message = 'we could not check your household just now'
+        await signOutOfGoogle(config).catch(() => {})
+        dropSession()
+        if (live) setState({ status: 'failed', message })
+        return
+      }
       if (!live) return
       putSession(sessionFor(identity, household))
       setState({ status: 'signedIn' })
@@ -291,14 +325,14 @@ export function useGoogleSignIn(): Value {
   return value
 }
 
-/** The household the committee recorded this address against, if there is one yet. */
+/**
+ * The household the committee recorded this address against, if there is one yet.
+ *
+ * Null only when the database answered and there is none. A lookup that could not be made
+ * throws, and the caller decides what that means for whoever is signing in.
+ */
 async function findHousehold(api: ReturnType<typeof useApi>, email: string) {
-  try {
-    return await api.portal.identify(email)
-  } catch {
-    // The portal can say more about this than a sign-in can; getting in is the job here.
-    return null
-  }
+  return api.portal.identify(email)
 }
 
 export type { AuthConfig }

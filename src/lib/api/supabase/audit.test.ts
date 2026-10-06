@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { actorName, auditMethods, toEntry } from './audit'
 
-function fakeClient(rows: unknown[] = []) {
+function fakeClient(rows: unknown[] = [], error: { message: string } | null = null) {
   const calls: string[] = []
   const chain: Record<string, unknown> = {}
   for (const method of ['select', 'order', 'limit']) {
@@ -11,7 +11,7 @@ function fakeClient(rows: unknown[] = []) {
       return chain
     }
   }
-  chain.then = (resolve: (v: unknown) => unknown) => resolve({ data: rows, error: null })
+  chain.then = (resolve: (v: unknown) => unknown) => resolve({ data: error ? null : rows, error })
   const client = {
     schema: (name: string) => {
       calls.push(`schema(${name})`)
@@ -43,6 +43,18 @@ describe('reading the trail the database keeps', () => {
     // microsecond, and a stamp cannot separate those.
     expect(calls.some((c) => c.startsWith('order(seq'))).toBe(true)
     expect(calls).toContain('limit(…)')
+  })
+
+  it('says the history could not be read, rather than that nothing has happened, when the read fails', async () => {
+    const { client } = fakeClient([], { message: 'fetch failed' })
+    await expect(auditMethods(async () => client).list({ householdId: 'h', role: 'admin' })).rejects.toThrow(
+      'The history could not be read: fetch failed',
+    )
+  })
+
+  it('still answers an empty trail when nothing has been done yet', async () => {
+    const { client } = fakeClient([])
+    expect(await auditMethods(async () => client).list({ householdId: 'h', role: 'admin' })).toEqual([])
   })
 
   it('gives nothing to somebody who is not on the committee, without asking', async () => {

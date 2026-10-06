@@ -4,7 +4,7 @@ import { createMemoryRouter, RouterProvider } from 'react-router'
 import { routes } from '@/app/router'
 import { previewAccounts } from '@/lib/auth/previewAccounts'
 import type { Session } from '@/lib/auth/session'
-import { TestDataProviders } from '@/test/render'
+import { createFailingApi, createTestApi, TestDataProviders } from '@/test/render'
 import { createMockApi } from '@/lib/api/mock'
 import type { ApiClient } from '@/lib/api'
 import type { SignInAttempt } from '@/domain/document'
@@ -446,6 +446,47 @@ describe('committee pages', () => {
   })
 })
 
+describe('when the portal’s data does not arrive', () => {
+  it('says the dashboard’s pieces did not load, rather than that there is nothing', async () => {
+    const api = createTestApi()
+    const failing = createFailingApi()
+    renderAt('/portal', member, {
+      ...api,
+      events: { ...api.events, getNext: failing.events.getNext },
+      news: { ...api.news, listAnnouncements: failing.news.listAnnouncements },
+      portal: { ...api.portal, getHousehold: failing.portal.getHousehold },
+    })
+    await screen.findByRole('heading', { level: 1, name: 'Dashboard' })
+    const announcements = screen.getByRole('heading', { name: 'Announcements' }).closest('section')!
+    expect(await within(announcements).findByText(/could not load the announcements/)).toBeInTheDocument()
+    expect(within(announcements).queryByText('Nothing pinned right now.')).not.toBeInTheDocument()
+    expect(await screen.findByText(/could not load the next event/)).toBeInTheDocument()
+    expect(await screen.findByText(/could not load your household/)).toBeInTheDocument()
+  })
+
+  it('says the household did not load, rather than that it could not be found', async () => {
+    const api = createTestApi()
+    renderAt('/portal/household', member, { ...api, portal: { ...api.portal, getHousehold: createFailingApi().portal.getHousehold } })
+    expect(await screen.findByText(/could not load your household/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument()
+    expect(screen.queryByText(/could not find your household/)).not.toBeInTheDocument()
+  })
+
+  it('tells an account with no household to ask the committee, instead of loading for ever', async () => {
+    const unlinked: Session = {
+      role: 'admin',
+      householdId: '',
+      householdName: 'No household yet',
+      name: 'Budhaditya Pandit',
+      email: 'panditbudhaditya@gmail.com',
+    }
+    renderAt('/portal/household', unlinked)
+    expect(await screen.findByText(/not linked to a household yet/)).toBeInTheDocument()
+    expect(within(screen.getByRole('main')).getByRole('link', { name: 'ask them' })).toHaveAttribute('href', '/contact')
+    expect(screen.queryByText('Loading…')).not.toBeInTheDocument()
+  })
+})
+
 describe('a household editing itself', () => {
   it('saves a change and shows it back on the page afterwards', async () => {
     renderAt('/portal/household', member)
@@ -459,6 +500,8 @@ describe('a household editing itself', () => {
     // Back on the read-only page, showing what was saved rather than what was typed.
     expect(await screen.findByRole('heading', { level: 1, name: 'My household' })).toBeInTheDocument()
     expect(await screen.findByText('Rina S Sen')).toBeInTheDocument()
+    // The form closes on a save, so the page itself says it went through.
+    expect(screen.getByText('Saved.')).toHaveAttribute('role', 'status')
   })
 
 

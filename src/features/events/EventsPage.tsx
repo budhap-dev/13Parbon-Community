@@ -36,8 +36,8 @@ export function EventsPage() {
   const [params] = useSearchParams()
   const festivalId = params.get('festival')
   const { data: festivals } = useFestivals()
-  const { data: upcoming, isPending, isError, refetch } = useUpcomingEvents(50)
-  const { data: past } = usePastEvents(6)
+  const { data: upcoming, isPending, isError, isSuccess, refetch } = useUpcomingEvents(50)
+  const { data: past, isError: pastFailed, refetch: refetchPast } = usePastEvents(6)
 
   const matches = (event: Event) => !festivalId || event.festivalId === festivalId
   const upcomingMonths = groupByMonth((upcoming ?? []).filter(matches))
@@ -46,6 +46,7 @@ export function EventsPage() {
 
   // Occasions the community keeps every year that have no date on the calendar yet. Naming
   // them is warmer than a general promise, and the note disappears once they are all up.
+  // Only once the calendar has arrived: before then, every festival would look unscheduled.
   const scheduled = new Set((upcoming ?? []).map((event) => event.festivalId))
   const awaitingDates = (festivals ?? []).filter((f) => !scheduled.has(f.id))
 
@@ -110,7 +111,7 @@ export function EventsPage() {
         ))
       )}
 
-      {!festivalId && awaitingDates.length > 0 ? (
+      {isSuccess && !festivalId && awaitingDates.length > 0 ? (
         <aside className={styles.more} aria-labelledby="more-title">
           <h2 id="more-title" className={styles.moreTitle}>
             <Icon name="calendar" size={24} className={styles.moreIcon} />
@@ -129,7 +130,14 @@ export function EventsPage() {
         </aside>
       ) : null}
 
-      {pastEvents.length > 0 ? (
+      {pastFailed ? (
+        <section className={styles.month} aria-labelledby="past-title">
+          <h2 id="past-title" className={styles.pastTitle}>
+            Earlier this year
+          </h2>
+          <LoadFailed what="the earlier evenings" onRetry={() => void refetchPast()} />
+        </section>
+      ) : pastEvents.length > 0 ? (
         <section className={styles.month} aria-labelledby="past-title">
           <h2 id="past-title" className={styles.pastTitle}>
             Earlier this year

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { useScrollToTopOn } from '@/app/useScrollToTopOn'
 import { Button } from '@/components/Button'
+import { LoadFailed } from '@/components/LoadFailed'
 import { formatLongDate, formatTime } from '@/domain/dates'
 import { useAuditTrail, useViewer } from '@/lib/api'
 import { can } from '@/lib/auth/permissions'
@@ -124,7 +125,7 @@ const PER_PAGE = 20
 export function AdminAuditPage() {
   useDocumentTitle('What has changed')
   const mayRead = can(useViewer(), 'admin:enter')
-  const { data: entries, isPending } = useAuditTrail()
+  const { data: entries, isPending, isError, refetch } = useAuditTrail()
 
   const list = entries ?? []
   const [page, setPage] = useState(0)
@@ -158,6 +159,8 @@ export function AdminAuditPage() {
         <p className={styles.empty} aria-busy="true">
           Loading…
         </p>
+      ) : isError && mayRead ? (
+        <LoadFailed what="the trail" onRetry={() => void refetch()} />
       ) : list.length === 0 ? (
         <p className={styles.empty}>
           {mayRead

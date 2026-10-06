@@ -2,6 +2,7 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router'
 import { useSettings } from '@/app/SettingsContext'
+import { Button } from '@/components/Button'
 import { Icon, type IconName } from '@/components/Icon'
 import {
   useAllAlbums,
@@ -111,6 +112,10 @@ function SearchDialog({ screens, onClose }: { screens: readonly SearchScreen[]; 
   const quizzes = useAllQuizzes()
   const lists = [households, events, posts, notices, albums, messages, feedback, polls, quizzes]
   const stillLoading = lists.some((list) => list.isPending)
+  // A list that failed is not a list with nothing in it: what somebody is looking for may well
+  // be in the one that did not arrive.
+  const failed = lists.filter((list) => list.isError)
+  const retry = () => failed.forEach((list) => void list.refetch())
 
   const index = useMemo(
     () =>
@@ -242,10 +247,20 @@ function SearchDialog({ screens, onClose }: { screens: readonly SearchScreen[]; 
         </div>
 
         <div className={styles.results}>
-          {found === 0 ? (
-            <p className={styles.empty}>
-              {stillLoading ? 'Still fetching the lists…' : <>Nothing matches “{typed}”.</>}
-            </p>
+          {found === 0 && stillLoading ? (
+            <p className={styles.empty}>Still fetching the lists…</p>
+          ) : found === 0 && failed.length > 0 ? (
+            <div className={styles.empty} role="alert">
+              <p style={{ margin: '0 0 12px' }}>
+                Nothing matches “{typed}” in what arrived, but some of the lists could not be fetched just now, so it may
+                still be there.
+              </p>
+              <Button onClick={retry} variant="line" size="sm">
+                Try again
+              </Button>
+            </div>
+          ) : found === 0 ? (
+            <p className={styles.empty}>Nothing matches “{typed}”.</p>
           ) : (
             <div id={`${id}-results`} role="listbox" aria-label="Results">
               {groups.map((group) => (
@@ -286,7 +301,7 @@ function SearchDialog({ screens, onClose }: { screens: readonly SearchScreen[]; 
         </div>
 
         <p className={styles.foot} role="status">
-          {typed ? `${found} ${found === 1 ? 'result' : 'results'}${stillLoading ? ', still fetching some lists' : ''}.` : 'Type to search, or pick a screen.'}{' '}
+          {typed ? `${found} ${found === 1 ? 'result' : 'results'}${stillLoading ? ', still fetching some lists' : failed.length > 0 ? ', though some lists could not be fetched' : ''}.` : 'Type to search, or pick a screen.'}{' '}
           <span aria-hidden="true">↑↓ to move · Enter to open</span>
         </p>
       </div>

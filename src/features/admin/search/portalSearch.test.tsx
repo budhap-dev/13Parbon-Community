@@ -7,15 +7,16 @@ import { buildFixtures } from '@/lib/api/mock/fixtures'
 import { previewAccounts } from '@/lib/auth/previewAccounts'
 import type { Session } from '@/lib/auth/session'
 import { expectNoAxeViolations } from '@/test/axe'
-import { TestDataProviders } from '@/test/render'
+import type { ApiClient } from '@/lib/api'
+import { createFailingApi, createTestApi, TestDataProviders } from '@/test/render'
 
 const member: Session = previewAccounts[0]
 const admin: Session = previewAccounts[1]
 
-function renderAt(path: string, session: Session = admin) {
+function renderAt(path: string, session: Session = admin, api?: ApiClient) {
   const router = createMemoryRouter(routes, { initialEntries: [path] })
   render(
-    <TestDataProviders session={session}>
+    <TestDataProviders session={session} api={api}>
       <RouterProvider router={router} />
     </TestDataProviders>,
   )
@@ -140,6 +141,16 @@ describe('the committee’s search', () => {
     renderAt('/admin')
     await search('zzzzqx')
     expect(await screen.findByText('Nothing matches “zzzzqx”.')).toBeInTheDocument()
+  })
+
+  it('does not say nothing matches when a list it searches did not arrive', async () => {
+    const api = createTestApi()
+    renderAt('/admin', admin, { ...api, contact: { ...api.contact, listMessages: createFailingApi().contact.listMessages } })
+    await search('zzzzqx')
+    const dialog = screen.getByRole('dialog', { name: 'Search the portal' })
+    expect(await within(dialog).findByText(/some of the lists could not be fetched/)).toBeInTheDocument()
+    expect(within(dialog).queryByText('Nothing matches “zzzzqx”.')).not.toBeInTheDocument()
+    expect(within(dialog).getByRole('button', { name: 'Try again' })).toBeInTheDocument()
   })
 
   it('passes the automated accessibility checks while open', async () => {

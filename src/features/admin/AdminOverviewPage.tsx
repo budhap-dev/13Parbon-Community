@@ -1,6 +1,7 @@
 import { Link } from 'react-router'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { Button } from '@/components/Button'
+import { LoadFailed } from '@/components/LoadFailed'
 import { formatLongDate } from '@/domain/dates'
 import { peopleAt } from '@/domain/attendance'
 import { waiting } from '@/domain/feedback'
@@ -17,15 +18,39 @@ function Stat({ label, value, note, accent }: { label: string; value: string | n
   )
 }
 
+/**
+ * What a figure shows until it is known. A 0 here reads as "nobody is waiting", which is an
+ * answer, so a figure that has not arrived — or never will — must not look like one.
+ */
+type Read = { isPending: boolean; isError: boolean }
+const LOADING = '…'
+const FAILED = '—'
+const figure = (query: Read, value: () => string | number) =>
+  query.isPending ? LOADING : query.isError ? FAILED : value()
+const noteFor = (query: Read, note: () => string) =>
+  query.isPending ? 'loading' : query.isError ? 'could not be loaded' : note()
+
 export function AdminOverviewPage() {
   useDocumentTitle('Committee overview')
-  const { data: households } = useHouseholds()
-  const { data: allAttempts } = useSignInAttempts()
-  const attempts = allAttempts?.filter((a) => !a.resolved)
-  const { data: messages } = useContactMessages()
-  const { data: attendance } = useAttendance()
-  const { data: feedback } = useAllFeedback()
+  const householdsQuery = useHouseholds()
+  const attemptsQuery = useSignInAttempts()
+  const messagesQuery = useContactMessages()
+  const attendanceQuery = useAttendance()
+  const feedbackQuery = useAllFeedback()
+  const households = householdsQuery.data
+  const attempts = attemptsQuery.data?.filter((a) => !a.resolved)
+  const messages = messagesQuery.data
+  const attendance = attendanceQuery.data
+  const feedback = feedbackQuery.data
   const unapproved = waiting(feedback ?? [])
+
+  const queries = [householdsQuery, attemptsQuery, messagesQuery, attendanceQuery, feedbackQuery]
+  const failed = queries.filter((q) => q.isError)
+  const retry = () => failed.forEach((q) => void q.refetch())
+  // The decisions list is only "nothing waiting" when every queue it reads from has answered.
+  const decisionQueries = [attemptsQuery, messagesQuery, feedbackQuery]
+  const decisionsPending = decisionQueries.some((q) => q.isPending)
+  const decisionsFailed = decisionQueries.some((q) => q.isError)
 
   /** The most recent night we have a number for. Nothing here is per household any more. */
   const lastCounted = attendance?.[0]
@@ -44,16 +69,39 @@ export function AdminOverviewPage() {
         </div>
       </div>
 
-      <div className={styles.stats}>
-        <Stat label="Waiting on you" value={attempts?.length ?? 0} note="tried to sign in, not on the list" accent />
-        <Stat label="Unread" value={unhandled.length} note="messages from the public" accent />
-        <Stat label="To review" value={unapproved.length} note="feedback waiting for a decision" accent />
+      {failed.length > 0 ? <LoadFailed what="some of these figures" onRetry={retry} /> : null}
+
+      <div className={styles.stats} aria-busy={queries.some((q) => q.isPending) || undefined}>
+        <Stat
+          label="Waiting on you"
+          value={figure(attemptsQuery, () => attempts?.length ?? 0)}
+          note={noteFor(attemptsQuery, () => 'tried to sign in, not on the list')}
+          accent
+        />
+        <Stat
+          label="Unread"
+          value={figure(messagesQuery, () => unhandled.length)}
+          note={noteFor(messagesQuery, () => 'messages from the public')}
+          accent
+        />
+        <Stat
+          label="To review"
+          value={figure(feedbackQuery, () => unapproved.length)}
+          note={noteFor(feedbackQuery, () => 'feedback waiting for a decision')}
+          accent
+        />
         <Stat
           label="Came last time"
-          value={lastCounted ? peopleAt(lastCounted) : '—'}
-          note={lastCounted ? `${lastCounted.households} households` : 'no count recorded yet'}
+          value={figure(attendanceQuery, () => (lastCounted ? peopleAt(lastCounted) : '—'))}
+          note={noteFor(attendanceQuery, () =>
+            lastCounted ? `${lastCounted.households} households` : 'no count recorded yet',
+          )}
         />
-        <Stat label="Members" value={memberCount} note={`${signedIn} have signed in, ${admins} admins`} />
+        <Stat
+          label="Members"
+          value={figure(householdsQuery, () => memberCount)}
+          note={noteFor(householdsQuery, () => `${signedIn} have signed in, ${admins} admins`)}
+        />
       </div>
 
       <div className={styles.two}>
@@ -86,17 +134,20 @@ export function AdminOverviewPage() {
                   <p className={styles.statAccent}>{peopleAt(lastCounted)}</p>
                 </div>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-                <div className={styles.rowBetween}>
-                  <span className={`${styles.muted} ${styles.tiny}`}>
-                    {lastCounted.households} of {memberCount} households
-                  </span>
-                  <span className={`${styles.muted} ${styles.tiny}`}>{filled}%</span>
+              {/* Without the household count the bar would read 0%, which is a figure, not a gap. */}
+              {householdsQuery.isSuccess ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+                  <div className={styles.rowBetween}>
+                    <span className={`${styles.muted} ${styles.tiny}`}>
+                      {lastCounted.households} of {memberCount} households
+                    </span>
+                    <span className={`${styles.muted} ${styles.tiny}`}>{filled}%</span>
+                  </div>
+                  <div className={styles.bar}>
+                    <div className={styles.barFill} style={{ width: `${filled}%` }} />
+                  </div>
                 </div>
-                <div className={styles.bar}>
-                  <div className={styles.barFill} style={{ width: `${filled}%` }} />
-                </div>
-              </div>
+              ) : null}
               <p className={`${styles.muted} ${styles.tiny}`}>
                 Counts only — we do not keep which households came. Bookings stay in the committee's
                 form.
@@ -111,10 +162,23 @@ export function AdminOverviewPage() {
               Needs a decision
             </h2>
           </div>
-          {(attempts?.length ?? 0) + unhandled.length + unapproved.length === 0 ? (
-            <p className={styles.empty}>Nothing waiting. </p>
+          {decisionsPending ? (
+            <p className={styles.empty} aria-busy="true">
+              Loading…
+            </p>
+          ) : (attempts?.length ?? 0) + unhandled.length + unapproved.length === 0 ? (
+            <p className={styles.empty}>
+              {decisionsFailed
+                ? 'Not everything could be read just now, so there may be things waiting that are not shown here.'
+                : 'Nothing waiting.'}
+            </p>
           ) : (
             <div className={styles.list}>
+              {decisionsFailed ? (
+                <p className={`${styles.pad} ${styles.muted} ${styles.tiny}`}>
+                  Not everything could be read just now, so there may be more waiting than this.
+                </p>
+              ) : null}
               {(attempts ?? []).map((attempt) => (
                 <div key={attempt.id} className={styles.listItem}>
                   <span className={styles.dot} />

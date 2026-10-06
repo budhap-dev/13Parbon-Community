@@ -27,9 +27,11 @@ const table = (client: SupabaseClient, name: string) => client.schema(SCHEMA).fr
  * Turns a PostgREST failure into something worth showing somebody.
  *
  * A policy that refuses a write comes back as 42501; one that refuses a *read* comes back as
- * no rows at all, which is why so little of this checks for errors and so much checks for
- * nothing. That is the design working, not a fault: a policy hides rows, it does not announce
- * that it is hiding them.
+ * no rows at all, which is why so much of this checks for nothing. That is the design working,
+ * not a fault: a policy hides rows, it does not announce that it is hiding them.
+ *
+ * An error on a read is something else — the connection, the token, the database itself — and
+ * every read here throws on one, because answered as no rows it looks like an empty account.
  */
 function refuse(message: string, error: { code?: string; message: string } | null): never {
   // 45001 is the last-admin guard, which raises a sentence already fit to show somebody. Every
@@ -76,24 +78,30 @@ export function householdMethods(getClient: () => Promise<SupabaseClient>) {
   return {
     identify: async (email: string) => {
       const client = await rowsOf()
-      const { data } = await table(client, 'households')
+      const { data, error } = await table(client, 'households')
         .select('id,name,role')
         .eq('google_email', email.trim().toLowerCase())
         .maybeSingle()
+      // Answered as no household, a failed lookup would tell somebody the committee has never
+      // heard of them. Thrown, sign-in says it could not check, which is the truth.
+      if (error) throw new Error(`Your household could not be looked up: ${error.message}`)
       return (data as Pick<Household, 'id' | 'name' | 'role'> | null) ?? null
     },
 
     getHousehold: async (id: string) => {
       const client = await rowsOf()
-      // No error branch on purpose: a household this person may not see comes back as no rows,
-      // exactly as one that does not exist does. Telling those two apart is itself a leak.
-      const { data } = await table(client, 'households').select(HOUSEHOLD_SELECT).eq('id', id).maybeSingle()
+      // A household this person may not see comes back as no rows and no error, exactly as one
+      // that does not exist does, so throwing on the error tells nobody anything they could not
+      // see. It only stops a dropped connection reading as "we could not find your household".
+      const { data, error } = await table(client, 'households').select(HOUSEHOLD_SELECT).eq('id', id).maybeSingle()
+      if (error) throw new Error(`The household could not be read: ${error.message}`)
       return data ? toHousehold(data as HouseholdRow) : null
     },
 
     listHouseholds: async () => {
       const client = await rowsOf()
-      const { data } = await table(client, 'households').select(HOUSEHOLD_SELECT).order('name')
+      const { data, error } = await table(client, 'households').select(HOUSEHOLD_SELECT).order('name')
+      if (error) throw new Error(`The households could not be read: ${error.message}`)
       return ((data ?? []) as HouseholdRow[]).map(toHousehold)
     },
 
@@ -137,7 +145,8 @@ export function householdMethods(getClient: () => Promise<SupabaseClient>) {
 
     listSignInAttempts: async () => {
       const client = await rowsOf()
-      const { data } = await table(client, 'sign_in_attempts').select('*').order('last_tried_at', { ascending: false })
+      const { data, error } = await table(client, 'sign_in_attempts').select('*').order('last_tried_at', { ascending: false })
+      if (error) throw new Error(`The sign-in attempts could not be read: ${error.message}`)
       return ((data ?? []) as AttemptRow[]).map(toAttempt)
     },
 
@@ -151,7 +160,8 @@ export function householdMethods(getClient: () => Promise<SupabaseClient>) {
 
     listAttendance: async () => {
       const client = await rowsOf()
-      const { data } = await table(client, 'event_attendance').select('*').order('held_on', { ascending: false })
+      const { data, error } = await table(client, 'event_attendance').select('*').order('held_on', { ascending: false })
+      if (error) throw new Error(`The headcounts could not be read: ${error.message}`)
       return ((data ?? []) as AttendanceRow[]).map(toAttendance)
     },
 
@@ -186,35 +196,47 @@ export function householdMethods(getClient: () => Promise<SupabaseClient>) {
       // they are matched on the addresses we hold. Anyone who wrote in from a work address is
       // missed, which is why the export says so rather than implying there were none.
       const addresses = [household.email, household.googleEmail].filter(Boolean).map((a) => a!.toLowerCase())
-      const { data: messages } = addresses.length
+      /*
+       * Every part of the export is checked, because an export is a promise of everything we
+       * hold. One with a section quietly empty because its read failed would tell a household
+       * we hold less about them than we do, so any failure fails the whole thing.
+       */
+      const none = { data: [], error: null }
+      const { data: messages, error: messagesError } = addresses.length
         ? await table(client, 'contact_messages').select('*').in('email', addresses).order('created_at', { ascending: false })
-        : { data: [] }
+        : none
+      if (messagesError) throw new Error(`The household's messages could not be read: ${messagesError.message}`)
 
-      const { data: attempts } = addresses.length
+      const { data: attempts, error: attemptsError } = addresses.length
         ? await table(client, 'sign_in_attempts').select('*').in('email', addresses)
-        : { data: [] }
+        : none
+      if (attemptsError) throw new Error(`The household's sign-in attempts could not be read: ${attemptsError.message}`)
 
       // Votes, scores and suggestions are keyed by household, so these find all of them — as far
       // as the policies let whoever is asking read. On an unnamed poll that is the household
       // alone, which VOTES_NOTE explains.
-      const { data: votes } = await table(client, 'poll_votes')
+      const { data: votes, error: votesError } = await table(client, 'poll_votes')
         .select('option, voted_at, polls(title, options)')
         .eq('household_id', id)
         .order('voted_at', { ascending: false })
-      const { data: scores } = await table(client, 'quiz_attempts')
+      if (votesError) throw new Error(`The household's votes could not be read: ${votesError.message}`)
+      const { data: scores, error: scoresError } = await table(client, 'quiz_attempts')
         .select('score, total, show_name, played_at, quizzes(title)')
         .eq('household_id', id)
         .order('played_at', { ascending: false })
-      const { data: suggested } = await table(client, 'suggestions')
+      if (scoresError) throw new Error(`The household's quiz scores could not be read: ${scoresError.message}`)
+      const { data: suggested, error: suggestedError } = await table(client, 'suggestions')
         .select('kind, prompt, status, created_at')
         .eq('household_id', id)
         .order('created_at', { ascending: false })
+      if (suggestedError) throw new Error(`The household's suggestions could not be read: ${suggestedError.message}`)
 
-      const { data: trail } = await table(client, 'audit_log')
+      const { data: trail, error: trailError } = await table(client, 'audit_log')
         .select('action,at,changes')
         .eq('subject_kind', 'households')
         .eq('subject_id', id)
         .order('at', { ascending: false })
+      if (trailError) throw new Error(`The household's history could not be read: ${trailError.message}`)
 
       return {
         takenAt: new Date().toISOString(),
@@ -259,7 +281,8 @@ type ScoreRow = { score: number; total: number; show_name: boolean; played_at: s
 type SuggestionRow = { kind: 'question' | 'poll'; prompt: string; status: 'pending' | 'approved' | 'rejected'; created_at: string }
 
 async function reread(client: SupabaseClient, id: string): Promise<Household | null> {
-  const { data } = await table(client, 'households').select(HOUSEHOLD_SELECT).eq('id', id).maybeSingle()
+  const { data, error } = await table(client, 'households').select(HOUSEHOLD_SELECT).eq('id', id).maybeSingle()
+  if (error) throw new Error(`The household could not be read: ${error.message}`)
   return data ? toHousehold(data as HouseholdRow) : null
 }
 
@@ -316,7 +339,8 @@ export function inboxMethods(getClient: () => Promise<SupabaseClient>) {
       const client = await getClient()
       // Nothing comes back at all for anybody who is not an admin: the policy hides the rows
       // rather than refusing the request. An empty inbox is the correct answer to give them.
-      const { data } = await table(client, 'contact_messages').select('*').order('created_at', { ascending: false })
+      const { data, error } = await table(client, 'contact_messages').select('*').order('created_at', { ascending: false })
+      if (error) throw new Error(`The messages could not be read: ${error.message}`)
       return ((data ?? []) as MessageRow[]).map(toMessage).sort(
         (a, b) =>
           // Takedowns nobody has dealt with, first — the same order the fixtures use, because
@@ -334,6 +358,8 @@ export function inboxMethods(getClient: () => Promise<SupabaseClient>) {
       // whatever is in this column straight out, so the id would show a reader "handled by
       // 7f3a-…". A member gets no row back here, but they get no row back from the update
       // either, so the answer is the same refusal in both cases.
+      // Its error is left alone on purpose: the name is a courtesy, and a message marked done by
+      // "The committee" is better than one nobody could mark done at all.
       const { data: who } = await table(client, 'households')
         .select('name')
         .eq('id', viewer?.householdId ?? '')

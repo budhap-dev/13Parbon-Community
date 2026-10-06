@@ -124,12 +124,14 @@ export function eventMethods(getClient: () => Promise<SupabaseClient>, now = () 
   }
 
   const all = async (): Promise<Event[]> => {
-    const { data } = await table(await getClient()).select('*').order('starts_at', { ascending: false })
+    const { data, error } = await table(await getClient()).select('*').order('starts_at', { ascending: false })
+    if (error) throw new Error(`The events could not be read: ${error.message}`)
     return ((data ?? []) as EventRow[]).map(toEvent)
   }
 
   const reread = async (id: string): Promise<Event> => {
-    const { data } = await table(await getClient()).select('*').eq('id', id).maybeSingle()
+    const { data, error } = await table(await getClient()).select('*').eq('id', id).maybeSingle()
+    if (error) throw new Error(`The event could not be read: ${error.message}`)
     if (!data) throw new NotAllowed('no such event')
     return toEvent(data as EventRow)
   }
@@ -155,7 +157,8 @@ export function eventMethods(getClient: () => Promise<SupabaseClient>, now = () 
         .sort((a, b) => a.startsAt.localeCompare(b.startsAt))[0] ?? null,
 
     getBySlug: async (slug) => {
-      const { data } = await table(await getClient()).select('*').eq('slug', slug).maybeSingle()
+      const { data, error } = await table(await getClient()).select('*').eq('slug', slug).maybeSingle()
+      if (error) throw new Error(`The event could not be read: ${error.message}`)
       const event = data ? toEvent(data as EventRow) : null
       // A draft reaching this by its address is not a published evening. The policy already
       // refuses it to anybody but the committee; this is so an admin previewing one does not
@@ -170,7 +173,10 @@ export function eventMethods(getClient: () => Promise<SupabaseClient>, now = () 
     create: async (draft: EventDraft) => {
       if (!isValidEvent(draft)) throw new NotAllowed('that event is not ready')
       const client = await getClient()
-      const { data: taken } = await table(client).select('slug')
+      const { data: taken, error: takenError } = await table(client).select('slug')
+      // Without the names already taken, the new slug could collide, and the insert would then
+      // say "there is already an evening with that name" about a problem that is nothing of the sort.
+      if (takenError) throw new Error(`The events could not be read: ${takenError.message}`)
       const slug = uniqueSlug(draft.title, ((taken ?? []) as { slug: string }[]).map((e) => e.slug), 'event')
       const { data, error } = await table(client)
         .insert({

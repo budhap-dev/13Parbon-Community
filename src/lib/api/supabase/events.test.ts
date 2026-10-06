@@ -3,20 +3,35 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { eventMethods, fromDraft, toEvent } from './events'
 import { blankEvent } from '@/domain/event'
 
-function fakeClient(rows: unknown[] = [], errors: { code: string; message: string } | null = null) {
+/**
+ * `errors` answers the writes; `readError` answers a plain read. Kept apart because `create`
+ * reads the names already taken before it inserts, and a refused insert is not a failed read.
+ */
+function fakeClient(
+  rows: unknown[] = [],
+  errors: { code: string; message: string } | null = null,
+  readError: { message: string } | null = null,
+) {
   const calls: string[] = []
   const chain: Record<string, unknown> = {}
+  let writing = false
   for (const method of ['select', 'eq', 'order', 'insert', 'update', 'delete']) {
     chain[method] = (...args: unknown[]) => {
       calls.push(`${method}(${args.map((a) => (typeof a === 'string' ? a : '…')).join(',')})`)
+      if (method === 'insert' || method === 'update' || method === 'delete') writing = true
       return chain
     }
   }
-  const first = () => (errors ? null : (rows[0] ?? null))
-  chain.maybeSingle = async () => ({ data: first(), error: errors })
-  chain.single = async () => ({ data: first(), error: errors })
-  chain.then = (resolve: (v: unknown) => unknown) => resolve({ data: errors ? [] : rows, error: errors })
-  return { calls, client: { schema: () => ({ from: () => chain }) } as unknown as SupabaseClient }
+  const error = () => (writing ? errors : readError)
+  const first = () => (error() ? null : (rows[0] ?? null))
+  chain.maybeSingle = async () => ({ data: first(), error: error() })
+  chain.single = async () => ({ data: first(), error: error() })
+  chain.then = (resolve: (v: unknown) => unknown) => resolve({ data: error() ? null : rows, error: error() })
+  const from = () => {
+    writing = false
+    return chain
+  }
+  return { calls, client: { schema: () => ({ from }) } as unknown as SupabaseClient }
 }
 
 const NOW = new Date('2026-06-01T12:00:00.000Z')
@@ -60,6 +75,20 @@ describe('which list an evening falls into', () => {
 
   it('still answers for a cancelled evening by its address, because somebody holds the link', async () => {
     expect((await events([row({ status: 'cancelled' })]).getBySlug('a-night'))?.status).toBe('cancelled')
+  })
+
+  it('says the events could not be read, rather than that there are none, when the read fails', async () => {
+    // A dropped connection answered as no rows would tell the whole street nothing is on.
+    const failing = eventMethods(async () => fakeClient([], null, { message: 'fetch failed' }).client, () => NOW)
+    await expect(failing.listUpcoming()).rejects.toThrow('The events could not be read: fetch failed')
+    await expect(failing.getNext()).rejects.toThrow(/could not be read/)
+    await expect(failing.getBySlug('a-night')).rejects.toThrow('The event could not be read: fetch failed')
+  })
+
+  it('still answers an empty list, and no next evening, when there genuinely are none', async () => {
+    expect(await events([]).listUpcoming()).toEqual([])
+    expect(await events([]).getNext()).toBeNull()
+    expect(await events([]).getBySlug('nothing')).toBeNull()
   })
 
   it('gives somebody who is not on the committee an empty list of everything', async () => {

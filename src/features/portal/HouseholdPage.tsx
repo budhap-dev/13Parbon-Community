@@ -1,7 +1,9 @@
 import { useState } from 'react'
+import { Link } from 'react-router'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { Button } from '@/components/Button'
 import { HouseholdForm } from '@/components/HouseholdForm'
+import { LoadFailed } from '@/components/LoadFailed'
 import { adults, children } from '@/domain/household'
 import { formatDateWithYear } from '@/domain/dates'
 import { useHousehold, useUpdateHousehold, useViewer } from '@/lib/api'
@@ -23,11 +25,29 @@ export function HouseholdPage() {
   useDocumentTitle('My household')
   const who = useSignedIn()
   const viewer = useViewer()
-  const { data: household, isPending } = useHousehold(who?.householdId)
+  const { data: household, isPending, isError, refetch } = useHousehold(who?.householdId)
   const save = useUpdateHousehold()
   const [editing, setEditing] = useState(false)
+  const [saved, setSaved] = useState(false)
 
+  // Before isPending: with no household to ask for, the query never runs, and a query that
+  // never runs stays pending for ever.
+  if (!who?.householdId) {
+    return (
+      <div className={styles.page}>
+        <h1 className={styles.title}>My household</h1>
+        <p className={styles.note}>
+          <strong>This account is not linked to a household yet.</strong> The committee can link it for you —{' '}
+          <Link to="/contact" className={styles.inlineLink}>
+            ask them
+          </Link>{' '}
+          and they will sort it out.
+        </p>
+      </div>
+    )
+  }
   if (isPending) return <p aria-busy="true">Loading…</p>
+  if (isError) return <LoadFailed what="your household" onRetry={() => void refetch()} />
   if (!household) return <p className={styles.empty}>We could not find your household.</p>
 
   const mayEdit = can(viewer, 'household:edit', { householdId: household.id })
@@ -57,7 +77,12 @@ export function HouseholdPage() {
               onSave={(draft) =>
                 save.mutate(
                   { id: household.id, draft },
-                  { onSuccess: () => setEditing(false) },
+                  {
+                    onSuccess: () => {
+                      setEditing(false)
+                      setSaved(true)
+                    },
+                  },
                 )
               }
             />
@@ -75,11 +100,24 @@ export function HouseholdPage() {
           <p className={styles.sub}>What the committee holds about you, and what other members can see.</p>
         </div>
         {mayEdit ? (
-          <Button variant="gold" size="sm" onClick={() => setEditing(true)}>
+          <Button
+            variant="gold"
+            size="sm"
+            onClick={() => {
+              setSaved(false)
+              setEditing(true)
+            }}
+          >
             Edit
           </Button>
         ) : null}
       </div>
+
+      {saved ? (
+        <p className={styles.note} role="status">
+          Saved.
+        </p>
+      ) : null}
 
       <div className={styles.two}>
         <div className={styles.stack}>

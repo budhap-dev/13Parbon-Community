@@ -98,6 +98,10 @@ describe('adding an evening', () => {
 
     const row = await screen.findByRole('row', { name: /Holi 2027/ })
     expect(within(row).getByText('Draft')).toBeInTheDocument()
+    expect(screen.getByText('Holi 2027 is saved as a draft, so it is not on the website yet.')).toHaveAttribute(
+      'role',
+      'status',
+    )
   })
 
   it('will not add one with nothing in it', async () => {
@@ -152,6 +156,21 @@ describe('archiving', () => {
       const row = screen.getByRole('row', { name: new RegExp(name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')) })
       expect(within(row).getByText('Past')).toBeInTheDocument()
     })
+  })
+
+  it('says so when it did not archive', async () => {
+    const api = createMockApi({ now: () => TEST_NOW, events: [...testEvents, unfiled] })
+    render(
+      <TestDataProviders
+        session={previewAccounts[1]}
+        api={{ ...api, events: { ...api.events, archive: async () => { throw new Error('Permission denied.') } } }}
+      >
+        <RouterProvider router={createMemoryRouter(routes, { initialEntries: ['/admin/events'] })} />
+      </TestDataProviders>,
+    )
+    await userEvent.click((await screen.findAllByRole('button', { name: /^Archive / }))[0])
+
+    expect(await screen.findByText(/That did not archive.*Permission denied\./)).toHaveAttribute('role', 'alert')
   })
 
   it('is not offered twice for the same evening', async () => {

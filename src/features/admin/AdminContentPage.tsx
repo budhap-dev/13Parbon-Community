@@ -7,6 +7,7 @@ import { formatLongDate } from '@/domain/dates'
 import { Button } from '@/components/Button'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { Icon } from '@/components/Icon'
+import { LoadFailed } from '@/components/LoadFailed'
 import { formatDateWithYear } from '@/domain/dates'
 import { isLive, type Announcement, type NewsPost } from '@/domain/news'
 import {
@@ -23,7 +24,7 @@ import {
   useSaveSettings,
 } from '@/lib/api'
 import { useNow } from '@/lib/clock'
-import { useSettings, useSettingsLoaded } from '@/app/SettingsContext'
+import { useSettings, useSettingsFailed, useSettingsLoaded } from '@/app/SettingsContext'
 import { countGaps, gapsNow } from '@/app/gaps'
 import { SITE_TEXT_FIELDS, SITE_TEXT_KEYS, type SiteTextKey } from '@/domain/settings'
 import styles from '@/features/portal/Portal.module.css'
@@ -71,10 +72,15 @@ export function AdminContentPage() {
   useDocumentTitle('Content')
   const settings = useSettings()
   const settingsLoaded = useSettingsLoaded()
-  const { data: posts } = useAllPosts()
-  const { data: announcements } = useAllAnnouncements()
-  const { data: albums } = useAlbums()
-  const { data: newsletters } = useNewsletters()
+  const settingsRead = useSettingsFailed()
+  const postsQuery = useAllPosts()
+  const noticesQuery = useAllAnnouncements()
+  const albumsQuery = useAlbums()
+  const newslettersQuery = useNewsletters()
+  const posts = postsQuery.data
+  const announcements = noticesQuery.data
+  const albums = albumsQuery.data
+  const newsletters = newslettersQuery.data
   const gaps = gapsNow(settings)
   const totalGaps = countGaps(gaps)
 
@@ -137,6 +143,9 @@ export function AdminContentPage() {
     return `Up now, ${where}.`
   }
 
+  const whereThePieceIs = (post: NewsPost): string =>
+    post.publishedAt && !post.hidden ? 'Saved. It is on the website.' : 'Saved. It is not on the website yet.'
+
   /** Which form is open: nothing, a new one, or an existing piece or notice. */
   const [editing, setEditing] = useState<
     { kind: 'post'; post?: NewsPost } | { kind: 'notice'; notice?: Announcement } | null
@@ -187,11 +196,14 @@ export function AdminContentPage() {
               saving={createPost.isPending || updatePost.isPending}
               error={createPost.isError ? createPost.error.message : updatePost.isError ? updatePost.error.message : undefined}
               onCancel={() => setEditing(null)}
-              onSave={(draft) =>
-                editing.post
-                  ? updatePost.mutate({ id: editing.post.id, draft }, { onSuccess: () => setEditing(null) })
-                  : createPost.mutate(draft, { onSuccess: () => setEditing(null) })
-              }
+              onSave={(draft) => {
+                const done = (post: NewsPost) => {
+                  setPosted(whereThePieceIs(post))
+                  setEditing(null)
+                }
+                if (editing.post) updatePost.mutate({ id: editing.post.id, draft }, { onSuccess: done })
+                else createPost.mutate(draft, { onSuccess: done })
+              }}
             />
           </div>
         </section>
@@ -375,10 +387,13 @@ export function AdminContentPage() {
               error={saveSettings.isError ? saveSettings.error.message : undefined}
               onSave={(draft) => saveSettings.mutate(draft)}
             />
+          ) : settingsRead.failed ? (
+            // Still no form: opened on the fallback, its Save would write the code's version over
+            // the committee's.
+            <LoadFailed what="what is saved" onRetry={settingsRead.retry} />
           ) : (
-            <p className={styles.muted} role="status">
-              Reading what is saved… If this does not go away, the settings could not be reached —
-              reload the page before changing anything.
+            <p className={styles.muted} role="status" aria-busy="true">
+              Reading what is saved…
             </p>
           )}
         </div>
@@ -402,6 +417,17 @@ export function AdminContentPage() {
                 Photographs
               </Button>
             </div>
+            {albumsQuery.isPending ? (
+              <p className={styles.empty} aria-busy="true">
+                Loading…
+              </p>
+            ) : albumsQuery.isError ? (
+              <div className={styles.pad}>
+                <LoadFailed what="the albums" onRetry={() => void albumsQuery.refetch()} />
+              </div>
+            ) : !albums?.length ? (
+              <p className={styles.empty}>No albums on the website yet.</p>
+            ) : (
             <div className={styles.scroll}>
               <table className={styles.table}>
                 <thead>
@@ -412,7 +438,7 @@ export function AdminContentPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {(albums ?? []).map((album) => (
+                  {albums.map((album) => (
                     <tr key={album.id}>
                       <td>
                         <strong>{album.title}</strong>
@@ -426,6 +452,7 @@ export function AdminContentPage() {
                 </tbody>
               </table>
             </div>
+            )}
           </section>
 
           <section className={styles.panel} aria-labelledby="newsletters-title">
@@ -434,16 +461,28 @@ export function AdminContentPage() {
                 Newsletters
               </h2>
             </div>
-            <div className={styles.list}>
-              {(newsletters ?? []).map((n) => (
-                <div key={n.id} className={styles.listItem}>
-                  <div className={styles.listBody}>
-                    <strong>{n.title}</strong>
-                    <span className={`${styles.muted} ${styles.tiny}`}>{formatDateWithYear(n.issuedOn)}</span>
+            {newslettersQuery.isPending ? (
+              <p className={styles.empty} aria-busy="true">
+                Loading…
+              </p>
+            ) : newslettersQuery.isError ? (
+              <div className={styles.pad}>
+                <LoadFailed what="the newsletters" onRetry={() => void newslettersQuery.refetch()} />
+              </div>
+            ) : !newsletters?.length ? (
+              <p className={styles.empty}>No newsletters yet.</p>
+            ) : (
+              <div className={styles.list}>
+                {newsletters.map((n) => (
+                  <div key={n.id} className={styles.listItem}>
+                    <div className={styles.listBody}>
+                      <strong>{n.title}</strong>
+                      <span className={`${styles.muted} ${styles.tiny}`}>{formatDateWithYear(n.issuedOn)}</span>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </section>
         </div>
         </>
@@ -460,7 +499,15 @@ export function AdminContentPage() {
             Put up a notice
           </Button>
         </div>
-        {!announcements?.length ? (
+        {noticesQuery.isPending ? (
+          <p className={styles.empty} aria-busy="true">
+            Loading…
+          </p>
+        ) : noticesQuery.isError ? (
+          <div className={styles.pad}>
+            <LoadFailed what="the notices" onRetry={() => void noticesQuery.refetch()} />
+          </div>
+        ) : !announcements?.length ? (
           <p className={styles.empty}>Nothing on the board.</p>
         ) : (
           <div className={styles.scroll}>
@@ -557,6 +604,17 @@ export function AdminContentPage() {
               Write something
             </Button>
           </div>
+          {postsQuery.isPending ? (
+            <p className={styles.empty} aria-busy="true">
+              Loading…
+            </p>
+          ) : postsQuery.isError ? (
+            <div className={styles.pad}>
+              <LoadFailed what="the writing" onRetry={() => void postsQuery.refetch()} />
+            </div>
+          ) : !posts?.length ? (
+            <p className={styles.empty}>Nothing written yet. Write something to start the news page.</p>
+          ) : (
           <div className={styles.scroll}>
             <table className={styles.table}>
               <thead>
@@ -573,7 +631,7 @@ export function AdminContentPage() {
                 </tr>
               </thead>
               <tbody>
-                {(posts ?? []).map((post) => (
+                {posts.map((post) => (
                   <tr key={post.id}>
                     <td>
                       <strong>{post.title}</strong>
@@ -648,6 +706,7 @@ export function AdminContentPage() {
               </tbody>
             </table>
           </div>
+          )}
         </section>
         )
       ) : null}

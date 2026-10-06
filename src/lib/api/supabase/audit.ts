@@ -55,7 +55,7 @@ export function auditMethods(getClient: () => Promise<SupabaseClient>) {
       // was never going to have anything in it.
       if (!isAdmin(viewer)) return []
       const client = await getClient()
-      const { data } = await client
+      const { data, error } = await client
         .schema('portal')
         .from('audit_log')
         // One foreign key from here to households, so PostgREST needs no hint about which —
@@ -68,6 +68,7 @@ export function auditMethods(getClient: () => Promise<SupabaseClient>) {
          */
         .order('seq', { ascending: false })
         .limit(limit)
+      if (error) throw new Error(`The history could not be read: ${error.message}`)
       return ((data ?? []) as AuditRow[]).map(toEntry)
     },
   }

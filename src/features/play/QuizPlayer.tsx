@@ -29,7 +29,7 @@ export function QuizPlayer({ id, backTo, backLabel, card }: { id: string; backTo
   const { showMemberSignIn } = useSettings()
   const member = Boolean(viewer?.householdId)
   const { data, isPending, isError, refetch } = useQuiz(id)
-  const { data: cards } = useQuizzes()
+  const { data: cards, isPending: cardsPending, isError: cardsFailed, refetch: refetchCards } = useQuizzes()
   const submit = useSubmitQuiz()
   const [at, setAt] = useState(0)
   const [answers, setAnswers] = useState<(number | undefined)[]>([])
@@ -47,7 +47,10 @@ export function QuizPlayer({ id, backTo, backLabel, card }: { id: string; backTo
     </Link>
   )
 
-  if (isPending) {
+  // A member's list says whether their household has had its go. Until it arrives we cannot
+  // tell, and offering a second one would only end in a refusal after the last question.
+  const checking = member && !result
+  if (isPending || (checking && cardsPending)) {
     return (
       <p className={portal.empty} aria-busy="true">
         Loading…
@@ -55,6 +58,7 @@ export function QuizPlayer({ id, backTo, backLabel, card }: { id: string; backTo
     )
   }
   if (isError) return <LoadFailed what="this quiz" onRetry={() => void refetch()} />
+  if (checking && cardsFailed) return <LoadFailed what="your household’s quizzes" onRetry={() => void refetchCards()} />
   if (!data) {
     return (
       <div className={styles.player}>
@@ -89,7 +93,7 @@ export function QuizPlayer({ id, backTo, backLabel, card }: { id: string; backTo
           <p className={styles.score}>{scoreLine(played.score, played.total)}</p>
           <p className={portal.muted}>One go per household, and yours has been played. {verdict(played.score, played.total)}</p>
         </section>
-        <Leaderboard rows={board.data} loading={board.isPending} box={box} />
+        <Leaderboard rows={board.data} loading={board.isPending} failed={board.isError} onRetry={() => void board.refetch()} box={box} />
       </div>
     )
   }
@@ -144,7 +148,7 @@ export function QuizPlayer({ id, backTo, backLabel, card }: { id: string; backTo
         </section>
 
         {member ? (
-          <Leaderboard rows={board.data} loading={board.isPending} box={box} />
+          <Leaderboard rows={board.data} loading={board.isPending} failed={board.isError} onRetry={() => void board.refetch()} box={box} />
         ) : showMemberSignIn ? (
           <p className={portal.note}>
             Members can <Link to="/login" className={portal.inlineLink}>sign in</Link> to put their household on the
@@ -264,7 +268,19 @@ export function QuizPlayer({ id, backTo, backLabel, card }: { id: string; backTo
  * Everybody who played, in order, so a place on it means what it says. A household that chose
  * not to be shown keeps its place and loses its name.
  */
-function Leaderboard({ rows, loading, box }: { rows?: LeaderRow[]; loading: boolean; box: string }) {
+function Leaderboard({
+  rows,
+  loading,
+  failed,
+  onRetry,
+  box,
+}: {
+  rows?: LeaderRow[]
+  loading: boolean
+  failed: boolean
+  onRetry: () => void
+  box: string
+}) {
   const list = rows ?? []
   return (
     <section className={box} aria-labelledby="board-title">
@@ -275,6 +291,8 @@ function Leaderboard({ rows, loading, box }: { rows?: LeaderRow[]; loading: bool
         <p className={portal.muted} aria-busy="true">
           Loading…
         </p>
+      ) : failed ? (
+        <LoadFailed what="the leaderboard" onRetry={onRetry} />
       ) : list.length === 0 ? (
         <p className={portal.muted}>Nobody has played yet.</p>
       ) : (

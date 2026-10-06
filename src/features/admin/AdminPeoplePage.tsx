@@ -8,6 +8,7 @@ import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { Icon } from '@/components/Icon'
 import { HouseholdForm } from '@/components/HouseholdForm'
 import { InfoNote } from '@/components/InfoNote'
+import { LoadFailed } from '@/components/LoadFailed'
 import { RemoveHousehold } from '@/components/RemoveHousehold'
 import { formatLongDate } from '@/domain/dates'
 import { committeeCsv, committeeCsvFilename } from '@/domain/committeeExport'
@@ -30,8 +31,8 @@ export function AdminPeoplePage() {
   useDocumentTitle('People')
   const who = useSignedIn()
   const viewer = useViewer()
-  const { data: households, isPending } = useHouseholds()
-  const { data: allAttempts } = useSignInAttempts()
+  const { data: households, isPending, isError, refetch } = useHouseholds()
+  const { data: allAttempts, isError: attemptsFailed, refetch: refetchAttempts } = useSignInAttempts()
   // Resolved ones are kept, so a second knock does not read as a first — but the screen is
   // about what still wants a decision.
   const attempts = unresolved(allAttempts)
@@ -40,6 +41,8 @@ export function AdminPeoplePage() {
   const remove = useDeleteHousehold()
   const resolve = useResolveSignInAttempt()
   const [open, setOpenRaw] = useState<Household | 'new' | null>(null)
+  /** What the last save did, said on the list it lands back on. */
+  const [saved, setSaved] = useState<string | null>(null)
   // The household form replaces the list in place, from a button at the foot of a long table.
   useScrollToTopOn(open)
   // What we already know about somebody who has been knocking, carried into the empty form.
@@ -48,6 +51,7 @@ export function AdminPeoplePage() {
   // null is closed, 'new' is the invitation form, a household is that one being edited.
   const setOpen = (next: Household | 'new' | null, from?: Partial<HouseholdDraft>) => {
     remove.reset()
+    setSaved(null)
     setPrefill(from)
     setOpenRaw(next)
   }
@@ -115,11 +119,15 @@ export function AdminPeoplePage() {
               viewer={viewer}
               saving={saving}
               error={failure}
-              onSave={(draft) =>
-                adding
-                  ? add.mutate(draft, { onSuccess: () => setOpen(null) })
-                  : update.mutate({ id: open.id, draft }, { onSuccess: () => setOpen(null) })
-              }
+              onSave={(draft) => {
+                const done = (text: string) => () => {
+                  setOpen(null)
+                  setSaved(text)
+                }
+                const name = draft.name.trim()
+                if (adding) add.mutate(draft, { onSuccess: done(`${name || 'The household'} is added.`) })
+                else update.mutate({ id: open.id, draft }, { onSuccess: done(`${name || open.name} is saved.`) })
+              }}
             />
           </div>
         </section>
@@ -138,6 +146,12 @@ export function AdminPeoplePage() {
                 error={remove.isError ? remove.error.message : undefined}
                 copy={copy.data}
                 gatheringCopy={copy.isFetching}
+                // Not while it is asking again: "could not" beside "Gathering…" says two things at once.
+                copyError={
+                  copy.isError && !copy.isFetching
+                    ? `We could not gather the copy just now. ${copy.error.message}`
+                    : undefined
+                }
                 onAskForCopy={() => void copy.refetch()}
                 onRemove={() => remove.mutate(open.id, { onSuccess: () => setOpen(null) })}
               />
@@ -187,7 +201,26 @@ export function AdminPeoplePage() {
         </div>
       </div>
 
-      {attempts && attempts.length > 0 ? (
+      {saved ? (
+        <p className={styles.said} role="status">
+          {saved}
+        </p>
+      ) : null}
+
+      {/* Hidden when there is nobody to decide about, but not when the list could not be read:
+          that would look exactly like nobody knocking. */}
+      {attemptsFailed ? (
+        <section className={styles.panel} aria-labelledby="attempts-title">
+          <div className={styles.panelHead}>
+            <h2 id="attempts-title" className={styles.panelTitle}>
+              Tried to sign in, not on the list
+            </h2>
+          </div>
+          <div className={styles.pad}>
+            <LoadFailed what="who has tried to sign in" onRetry={() => void refetchAttempts()} />
+          </div>
+        </section>
+      ) : attempts && attempts.length > 0 ? (
         <section className={styles.panel} aria-labelledby="attempts-title">
           <div className={styles.panelHead}>
             <h2 id="attempts-title" className={styles.panelTitle}>
@@ -243,6 +276,11 @@ export function AdminPeoplePage() {
             </table>
           </div>
           <div className={styles.pad} style={{ paddingTop: 14 }}>
+            {resolve.isError ? (
+              <p className={`${styles.muted} ${styles.tiny}`} role="alert" style={{ marginBottom: 8 }}>
+                That did not save, so they are still on the list. {resolve.error.message}
+              </p>
+            ) : null}
             <p className={`${styles.muted} ${styles.tiny}`}>
               Nobody can create an account for themselves. When someone signs in with a Google address you have not
               added, they are turned away politely and land here so you can decide.
@@ -256,10 +294,13 @@ export function AdminPeoplePage() {
           <h2 id="members-title" className={styles.panelTitle}>
             Members
           </h2>
-          <span className={`${styles.muted} ${styles.tiny}`}>
-            {households?.length ?? 0} households
-            {neverSignedIn > 0 ? ` · ${neverSignedIn} never signed in` : ''}
-          </span>
+          {/* A count only once there is one: "0 households" over a list that failed is a fright. */}
+          {households ? (
+            <span className={`${styles.muted} ${styles.tiny}`}>
+              {households.length} households
+              {neverSignedIn > 0 ? ` · ${neverSignedIn} never signed in` : ''}
+            </span>
+          ) : null}
         </div>
         <div className={styles.toolbar}>
           <div className={styles.search}>
@@ -283,6 +324,12 @@ export function AdminPeoplePage() {
           <p className={styles.empty} aria-busy="true">
             Loading…
           </p>
+        ) : isError ? (
+          <div className={styles.pad}>
+            <LoadFailed what="the households" onRetry={() => void refetch()} />
+          </div>
+        ) : !households?.length ? (
+          <p className={styles.empty}>No households yet. Add the first with Add a household.</p>
         ) : query.trim() && shown.length === 0 ? (
           <p className={styles.pad}>
             <span className={styles.muted}>Nobody matches “{query.trim()}”.</span>{' '}

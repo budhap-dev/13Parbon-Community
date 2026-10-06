@@ -149,7 +149,14 @@ export function PlayPage() {
                   </div>
                 </>
               )}
-              {(mine.data ?? []).length > 0 ? (
+              {mine.isError ? (
+                <div>
+                  <p className={portal.eyebrow} style={{ marginBottom: 8 }}>
+                    Your suggestions
+                  </p>
+                  <LoadFailed what="your suggestions" onRetry={() => void mine.refetch()} />
+                </div>
+              ) : (mine.data ?? []).length > 0 ? (
                 <div>
                   <p className={portal.eyebrow} style={{ marginBottom: 8 }}>
                     Your suggestions

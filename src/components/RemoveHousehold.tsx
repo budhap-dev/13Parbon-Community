@@ -24,6 +24,7 @@ export function RemoveHousehold({
   error,
   copy,
   gatheringCopy,
+  copyError,
   onAskForCopy,
 }: {
   household: Household
@@ -32,6 +33,8 @@ export function RemoveHousehold({
   error?: string
   copy?: HouseholdExport
   gatheringCopy?: boolean
+  /** Why the copy could not be gathered. Without it a failed copy reads as a slow one. */
+  copyError?: string
   onAskForCopy: () => void
 }) {
   const [open, setOpen] = useState(false)
@@ -75,7 +78,7 @@ export function RemoveHousehold({
           <strong>Take a copy first.</strong> Afterwards this is the only record of them that will
           exist anywhere.
         </p>
-        <DownloadExport data={copy} loading={gatheringCopy} onAsk={onAskForCopy} />
+        <DownloadExport data={copy} loading={gatheringCopy} error={copyError} onAsk={onAskForCopy} />
       </div>
 
       <div className={styles.confirm}>

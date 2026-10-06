@@ -5,6 +5,7 @@ import { useOpenFromAddress } from '@/app/useOpenFromAddress'
 import { Button } from '@/components/Button'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { Icon } from '@/components/Icon'
+import { LoadFailed } from '@/components/LoadFailed'
 import { formatLongDate, formatTime } from '@/domain/dates'
 import { attributionOf, waiting, type Feedback } from '@/domain/feedback'
 import { paragraphs } from '@/domain/news'
@@ -31,7 +32,7 @@ const STATUS_WORDS: Record<Feedback['status'], string> = {
  */
 export function AdminFeedbackPage() {
   useDocumentTitle('Feedback')
-  const { data: feedback, isPending } = useAllFeedback()
+  const { data: feedback, isPending, isError, refetch } = useAllFeedback()
   const review = useReviewFeedback()
   const remove = useRemoveFeedback()
   const viewer = useViewer()
@@ -77,6 +78,8 @@ export function AdminFeedbackPage() {
         <p className={styles.empty} aria-busy="true">
           Loading…
         </p>
+      ) : isError ? (
+        <LoadFailed what="the feedback" onRetry={() => void refetch()} />
       ) : list.length === 0 ? (
         <p className={styles.empty}>Nothing has come in yet.</p>
       ) : (
@@ -210,7 +213,12 @@ export function AdminFeedbackPage() {
                   confirmLabel="Delete"
                   busyLabel="Deleting…"
                   busy={remove.isPending}
-                  onCancel={() => setConfirming(false)}
+                  // In the dialog, which stays open when it fails: behind it, nobody would see it.
+                  error={remove.isError ? `That did not delete. ${remove.error.message}` : undefined}
+                  onCancel={() => {
+                    setConfirming(false)
+                    remove.reset()
+                  }}
                   onConfirm={() =>
                     remove.mutate(open.id, {
                       onSuccess: () => {
@@ -229,11 +237,6 @@ export function AdminFeedbackPage() {
                 {review.isError ? (
                   <p className={`${styles.muted} ${styles.tiny}`} role="alert">
                     That did not save. {review.error.message}
-                  </p>
-                ) : null}
-                {remove.isError ? (
-                  <p className={`${styles.muted} ${styles.tiny}`} role="alert">
-                    That did not delete. {remove.error.message}
                   </p>
                 ) : null}
                 <p className={`${styles.muted} ${styles.tiny}`}>

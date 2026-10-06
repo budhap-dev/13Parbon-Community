@@ -3,6 +3,8 @@ import { Link, NavLink, Outlet, ScrollRestoration, useLocation } from 'react-rou
 import { site } from '@/app/site'
 import { useSettings } from '@/app/SettingsContext'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { OfflineNotice } from '@/components/OfflineNotice'
 import { Icon, type IconName } from '@/components/Icon'
 import { PortalSearch, SearchButton, type SearchScreen } from '@/features/admin/search/PortalSearch'
 import { ThemeSwitcher } from './ThemeSwitcher'
@@ -374,6 +376,7 @@ export function PortalLayout() {
         </div>
       </aside>
       <main id="portal-main" ref={mainRef} tabIndex={-1} className={styles.main} inert={menuOpen || undefined}>
+        <OfflineNotice />
         {/*
           * Three states, and they used to be told as one.
           *
@@ -400,13 +403,20 @@ export function PortalLayout() {
             <span className={styles.previewStrong}>No household yet</span>
             <span>
               You are signed in as {who.email}, but the committee has not recorded a household against that
-              address — so the database has nothing to show you and these screens will stay empty. Set
-              `google_email` on your household in Supabase, then reload.
+              address yet, so these screens will stay empty.{' '}
+              <Link to="/contact" className={styles.previewLink}>
+                Ask the committee to add it
+              </Link>
+              , then sign in again.
             </span>
           </p>
         ) : null}
         <div className={styles.content}>
-          <Outlet />
+          {/* A screen that throws takes only itself down: the menu stays, so there is a way out.
+              Keyed on the route so moving to another screen clears it. */}
+          <ErrorBoundary key={pathname}>
+            <Outlet />
+          </ErrorBoundary>
         </div>
       </main>
       {/* Outside main, so it is the page's own footer to a screen reader rather than a box in the content. */}

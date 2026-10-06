@@ -93,13 +93,16 @@ export function galleryMethods(getClient: () => Promise<SupabaseClient>, deps: G
     const client = await getClient()
     let query = table(client, 'albums').select('*').order('published_at', { ascending: false })
     if (publicOnly) query = query.eq('visibility', 'public')
-    const { data: albumRows } = await query
+    const { data: albumRows, error: albumError } = await query
+    if (albumError) throw new Error(`The albums could not be read: ${albumError.message}`)
     const albums = ((albumRows ?? []) as AlbumRow[]).map(toAlbum)
     if (albums.length === 0) return []
 
-    const { data: mediaRows } = await table(client, 'media')
+    const { data: mediaRows, error: mediaError } = await table(client, 'media')
       .select('*')
       .in('album_id', albums.map((a) => a.id))
+    // Albums with their photographs missing would read as evenings nobody took a picture at.
+    if (mediaError) throw new Error(`The photographs could not be read: ${mediaError.message}`)
     const media = ((mediaRows ?? []) as MediaRow[]).map(toMedia)
 
     return albums.map((album) => {
@@ -112,7 +115,8 @@ export function galleryMethods(getClient: () => Promise<SupabaseClient>, deps: G
   }
 
   const reread = async (client: SupabaseClient, id: string): Promise<Album> => {
-    const { data } = await table(client, 'albums').select('*').eq('id', id).maybeSingle()
+    const { data, error } = await table(client, 'albums').select('*').eq('id', id).maybeSingle()
+    if (error) throw new Error(`The album could not be read: ${error.message}`)
     if (!data) throw new NotAllowed('no such album')
     return toAlbum(data as AlbumRow)
   }
@@ -171,7 +175,9 @@ export function galleryMethods(getClient: () => Promise<SupabaseClient>, deps: G
 
     addMedia: async (albumId: string, photo: UploadedPhoto) => {
       const client = await getClient()
-      const { count } = await table(client, 'media').select('id', { count: 'exact', head: true }).eq('album_id', albumId)
+      const { count, error: countError } = await table(client, 'media').select('id', { count: 'exact', head: true }).eq('album_id', albumId)
+      // Without the count the new photograph would go in at the front rather than the end.
+      if (countError) throw new Error(`The album's photographs could not be counted: ${countError.message}`)
       const { data, error } = await table(client, 'media')
         .insert({
           album_id: albumId,
@@ -191,7 +197,8 @@ export function galleryMethods(getClient: () => Promise<SupabaseClient>, deps: G
     setCover: async (albumId: string, mediaId: string) => {
       const client = await getClient()
       // A photograph from another album would front one evening with another's picture.
-      const { data: inAlbum } = await table(client, 'media').select('id').eq('id', mediaId).eq('album_id', albumId).maybeSingle()
+      const { data: inAlbum, error: readError } = await table(client, 'media').select('id').eq('id', mediaId).eq('album_id', albumId).maybeSingle()
+      if (readError) throw new Error(`The photograph could not be read: ${readError.message}`)
       if (!inAlbum) throw new NotAllowed('that photograph is not in this album')
       const { error } = await table(client, 'albums').update({ cover_media_id: mediaId }).eq('id', albumId)
       if (error) refuse('only the committee can do that', error)
@@ -212,7 +219,8 @@ export function galleryMethods(getClient: () => Promise<SupabaseClient>, deps: G
 
     reorder: async (albumId: string, mediaIds: string[]) => {
       const client = await getClient()
-      const { data } = await table(client, 'media').select('*').eq('album_id', albumId)
+      const { data, error: readError } = await table(client, 'media').select('*').eq('album_id', albumId)
+      if (readError) throw new Error(`The album's photographs could not be read: ${readError.message}`)
       const inAlbum = ((data ?? []) as MediaRow[]).map(toMedia)
       // Every photograph, once each: a partial list would silently drop the rest to the end.
       const same =
@@ -239,7 +247,8 @@ export function galleryMethods(getClient: () => Promise<SupabaseClient>, deps: G
      */
     deleteMedia: async (id: string) => {
       const client = await getClient()
-      const { data } = await table(client, 'media').select('*').eq('id', id).maybeSingle()
+      const { data, error: readError } = await table(client, 'media').select('*').eq('id', id).maybeSingle()
+      if (readError) throw new Error(`The photograph could not be read: ${readError.message}`)
       if (!data) throw new NotAllowed('no such photograph')
       const media = toMedia(data as MediaRow)
 

@@ -65,6 +65,15 @@ describe('identifying somebody at sign-in', () => {
     const { client } = fakeClient()
     expect(await householdMethods(async () => client).identify('stranger@example.com')).toBeNull()
   })
+
+  it('throws when the lookup fails, rather than answering that there is no household', async () => {
+    // "No household" sends somebody to be told the committee has never heard of them, which is
+    // not what a dropped connection means.
+    const { client } = fakeClient({}, { households: { code: '', message: 'fetch failed' } })
+    await expect(householdMethods(async () => client).identify('rina.sen@gmail.com')).rejects.toThrow(
+      'Your household could not be looked up: fetch failed',
+    )
+  })
 })
 
 describe('reading a household', () => {
@@ -72,6 +81,12 @@ describe('reading a household', () => {
     const { client, calls } = fakeClient()
     await householdMethods(async () => client).getHousehold('hh-1')
     expect(calls).toContain('households.select(*,people(*))')
+  })
+
+  it('says the household could not be read, rather than that it is not there, when the read fails', async () => {
+    const { client } = fakeClient({}, { households: { code: 'PGRST301', message: 'JWT expired' } })
+    await expect(householdMethods(async () => client).getHousehold('hh-1')).rejects.toThrow('The household could not be read: JWT expired')
+    await expect(householdMethods(async () => client).listHouseholds()).rejects.toThrow('The households could not be read: JWT expired')
   })
 
   it('answers "not there" for one the policies hide', async () => {
@@ -235,6 +250,16 @@ describe('the inbox', () => {
     expect(calls.some((c) => c.startsWith('contact_messages.select'))).toBe(true)
   })
 
+  it('says the messages could not be read, rather than showing an empty inbox, when the read fails', async () => {
+    const { client } = fakeClient({}, { contact_messages: { code: '', message: 'fetch failed' } })
+    await expect(inboxMethods(async () => client).listMessages()).rejects.toThrow('The messages could not be read: fetch failed')
+  })
+
+  it('still shows an empty inbox when nobody has written', async () => {
+    const { client } = fakeClient()
+    expect(await inboxMethods(async () => client).listMessages()).toEqual([])
+  })
+
   it('puts takedowns nobody has dealt with at the top', async () => {
     const { client } = fakeClient({
       contact_messages: [
@@ -346,5 +371,13 @@ describe('the copy a household asks for', () => {
     expect(copy.suggestions).toEqual([{ kind: 'poll', prompt: 'Film night?', status: 'pending', sentAt: '2026-09-01T10:00:00Z' }])
     for (const table of ['poll_votes', 'quiz_attempts', 'suggestions']) expect(calls).toContain(`${table}.eq(household_id,hh-sen)`)
     expect(copy.notes.some((n) => /committee included/.test(n))).toBe(true)
+  })
+
+  it('fails the whole copy when one part of it cannot be read, rather than leaving that part empty', async () => {
+    // An export with the votes quietly missing tells a household we hold less than we do.
+    const { client } = fakeClient({ households: householdRow }, { poll_votes: { code: '', message: 'fetch failed' } })
+    await expect(householdMethods(async () => client).exportHousehold('hh-sen')).rejects.toThrow(
+      "The household's votes could not be read: fetch failed",
+    )
   })
 })

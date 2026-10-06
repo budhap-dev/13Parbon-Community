@@ -159,6 +159,26 @@ describe('polls', () => {
     expect(calls).toContain('poll_votes.eq(household_id,hh-1)')
   })
 
+  it('say the polls could not be read, rather than that there are none, when the read fails', async () => {
+    await expect(api({}, { polls: { code: '', message: 'fetch failed' } }).polls.list(member)).rejects.toThrow('The polls could not be read: fetch failed')
+    await expect(api({}, { polls: { code: '', message: 'fetch failed' } }).polls.listAll(admin)).rejects.toThrow('The polls could not be read: fetch failed')
+  })
+
+  it('fail the list when the household’s own votes cannot be read, rather than offering a second vote', async () => {
+    const { polls } = api({ polls: [pollRow()] }, { poll_votes: { code: '', message: 'fetch failed' } })
+    await expect(polls.list(member)).rejects.toThrow('Your votes could not be read: fetch failed')
+  })
+
+  it('fail when the totals cannot be read, which is not the same as totals kept back', async () => {
+    const { polls } = api({ polls: [pollRow()] }, { 'rpc:poll_results': { code: '', message: 'fetch failed' } })
+    await expect(polls.list(member)).rejects.toThrow("The poll's results could not be read: fetch failed")
+  })
+
+  it('still answer an empty list when no poll has opened', async () => {
+    expect(await api().polls.list(member)).toEqual([])
+    expect(await api().polls.listAll(admin)).toEqual([])
+  })
+
   it('do not look up a vote for an admin with no household', async () => {
     const { polls, calls } = api({ polls: [pollRow()] })
     await polls.list({ householdId: '', role: 'admin' })
@@ -232,6 +252,25 @@ describe('quizzes', () => {
     expect(cards.find((c) => c.quiz.id === 'z-1')).toMatchObject({ questionCount: 2, played: { score: 1, total: 2 } })
     expect(cards.find((c) => c.quiz.id === 'z-2')).not.toHaveProperty('played')
     expect(calls).toContain('quiz_attempts.eq(household_id,hh-1)')
+  })
+
+  it('say the quizzes could not be read, rather than that there are none, when the read fails', async () => {
+    await expect(api({}, { quizzes: { code: '', message: 'fetch failed' } }).quizzes.list(null)).rejects.toThrow('The quizzes could not be read: fetch failed')
+    await expect(api({}, { quizzes: { code: '', message: 'fetch failed' } }).quizzes.get('z-1', null)).rejects.toThrow('The quiz could not be read: fetch failed')
+    await expect(api({}, { 'rpc:quiz_leaderboard': { code: '', message: 'fetch failed' } }).quizzes.leaderboard('z-1', member)).rejects.toThrow(
+      'The scores could not be read: fetch failed',
+    )
+  })
+
+  it('fail the committee’s list and the bank when the plays cannot be read, rather than unlocking what was played', async () => {
+    const broken = api({ quizzes: [quizRow()] }, { quiz_attempts: { code: '', message: 'fetch failed' } })
+    await expect(broken.quizzes.listAll(admin)).rejects.toThrow("The quizzes' plays could not be read: fetch failed")
+    await expect(broken.quizzes.bank(admin)).rejects.toThrow("The quizzes' plays could not be read: fetch failed")
+  })
+
+  it('still answer an empty list when no quiz has opened', async () => {
+    expect(await api().quizzes.list(member)).toEqual([])
+    expect(await api().quizzes.listAll(admin)).toEqual([])
   })
 
   it('ask a visitor’s list nothing about attempts', async () => {
@@ -384,6 +423,15 @@ describe('suggestions', () => {
     expect(await suggestions.listMine(null)).toEqual([])
     expect(await suggestions.listMine(member)).toHaveLength(1)
     expect(calls).toContain('suggestions.eq(household_id,hh-1)')
+  })
+
+  it('say the suggestions could not be read, rather than that there are none, when the read fails', async () => {
+    await expect(api({}, { suggestions: { code: '', message: 'fetch failed' } }).suggestions.listMine(member)).rejects.toThrow(
+      'Your suggestions could not be read: fetch failed',
+    )
+    await expect(api({}, { suggestions: { code: '', message: 'fetch failed' } }).suggestions.listAll(admin)).rejects.toThrow(
+      'The suggestions could not be read: fetch failed',
+    )
   })
 
   it('give the committee the queue, waiting first', async () => {

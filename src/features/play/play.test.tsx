@@ -10,6 +10,9 @@ import type { Session } from '@/lib/auth/session'
 import { TEST_NOW, TestDataProviders, createFailingApi } from '@/test/render'
 
 const member: Session = previewAccounts[0]
+const down = async (): Promise<never> => {
+  throw new Error('down')
+}
 const admin: Session = previewAccounts[1]
 
 function api(over: Partial<ApiClient> = {}, settings: Partial<typeof defaultSettings> = {}): ApiClient {
@@ -171,6 +174,29 @@ describe('polls and quizzes, for a member', () => {
     renderAt('/portal', member, client)
     const say = (await screen.findByText('Have your say')).closest('section')!
     expect(within(say).getByRole('link', { name: 'Play' })).toHaveAttribute('href', expect.stringMatching(/^\/portal\/play\/quiz-/))
+  })
+
+  it('says the leaderboard did not load, rather than that nobody has played', async () => {
+    const base = api()
+    await base.quizzes.submit('quiz-words', [0, 1, 1], true, { householdId: 'hh-sen', role: 'member' })
+    renderAt('/portal/play/quiz-words', member, { ...base, quizzes: { ...base.quizzes, leaderboard: down } })
+    const board = (await screen.findByRole('heading', { name: 'Leaderboard' })).closest('section')!
+    expect(await within(board).findByText(/could not load the leaderboard/)).toBeInTheDocument()
+    expect(within(board).queryByText('Nobody has played yet.')).not.toBeInTheDocument()
+  })
+
+  it('will not offer a quiz until it knows whether the household has played it', async () => {
+    const base = api()
+    // Without the list, a household that has had its go would look as if it had not.
+    renderAt('/portal/play/quiz-words', member, { ...base, quizzes: { ...base.quizzes, list: down } })
+    expect(await screen.findByText(/could not load your household’s quizzes/)).toBeInTheDocument()
+    expect(screen.queryByText('Question 1 of 3')).not.toBeInTheDocument()
+  })
+
+  it('says so when its own suggestions do not arrive', async () => {
+    const base = api()
+    renderAt('/portal/play', member, { ...base, suggestions: { ...base.suggestions, listMine: down } })
+    expect(await screen.findByText(/could not load your suggestions/)).toBeInTheDocument()
   })
 
   it('says so when the polls and quizzes do not arrive', async () => {
@@ -386,6 +412,45 @@ describe('the committee’s polls and quizzes', () => {
     const dialog = await screen.findByRole('dialog')
     await userEvent.click(within(dialog).getByRole('button', { name: 'Delete' }))
     expect(await within(dialog).findByRole('alert')).toHaveTextContent(/Take it out of the quiz first/)
+  })
+
+  it('says each list did not load, rather than that it is empty', async () => {
+    const failing = createFailingApi()
+    renderAt('/admin/play', admin, api({ polls: failing.polls, quizzes: failing.quizzes, suggestions: failing.suggestions }))
+    expect(await screen.findByText(/could not load the polls/)).toBeInTheDocument()
+    expect(screen.queryByText('No polls yet.')).not.toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('tab', { name: 'Quizzes' }))
+    expect(await screen.findByText(/could not load the quizzes/)).toBeInTheDocument()
+    expect(screen.queryByText(/No quizzes yet/)).not.toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('tab', { name: 'Question bank' }))
+    expect(await screen.findByText(/could not load the question bank/)).toBeInTheDocument()
+    expect(screen.queryByText(/The bank is empty/)).not.toBeInTheDocument()
+    expect(screen.queryByText('0 questions')).not.toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('tab', { name: 'Suggestions' }))
+    expect(await screen.findByText(/could not load the suggestions/)).toBeInTheDocument()
+    expect(screen.queryByText(/No suggestions yet/)).not.toBeInTheDocument()
+  })
+
+  it('says the scores did not load, rather than showing an empty table', async () => {
+    const base = api()
+    renderAt('/admin/play?tab=quizzes', admin, { ...base, quizzes: { ...base.quizzes, attempts: down } })
+    const row = (await screen.findByText('Bengali words for children')).closest('tr')!
+    await userEvent.click(within(row).getByRole('button', { name: 'Scores' }))
+    const scores = (await screen.findByRole('heading', { name: /Scores: Bengali words/ })).closest('section')!
+    expect(await within(scores).findByText(/could not load the scores/)).toBeInTheDocument()
+  })
+
+  it('says so beside the saved line when a used suggestion cannot be marked used', async () => {
+    const base = api()
+    renderAt('/admin/play?tab=suggestions', admin, { ...base, suggestions: { ...base.suggestions, review: down } })
+    await userEvent.click(await screen.findByRole('button', { name: /Which river runs past Kumartuli/ }))
+    await userEvent.click(screen.getByRole('button', { name: 'Add to the question bank' }))
+    await userEvent.click(await screen.findByRole('button', { name: 'Add to the bank' }))
+    expect(await screen.findByText(/Added to the bank/)).toBeInTheDocument()
+    expect(await screen.findByRole('alert')).toHaveTextContent(/could not be marked as used/)
   })
 
   it('has a badge for what is waiting', async () => {

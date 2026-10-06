@@ -70,6 +70,24 @@ describe('what the public lists show', () => {
     expect(album.media.map((m) => m.id)).toEqual(['m-1', 'm-2'])
   })
 
+  it('says the albums could not be read, rather than that there are none, when the read fails', async () => {
+    const { client } = fakeClient({}, { albums: { code: '', message: 'fetch failed' } })
+    await expect(galleryMethods(async () => client, deps([])).listAlbums()).rejects.toThrow('The albums could not be read: fetch failed')
+  })
+
+  it('fails the whole list when the photographs cannot be read, rather than showing empty albums', async () => {
+    // Albums with nothing in them would read as evenings nobody took a picture at.
+    const { client } = fakeClient({ albums: [albumRow()] }, { media: { code: '', message: 'fetch failed' } })
+    await expect(galleryMethods(async () => client, deps([])).listAlbums()).rejects.toThrow('The photographs could not be read: fetch failed')
+    await expect(galleryMethods(async () => client, deps([])).getAlbum('a-night')).rejects.toThrow(/could not be read/)
+  })
+
+  it('still answers an empty gallery when there genuinely are no albums', async () => {
+    const { client } = fakeClient({ albums: [] })
+    expect(await galleryMethods(async () => client, deps([])).listAlbums()).toEqual([])
+    expect(await galleryMethods(async () => client, deps([])).getAlbum('a-night')).toBeNull()
+  })
+
   it('gives somebody who is not on the committee an empty list of all albums', async () => {
     const { client, calls } = fakeClient({ albums: [albumRow()] })
     expect(await galleryMethods(async () => client, deps([])).listAllAlbums({ householdId: 'h', role: 'member' })).toEqual([])
@@ -137,6 +155,13 @@ describe('taking a photograph down', () => {
     await galleryMethods(async () => client, d).deleteMedia('m-1', admin)
     expect(d.removeObject).not.toHaveBeenCalled()
     expect(calls.some((c) => c.startsWith('media.delete'))).toBe(true)
+  })
+
+  it('does not call a photograph missing when it simply could not be read', async () => {
+    const { client } = fakeClient({}, { media: { code: '', message: 'fetch failed' } })
+    const d = deps([])
+    await expect(galleryMethods(async () => client, d).deleteMedia('m-1', admin)).rejects.toThrow('The photograph could not be read: fetch failed')
+    expect(d.removeObject).not.toHaveBeenCalled()
   })
 
   it('does not touch the bucket when the row is not there to begin with', async () => {
