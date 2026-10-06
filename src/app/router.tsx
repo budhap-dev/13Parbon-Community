@@ -22,7 +22,7 @@ import {
   AdminOverviewPage,
   AdminPeoplePage,
 } from '@/features/admin'
-import { DashboardPage, HouseholdPage } from '@/features/portal'
+import { DashboardPage, HelpPage, HouseholdPage } from '@/features/portal'
 import { PortalLayout } from './layouts/PortalLayout'
 import { PublicLayout } from './layouts/PublicLayout'
 import { RequireSession } from './layouts/RequireSession'
@@ -85,6 +85,7 @@ export const routes: RouteObject[] = [
           { path: '/portal/household', Component: HouseholdPage },
           { path: '/portal/play', Component: PlayPage },
           { path: '/portal/play/:id', Component: PortalQuizPage },
+          { path: '/portal/help', Component: HelpPage },
         ],
       },
     ],

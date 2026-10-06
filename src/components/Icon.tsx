@@ -35,6 +35,7 @@ export type IconName =
   | 'logout'
   | 'search'
   | 'info'
+  | 'help'
 
 const paths: Record<IconName, ReactElement> = {
   users: (
@@ -207,6 +208,13 @@ const paths: Record<IconName, ReactElement> = {
       <circle cx="12" cy="12" r="9" />
       <path d="M12 11v5.5" />
       <path d="M12 7.6v.01" />
+    </>
+  ),
+  help: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M9.5 9.5a2.5 2.5 0 0 1 4.9.7c0 1.7-2.4 2.1-2.4 3.6" />
+      <path d="M12 17v.01" />
     </>
   ),
   external: (

@@ -33,6 +33,7 @@ const memberNav: Item[] = [
   { label: 'Dashboard', to: '/portal', icon: 'home', end: true },
   { label: 'My household', to: '/portal/household', icon: 'users' },
   { label: 'Polls and quizzes', to: '/portal/play', icon: 'sparkle' },
+  { label: 'Help', to: '/portal/help', icon: 'help' },
 ]
 
 const committeeScreens: Item[] = [
