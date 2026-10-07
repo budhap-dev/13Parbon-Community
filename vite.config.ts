@@ -33,6 +33,13 @@ export default defineConfig({
     include: ['src/**/*.test.{ts,tsx}'],
     css: { modules: { classNameStrategy: 'non-scoped' } },
     clearMocks: true,
+    /*
+     * Up from the default 5s. The portal tests render a whole admin screen and type into it a key
+     * at a time, and on CI's runner with coverage on that is three or four times slower than a
+     * laptop: siteSwitches passed locally in 16s and timed out on four tests there. A test that
+     * hangs still fails, just later.
+     */
+    testTimeout: 20_000,
     coverage: {
       provider: 'v8',
       include: ['src/**/*.{ts,tsx}'],
