@@ -645,6 +645,26 @@ describe('somebody knocking', () => {
     expect(screen.getByLabelText('Name')).toHaveValue('Priya Dutta')
   })
 
+  /*
+   * Adding the household is the answer to a knock. It used to leave the knock on the panel, still
+   * offering "Add household" for a household that now existed, and the badge still counting it.
+   */
+  it('takes a knock off the list, and out of the count, once its household is added', async () => {
+    renderAt('/admin/people', admin)
+    const people = await screen.findByRole('link', { name: /People/ })
+    await waitFor(() => expect(people).toHaveTextContent('2'))
+
+    await userEvent.click(await screen.findByRole('button', { name: /Add household for priya.dutta@gmail.com/ }))
+    await userEvent.type(await screen.findByLabelText('Household name'), 'The Duttas')
+    await userEvent.click(screen.getByRole('button', { name: 'Add the household' }))
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'People' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Add household for priya.dutta@gmail.com/ })).not.toBeInTheDocument()
+    // The other one is untouched.
+    expect(screen.getByRole('button', { name: /Add household for amit.bose@gmail.com/ })).toBeInTheDocument()
+    await waitFor(() => expect(people).toHaveTextContent('1'))
+  })
+
   it('takes a knock off the list once it has been dealt with', async () => {
     renderAt('/admin/people', admin)
     expect(await screen.findByText('amit.bose@gmail.com')).toBeInTheDocument()
@@ -678,9 +698,10 @@ describe('preview sign-in', () => {
   })
 })
 
-/**
- * The walkthrough now belongs to whoever is already signed in as an admin, and is opened from
- * inside the portal.
+/*
+ * The sample households were offered to the committee from the sidebar until the portal ran on
+ * real ones. Inside a sample household the portal looks exactly like the real one, so a switch
+ * thrown there seemed to save and changed nothing on the live site. Now nobody is offered it.
  */
 describe('walking through the sample data', () => {
   const realAdmin: Session = {
@@ -691,66 +712,12 @@ describe('walking through the sample data', () => {
     email: 'd.chatterjee@gmail.com',
   }
 
-  it('is offered to the committee and to nobody else', async () => {
-    renderAt('/portal', member)
-    await screen.findByRole('heading', { level: 1, name: 'Dashboard' })
-    expect(screen.queryByText('Walk through sample data')).not.toBeInTheDocument()
-
-    cleanup()
+  it('is offered to nobody inside the portal, the committee included', async () => {
     renderAt('/portal', realAdmin)
     await screen.findByRole('heading', { level: 1, name: 'Dashboard' })
-    expect(screen.getByText('Walk through sample data')).toBeInTheDocument()
-  })
-
-  /*
-   * The reason a preview cannot simply swap the session and leave the client alone.
-   *
-   * Against a real project the app talks to Postgres, and `hh-sen` is not a household there —
-   * it is not even a uuid, so the walkthrough would not show fixtures, it would show an error.
-   * A preview has to bring its own data, and the real client must go untouched while it is open.
-   */
-  it('runs on fixtures, and leaves the real client alone while it is open', async () => {
-    const real = createMockApi()
-    const preview = createMockApi()
-    const asksTheDatabase = vi.spyOn(real.portal, 'getHousehold')
-    const asksTheFixtures = vi.spyOn(preview.portal, 'getHousehold')
-
-    const router = createMemoryRouter(routes, { initialEntries: ['/portal'] })
-    render(
-      <TestDataProviders session={realAdmin} api={real} previewApi={preview}>
-        <RouterProvider router={router} />
-      </TestDataProviders>,
-    )
-    await screen.findByRole('heading', { level: 1, name: 'Dashboard' })
-    await waitFor(() => expect(asksTheDatabase).toHaveBeenCalled())
-    expect(asksTheFixtures).not.toHaveBeenCalled()
-
-    const answeredSoFar = asksTheDatabase.mock.calls.length
-    await userEvent.click(screen.getByText('Walk through sample data'))
-    await userEvent.click(screen.getByRole('button', { name: /As The Sens/ }))
-
-    await waitFor(() => expect(asksTheFixtures).toHaveBeenCalled())
-    expect(asksTheDatabase.mock.calls.length).toBe(answeredSoFar)
-  })
-
-  it('steps into a sample household and back out to your own account', async () => {
-    renderAt('/portal', realAdmin)
-    await screen.findByRole('heading', { level: 1, name: 'Dashboard' })
-    // Their own account, so no banner of any kind.
-    expect(screen.queryByRole('status')).not.toBeInTheDocument()
-
-    await userEvent.click(screen.getByText('Walk through sample data'))
-    await userEvent.click(screen.getByRole('button', { name: /As The Sens/ }))
-
-    const banner = await screen.findByRole('status')
-    expect(within(banner).getByText(/sample household/)).toBeInTheDocument()
-    expect(within(banner).getByText(/The Sens/)).toBeInTheDocument()
-
-    await userEvent.click(screen.getByRole('button', { name: 'Leave preview' }))
-
-    // Back to their own, with nothing to say about it.
-    await waitFor(() => expect(screen.queryByRole('status')).not.toBeInTheDocument())
     expect(within(screen.getByRole('complementary')).getByText('Debashis Chatterjee')).toBeInTheDocument()
+    expect(screen.queryByText('Walk through sample data')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /As The Sens/ })).not.toBeInTheDocument()
   })
 })
 

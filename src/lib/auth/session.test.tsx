@@ -77,7 +77,6 @@ describe('session', () => {
   it('offers the preview only while developing, or when asked for by name', () => {
     expect(previewEnabled(true)).toBe(true)
     // `?preview` used to open the committee's back office to anybody who knew the trick.
-    // On the live site the walkthrough is offered inside the portal, to admins, instead.
     expect(previewEnabled(false)).toBe(false)
   })
 })

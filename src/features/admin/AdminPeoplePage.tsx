@@ -35,7 +35,7 @@ export function AdminPeoplePage() {
   const { data: allAttempts, isError: attemptsFailed, refetch: refetchAttempts } = useSignInAttempts()
   // Resolved ones are kept, so a second knock does not read as a first — but the screen is
   // about what still wants a decision.
-  const attempts = unresolved(allAttempts)
+  const attempts = unresolved(allAttempts, households)
   const add = useAddHousehold()
   const update = useUpdateHousehold()
   const remove = useDeleteHousehold()

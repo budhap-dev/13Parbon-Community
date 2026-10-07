@@ -33,9 +33,11 @@ export const previewAccounts: (SignedIn & { blurb: string })[] = [
  * data, since the database answers to the token and a preview holds none, but the committee's
  * screens are not a public exhibit either.
  *
- * On the live site the walkthrough belongs to whoever is already signed in as an admin, and it
- * is offered from inside the portal instead. Kept here for development because a machine with
- * no project configured and no Google sign-in has no other way into the portal at all.
+ * The live site does not offer it at all. It was in the portal's sidebar for the committee
+ * until the portal ran on real households (removed 2026-10-07): a sample household looks
+ * exactly like the real portal, so a switch thrown inside one seemed to save and changed
+ * nothing. Kept here for development because a machine with no project configured and no
+ * Google sign-in has no other way into the portal at all.
  *
  * Callers pass `import.meta.env.MODE === 'development'` rather than `DEV`, because the test
  * runner reports DEV as true and the preview would then appear in every test.
