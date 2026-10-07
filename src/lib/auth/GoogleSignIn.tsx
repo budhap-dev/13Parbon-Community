@@ -29,8 +29,8 @@ export type SignInState =
   | { status: 'ready' }
   | { status: 'working' }
   | { status: 'signedIn' }
-  /** Signed in with Google, but not someone we let in. */
-  | { status: 'refused'; email: string }
+  /** Signed in with Google, but not someone we let in. The name is the one Google gave. */
+  | { status: 'refused'; email: string; name: string }
   | { status: 'failed'; message: string }
 
 type Value = { state: SignInState; signIn: () => void; signOut: () => void }
@@ -157,34 +157,35 @@ export function GoogleSignInProvider({
         if (live) setState({ status: 'ready' })
         return
       }
-      if (!isAllowed(identity.email, config.allowlist)) {
-        /*
-         * Somebody who went to Google to sign a piece of feedback is not knocking at the
-         * portal, and must not be treated as though they were. Turning them away here would
-         * sign them out of the account they are about to put their name to — the button on
-         * the feedback form would appear to do nothing, over and over.
-         *
-         * They stay exactly what they were to the rest of the app: a visitor. The session is
-         * left alone for `usePublicSignIn` to read the name off, and it opens no door —
-         * an address with no household reaches nothing in the database.
-         */
-        if (purposeNow() === 'feedback') {
-          if (live) setState({ status: 'ready' })
-          return
-        }
-        // Out of Google too, not just out of the app: a refused address should keep nothing.
-        // A sign-out that fails is still a refusal: the screen must say so rather than sit on
-        // "checking", and the app's session goes either way.
-        await signOutOfGoogle(config).catch(() => {})
-        dropSession()
-        if (live) setState({ status: 'refused', email: identity.email })
-        return
+      /*
+       * Who gets in: anybody whose Google address the committee has recorded on a household,
+       * and the few addresses on the allowlist. The household is the real answer. Adding one on
+       * the People screen is what lets somebody in, as that screen says. The allowlist is for
+       * the developer's own address, which has no household to be found by.
+       *
+       * It used to be the allowlist alone, which meant a household added in the portal still
+       * could not sign in until somebody edited a hosting setting and redeployed.
+       */
+      const allowed = isAllowed(identity.email, config.allowlist)
+      /*
+       * Somebody who went to Google to sign a piece of feedback is not knocking at the portal,
+       * and must not be treated as though they were. Turning them away here would sign them
+       * out of the account they are about to put their name to — the button on the feedback
+       * form would appear to do nothing, over and over.
+       *
+       * They stay exactly what they were to the rest of the app: a visitor. The session is
+       * left alone for `usePublicSignIn` to read the name off, and it opens no door — an
+       * address with no household reaches nothing in the database.
+       */
+      const staysAVisitor = () => {
+        if (live) setState({ status: 'ready' })
       }
       let household: Awaited<ReturnType<typeof findHousehold>>
       try {
         household = await findHousehold(api, identity.email)
       } catch (error) {
         console.error('The household lookup failed during sign-in:', error)
+        if (!allowed && purposeNow() === 'feedback') return staysAVisitor()
         /*
          * Somebody already in, checked again. Supabase asks this question on every token
          * refresh — about hourly — and signing a member out mid-form over one dropped request
@@ -211,6 +212,16 @@ export function GoogleSignInProvider({
         await signOutOfGoogle(config).catch(() => {})
         dropSession()
         if (live) setState({ status: 'failed', message })
+        return
+      }
+      if (!household && !allowed) {
+        if (purposeNow() === 'feedback') return staysAVisitor()
+        // Out of Google too, not just out of the app: a refused address should keep nothing.
+        // A sign-out that fails is still a refusal: the screen must say so rather than sit on
+        // "checking", and the app's session goes either way.
+        await signOutOfGoogle(config).catch(() => {})
+        dropSession()
+        if (live) setState({ status: 'refused', email: identity.email, name: identity.name })
         return
       }
       if (!live) return

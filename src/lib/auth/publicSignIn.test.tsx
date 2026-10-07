@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -129,7 +129,14 @@ describe('coming back from Google as somebody the committee has never heard of',
     // The invitation-only rule is unchanged: an unrecognised address knocking at the portal
     // is refused and signed out of Google, exactly as before.
     await waitFor(() => expect(signOutOfGoogle).toHaveBeenCalled())
-    expect(await screen.findByText(/is not on the list yet/)).toBeInTheDocument()
+    // Kindly, by first name, and saying what happens next rather than leaving them to ask.
+    const panel = await screen.findByRole('status', { name: 'Thanks for coming, Priya.' })
+    expect(within(panel).getByText('a.stranger@gmail.com')).toBeInTheDocument()
+    expect(within(panel).getByText(/We have let the committee know you tried/)).toBeInTheDocument()
+    expect(within(panel).getByRole('link', { name: 'Message the committee' })).toHaveAttribute('href', '/contact')
+    expect(within(panel).getByRole('button', { name: 'Use a different Google account' })).toBeEnabled()
+    // The Google button it replaces is not offered beside it as well.
+    expect(screen.queryByRole('button', { name: /Continue with Google/ })).not.toBeInTheDocument()
   })
 
   /**

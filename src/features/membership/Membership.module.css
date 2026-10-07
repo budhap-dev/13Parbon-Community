@@ -250,6 +250,52 @@
   color: var(--color-fg-muted);
 }
 
+/*
+ * Somebody turned away at the door. Edged in the accent rather than drawn as an error, because
+ * nothing went wrong: they are early, not refused for a reason, and the committee is on it.
+ */
+.turnedAway {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 620px;
+  padding: 32px;
+  border: 2px solid var(--color-accent);
+  border-radius: var(--radius-panel);
+  background: var(--color-bg-raised);
+}
+
+.turnedAwayTitle {
+  font-size: clamp(26px, 3vw, 32px);
+  text-wrap: balance;
+}
+
+.turnedAwayText {
+  font-size: 18px;
+  line-height: 1.55;
+  color: var(--color-fg-muted);
+  text-wrap: pretty;
+}
+
+.turnedAwayText strong {
+  color: var(--color-fg);
+}
+
+/* A Google address is one long word, and on a phone it would push the panel wider than the screen. */
+.address {
+  overflow-wrap: anywhere;
+}
+
+.turnedAway .cta {
+  padding-top: 6px;
+}
+
+@media (max-width: 600px) {
+  .turnedAway {
+    padding: 22px;
+  }
+}
+
 .preview {
   display: flex;
   flex-direction: column;

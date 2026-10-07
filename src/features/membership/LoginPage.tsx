@@ -15,6 +15,12 @@ import styles from './Membership.module.css'
  * has no Supabase project, or nobody on the allowlist, the button says so rather than
  * pretending: the preview accounts below still let the portal be walked through.
  */
+/** ", Subhendu" from "Subhendu Roy". Nothing at all when Google gave no name worth using. */
+function greeting(name: string): string {
+  const first = name.trim().split(/\s+/)[0]
+  return first && !first.includes('@') ? `, ${first}` : ''
+}
+
 export function LoginPage() {
   useDocumentTitle('Member sign-in')
   const { signIn } = useSession()
@@ -47,43 +53,70 @@ export function LoginPage() {
         Everything else on this website is open to everyone, no account needed.
       </p>
 
-      <div className={styles.googleWrap}>
-        <button
-          type="button"
-          className={styles.google}
-          onClick={withGoogle}
-          disabled={state.status === 'off' || state.status === 'working'}
-        >
-          <GoogleMark />
-          {state.status === 'working' ? 'Taking you to Google…' : 'Continue with Google'}
-        </button>
-        {state.status === 'off' ? (
-          <p className={styles.hint}>Not switched on yet. The committee is still setting it up.</p>
-        ) : null}
-        {state.status === 'refused' ? (
-          <p role="alert" className={styles.hint}>
-            {state.email} is not on the list yet. Membership is by invitation while we get started — send the
-            committee a message and someone will add you.
+      {state.status === 'refused' ? (
+        /*
+         * Turned away, said kindly and with what happens next.
+         *
+         * They did nothing wrong: membership is by invitation and nobody has added this address
+         * yet. The database noted the try on its way past, so the committee already sees them on
+         * the People screen, and the page can honestly say there is nothing more to do. Without
+         * that line people sign in again and again, or write in to ask, which is the same news
+         * reaching the committee twice.
+         */
+        <section className={styles.turnedAway} role="status" aria-labelledby="turned-away-title">
+          <h2 id="turned-away-title" className={styles.turnedAwayTitle}>
+            Thanks for coming{greeting(state.name)}.
+          </h2>
+          <p className={styles.turnedAwayText}>
+            Membership is by invitation, and <strong className={styles.address}>{state.email}</strong> is not on the
+            members’ list yet.
           </p>
-        ) : null}
-        {state.status === 'failed' ? (
-          <p role="alert" className={styles.hint}>
-            Google sign-in did not go through: {state.message}. Try again in a moment.
+          <p className={styles.turnedAwayText}>
+            <strong>We have let the committee know you tried</strong>, so there is nothing more you need to do. Once
+            they have added your household, come back and sign in with this same Google account.
           </p>
-        ) : null}
-      </div>
+          <div className={styles.cta}>
+            <Button to="/contact">Message the committee</Button>
+            <Button variant="line" onClick={withGoogle}>
+              Use a different Google account
+            </Button>
+          </div>
+        </section>
+      ) : (
+        <>
+          <div className={styles.googleWrap}>
+            <button
+              type="button"
+              className={styles.google}
+              onClick={withGoogle}
+              disabled={state.status === 'off' || state.status === 'working'}
+            >
+              <GoogleMark />
+              {state.status === 'working' ? 'Taking you to Google…' : 'Continue with Google'}
+            </button>
+            {state.status === 'off' ? (
+              <p className={styles.hint}>Not switched on yet. The committee is still setting it up.</p>
+            ) : null}
+            {state.status === 'failed' ? (
+              <p role="alert" className={styles.hint}>
+                Google sign-in did not go through: {state.message}. Try again in a moment.
+              </p>
+            ) : null}
+          </div>
 
-      <p className={styles.intro}>
-        Membership is by invitation while we get started, so there is no sign-up form. If you would like to join
-        {site.town.trim().startsWith('[') ? ' the community' : ` us in ${site.town}`}, send the committee a message
-        and someone will be in touch.
-      </p>
-      <div className={styles.cta}>
-        <Button to="/contact">Message the committee</Button>
-        <Button to="/events" variant="line">
-          What’s on
-        </Button>
-      </div>
+          <p className={styles.intro}>
+            Membership is by invitation while we get started, so there is no sign-up form. If you would like to join
+            {site.town.trim().startsWith('[') ? ' the community' : ` us in ${site.town}`}, send the committee a message
+            and someone will be in touch.
+          </p>
+          <div className={styles.cta}>
+            <Button to="/contact">Message the committee</Button>
+            <Button to="/events" variant="line">
+              What’s on
+            </Button>
+          </div>
+        </>
+      )}
 
       {showPreview ? (
         <section className={styles.preview} aria-labelledby="preview-title">
