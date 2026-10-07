@@ -13,8 +13,7 @@ import { useThemeScope } from '@/app/theme/ThemeContext'
 import { useGoogleSignIn } from '@/lib/auth/GoogleSignIn'
 import { useNow } from '@/lib/clock'
 import { useSession, useSignedIn } from '@/lib/auth/session'
-import { previewAccounts } from '@/lib/auth/previewAccounts'
-import { useAllFeedback, useAllSuggestions, useSignInAttempts, useViewer } from '@/lib/api'
+import { useAllFeedback, useAllSuggestions, useHouseholds, useSignInAttempts, useViewer } from '@/lib/api'
 import { waitingSuggestions } from '@/domain/suggestions'
 import { can } from '@/lib/auth/permissions'
 import { unresolved } from '@/domain/document'
@@ -80,13 +79,14 @@ export function PortalLayout() {
   // The same answer that guards the routes, so the navigation cannot offer a door that shuts.
   const onTheCommittee = can(useViewer(), 'admin:enter')
   const { signOut } = useGoogleSignIn()
-  const { enterPreview, leavePreview } = useSession()
+  const { leavePreview } = useSession()
   const { pathname, key } = useLocation()
   // Everything below here wears the committee's own looks, not the community's festivals.
   useThemeScope('portal')
   const mainRef = useRef<HTMLElement>(null)
   const first = useRef(true)
   const { data: attempts } = useSignInAttempts()
+  const { data: households } = useHouseholds()
   const { tools, text } = useSettings()
   const year = useNow().getFullYear()
   const { data: feedback } = useAllFeedback()
@@ -117,7 +117,7 @@ export function PortalLayout() {
    * On a phone the sidebar is a drawer, out from the left where it sits on a wider screen.
    *
    * It used to stack above the page instead, and on a phone that was the whole first screen:
-   * fourteen links, the person, the theme and the walkthrough, with the screen somebody had
+   * fourteen links, the person and the theme, with the screen somebody had
    * just asked for starting below the fold. While the drawer is open it owns the screen —
    * Escape, the close button and a tap on the page behind all shut it, the page does not
    * scroll underneath, and nothing behind it can be tabbed to.
@@ -186,7 +186,7 @@ export function PortalLayout() {
   // them meant the badge never cleared once somebody had been dealt with — and a badge that
   // never clears stops being read.
   const counts: Record<string, number> = {
-    '/admin/people': unresolved(attempts).length,
+    '/admin/people': unresolved(attempts, households).length,
     '/admin/feedback': waiting(feedback ?? []).length,
     '/admin/play': waitingSuggestions(suggestions ?? []).length,
   }
@@ -321,32 +321,6 @@ export function PortalLayout() {
             </span>
           </div>
           <span className={styles.whoEmail}>{who.email}</span>
-          {/*
-            * The walkthrough, and only for the committee.
-            *
-            * It used to be reachable by putting `?preview` on the sign-in page, which meant
-            * anybody who knew the trick could let themselves into the back office of the live
-            * site. Not a way to anybody's data — the database answers to a token and a preview
-            * carries none — but the committee's screens are not a public exhibit either.
-            */}
-          {onTheCommittee ? (
-            <details className={styles.walkthrough}>
-              <summary className={styles.walkthroughToggle}>Walk through sample data</summary>
-              <p className={styles.walkthroughNote}>
-                Made-up households, so you can look around without touching anything real.
-              </p>
-              {previewAccounts.map((account) => (
-                <button
-                  key={account.householdId}
-                  type="button"
-                  className={styles.walkthroughAccount}
-                  onClick={() => enterPreview(account)}
-                >
-                  As {account.householdName} ({account.role})
-                </button>
-              ))}
-            </details>
-          ) : null}
           {/*
             * Down here with the person rather than under the brand: it is a preference of theirs,
             * like signing out, and the list opens upwards so it has the sidebar to open into.
