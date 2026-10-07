@@ -1,5 +1,5 @@
 import type { SupabaseClient, User } from '@supabase/supabase-js'
-import { readSupabaseConfig } from '@/lib/api/supabase'
+import { readSupabaseConfig, type SupabaseConfig } from '@/lib/api/supabase'
 import { isAllowed, readAllowlist } from './allowlist'
 import type { SignedIn } from './session'
 import type { Role } from '@/domain/household'
@@ -7,15 +7,29 @@ import type { Role } from '@/domain/household'
 /**
  * Google sign-in through Supabase.
  *
- * **What this is not.** Everything here runs in the browser, so the allowlist decides what
- * the app *shows*, not what the database *gives out*. Anyone able to run JavaScript can hold
- * a session for an address that is not on the list. That is acceptable while the portal reads
- * from fixtures and there is nothing real to protect — but before a single household's details
- * go into Supabase, row level security has to enforce the same rule server-side, because this
- * cannot. See supabase/portal.sql, which is drafted and not yet correct.
+ * **What the allowlist is not.** Everything here runs in the browser, so it decides what the
+ * app *shows*, not what the database *gives out*. Anyone able to run JavaScript can hold a
+ * session for an address that is not on it.
+ *
+ * What stops them reaching anything is `supabase/portal.sql`, which has been run and verified
+ * against the real database: a signed-in account reaches its own household and nothing else,
+ * whatever this file thinks. The allowlist is a gate on the door, not the lock.
  */
 
 export type AuthConfig = { url: string; anonKey: string; allowlist: string[] }
+
+/**
+ * The same client, for reading data.
+ *
+ * Deliberately the same one: it holds the session, so every query carries the signed-in
+ * person's token and the policies answer for them. A second client would have its own idea of
+ * who is here, and a request with the anon key does not fail — it returns nothing, which looks
+ * like an empty account.
+ *
+ * It takes only the project settings, because reading data does not depend on the allowlist —
+ * that decides who may hold a session, not what a session can reach.
+ */
+export const dataClient = authClient
 
 /** Settings for real sign-in, or null when this build has none and should stay switched off. */
 export function readAuthConfig(env: Record<string, string | undefined>): AuthConfig | null {
@@ -37,7 +51,7 @@ let client: Promise<SupabaseClient> | null = null
  * that most of them will never use and that is switched off in builds without a project. As a
  * dynamic import it stays out of the main bundle until somebody actually signs in.
  */
-export function authClient(config: AuthConfig): Promise<SupabaseClient> {
+export function authClient(config: SupabaseConfig): Promise<SupabaseClient> {
   client ??= import('@supabase/supabase-js').then(({ createClient }) =>
     createClient(config.url, config.anonKey, {
       auth: {
@@ -52,8 +66,14 @@ export function authClient(config: AuthConfig): Promise<SupabaseClient> {
   return client
 }
 
-/** Sends the viewer to Google, and back to the portal afterwards. */
-export async function startGoogleSignIn(config: AuthConfig, returnTo = '/portal'): Promise<void> {
+/**
+ * Sends the viewer to Google, and back to the portal afterwards.
+ *
+ * Takes the project settings rather than the whole `AuthConfig`, because getting to Google
+ * has nothing to do with the allowlist — that decides what to do with the address on the way
+ * back. The public feedback sign-in has no list at all and uses this same door.
+ */
+export async function startGoogleSignIn(config: SupabaseConfig, returnTo = '/portal'): Promise<void> {
   const supabase = await authClient(config)
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
@@ -66,7 +86,18 @@ export async function startGoogleSignIn(config: AuthConfig, returnTo = '/portal'
   if (error) throw error
 }
 
-export async function signOutOfGoogle(config: AuthConfig): Promise<void> {
+/**
+ * The signed-in person's token, for a request that goes somewhere other than PostgREST.
+ *
+ * The photo function verifies the caller by asking the database `is_admin()` with this, so it
+ * carries the same identity every other request does. Null when nobody is signed in.
+ */
+export async function accessToken(config: SupabaseConfig): Promise<string | null> {
+  const { data } = await (await authClient(config)).auth.getSession()
+  return data.session?.access_token ?? null
+}
+
+export async function signOutOfGoogle(config: SupabaseConfig): Promise<void> {
   await (await authClient(config)).auth.signOut()
 }
 

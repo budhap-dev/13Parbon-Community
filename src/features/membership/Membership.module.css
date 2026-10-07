@@ -217,8 +217,32 @@
   color: var(--color-bg);
   font-weight: 600;
   font-size: 17px;
+  cursor: pointer;
+  transition:
+    transform var(--motion-fast) ease,
+    opacity var(--motion-fast) ease;
+}
+
+.google:hover {
+  transform: translateY(-1px);
+}
+
+.google:focus-visible {
+  outline: 3px solid var(--color-fg);
+  outline-offset: 3px;
+}
+
+/*
+ * The washed-out look belongs to the disabled state, and only to it.
+ *
+ * These two lines sat on the base class, so the button looked unavailable in every state
+ * including the one where it works — and the only way to find out it was live was to click
+ * something that looked like it would do nothing.
+ */
+.google:disabled {
   cursor: not-allowed;
   opacity: 0.55;
+  transform: none;
 }
 
 .hint {

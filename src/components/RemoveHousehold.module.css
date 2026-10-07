@@ -1,0 +1,78 @@
+.zone {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px;
+  border: 2px solid var(--error, #b3261e);
+  border-radius: 14px;
+}
+
+.title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--error, #b3261e);
+}
+
+.text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  max-width: 66ch;
+}
+
+.list {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.copyFirst {
+  padding: 14px;
+  border-radius: 10px;
+  background: var(--tint, rgba(0, 0, 0, 0.04));
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.input {
+  min-height: 46px;
+  padding: 0 12px;
+  border: 2px solid var(--line, rgba(0, 0, 0, 0.2));
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  max-width: 34ch;
+}
+
+.input:focus-visible {
+  outline: 3px solid var(--error, #b3261e);
+  outline-offset: 1px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.error {
+  font-size: 13px;
+  color: var(--error, #b3261e);
+  margin: 0;
+}

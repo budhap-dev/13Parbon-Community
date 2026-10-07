@@ -1,6 +1,6 @@
 import { Link } from 'react-router'
 import { Icon } from './Icon'
-import type { Event } from '@/domain/event'
+import { isCancelled, type Event } from '@/domain/event'
 import { formatDayMonth } from '@/domain/dates'
 import styles from './EventCard.module.css'
 
@@ -9,8 +9,9 @@ export function EventCard({ event, headingLevel = 3 }: { event: Event; headingLe
   const stamp = formatDayMonth(event.startsAt)
   const Heading = headingLevel === 2 ? 'h2' : 'h3'
   const isPast = event.status === 'past'
+  const cancelled = isCancelled(event)
   return (
-    <article className={isPast ? styles.cardPast : styles.card}>
+    <article className={cancelled ? styles.cardCancelled : isPast ? styles.cardPast : styles.card}>
       <span className={styles.stamp}>
         {stamp.day} {stamp.month}
       </span>
@@ -19,11 +20,14 @@ export function EventCard({ event, headingLevel = 3 }: { event: Event; headingLe
           {event.title}
         </Link>
       </Heading>
+      {/* On the card as well as the page. Somebody scanning the calendar for what is on should
+          not have to open an evening to find out it is off. */}
+      {cancelled ? <p className={styles.cancelled}>Cancelled</p> : null}
       <p className={styles.meta}>
         {event.venue} · {event.summary}
       </p>
       <span className={styles.action}>
-        {isPast ? 'Look back' : 'Details'}
+        {cancelled ? 'What happened' : isPast ? 'Look back' : 'Details'}
         <Icon name="chevronRight" size={17} className={styles.actionArrow} />
       </span>
     </article>

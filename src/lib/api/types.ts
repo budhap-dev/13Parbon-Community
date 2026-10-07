@@ -1,12 +1,31 @@
-import type { Event } from '@/domain/event'
+import type { Event, EventDraft } from '@/domain/event'
 import type { Festival } from '@/domain/festival'
-import type { AlbumWithMedia, Media } from '@/domain/gallery'
-import type { ContactInput, ContactMessage } from '@/domain/contact'
-import type { CommunityDocument, SignInAttempt } from '@/domain/document'
-import type { Household } from '@/domain/household'
-import type { Registration } from '@/domain/registration'
-import type { Announcement, NewsPost, Newsletter } from '@/domain/news'
+import type { Album, AlbumDraft, AlbumWithMedia, Media } from '@/domain/gallery'
+import type { ContactInput, ContactMessage, ContactReceipt } from '@/domain/contact'
+import type { Feedback, FeedbackInput, FeedbackReceipt, FeedbackStatus } from '@/domain/feedback'
+import type { SignInAttempt } from '@/domain/document'
+import type { Household, HouseholdDraft, Viewer } from '@/domain/household'
+import type { AttendanceDraft, EventAttendance } from '@/domain/attendance'
+import type { AuditEntry } from '@/domain/audit'
+import type { UploadedPhoto } from './uploads'
+import type { SettingsDraft, SiteSettings } from '@/domain/settings'
+import type { HouseholdExport } from '@/domain/subjectAccess'
+import type { Announcement, AnnouncementDraft, NewsDraft, NewsPost, Newsletter } from '@/domain/news'
 import type { VolunteerRole } from '@/domain/volunteer'
+import type { Poll, PollDraft, PollSummary, PollView } from '@/domain/polls'
+import type {
+  BankQuestion,
+  LeaderRow,
+  PlayableQuiz,
+  QuestionDraft,
+  Quiz,
+  QuizAttempt,
+  QuizCard,
+  QuizDraft,
+  QuizResult,
+  QuizStats,
+} from '@/domain/quizzes'
+import type { Suggestion, SuggestionDraft, SuggestionStatus } from '@/domain/suggestions'
 
 /**
  * The contract between the UI and whatever backend we pick.
@@ -26,6 +45,38 @@ export interface ApiClient {
     getNext(): Promise<Event | null>
     /** A published, public event by slug, or null. */
     getBySlug(slug: string): Promise<Event | null>
+    /** Every event, drafts and past ones included. Empty for anybody who is not an admin. */
+    listAll(viewer: Viewer): Promise<Event[]>
+    /**
+     * Saves how an event is presented.
+     *
+     * The committee's planner holds the logistics; this holds front of house. They overlap on
+     * the title, the date and the venue and nowhere else.
+     */
+    save(id: string, draft: EventDraft, viewer: Viewer): Promise<Event>
+    /**
+     * Adds an evening. Admin only, and it arrives as a draft whatever the form says.
+     *
+     * Front of house is created here because front of house is what this site owns. The planner
+     * holds the logistics, and when it grows a way to hand over a title, a date and a venue it
+     * will fill the same three fields somebody types now.
+     */
+    create(draft: EventDraft, viewer: Viewer): Promise<Event>
+    /**
+     * Files an evening as past.
+     *
+     * Not automatic on the date: a date passing is not the same as the committee being finished
+     * with it, and an event that tidied itself away while somebody was writing the round-up
+     * would be its own small annoyance. The screen offers; a person decides.
+     */
+    archive(id: string, viewer: Viewer): Promise<Event>
+    /**
+     * Deletes an evening that should never have been there — a test, or one typed twice.
+     *
+     * Refused, with a sentence to show, once it has a headcount recorded or an album filed under
+     * it: that is history somebody else is holding, and archiving is the way to put it away.
+     */
+    remove(id: string, viewer: Viewer): Promise<void>
   }
   festivals: {
     list(): Promise<Festival[]>
@@ -36,40 +87,318 @@ export interface ApiClient {
     /** Public albums with their approved media, newest first. */
     listAlbums(): Promise<AlbumWithMedia[]>
     getAlbum(slug: string): Promise<AlbumWithMedia | null>
+    /** Every album, published or not, for the committee. Empty for anybody else. */
+    listAllAlbums(viewer: Viewer): Promise<AlbumWithMedia[]>
+    createAlbum(draft: AlbumDraft, viewer: Viewer): Promise<Album>
+    updateAlbum(id: string, draft: AlbumDraft, viewer: Viewer): Promise<Album>
+    /**
+     * Records a photograph that has been uploaded, at the end of the album. Admin only.
+     *
+     * The upload itself goes straight from the browser to the bucket; this is the row that
+     * makes it part of an album. Until this existed the committee could make albums and never
+     * fill them — there was no way to say a picture was in one.
+     */
+    addMedia(albumId: string, photo: UploadedPhoto, viewer: Viewer): Promise<Media>
+    /**
+     * Chooses the photograph that stands for an album. Admin only.
+     *
+     * Deliberately a decision somebody makes, rather than the first or a random one: the
+     * picture that represents a night is a judgement, and an album that changes its face on
+     * every reload cannot be pointed at.
+     */
+    setCover(albumId: string, mediaId: string, viewer: Viewer): Promise<Album>
+    setCaption(mediaId: string, caption: string, viewer: Viewer): Promise<Media>
+    /** The photographs of one album, in the order they should appear. Admin only. */
+    reorder(albumId: string, mediaIds: string[], viewer: Viewer): Promise<Media[]>
+    /**
+     * Removes a photograph for good.
+     *
+     * **This has to delete the object in the bucket, not only the row.** The privacy page
+     * promises to take down any photograph a member or their child appears in, on request and
+     * without a reason — and a photograph that is merely unlisted has not been taken down. Any
+     * adapter that hides a row and leaves the file at `photos.13parbon.org.uk` has broken the
+     * promise while appearing to keep it, because the URL still works for anyone who has it.
+     *
+     * To hide a picture without destroying it, set its album to `members` instead.
+     */
+    deleteMedia(id: string, viewer: Viewer): Promise<void>
   }
   news: {
     /** Published posts, newest first. */
     listPosts(limit?: number): Promise<NewsPost[]>
     getPost(slug: string): Promise<NewsPost | null>
-    /** Live public announcements, pinned first then newest. */
-    listAnnouncements(): Promise<Announcement[]>
+    /** Live notices this viewer may see, pinned first then newest: public for anybody, and
+     *  members-only ones too once signed in and matched to a household. */
+    listAnnouncements(viewer: Viewer): Promise<Announcement[]>
     /** Newsletters, newest first. */
     listNewsletters(): Promise<Newsletter[]>
+
+    /** Every post including drafts, newest first. Empty for anybody who is not an admin. */
+    listAllPosts(viewer: Viewer): Promise<NewsPost[]>
+    /** Every announcement, whatever its audience or dates. Empty for anybody who is not an admin. */
+    listAllAnnouncements(viewer: Viewer): Promise<Announcement[]>
+
+    createPost(draft: NewsDraft, viewer: Viewer): Promise<NewsPost>
+    updatePost(id: string, draft: NewsDraft, viewer: Viewer): Promise<NewsPost>
+    createAnnouncement(draft: AnnouncementDraft, viewer: Viewer): Promise<Announcement>
+    updateAnnouncement(id: string, draft: AnnouncementDraft, viewer: Viewer): Promise<Announcement>
+    /**
+     * Takes an announcement off the board.
+     *
+     * Really gone, and with no ceremony: an announcement is a note on a noticeboard, and there
+     * is no version of it worth keeping once it stops being true. The ordinary way to take a
+     * *piece* down is different — `published: false` on the draft, which keeps the writing and
+     * the date — though `removePost` destroys one when it should never have been there.
+     */
+    removeAnnouncement(id: string, viewer: Viewer): Promise<void>
+    /**
+     * Destroys a piece of writing.
+     *
+     * Not the ordinary way to take something down — that is `published: false`, which keeps the
+     * writing and the date it first went up, so it can go back. This is for a piece that should
+     * never have been there: written in the wrong place, or content that arrived with the app
+     * rather than from the committee. The screen says as much before it does it.
+     *
+     * The trail keeps the title, so "what happened to that piece about the hall?" has an answer
+     * after the row itself is gone.
+     */
+    removePost(id: string, viewer: Viewer): Promise<void>
   }
   contact: {
-    /** Sends a message to the committee. Rejects with an Error when the input is invalid. */
-    send(input: ContactInput): Promise<ContactMessage>
     /**
-     * The committee's inbox, newest first. Admin only. The public table is insert-only,
-     * so reading this from the browser will need a policy for signed-in admins.
+     * Sends a message to the committee. Rejects with an Error when the input is invalid.
+     *
+     * Returns a receipt, not the stored row: the public website cannot read this table back,
+     * so there is no row to return. See `ContactReceipt`.
      */
-    listMessages(): Promise<(ContactMessage & { handledBy?: string })[]>
+    send(input: ContactInput): Promise<ContactReceipt>
+    /** The committee's inbox, newest first. Empty for anybody who is not an admin. */
+    listMessages(viewer: Viewer): Promise<ContactMessage[]>
+    /**
+     * Marks a message dealt with, and by whom. Rejects for anybody who is not an admin.
+     *
+     * The smallest write there is, and deliberately the first: it exercises the whole path —
+     * contract, mock, mutation, cache invalidation — on something with nothing at stake.
+     */
+    markHandled(id: string, viewer: Viewer, note?: string): Promise<ContactMessage>
+    /**
+     * Removes a message for good. Admin only.
+     *
+     * Really gone, and worth pausing over: a message is the only record the committee holds of
+     * something somebody asked for. A takedown request is evidence of a promise made and kept,
+     * and the subject-access export finds a household's messages by matching the address they
+     * wrote from — so a message deleted today is one that cannot be handed back tomorrow.
+     *
+     * Kept anyway, because the alternative is an inbox that fills with spam and stops being
+     * read, and an inbox nobody reads is worse for the person waiting in it. Marking a message
+     * handled is what to do with one that mattered; this is for the ones that never did.
+     */
+    deleteMessage(id: string, viewer: Viewer): Promise<void>
   }
-  /** Everything behind the sign-in. */
+  /**
+   * What the public says about us.
+   *
+   * The one part of this contract a stranger both writes to and reads from, which is why the
+   * two halves are so unevenly shaped. Anybody may send a piece; nobody sees it until the
+   * committee has approved it; and what comes back out carries a first name at most.
+   */
+  feedback: {
+    /**
+     * Approved feedback, newest first. Readable by anybody, including a visitor — it is what
+     * the showcase on the public page is made of.
+     */
+    listApproved(limit?: number): Promise<Feedback[]>
+    /**
+     * Sends a piece of feedback. Rejects with an Error when the input is invalid.
+     *
+     * Returns a receipt, not the stored row, for the same reason `contact.send` does: what
+     * has just been written is pending, and pending rows are exactly what the public website
+     * has no policy to read. Asking for the row back would turn the insert into a read and
+     * fail the whole request.
+     *
+     * Whether it arrives signed is decided by the token, not by the input. `signed: true`
+     * from somebody not signed in sends anonymous feedback rather than failing: the box was
+     * ticked in hope, and losing the words over it would be the worse answer.
+     */
+    send(input: FeedbackInput): Promise<FeedbackReceipt>
+    /** Everything, waiting first then newest. Empty for anybody who is not an admin. */
+    listAll(viewer: Viewer): Promise<Feedback[]>
+    /**
+     * Approves a piece, turns it down, or puts an approved one back in the queue.
+     *
+     * Approving is publishing: the moment this returns, those words are on the public page
+     * over somebody's first name. Nothing else in this contract puts a member of the public's
+     * writing on the website, so it is the one write here that cannot be undone quietly —
+     * `pending` takes it down again, but it was up in between.
+     */
+    review(id: string, status: FeedbackStatus, viewer: Viewer): Promise<Feedback>
+    /**
+     * Removes a piece for good. Admin only.
+     *
+     * For what should never have been sent — abuse, a test, somebody's phone number typed in
+     * by mistake. Turning a piece down is what to do with one that simply is not for the
+     * website; this is for one that should not be held at all. The trail keeps that it went
+     * and who sent it away, never the words.
+     */
+    remove(id: string, viewer: Viewer): Promise<void>
+  }
+  /**
+   * Everything behind the sign-in.
+   *
+   * Every method here takes a `Viewer`, because every one of them is answered differently
+   * depending on who is asking — and because the alternative is a signature that promises
+   * more than the database will give. These are written to refuse precisely what
+   * `supabase/portal.sql` refuses: a member reaches their own household and nothing else,
+   * an admin reaches everything, a visitor reaches none of it.
+   */
   portal: {
-    /** The household the signed-in person belongs to. */
-    getHousehold(id: string): Promise<Household | null>
-    /** Every household, for the committee. */
-    listHouseholds(): Promise<Household[]>
-    /** Households that chose to appear, for members. */
-    listDirectory(): Promise<Household[]>
-    listDocuments(): Promise<CommunityDocument[]>
-    /** One household's registrations, newest event first. */
-    listRegistrationsForHousehold(householdId: string): Promise<Registration[]>
-    /** Every registration for one event, newest first. */
-    listRegistrationsForEvent(eventId: string): Promise<Registration[]>
-    /** Google accounts that signed in but matched no household. */
-    listSignInAttempts(): Promise<SignInAttempt[]>
+    /**
+     * The household recorded against an address that has just signed in — the one lookup that
+     * happens before there is a viewer, because working out what the viewer is *is* its job.
+     *
+     * The address is the identity here, not a search key. On Supabase this reads a row back
+     * through `where google_email = auth.jwt() ->> 'email'`, which row level security narrows
+     * to the caller's own household: nobody can look anybody else up with it.
+     */
+    identify(email: string): Promise<Pick<Household, 'id' | 'name' | 'role'> | null>
+    /** A household, if this viewer may see it. Null when they may not, same as when it is missing. */
+    getHousehold(id: string, viewer: Viewer): Promise<Household | null>
+    /** Every household. Empty for anybody who is not an admin. */
+    listHouseholds(viewer: Viewer): Promise<Household[]>
+    /**
+     * How many came to each event, newest first. Readable by any member: it is the history the
+     * portal shows, and there is nobody in it.
+     */
+    listAttendance(viewer: Viewer): Promise<EventAttendance[]>
+    /**
+     * Records how many came. Admin only, and one record per event — saving again corrects it.
+     *
+     * Typed in rather than counted up. Bookings live in the committee's Google Form and stay
+     * there; a number is the only thing that needs to cross, and it brings nobody with it.
+     */
+    recordAttendance(draft: AttendanceDraft, viewer: Viewer): Promise<EventAttendance>
+    /** Google accounts that signed in but matched no household. Admin only. */
+    listSignInAttempts(viewer: Viewer): Promise<SignInAttempt[]>
+    /**
+     * Invites a household. Admin only — this is the whole invitation model, and the reason
+     * there is no application form anywhere in the app.
+     */
+    addHousehold(draft: HouseholdDraft, viewer: Viewer): Promise<Household>
+    /**
+     * Saves a household. A member may save their own; the committee may save any.
+     *
+     * The committee's fields on the draft are refused, not ignored, when they come from a
+     * member — the same answer the database's trigger gives, and for the same reason: a draft
+     * is whatever the browser chose to send, and a form that does not show a field is no
+     * guarantee that nobody sent one.
+     */
+    updateHousehold(id: string, draft: HouseholdDraft, viewer: Viewer): Promise<Household>
+    /**
+     * Everything held about one household, for handing to them when they ask.
+     *
+     * A household may take its own; the committee may take any — and should, before deleting
+     * anybody, because erasure leaves the audit trail anonymous and the account of what that
+     * household did goes with it.
+     */
+    exportHousehold(id: string, viewer: Viewer): Promise<HouseholdExport>
+    /**
+     * Erases a household: the record, everybody in it, and everything they were recorded at.
+     *
+     * Decided 2026-09-15 — the registrations go too, which is what the schema already does
+     * (`on delete cascade`) and the cleaner reading of erasure. The cost is real and worth
+     * stating: past events lose those headcounts, so the attendance history thins out behind
+     * you. Take the export first; it is the only copy there will be.
+     *
+     * Admin only, never your own household, and never the last admin.
+     */
+    deleteHousehold(id: string, viewer: Viewer): Promise<void>
+    /**
+     * Marks a knock as dealt with — they were added, or the committee decided not to.
+     *
+     * Kept rather than removed, so somebody turned away twice does not read as somebody turned
+     * away once. The list on the People screen shows what is still waiting.
+     */
+    resolveSignInAttempt(id: string, viewer: Viewer): Promise<SignInAttempt>
+  }
+  /**
+   * The switches the committee can throw without a developer.
+   *
+   * Readable by anybody, including a visitor: they decide what the public site shows, so the
+   * public site has to be able to ask. Writable by the committee alone.
+   */
+  settings: {
+    get(): Promise<SiteSettings>
+    save(draft: SettingsDraft, viewer: Viewer): Promise<SiteSettings>
+  }
+  /**
+   * What has been changed, and by whom. Written by `withAuditTrail` here and by a trigger in
+   * the database; read by the committee and nobody else.
+   */
+  audit: {
+    list(viewer: Viewer, limit?: number): Promise<AuditEntry[]>
+  }
+  /**
+   * Questions the committee asks members, one vote per household.
+   *
+   * Members only. Who voted which way is not known to anybody — the committee included —
+   * unless the poll said it was named before anybody voted. See `supabase/polls-quizzes.sql`.
+   */
+  polls: {
+    /** Every opened poll, open ones first, with this household's vote and the totals they may see. Empty for anybody who is not a member. */
+    list(viewer: Viewer): Promise<PollView[]>
+    /** Records this household's vote, replacing any earlier one, while the poll is open. */
+    vote(pollId: string, option: number, viewer: Viewer): Promise<PollView>
+    /** Every poll, drafts included, with its totals — and, on a named poll, who chose what. Empty for anybody who is not an admin. */
+    listAll(viewer: Viewer): Promise<PollSummary[]>
+    create(draft: PollDraft, viewer: Viewer): Promise<Poll>
+    /** Refused for the choices, and for whether it is named, once anybody has voted. */
+    update(id: string, draft: PollDraft, viewer: Viewer): Promise<Poll>
+    remove(id: string, viewer: Viewer): Promise<void>
+  }
+  /**
+   * Quizzes. The committee writes them; members play them, and visitors play the ones opened
+   * to everyone. The right answers come back only from `submit`.
+   */
+  quizzes: {
+    /** Opened quizzes this viewer may play: public ones for anybody, every one for a member. */
+    list(viewer: Viewer): Promise<QuizCard[]>
+    /** A quiz and its questions, with no answers in them. Null when it is not this viewer's to play. */
+    get(id: string, viewer: Viewer): Promise<PlayableQuiz | null>
+    /**
+     * Marks a set of answers and returns the score with the right answers.
+     *
+     * For a member household this is their one play, kept with their choice about the
+     * leaderboard. For a visitor it is counted and nothing else is kept.
+     */
+    submit(id: string, answers: number[], showName: boolean, viewer: Viewer): Promise<QuizResult>
+    /** Scores, best first, named where the household chose to be. Members and the committee only. */
+    leaderboard(id: string, viewer: Viewer): Promise<LeaderRow[]>
+    /** Every quiz, drafts included, with how many have played. Empty for anybody who is not an admin. */
+    listAll(viewer: Viewer): Promise<QuizStats[]>
+    create(draft: QuizDraft, viewer: Viewer): Promise<Quiz>
+    /** Refused for the list of questions once anybody has played; the title and dates can still change. */
+    update(id: string, draft: QuizDraft, viewer: Viewer): Promise<Quiz>
+    remove(id: string, viewer: Viewer): Promise<void>
+    /** Each member household's play, best first. Admin only. */
+    attempts(id: string, viewer: Viewer): Promise<QuizAttempt[]>
+    /** The question bank, with answers. Empty for anybody who is not an admin. */
+    bank(viewer: Viewer): Promise<BankQuestion[]>
+    createQuestion(draft: QuestionDraft, viewer: Viewer): Promise<BankQuestion>
+    /** Refused for the wording and the answer once anybody has answered it; tags and explanation can still change. */
+    updateQuestion(id: string, draft: QuestionDraft, viewer: Viewer): Promise<BankQuestion>
+    /** Refused while the question is in a quiz. */
+    removeQuestion(id: string, viewer: Viewer): Promise<void>
+  }
+  /** Members' ideas for questions and polls, which the committee approves or declines. */
+  suggestions: {
+    /** Members only. Arrives waiting, whatever was sent. */
+    send(draft: SuggestionDraft, viewer: Viewer): Promise<Suggestion>
+    /** This household's own suggestions, newest first. */
+    listMine(viewer: Viewer): Promise<Suggestion[]>
+    /** Everything, waiting first. Empty for anybody who is not an admin. */
+    listAll(viewer: Viewer): Promise<Suggestion[]>
+    review(id: string, status: SuggestionStatus, viewer: Viewer): Promise<Suggestion>
+    remove(id: string, viewer: Viewer): Promise<void>
   }
   volunteering: {
     /** Roles that still have free slots. */

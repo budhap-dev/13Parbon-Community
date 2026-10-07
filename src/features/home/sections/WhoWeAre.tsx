@@ -1,9 +1,11 @@
 import { Link } from 'react-router'
-import { isPlaceholder, site } from '@/app/site'
+import { isPlaceholder } from '@/app/site'
+import { useSettings } from '@/app/SettingsContext'
 import { Container } from '@/components/Container'
 import styles from '../Home.module.css'
 
 export function WhoWeAre() {
+  const { text } = useSettings()
   return (
     <Container>
       <section className={styles.who} aria-labelledby="who-title">
@@ -11,9 +13,9 @@ export function WhoWeAre() {
           Who we are
         </h2>
         <div className={styles.whoBody}>
-          <p>{site.mission}</p>
-          {isPlaceholder(site.missionStatement) ? null : (
-            <p className={styles.whoMuted}>{site.missionStatement}</p>
+          <p>{text.mission}</p>
+          {isPlaceholder(text.missionStatement) ? null : (
+            <p className={styles.whoMuted}>{text.missionStatement}</p>
           )}
           <Link to="/about" className={styles.whoLink}>
             About the community and the committee

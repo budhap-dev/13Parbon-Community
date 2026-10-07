@@ -387,21 +387,29 @@
     gap: 32px;
   }
 
-  /* The same order as the desktop layout: the theme, which is what the day is about and the
-     best-looking part of the page, comes straight after the title, and the details follow. */
-  .head {
+  /*
+   * The same order as the desktop layout: the theme, which is what the day is about and the
+   * best-looking part of the page, comes straight after the title, and the details follow.
+   *
+   * Scoped to `.detail`, the evening's own page. `.head` is also the events list's title block
+   * and this stylesheet serves both, so an unscoped `order: 1` put "What's on", its opening
+   * line and the occasion filters at the foot of the list on any screen under 960px — below
+   * every card and directly above the footer, while its siblings sat at the default 0. The
+   * page read as one whose heading had been forgotten. Found 2026-09-18, walking at 390px.
+   */
+  .detail .head {
     order: 1;
   }
 
-  .theme {
+  .detail .theme {
     order: 2;
   }
 
-  .detailBody {
+  .detail .detailBody {
     order: 3;
   }
 
-  .side {
+  .detail .side {
     order: 4;
   }
 }
@@ -451,4 +459,40 @@
 .albumMeta {
   font-size: 15px;
   color: var(--color-fg-muted);
+}
+
+/*
+ * The cover photograph, if there is one.
+ *
+ * `alt=""` on purpose: it is decoration above a heading that already says what the evening is,
+ * and a screen reader announcing "a photograph of the hall" before the title helps nobody.
+ */
+.cover {
+  border-radius: var(--radius-lg, 18px);
+  margin-bottom: 28px;
+}
+
+@media (max-width: 640px) {
+  .cover {
+    border-radius: var(--radius-md, 12px);
+    margin-bottom: 20px;
+  }
+}
+
+/*
+ * A cancelled evening.
+ *
+ * Loud, because the alternative is somebody standing outside a hall. It reads as a sentence
+ * rather than a badge: whoever is looking has almost certainly come to find out what time to
+ * turn up, and a small grey pill beside the title is easy to read straight past.
+ */
+.cancelled {
+  margin: 0 0 24px;
+  padding: 16px 18px;
+  border-radius: var(--radius-md, 12px);
+  border: 2px solid var(--error, #b3261e);
+  color: var(--error, #b3261e);
+  font-size: 16px;
+  line-height: 1.55;
+  max-width: 62ch;
 }

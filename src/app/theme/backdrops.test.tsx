@@ -8,6 +8,9 @@ describe('Backdrop', () => {
     ['saraswati', 'veena', ['strings', 'notes']],
     ['holi', 'splash', ['splashes']],
     ['mahalaya', 'kash', ['stems', 'train', 'smoke']],
+    ['kojagori', 'moon', ['cloud', 'steps']],
+    ['deepavali', 'diyas', ['flame', 'spark']],
+    ['borodin', 'lights', ['star', 'bulb', 'snow']],
   ] as const)('%s renders the %s motif with its moving parts', (theme, motif, parts) => {
     const { container } = render(<Backdrop theme={theme} />)
     expect(container.querySelector(`[data-backdrop="${motif}"]`)).toBeInTheDocument()

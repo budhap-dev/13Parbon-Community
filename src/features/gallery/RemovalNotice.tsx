@@ -1,4 +1,5 @@
 import { Link } from 'react-router'
+import { TAKEDOWN_PROMISE } from '@/domain/contact'
 import styles from './Gallery.module.css'
 
 /**
@@ -10,7 +11,7 @@ export function RemovalNotice() {
   return (
     <p className={styles.notice}>
       If you or your child are in a photograph here and would rather not be,{' '}
-      <Link to="/contact">tell us</Link> and we will take it down. You do not have to give a reason.
+      <Link to="/contact?about=photo">tell us</Link> and we will take it down — {TAKEDOWN_PROMISE}.
     </p>
   )
 }

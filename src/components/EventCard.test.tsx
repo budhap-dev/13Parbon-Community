@@ -12,7 +12,6 @@ const base: Event = {
   venue: 'The park',
   isPublic: true,
   registrationOpen: true,
-  householdsRegistered: 0,
   status: 'published',
 }
 

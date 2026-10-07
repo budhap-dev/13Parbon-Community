@@ -1,12 +1,13 @@
-import type { CommunityDocument, SignInAttempt } from '@/domain/document'
+import type { SignInAttempt } from '@/domain/document'
+import type { EventAttendance } from '@/domain/attendance'
 import type { Household } from '@/domain/household'
 import type { ContactMessage } from '@/domain/contact'
-import type { Registration } from '@/domain/registration'
+import type { Feedback } from '@/domain/feedback'
 
 /**
- * Sample households, registrations and documents for the portal. Enough variety to show
+ * Sample households and registrations for the portal. Enough variety to show
  * every state the screens have to handle: an admin, a lapsed household, one that has
- * never signed in, and one that keeps itself out of the directory.
+ * never signed in, and one whose membership has lapsed.
  */
 export function buildPortalFixtures() {
   const households: Household[] = [
@@ -26,9 +27,6 @@ export function buildPortalFixtures() {
       memberSince: '2024-04-01',
       membership: { status: 'active', paidTo: '2027-03-31' },
       role: 'member',
-      listedInDirectory: true,
-      shareEmail: true,
-      sharePhone: false,
     },
     {
       id: 'hh-chatterjee',
@@ -41,9 +39,6 @@ export function buildPortalFixtures() {
       memberSince: '2021-01-10',
       membership: { status: 'active', paidTo: '2027-03-31' },
       role: 'admin',
-      listedInDirectory: true,
-      shareEmail: true,
-      sharePhone: false,
     },
     {
       id: 'hh-banerjee',
@@ -61,9 +56,6 @@ export function buildPortalFixtures() {
       memberSince: '2022-03-14',
       membership: { status: 'active', paidTo: '2027-03-31' },
       role: 'admin',
-      listedInDirectory: true,
-      shareEmail: true,
-      sharePhone: false,
     },
     {
       id: 'hh-ghosh',
@@ -80,9 +72,6 @@ export function buildPortalFixtures() {
       memberSince: '2026-09-01',
       membership: { status: 'active', paidTo: '2027-03-31' },
       role: 'member',
-      listedInDirectory: true,
-      shareEmail: true,
-      sharePhone: false,
     },
     {
       id: 'hh-roy',
@@ -98,9 +87,6 @@ export function buildPortalFixtures() {
       memberSince: '2023-11-02',
       membership: { status: 'active', paidTo: '2027-03-31' },
       role: 'member',
-      listedInDirectory: true,
-      shareEmail: true,
-      sharePhone: false,
     },
     {
       id: 'hh-mitra',
@@ -117,9 +103,6 @@ export function buildPortalFixtures() {
       memberSince: '2025-02-20',
       membership: { status: 'active', paidTo: '2027-03-31' },
       role: 'member',
-      listedInDirectory: false,
-      shareEmail: false,
-      sharePhone: false,
     },
     {
       id: 'hh-palit',
@@ -136,9 +119,6 @@ export function buildPortalFixtures() {
       memberSince: '2020-02-11',
       membership: { status: 'lapsed', paidTo: '2026-03-31' },
       role: 'member',
-      listedInDirectory: false,
-      shareEmail: false,
-      sharePhone: false,
     },
     {
       id: 'hh-das',
@@ -154,28 +134,9 @@ export function buildPortalFixtures() {
       memberSince: '2026-08-25',
       membership: { status: 'active', paidTo: '2027-03-31' },
       role: 'member',
-      listedInDirectory: false,
-      shareEmail: false,
-      sharePhone: false,
     },
   ]
 
-  const registrations: Registration[] = [
-    { id: 'rg-1', eventId: 'ev-mahalaya-2026', householdId: 'hh-roy', adults: 2, children: 0, helping: 'Sound', registeredAt: '2026-09-03T14:20:00' },
-    { id: 'rg-2', eventId: 'ev-mahalaya-2026', householdId: 'hh-banerjee', adults: 2, children: 2, helping: 'Cooking', notes: '1 vegetarian', registeredAt: '2026-09-03T11:02:00' },
-    { id: 'rg-3', eventId: 'ev-mahalaya-2026', householdId: 'hh-ghosh', adults: 1, children: 2, helping: "Children's programme", notes: 'No nuts, please', registeredAt: '2026-09-02T20:41:00' },
-    { id: 'rg-4', eventId: 'ev-mahalaya-2026', householdId: 'hh-chatterjee', adults: 1, children: 0, helping: 'Stage', registeredAt: '2026-09-01T09:15:00' },
-    { id: 'rg-5', eventId: 'ev-mahalaya-2026', householdId: 'hh-mitra', adults: 2, children: 1, notes: 'Wheelchair access needed', registeredAt: '2026-08-31T18:03:00' },
-    { id: 'rg-6', eventId: 'ev-poila-2026', householdId: 'hh-sen', adults: 2, children: 1, registeredAt: '2026-04-02T12:00:00' },
-    { id: 'rg-7', eventId: 'ev-poila-2026', householdId: 'hh-roy', adults: 2, children: 0, helping: 'Sound', registeredAt: '2026-04-01T12:00:00' },
-  ]
-
-  const documents: CommunityDocument[] = [
-    { id: 'doc-1', title: 'Annual general meeting minutes 2026', category: 'minutes', fileUrl: '#', addedOn: '2026-08-20' },
-    { id: 'doc-2', title: 'How we run a programme', category: 'guidelines', fileUrl: '#', addedOn: '2026-06-02' },
-    { id: 'doc-3', title: 'Constitution', category: 'guidelines', fileUrl: '#', addedOn: '2025-01-14' },
-    { id: 'doc-4', title: 'Stage plan and equipment list', category: 'resources', fileUrl: '#', addedOn: '2026-09-03' },
-  ]
 
   const signInAttempts: SignInAttempt[] = [
     { id: 'sa-1', email: 'priya.dutta@gmail.com', name: 'Priya Dutta', lastTriedAt: '2026-09-03T16:12:00', attempts: 2, resolved: false },
@@ -201,6 +162,16 @@ export function buildPortalFixtures() {
       createdAt: '2026-09-01T08:40:00',
     },
     {
+      id: 'cm-photo',
+      name: 'Anjali Roy',
+      email: 'anjali@example.com',
+      subject: 'Please take down a photograph',
+      kind: 'photo' as const,
+      message:
+        'There is a picture of my daughter in the Boishakhi album — she is in the yellow kurta near the front of the stage. She would rather it were not there. Thank you.',
+      createdAt: '2026-09-02T21:40:00',
+    },
+    {
       id: 'cm-3',
       name: 'Ruma Das',
       email: 'ruma@example.com',
@@ -211,5 +182,58 @@ export function buildPortalFixtures() {
     },
   ]
 
-  return { households, registrations, documents, signInAttempts, messages }
+  /**
+   * What the public has sent in: one of each state the review screen has to handle.
+   *
+   * A signed piece already on the website, an anonymous one waiting, a signed one waiting, and
+   * one that was turned down — because a queue with nothing turned down in it teaches nobody
+   * what turning something down looks like afterwards.
+   */
+  const feedback: Feedback[] = [
+    {
+      id: 'fb-1',
+      message:
+        'We came to Poila Boishakh not knowing a soul and left with our daughter in the dance line. Whoever thought to put the children on first, thank you — it broke the ice for the whole room.',
+      authorName: 'Meera Ghosh',
+      signedIn: true,
+      status: 'approved',
+      reviewedBy: 'Debashis Chatterjee',
+      reviewedAt: '2026-04-22T09:10:00',
+      createdAt: '2026-04-20T21:35:00',
+    },
+    {
+      id: 'fb-2',
+      message:
+        'The hall gets very cold by the interval. Nothing that spoils the evening, but a word to whoever holds the heating key would be kind for the older ones among us.',
+      signedIn: false,
+      status: 'pending',
+      createdAt: '2026-09-14T18:02:00',
+    },
+    {
+      id: 'fb-3',
+      message:
+        'Third year we have come to the Durga Puja here and it is the one weekend our children ask about all year. Please keep the food stalls — the queue is half the fun.',
+      authorName: 'Arjun Banerjee',
+      signedIn: true,
+      status: 'pending',
+      createdAt: '2026-09-12T11:20:00',
+    },
+    {
+      id: 'fb-4',
+      message: 'Testing testing does this box work 123456789',
+      signedIn: false,
+      status: 'rejected',
+      reviewedBy: 'Debashis Chatterjee',
+      reviewedAt: '2026-09-10T08:00:00',
+      createdAt: '2026-09-09T23:55:00',
+    },
+  ]
+
+  /** A couple of years of numbers, which is what the history looks like once it has run a while. */
+  const attendance: EventAttendance[] = [
+    { eventId: 'ev-poila-2026', heldOn: '2026-04-18', households: 41, adults: 96, children: 34, recordedAt: '2026-04-20T10:00:00' },
+    { eventId: 'ev-saraswati-2026', heldOn: '2026-02-01', households: 28, adults: 61, children: 40, recordedAt: '2026-02-03T10:00:00' },
+  ]
+
+  return { households, signInAttempts, messages, feedback, attendance }
 }

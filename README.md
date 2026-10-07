@@ -2,7 +2,9 @@
 
 > *Baro mase tero parbon* — twelve months, thirteen festivals. A community app for people who always have something to gather around.
 
-Read the [project story](docs/STORY.md) for the vision and the [portal plan](docs/PLAN.md) for structure, architecture and delivery phases. [Photographs](docs/PHOTOS.md) covers how pictures from an event reach the gallery, and why they are not kept in this repository.
+**New to the project? Start with [what this app does](docs/FEATURES.md)** — every screen, every rule, and the decisions behind them, in one place.
+
+Read the [project story](docs/STORY.md) for the vision and the [portal plan](docs/PLAN.md) for structure, architecture and delivery phases. [Photographs](docs/PHOTOS.md) covers how pictures from an event reach the gallery, and why they are not kept in this repository. [Member login](docs/MEMBER-LOGIN.md) is the parked story for sign-in and the committee's back office, and [Feedback](docs/FEEDBACK.md) covers what the public can send in, how the committee reviews it, and why signing in to leave feedback is a different door from signing in as a member.
 
 ## Stack
 
@@ -36,6 +38,11 @@ npm run dev        # http://localhost:5173
 | `npm run test:coverage` | Run Vitest with coverage (70% floor) |
 | `npm run check` | Lint, typecheck and test in one go |
 
+`npm run check` also runs on every push, from `.githooks/pre-push`. `npm install` points git
+at that folder, so a fresh clone gets it without anybody remembering to. It is the same four
+commands CI runs — it just answers in sixteen seconds rather than four minutes. To push past
+it, `git push --no-verify`.
+
 Two more are run by hand rather than by the build, and need macOS:
 
 | Script | What it does |
@@ -57,14 +64,16 @@ src/
   features/          # one folder per capability (home, events, news, gallery, about, contact, membership, privacy, placeholder)
   test/              # Vitest setup and render helpers
 docs/
+  FEATURES.md        # every feature, screen and rule — the tour for somebody new
   STORY.md           # project story and vision
   PLAN.md            # portal structure, architecture and delivery phases
   PHOTOS.md          # how photographs reach the gallery, and where they are kept
+  FEEDBACK.md        # feedback from the public: the two sign-in doors, and what is not stored
 ```
 
 Import from `src` with the `@/` alias, for example `import { Button } from '@/components/Button'`.
 
-Themes: five colour schemes tied to the community's year live in `src/app/theme/tokens.css` (Festival, Poila Boishakh, Saraswati Puja, Holi, Mahalaya). The header's theme picker stamps `data-theme` on the root element and remembers the choice in `localStorage`. Each theme also has a drawn motif behind the hero (`src/app/theme/backdrops.tsx`) and can name a `heroImage` in `src/app/theme/themes.ts`, served from `public/brand/themes/`. To add a theme, add a `[data-theme='...']` block with the full token set, register it in `themes.ts`, and give it a backdrop.
+Themes: eight colour schemes tied to the community's year live in `src/app/theme/tokens.css` (Festival, Poila Boishakh, Saraswati Puja, Holi, Mahalaya, Kojagori, Deepavali, Borodin), each with its own background texture and corners as well as colours. The header's theme picker stamps `data-theme` on the root element and remembers the choice in `localStorage`. Each theme also has a drawn motif behind the hero (`src/app/theme/backdrops.tsx`) and can name a `heroImage` in `src/app/theme/themes.ts`, served from `public/brand/themes/`. To add a theme, add a `[data-theme='...']` block with the full token set (and, at the end of `tokens.css`, its texture and corners), add its id to `SITE_THEMES` in `src/domain/siteContent.ts`, register it in `themes.ts`, and give it a backdrop.
 
 Brand assets live in `public/brand/`: the full logo, the round emblem used in the header and favicon, and the three pieces the home page animates together.
 
@@ -81,6 +90,13 @@ Until Supabase is configured the contact page says so and offers another way thr
 3. Copy Project Settings → API → Project URL and the `anon` public key.
 4. In Vercel, Project Settings → Environment Variables, add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` for Production and Preview.
 5. Redeploy. The contact form now submits, and rows appear in the Supabase table editor.
+
+The portal tables come next, in [`supabase/portal.sql`](supabase/portal.sql), feedback
+from the public after that in [`supabase/feedback.sql`](supabase/feedback.sql), and polls and
+quizzes last, in [`supabase/polls-quizzes.sql`](supabase/polls-quizzes.sql). Each has a
+`verify` script beside it that proves its rules hold rather than merely having been typed —
+run them; a clean run is silence and a notice. See [Feedback](docs/FEEDBACK.md) for what that
+one switches on, and what it deliberately does not store.
 
 Registering for an event happens on a Google Form the committee runs, not here. Paste its address into `registrationFormUrl` in [`src/app/site.ts`](src/app/site.ts) and the button appears wherever registration is open.
 

@@ -1,0 +1,84 @@
+import { render, screen, waitFor, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { createMemoryRouter, RouterProvider } from 'react-router'
+import { describe, expect, it } from 'vitest'
+import { routes } from '@/app/router'
+import { previewAccounts } from '@/lib/auth/previewAccounts'
+import type { Session } from '@/lib/auth/session'
+import type { ApiClient } from '@/lib/api'
+import { createTestApi, TestDataProviders } from '@/test/render'
+
+const member: Session = previewAccounts[0]
+const admin: Session = previewAccounts[1]
+
+function renderAt(path: string, session?: Session, api?: ApiClient) {
+  render(
+    <TestDataProviders session={session} api={api}>
+      <RouterProvider router={createMemoryRouter(routes, { initialEntries: [path] })} />
+    </TestDataProviders>,
+  )
+}
+
+/**
+ * Deleting a message, which is the one thing in the inbox that cannot be undone.
+ *
+ * A message is the only record the committee holds of something somebody asked for, and the
+ * subject-access export finds a household's messages by matching the address they wrote from.
+ * So the screen asks first, says what is lost, and points at marking it handled instead.
+ */
+describe('deleting a message', () => {
+  it('asks before it does it, and can be called off', async () => {
+    renderAt('/admin/messages', admin)
+    await screen.findByRole('heading', { level: 1, name: 'Messages' })
+    const before = (await screen.findAllByRole('listitem')).length
+
+    await userEvent.click(screen.getByRole('button', { name: /Delete/ }))
+    const asking = await screen.findByRole('dialog')
+    expect(asking).toHaveTextContent(/only record the committee holds/)
+
+    await userEvent.click(within(asking).getByRole('button', { name: 'Keep it' }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(await screen.findAllByRole('listitem')).toHaveLength(before)
+  })
+
+  it('points at marking it handled, which keeps it', async () => {
+    renderAt('/admin/messages', admin)
+    // The heading is drawn above the loading branch, so waiting for it is not waiting for the
+    // inbox. The list is what has to be there before there is anything to delete.
+    await screen.findAllByRole('listitem')
+    await userEvent.click(screen.getByRole('button', { name: /Delete/ }))
+    expect(await screen.findByRole('dialog')).toHaveTextContent(/mark it handled instead/)
+  })
+
+  it('takes it off the list once confirmed', async () => {
+    renderAt('/admin/messages', admin)
+    await screen.findByRole('heading', { level: 1, name: 'Messages' })
+    const before = (await screen.findAllByRole('listitem')).length
+
+    await userEvent.click(screen.getByRole('button', { name: /Delete/ }))
+    await userEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Delete' }))
+
+    await waitFor(async () => expect(await screen.findAllByRole('listitem')).toHaveLength(before - 1))
+  })
+
+  it('says in the dialog when it did not delete, and keeps the message', async () => {
+    const api = createTestApi()
+    renderAt('/admin/messages', admin, {
+      ...api,
+      contact: { ...api.contact, deleteMessage: async () => { throw new Error('Permission denied.') } },
+    })
+    const before = (await screen.findAllByRole('listitem')).length
+    await userEvent.click(screen.getByRole('button', { name: /Delete/ }))
+    const asking = await screen.findByRole('dialog')
+    await userEvent.click(within(asking).getByRole('button', { name: 'Delete' }))
+
+    expect(await within(asking).findByRole('alert')).toHaveTextContent('That did not delete. Permission denied.')
+    expect(screen.getAllByRole('listitem')).toHaveLength(before)
+  })
+
+  it('is not offered to a member, who cannot reach the inbox at all', async () => {
+    renderAt('/admin/messages', member)
+    // The route itself sends them back; there is no inbox to delete from.
+    await waitFor(() => expect(screen.queryByRole('heading', { level: 1, name: 'Messages' })).not.toBeInTheDocument())
+  })
+})

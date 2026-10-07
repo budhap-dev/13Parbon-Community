@@ -2,9 +2,12 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, type RenderOptions } from '@testing-library/react'
 import type { ReactElement, ReactNode } from 'react'
 import { MemoryRouter } from 'react-router'
-import { ApiProvider, createMockApi, type ApiClient } from '@/lib/api'
+import { createMockApi, withAuditTrail, type ApiClient } from '@/lib/api'
+import { ApiForSession } from '@/app/providers'
 import { testEvents } from './events'
+import { defaultSettings } from '@/app/defaults'
 import { ClockProvider } from '@/lib/clock'
+import { SettingsProvider } from '@/app/SettingsContext'
 import { ThemeProvider } from '@/app/theme/ThemeContext'
 import { GoogleSignInProvider } from '@/lib/auth/GoogleSignIn'
 import { SessionProvider, type Session } from '@/lib/auth/session'
@@ -13,7 +16,9 @@ import { SessionProvider, type Session } from '@/lib/auth/session'
 export const TEST_NOW = new Date('2026-09-03T10:00:00')
 
 export function createTestApi(): ApiClient {
-  return createMockApi({ now: () => TEST_NOW, events: testEvents })
+  // Wrapped exactly as createApi wraps it, so a test exercises the client the app runs on
+  // rather than a plainer one that happens to pass.
+  return withAuditTrail(createMockApi({ now: () => TEST_NOW, events: testEvents }), () => TEST_NOW)
 }
 
 /**
@@ -23,21 +28,81 @@ export function createTestApi(): ApiClient {
 export function createEmptyApi(): ApiClient {
   return {
     delivers: false,
-    events: { listUpcoming: async () => [], listPast: async () => [], getNext: async () => null, getBySlug: async () => null },
+    events: {
+      listUpcoming: async () => [], listPast: async () => [], getNext: async () => null, getBySlug: async () => null,
+      listAll: async () => [], save: async () => { throw new Error('not connected') },
+      create: async () => { throw new Error('not connected') }, archive: async () => { throw new Error('not connected') },
+      remove: async () => { throw new Error('not connected') },
+    },
     festivals: { list: async () => [] },
-    gallery: { listRecentMedia: async () => [], listAlbums: async () => [], getAlbum: async () => null },
-    news: { listPosts: async () => [], getPost: async () => null, listAnnouncements: async () => [], listNewsletters: async () => [] },
-    contact: { send: async () => { throw new Error('not connected') }, listMessages: async () => [] },
+    gallery: {
+      listRecentMedia: async () => [], listAlbums: async () => [], getAlbum: async () => null,
+      listAllAlbums: async () => [],
+      createAlbum: async () => { throw new Error('not connected') },
+      addMedia: async () => { throw new Error('not connected') },
+      updateAlbum: async () => { throw new Error('not connected') },
+      setCover: async () => { throw new Error('not connected') },
+      setCaption: async () => { throw new Error('not connected') },
+      reorder: async () => { throw new Error('not connected') },
+      deleteMedia: async () => { throw new Error('not connected') },
+    },
+    news: {
+      listPosts: async () => [], getPost: async () => null, listAnnouncements: async () => [], listNewsletters: async () => [],
+      listAllPosts: async () => [], listAllAnnouncements: async () => [],
+      createPost: async () => { throw new Error('not connected') },
+      updatePost: async () => { throw new Error('not connected') },
+      removePost: async () => { throw new Error('not connected') },
+      createAnnouncement: async () => { throw new Error('not connected') },
+      updateAnnouncement: async () => { throw new Error('not connected') },
+      removeAnnouncement: async () => { throw new Error('not connected') },
+    },
+    contact: { send: async () => { throw new Error('not connected') }, listMessages: async () => [], markHandled: async () => { throw new Error('not connected') }, deleteMessage: async () => { throw new Error('not connected') } },
+    feedback: {
+      listApproved: async () => [], listAll: async () => [],
+      send: async () => { throw new Error('not connected') },
+      review: async () => { throw new Error('not connected') },
+      remove: async () => { throw new Error('not connected') },
+    },
     portal: {
+      identify: async () => null,
       getHousehold: async () => null,
       listHouseholds: async () => [],
-      listDirectory: async () => [],
-      listDocuments: async () => [],
-      listRegistrationsForHousehold: async () => [],
-      listRegistrationsForEvent: async () => [],
       listSignInAttempts: async () => [],
+      listAttendance: async () => [],
+      recordAttendance: async () => { throw new Error('not connected') },
+      addHousehold: async () => { throw new Error('not connected') },
+      updateHousehold: async () => { throw new Error('not connected') },
+      exportHousehold: async () => { throw new Error('not connected') },
+      deleteHousehold: async () => { throw new Error('not connected') },
+      resolveSignInAttempt: async () => { throw new Error('not connected') },
     },
+    settings: { get: async () => defaultSettings, save: async () => { throw new Error('not connected') } },
+    audit: { list: async () => [] },
     volunteering: { listOpenRoles: async () => [], listRolesForEvent: async () => [] },
+    polls: {
+      list: async () => [], listAll: async () => [],
+      vote: async () => { throw new Error('not connected') },
+      create: async () => { throw new Error('not connected') },
+      update: async () => { throw new Error('not connected') },
+      remove: async () => { throw new Error('not connected') },
+    },
+    quizzes: {
+      list: async () => [], get: async () => null, leaderboard: async () => [], listAll: async () => [],
+      attempts: async () => [], bank: async () => [],
+      submit: async () => { throw new Error('not connected') },
+      create: async () => { throw new Error('not connected') },
+      update: async () => { throw new Error('not connected') },
+      remove: async () => { throw new Error('not connected') },
+      createQuestion: async () => { throw new Error('not connected') },
+      updateQuestion: async () => { throw new Error('not connected') },
+      removeQuestion: async () => { throw new Error('not connected') },
+    },
+    suggestions: {
+      listMine: async () => [], listAll: async () => [],
+      send: async () => { throw new Error('not connected') },
+      review: async () => { throw new Error('not connected') },
+      remove: async () => { throw new Error('not connected') },
+    },
   }
 }
 
@@ -51,21 +116,41 @@ export function createFailingApi(): ApiClient {
   }
   return {
     delivers: false,
-    events: { listUpcoming: down, listPast: down, getNext: down, getBySlug: down },
+    events: { listUpcoming: down, listPast: down, getNext: down, getBySlug: down, listAll: down, save: down, create: down, archive: down, remove: down },
     festivals: { list: down },
-    gallery: { listRecentMedia: down, listAlbums: down, getAlbum: down },
-    news: { listPosts: down, getPost: down, listAnnouncements: down, listNewsletters: down },
-    contact: { send: down, listMessages: down },
+    gallery: {
+      listRecentMedia: down, listAlbums: down, getAlbum: down, listAllAlbums: down,
+      createAlbum: down, addMedia: down, updateAlbum: down, setCover: down, setCaption: down, reorder: down, deleteMedia: down,
+    },
+    news: {
+      listPosts: down, getPost: down, listAnnouncements: down, listNewsletters: down,
+      listAllPosts: down, listAllAnnouncements: down, createPost: down, updatePost: down,
+      createAnnouncement: down, updateAnnouncement: down, removeAnnouncement: down, removePost: down,
+    },
+    contact: { send: down, listMessages: down, markHandled: down, deleteMessage: down },
+    feedback: { listApproved: down, listAll: down, send: down, review: down, remove: down },
     portal: {
+      identify: down,
       getHousehold: down,
       listHouseholds: down,
-      listDirectory: down,
-      listDocuments: down,
-      listRegistrationsForHousehold: down,
-      listRegistrationsForEvent: down,
       listSignInAttempts: down,
+      listAttendance: down,
+      recordAttendance: down,
+      addHousehold: down,
+      updateHousehold: down,
+      exportHousehold: down,
+      deleteHousehold: down,
+      resolveSignInAttempt: down,
     },
+    settings: { get: down, save: down },
+    audit: { list: down },
     volunteering: { listOpenRoles: down, listRolesForEvent: down },
+    polls: { list: down, vote: down, listAll: down, create: down, update: down, remove: down },
+    quizzes: {
+      list: down, get: down, submit: down, leaderboard: down, listAll: down, create: down, update: down, remove: down,
+      attempts: down, bank: down, createQuestion: down, updateQuestion: down, removeQuestion: down,
+    },
+    suggestions: { send: down, listMine: down, listAll: down, review: down, remove: down },
   }
 }
 
@@ -77,30 +162,42 @@ export function createDeliveringTestApi(): ApiClient {
 type DataProps = {
   children: ReactNode
   api?: ApiClient
+  /** Where "now" stands. Defaults to TEST_NOW; pass one to walk past an event's date. */
+  now?: Date
   session?: Session
   /** Sign-in settings. Empty by default, so no test reaches for a real Supabase project. */
   env?: Record<string, string | undefined>
+  /**
+   * What a preview runs on. Defaults to the same client, which is what nearly every test wants:
+   * the sample accounts carry `preview: true`, so a separate fixtures client here would quietly
+   * ignore the api a test had just handed in. Pass one only to prove the swap itself.
+   */
+  previewApi?: ApiClient
 }
 
 /** Query client, API and clock, without a router. Use with createMemoryRouter. */
 export function TestDataProviders({
   children,
   api = createTestApi(),
+  previewApi,
   session = { role: 'visitor' },
   env = {},
+  now = TEST_NOW,
 }: DataProps) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return (
     <QueryClientProvider client={client}>
-      <ApiProvider api={api}>
-        <ClockProvider now={() => TEST_NOW}>
-          <SessionProvider initial={session}>
+      <ClockProvider now={() => now}>
+        <SessionProvider initial={session}>
+          <ApiForSession real={api} fixtures={previewApi ?? api}>
             <GoogleSignInProvider env={env}>
-              <ThemeProvider>{children}</ThemeProvider>
+              <SettingsProvider>
+                <ThemeProvider>{children}</ThemeProvider>
+              </SettingsProvider>
             </GoogleSignInProvider>
-          </SessionProvider>
-        </ClockProvider>
-      </ApiProvider>
+          </ApiForSession>
+        </SessionProvider>
+      </ClockProvider>
     </QueryClientProvider>
   )
 }
@@ -108,9 +205,9 @@ export function TestDataProviders({
 type Props = DataProps & { route?: string }
 
 /** Everything a component needs, including an in-memory router. */
-export function TestProviders({ children, api, session, env, route = '/' }: Props) {
+export function TestProviders({ children, api, session, env, now, route = '/' }: Props) {
   return (
-    <TestDataProviders api={api} session={session} env={env}>
+    <TestDataProviders api={api} session={session} env={env} now={now}>
       <MemoryRouter initialEntries={[route]}>{children}</MemoryRouter>
     </TestDataProviders>
   )
@@ -121,12 +218,20 @@ type Options = Omit<RenderOptions, 'wrapper'> & {
   api?: ApiClient
   session?: Session
   env?: Record<string, string | undefined>
+  /** Where "now" stands, for a page whose answer depends on the date. */
+  now?: Date
+  /**
+   * What a preview runs on. Defaults to the same client, which is what nearly every test wants:
+   * the sample accounts carry `preview: true`, so a separate fixtures client here would quietly
+   * ignore the api a test had just handed in. Pass one only to prove the swap itself.
+   */
+  previewApi?: ApiClient
 }
 
-export function renderWithProviders(ui: ReactElement, { route, api, session, env, ...options }: Options = {}) {
+export function renderWithProviders(ui: ReactElement, { route, api, session, env, now, ...options }: Options = {}) {
   return render(ui, {
     wrapper: ({ children }) => (
-      <TestProviders api={api} session={session} env={env} route={route}>
+      <TestProviders api={api} session={session} env={env} now={now} route={route}>
         {children}
       </TestProviders>
     ),

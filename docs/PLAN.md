@@ -1,6 +1,6 @@
 # 13Parbon Community — Portal Plan
 
-> **Status:** proposed. Based on the portal structure supplied on 2026-09-03. Read alongside [STORY.md](STORY.md). Items marked **decision** need your call before that phase starts.
+> **Status:** proposed. Based on the portal structure supplied on 2026-09-03. Read alongside [STORY.md](STORY.md), and [MEMBER-LOGIN.md](MEMBER-LOGIN.md) for the parked sign-in and back-office story. Items marked **decision** need your call before that phase starts.
 
 ## 1. Shape of the product
 
@@ -27,6 +27,14 @@ membership is a status on the household, not a role. Sign-in is **Google only**,
 has added: there is no application form and nobody creates an account for themselves. A Google address that
 matches no household is turned away and listed for the committee.
 
+**Amended 2026-09-21: the sentence above is about the portal, and now says so.** Feedback from the public
+introduced a second use for the same Google sign-in — a member of the public putting their first name to a
+note — and the rule as written would have signed those people straight back out again. So the app records
+which door somebody used, and an unrecognised address is turned away from the portal exactly as before while
+being left alone if it came to sign a piece of feedback. A feedback sign-in creates no session, reaches no
+household, and is not listed as a knock: it buys a first name on the showcase and nothing else. Membership is
+still by invitation and there is still no application form. See [FEEDBACK.md](FEEDBACK.md).
+
 Permissions live in one place (`src/lib/auth/permissions.ts`) as a `can(user, action, resource)` function so routes, buttons and API calls all ask the same question.
 
 ## 3. Route map
@@ -41,6 +49,7 @@ Permissions live in one place (`src/lib/auth/permissions.ts`) as a `can(user, ac
 /news                     News & announcements, newsletters
 /news/:slug               Article
 /contact                  Contact form, socials, map
+/feedback                 Leave feedback, and read what the committee has approved
 /join                     Membership application
 /login  /logout  /reset-password
 
@@ -57,6 +66,7 @@ Permissions live in one place (`src/lib/auth/permissions.ts`) as a `can(user, ac
 /admin/events             Events, registrations, attendance
 /admin/members            Applications, renewals, roles
 /admin/media              Uploads, albums, moderation
+/admin/feedback           The queue of what the public has sent in
 /admin/reports            Growth, attendance, traffic, registrations
 ```
 
@@ -169,7 +179,7 @@ Each phase is shippable on its own and lands as a series of small PRs.
 |---|---|---|
 | **0 — Foundation** ✅ | Scaffold, CI, protected main, story | Done 2026-09-03 |
 | **1 — Public site** ✅ | Router, layouts, design tokens, Home, About, Events list & detail, News, Gallery, Contact. Mock data. Deployed. | Done 2026-09-03. Live on Vercel; Lighthouse 100/100/100/100 desktop. |
-| **2 — Identity & membership** | Supabase project. Contact writes live (adapter and schema already in the repo). Google sign-in. Admin adds households and sets roles. Member dashboard, household, directory, documents. | A committee member adds a household; that household signs in with Google and sees their dashboard. |
+| **2 — Identity & membership** | Supabase project. Contact writes live (adapter and schema already in the repo). Google sign-in. Admin adds households and sets roles. Member dashboard, household, directory, documents. Parked for the MVP — the back office it covers is written up in [MEMBER-LOGIN.md](MEMBER-LOGIN.md). | A committee member adds a household; that household signs in with Google and sees their dashboard. |
 | **3 — Events end to end** | Admin creates events. Registration (member + guest). Countdown. Attendance tracking. Volunteer roles and sign-up. | Organiser runs a real event through the app. |
 | **4 — Content & media** | Admin CMS for pages, announcements, news, newsletters. Media upload, albums, moderation. | Committee publishes without a developer. Until then, photographs go up by hand — see [PHOTOS.md](PHOTOS.md). |
 | **5 — Community** | Member directory with privacy controls, groups. Documents library. Forum with moderation. | Members find each other and talk without WhatsApp. |

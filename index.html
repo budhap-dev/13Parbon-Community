@@ -53,10 +53,21 @@
     <meta name="theme-color" content="#7a1a12" />
     <title>13Parbon Community</title>
     <script>
+      // The portal wears its own quiet set, so a reload there starts in it rather than in
+      // Festival red. The same test and list as scopeForPath and portalThemeNames in themes.ts.
+      var portal = /^\/(portal|admin)(\/|$)/.test(location.pathname)
       try {
-        var theme = localStorage.getItem('13parbon:theme')
+        var portalThemes = ['paper', 'linen', 'sage', 'mist', 'slate', 'midnight', 'marigold', 'lagoon', 'peacock']
+        var chosen = localStorage.getItem('13parbon:portal-theme')
+        // Elsewhere, the visitor's own choice, or failing that the committee's as this browser last heard it.
+        var theme = portal
+          ? portalThemes.indexOf(chosen) >= 0 ? chosen : 'paper'
+          : localStorage.getItem('13parbon:theme') || localStorage.getItem('13parbon:site-theme')
         if (theme) document.documentElement.dataset.theme = theme
-      } catch (error) {}
+      } catch (error) {
+        // Storage blocked: no choice to read, but the portal still is not the festivals.
+        if (portal) document.documentElement.dataset.theme = 'paper'
+      }
     </script>
   </head>
   <body>

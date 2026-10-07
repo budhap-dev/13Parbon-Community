@@ -1,4 +1,3 @@
 export { DashboardPage } from './DashboardPage'
+export { HelpPage } from './HelpPage'
 export { HouseholdPage } from './HouseholdPage'
-export { DirectoryPage } from './DirectoryPage'
-export { DocumentsPage } from './DocumentsPage'

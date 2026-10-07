@@ -2,7 +2,7 @@ import type { ButtonHTMLAttributes, ReactNode } from 'react'
 import { Link } from 'react-router'
 import styles from './Button.module.css'
 
-export type ButtonVariant = 'gold' | 'cream' | 'line' | 'ink' | 'inkLine'
+export type ButtonVariant = 'gold' | 'cream' | 'line' | 'ink' | 'inkLine' | 'danger'
 export type ButtonSize = 'md' | 'sm'
 
 type Common = {

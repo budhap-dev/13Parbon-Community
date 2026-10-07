@@ -1,6 +1,6 @@
 import { Button } from './Button'
 import { Container } from './Container'
-import { site } from '@/app/site'
+import { useSettings } from '@/app/SettingsContext'
 import styles from './ErrorPanel.module.css'
 
 /**
@@ -8,6 +8,9 @@ import styles from './ErrorPanel.module.css'
  * gives them something to press, and keeps a way back to the rest of the site.
  */
 export function ErrorPanel() {
+  // Outside every provider this still answers, with what the code says — which is what is
+  // wanted from the one screen that exists because something else did not load.
+  const { social } = useSettings()
   return (
     <Container className={styles.page}>
       <section className={styles.box} aria-labelledby="error-title">
@@ -27,15 +30,15 @@ export function ErrorPanel() {
         </div>
         <p className={styles.aside}>
           If it keeps happening, tell us on{' '}
-          {site.social.map((channel, i) => (
+          {social.map((channel, i) => (
             <span key={channel.name}>
               {i > 0 ? ' or ' : ''}
               {channel.href ? (
                 <a href={channel.href} target="_blank" rel="noreferrer">
-                  {channel.mention}
+                  {channel.mention ?? channel.name}
                 </a>
               ) : (
-                channel.mention
+                (channel.mention ?? channel.name)
               )}
             </span>
           ))}

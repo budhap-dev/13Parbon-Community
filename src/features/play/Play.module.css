@@ -1,0 +1,398 @@
+/*
+ * Polls and quizzes. Built on the theme's tokens only, so every portal look — and every
+ * festival look on the public page — dresses them without a line here knowing which it is.
+ */
+
+/* ---- Choices: a poll's options and a quiz's answers ---------------------- */
+
+.choices {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+
+.choice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--portal-button-radius, var(--radius-tile, 10px));
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font: inherit;
+  font-size: 15px;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease;
+}
+
+.choice:hover:not(:disabled) {
+  background: linear-gradient(var(--color-hover-wash), var(--color-hover-wash)), var(--color-bg);
+}
+
+.choice:focus-visible,
+.choice:has(input:focus-visible) {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.choice:disabled {
+  cursor: default;
+}
+
+/* A radio inside a label, for polls, where the form submits the choice. */
+.choice input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.choiceOn {
+  border-color: var(--color-accent);
+  box-shadow: inset 0 0 0 1px var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 12%, var(--color-bg));
+}
+
+.choiceRight {
+  border-color: var(--color-green, #2f8f4e);
+  box-shadow: inset 0 0 0 1px var(--color-green, #2f8f4e);
+  background: color-mix(in srgb, var(--color-green, #2f8f4e) 16%, var(--color-bg));
+}
+
+.choiceWrong {
+  border-color: var(--error, #c0392b);
+  background: color-mix(in srgb, var(--error, #c0392b) 12%, var(--color-bg));
+}
+
+.letter {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--color-hover-wash);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.choiceOn .letter {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+.choiceRight .letter {
+  background: var(--color-green, #2f8f4e);
+  color: var(--color-bg);
+}
+
+.choiceText {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.mark {
+  flex: none;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* ---- Poll totals --------------------------------------------------------- */
+
+.tally {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tallyRow {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tallyHead {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 14px;
+}
+
+.tallyMine {
+  font-weight: 700;
+}
+
+.voters {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--color-fg-muted);
+}
+
+/* ---- Playing ------------------------------------------------------------- */
+
+.progress {
+  display: flex;
+  gap: 4px;
+}
+
+.step {
+  flex: 1;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--color-hover-wash);
+}
+
+.stepDone {
+  background: var(--color-accent);
+}
+
+.prompt {
+  font-size: clamp(20px, 2.2vw, 26px);
+  line-height: 1.25;
+  text-wrap: pretty;
+}
+
+.picture {
+  display: block;
+  width: 100%;
+  max-height: 320px;
+  object-fit: cover;
+  border-radius: var(--portal-radius, var(--radius-card, 12px));
+}
+
+.score {
+  font-family: var(--font-display);
+  font-size: clamp(44px, 6vw, 68px);
+  line-height: 1;
+}
+
+.review {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.review > li {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 20px;
+  border-top: 1px solid var(--color-border-faint);
+}
+
+.reviewPrompt {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.explain {
+  font-size: 14px;
+  color: var(--color-fg-muted);
+  line-height: 1.55;
+}
+
+.board {
+  display: flex;
+  flex-direction: column;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.board li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--color-border-faint);
+  font-size: 15px;
+}
+
+.board li:last-child {
+  border-bottom: 0;
+}
+
+.place {
+  flex: none;
+  width: 28px;
+  font-weight: 700;
+  color: var(--color-fg-muted);
+}
+
+.boardName {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ---- Lists of quizzes ---------------------------------------------------- */
+
+.quizCards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+  gap: 16px;
+}
+
+.quizCard {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
+}
+
+.quizCardTitle {
+  font-size: 18px;
+  line-height: 1.25;
+}
+
+.quizCardFoot {
+  margin-top: auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+/* ---- Forms --------------------------------------------------------------- */
+
+.optionRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.optionRow > input[type='text'],
+.optionRow > input:not([type]) {
+  flex: 1;
+  min-width: 0;
+}
+
+.optionRow input[type='radio'] {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--color-accent);
+}
+
+.picked {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.picked li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--color-border-faint);
+  border-radius: var(--portal-button-radius, 8px);
+  font-size: 14px;
+}
+
+.pickedText {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.iconButton {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--color-border-faint);
+  border-radius: var(--portal-button-radius, 8px);
+  background: transparent;
+  color: var(--color-fg);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.iconButton:hover:not(:disabled) {
+  background: var(--color-hover-wash);
+}
+
+.iconButton:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.iconButton:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* ---- The public page ----------------------------------------------------- */
+
+.public {
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+  padding-top: 48px;
+  padding-bottom: 96px;
+}
+
+.publicHead {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.publicTitle {
+  font-size: clamp(36px, 5vw, 64px);
+}
+
+.publicIntro {
+  max-width: 600px;
+  font-size: 19px;
+  color: var(--color-fg-muted);
+  text-wrap: pretty;
+}
+
+.publicCard {
+  background: var(--color-bg-raised);
+  border: 1px solid var(--color-border-faint);
+  border-radius: var(--radius-card, 18px);
+}
+
+.player {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 720px;
+  width: 100%;
+}
+
+.playerCard {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: clamp(18px, 3vw, 28px);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+}

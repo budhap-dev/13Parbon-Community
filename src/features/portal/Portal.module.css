@@ -1,7 +1,7 @@
 .page {
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: 20px;
 }
 
 .top {
@@ -13,13 +13,24 @@
 }
 
 .title {
-  font-size: clamp(26px, 3vw, 34px);
+  font-size: clamp(24px, 2.4vw, 30px);
 }
 
 .sub {
   margin-top: 6px;
+  font-size: 15px;
   color: var(--color-fg-muted);
-  max-width: 62ch;
+  /*
+   * 62ch was a reading measure, and these are not paragraphs. Nearly every one of them is a
+   * single sentence under a heading, and a sentence with obvious room to its right that breaks
+   * anyway and leaves three words on a line of their own looks like a fault rather than a
+   * choice. Wide enough now that the one-line ones stay on one line on a full screen.
+   *
+   * Still capped, because the cap is not the enemy: two of these run past 120 characters, and a
+   * line that long is harder to read than the wrap was. Those two want shorter sentences, which
+   * is a writing fix and not a CSS one.
+   */
+  max-width: 96ch;
   text-wrap: pretty;
 }
 
@@ -31,11 +42,24 @@
   color: var(--color-accent);
 }
 
+/*
+ * A panel's corners, border and shadow are the theme's: flat and square in Linen, floating in
+ * Denim, glowing at the edge in Midnight. The fallbacks are what every theme had before.
+ */
 .panel {
   background: var(--color-bg-raised);
-  border: 1px solid var(--color-border-faint);
-  border-radius: 14px;
+  border: 1px solid var(--portal-panel-border, var(--color-border-faint));
+  border-radius: var(--portal-radius, 14px);
+  box-shadow: var(--portal-shadow, none);
   overflow: hidden;
+  /*
+   * `.page` is a flex column, and a flex item will not shrink below its content unless it is
+   * told it may: the default is min-width: auto. Without this a wide table inside a panel —
+   * the audit trail is the one that does it — widens the panel, which widens the page, and the
+   * whole screen scrolls sideways with the header and the navigation going with it. The
+   * .scroll box inside cannot help while its parent is free to grow.
+   */
+  min-width: 0;
 }
 
 .panelHead {
@@ -44,16 +68,17 @@
   align-items: center;
   justify-content: space-between;
   gap: 10px 16px;
-  padding: 17px 22px;
+  min-height: 58px;
+  padding: 12px 20px;
   border-bottom: 1px solid var(--color-border-faint);
 }
 
 .panelTitle {
-  font-size: 19px;
+  font-size: 17px;
 }
 
 .pad {
-  padding: 22px;
+  padding: 20px;
 }
 
 .two {
@@ -72,6 +97,53 @@
 /* Tables */
 .scroll {
   overflow-x: auto;
+  /*
+   * A box for anything positioned inside to be measured from. The hidden "Actions" label over a
+   * table's last column is absolutely positioned, and with nothing here to hold it, it was placed
+   * against the page instead — past the right edge on a phone, so the whole screen scrolled
+   * sideways by the width the table was clipping.
+   */
+  position: relative;
+  /*
+   * A shade at whichever edge has more table beyond it. On a phone the last columns — Status,
+   * and the Edit button — are past the right edge, and a table cut cleanly at the border reads
+   * as a table that ends there. The covers scroll with the table and the shades stay put, so a
+   * shade shows only while there is something on that side to scroll to.
+   */
+  background:
+    linear-gradient(to right, var(--color-bg-raised) 40%, transparent) left / 32px 100% no-repeat local,
+    linear-gradient(to left, var(--color-bg-raised) 40%, transparent) right / 32px 100% no-repeat local,
+    radial-gradient(farthest-side at 0 50%, rgba(0, 0, 0, 0.24), transparent) left / 14px 100% no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%, rgba(0, 0, 0, 0.24), transparent) right / 14px 100% no-repeat scroll;
+}
+
+/*
+ * A table that is read rather than scanned, and is long: the audit trail. A box of its own so
+ * the page has an end to it, with the column labels pinned inside — sticky against this box
+ * rather than against the window, which already has the portal's own header stuck to it.
+ */
+.tall {
+  position: relative;
+  max-height: 68vh;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.tall thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  /* Opaque, or the rows show through the labels as they scroll under them. */
+  background: linear-gradient(var(--color-hover-wash), var(--color-hover-wash)), var(--color-bg-raised);
+}
+
+/*
+ * A changed value can be a whole jsonb column stringified — the site settings carry the FAQ in
+ * one. To a browser that is a single unbreakable word, which sets the table's width on its own.
+ */
+.changes {
+  overflow-wrap: anywhere;
+  max-width: 48ch;
 }
 
 .table {
@@ -81,8 +153,9 @@
 
 .table th {
   text-align: left;
-  padding: 11px 22px;
-  font-size: 10px;
+  padding: 10px 20px;
+  background: var(--color-hover-wash);
+  font-size: 10.5px;
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -92,9 +165,18 @@
 }
 
 .table td {
-  padding: 14px 22px;
+  padding: 11px 20px;
   border-bottom: 1px solid var(--color-border-faint);
   vertical-align: middle;
+  font-size: 14.5px;
+}
+
+.table tbody tr {
+  transition: background-color var(--motion-fast) ease;
+}
+
+.table tbody tr:hover {
+  background: var(--color-hover-wash);
 }
 
 .table tbody tr:last-child td {
@@ -167,8 +249,9 @@
   gap: 4px;
   padding: 18px 20px;
   background: var(--color-bg-raised);
-  border: 1px solid var(--color-border-faint);
-  border-radius: 12px;
+  border: 1px solid var(--portal-panel-border, var(--color-border-faint));
+  border-radius: var(--portal-radius, 12px);
+  box-shadow: var(--portal-shadow, none);
 }
 
 .statLabel {
@@ -206,7 +289,8 @@
   padding: 24px;
   background: var(--color-bg-raised);
   border: 1px solid color-mix(in srgb, var(--color-accent) 45%, transparent);
-  border-radius: 14px;
+  border-radius: var(--portal-radius, 14px);
+  box-shadow: var(--portal-shadow, none);
 }
 
 .featureBody {
@@ -227,7 +311,7 @@
   padding: 22px;
   background: var(--color-ink);
   color: var(--color-on-ink);
-  border-radius: 12px;
+  border-radius: calc(var(--portal-radius, 14px) - 2px);
 }
 
 .countValue {
@@ -247,7 +331,7 @@
 
 .note {
   padding: 13px 16px;
-  border-radius: 10px;
+  border-radius: var(--portal-radius, 10px);
   background: color-mix(in srgb, var(--color-accent) 12%, transparent);
   border: 1px solid color-mix(in srgb, var(--color-accent) 34%, transparent);
   font-size: 14px;
@@ -426,4 +510,232 @@
     justify-content: center;
     gap: 10px;
   }
+}
+
+/* A link inside a table cell or a paragraph: underlined, because colour alone is not a signal. */
+.inlineLink {
+  color: var(--color-fg);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.inlineLink:hover {
+  color: var(--color-accent);
+}
+
+/* A list inside a table cell: the rows are the content, the bullets would be noise. */
+.plainList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+/* What just happened. Green, because it is an outcome rather than a link or a warning. */
+.said {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-green);
+}
+
+/* Three jobs, three tabs. Real buttons in a tablist, so the keyboard and a screen reader get
+   the same thing the mouse does. */
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  border-bottom: 1px solid var(--color-border-faint);
+  padding-bottom: 10px;
+}
+
+.tab,
+.tabOn {
+  appearance: none;
+  border: 1px solid transparent;
+  background: none;
+  color: var(--color-fg-muted);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+}
+
+.tab:hover {
+  background: var(--color-hover-wash);
+  color: var(--color-fg);
+}
+
+.tabOn {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+.tab:focus-visible,
+.tabOn:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* The way through a long table, under it. */
+.pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 22px;
+  border-top: 1px solid var(--color-border-faint);
+}
+
+.pagerButtons {
+  display: flex;
+  gap: 8px;
+}
+
+/* A column of controls belongs at the end of the row, against the edge it is read from. */
+.right {
+  text-align: right;
+}
+
+.actionsRight {
+  justify-content: flex-end;
+}
+
+/* A text box on a portal screen. It had no style at all and came out as the browser's own. */
+.input {
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--portal-button-radius, 8px);
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font: inherit;
+  font-size: 14.5px;
+}
+
+.input::placeholder {
+  color: var(--color-fg-faint);
+}
+
+.input:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 1px;
+  border-color: var(--color-focus);
+}
+
+/* A row of controls over a list: the search on the left, what it found on the right. */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--color-border-faint);
+}
+
+.search {
+  position: relative;
+  flex: 1 1 280px;
+  max-width: 420px;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 11px;
+  top: 50%;
+  translate: 0 -50%;
+  color: var(--color-fg-faint);
+  pointer-events: none;
+}
+
+.searchInput {
+  composes: input;
+  padding-left: 36px;
+}
+
+/* The search box's own clear button, which the browser draws, is in the wrong colours. */
+.searchInput::-webkit-search-cancel-button {
+  cursor: pointer;
+}
+
+/* A list that can be long: its own scroll, so the page around it stays put. */
+.boxed {
+  max-height: min(62vh, 640px);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.boxed thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: linear-gradient(var(--color-hover-wash), var(--color-hover-wash)), var(--color-bg-raised);
+}
+
+/* A button that is a sentence's next step rather than a control of its own. */
+.inlineButton {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-accent);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+/* An announcement's icon, in a small tile of the accent so the list has a left edge to read down. */
+.listIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  align-self: flex-start;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--color-accent) 13%, transparent);
+  color: var(--color-accent);
+}
+
+/* A few facts as label and value, one to a row. */
+.facts {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.facts > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 11px 20px;
+  border-bottom: 1px solid var(--color-border-faint);
+  font-size: 14px;
+}
+
+.facts > div:last-child {
+  border-bottom: 0;
+}
+
+.facts dt {
+  color: var(--color-fg-muted);
+}
+
+.facts dd {
+  margin: 0;
+  font-weight: 600;
+  text-align: right;
+}
+
+/* Two notes in a row are two things to read, not one long box. */
+.note + .note {
+  margin-top: 10px;
 }

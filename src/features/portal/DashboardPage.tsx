@@ -1,9 +1,11 @@
-import { Link } from 'react-router'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { Button } from '@/components/Button'
 import { Icon } from '@/components/Icon'
+import { LoadFailed } from '@/components/LoadFailed'
 import { daysUntil, describeCountdown, formatDateWithYear, formatLongDate, formatTime } from '@/domain/dates'
-import { useAnnouncements, useHousehold, useHouseholdRegistrations, useNextEvent, useUpcomingEvents } from '@/lib/api'
+import { describeSize } from '@/domain/household'
+import { useAnnouncements, useHousehold, useNextEvent, usePolls, useQuizzes } from '@/lib/api'
+import { stateOf } from '@/domain/polls'
 import { useSignedIn } from '@/lib/auth/session'
 import { useNow } from '@/lib/clock'
 import styles from './Portal.module.css'
@@ -12,15 +14,15 @@ export function DashboardPage() {
   useDocumentTitle('Dashboard')
   const who = useSignedIn()
   const now = useNow()
-  const { data: event } = useNextEvent()
-  const { data: upcoming } = useUpcomingEvents(6)
-  const { data: household } = useHousehold(who?.householdId)
-  const { data: registrations } = useHouseholdRegistrations(who?.householdId)
-  const { data: announcements } = useAnnouncements()
+  const next = useNextEvent()
+  const event = next.data
+  const { data: household, isError: householdFailed, refetch: refetchHousehold } = useHousehold(who?.householdId)
+  const announced = useAnnouncements()
+  const announcements = announced.data
+  const { data: polls } = usePolls()
+  const { data: quizzes } = useQuizzes()
 
-  const registeredFor = new Set((registrations ?? []).map((r) => r.eventId))
   const countdown = event ? describeCountdown(daysUntil(event.startsAt, now)) : null
-  const eventsById = new Map((upcoming ?? []).map((e) => [e.id, e]))
 
   return (
     <div className={styles.page}>
@@ -31,7 +33,13 @@ export function DashboardPage() {
         </div>
       </div>
 
-      {event && countdown ? (
+      {next.isError ? (
+        <section className={styles.panel} aria-label="Next event">
+          <div className={styles.pad}>
+            <LoadFailed what="the next event" onRetry={() => void next.refetch()} />
+          </div>
+        </section>
+      ) : event && countdown ? (
         <section className={styles.feature} aria-labelledby="next-title">
           <div className={styles.featureBody}>
             <p className={styles.eyebrow}>Next event</p>
@@ -41,17 +49,9 @@ export function DashboardPage() {
             <p className={styles.muted}>
               {formatLongDate(event.startsAt)}, {formatTime(event.startsAt)} · {event.venue} · {event.summary}
             </p>
-            {registeredFor.has(event.id) ? (
-              <p className={styles.note}>Your household is registered. You can change it any time before the day.</p>
-            ) : (
-              <p className={styles.note}>
-                Your household has not registered yet.
-                {event.householdsRegistered > 0 ? ` ${event.householdsRegistered} households are coming so far.` : ''}
-              </p>
-            )}
             <div className={styles.actions}>
               <Button to={`/events/${event.slug}`} variant="gold" size="sm">
-                {registeredFor.has(event.id) ? 'Change our registration' : 'Register the household'}
+                Book your places
               </Button>
               <Button to={`/events/${event.slug}`} variant="line" size="sm">
                 Event details
@@ -65,53 +65,58 @@ export function DashboardPage() {
         </section>
       ) : null}
 
+      {/*
+        * Announcements are the reading, so they take the wide column; the household's own facts
+        * sit beside them. Before, both stacked down the left two-thirds and the right third of
+        * every screen was empty.
+        */}
       <div className={styles.two}>
-        <section className={styles.panel} aria-labelledby="regs-title">
+        <section className={styles.panel} aria-labelledby="announce-title">
           <div className={styles.panelHead}>
-            <h2 id="regs-title" className={styles.panelTitle}>
-              Your registrations
+            <h2 id="announce-title" className={styles.panelTitle}>
+              Announcements
             </h2>
-            <Link to="/events" className={styles.tiny}>
-              All events
-            </Link>
           </div>
-          {registrations && registrations.length > 0 ? (
-            <div className={styles.scroll}>
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>Event</th>
-                    <th>Coming</th>
-                    <th>Helping</th>
-                    <th>Registered</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {registrations.map((r) => {
-                    const forEvent = eventsById.get(r.eventId)
-                    return (
-                      <tr key={r.id}>
-                        <td>
-                          <strong>{forEvent?.title ?? 'An earlier event'}</strong>
-                        </td>
-                        <td className={`${styles.num} ${styles.muted}`}>
-                          {r.adults} {r.adults === 1 ? 'adult' : 'adults'}
-                          {r.children > 0 ? `, ${r.children} ${r.children === 1 ? 'child' : 'children'}` : ''}
-                        </td>
-                        <td className={styles.muted}>{r.helping ?? '—'}</td>
-                        <td className={`${styles.muted} ${styles.tiny}`}>{formatDateWithYear(r.registeredAt)}</td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
+          {announced.isPending ? (
+            <div className={styles.pad}>
+              <p className={styles.empty} aria-busy="true">
+                Loading…
+              </p>
+            </div>
+          ) : announced.isError ? (
+            <div className={styles.pad}>
+              <LoadFailed what="the announcements" onRetry={() => void announced.refetch()} />
+            </div>
+          ) : announcements && announcements.length > 0 ? (
+            <div className={styles.list}>
+              {announcements.map((a) => (
+                <div key={a.id} className={styles.listItem}>
+                  <span className={styles.listIcon}>
+                    <Icon name="megaphone" size={17} />
+                  </span>
+                  <div className={styles.listBody}>
+                    <strong>{a.title}</strong>
+                    <span className={`${styles.muted} ${styles.tiny}`}>{a.body}</span>
+                  </div>
+                </div>
+              ))}
             </div>
           ) : (
-            <p className={styles.empty}>Nothing yet. Register for the next event and it will appear here.</p>
+            <div className={styles.pad}>
+              <p className={styles.empty}>Nothing pinned right now.</p>
+            </div>
           )}
         </section>
 
         <div className={styles.stack}>
+          {householdFailed ? (
+            <section className={styles.panel} aria-label="Your household">
+              <div className={styles.pad}>
+                <LoadFailed what="your household" onRetry={() => void refetchHousehold()} />
+              </div>
+            </section>
+          ) : null}
+
           {household ? (
             <section className={styles.panel} aria-labelledby="membership-title">
               <div className={styles.pad}>
@@ -125,34 +130,97 @@ export function DashboardPage() {
                   </span>
                 </div>
                 <p className={`${styles.muted} ${styles.tiny}`} style={{ marginTop: 8 }}>
-                  {household.membership.status === 'active' ? 'Runs to ' : 'Ran out '}
-                  {formatDateWithYear(household.membership.paidTo)}.
+                  {household.membership.paidTo ? (
+                    <>
+                      {household.membership.status === 'active' ? 'Runs to ' : 'Ran out '}
+                      {formatDateWithYear(household.membership.paidTo)}.
+                    </>
+                  ) : (
+                    // The status column defaults to active and the date column has no default,
+                    // so every household the committee writes down arrives in exactly this
+                    // state. Saying so beats a date nobody set, and beats taking the page down.
+                    'No renewal date recorded yet.'
+                  )}
                 </p>
               </div>
             </section>
           ) : null}
 
-          <section className={styles.panel} aria-labelledby="announce-title">
-            <div className={styles.panelHead}>
-              <h2 id="announce-title" className={styles.panelTitle}>
-                Announcements
-              </h2>
-            </div>
-            {announcements && announcements.length > 0 ? (
-              <div className={styles.list}>
-                {announcements.map((a) => (
-                  <div key={a.id} className={styles.listItem}>
-                    <Icon name="megaphone" size={18} />
-                    <div className={styles.listBody}>
-                      <strong>{a.title}</strong>
-                      <span className={`${styles.muted} ${styles.tiny}`}>{a.body}</span>
-                    </div>
-                  </div>
-                ))}
+          {household ? (
+            <section className={styles.panel} aria-labelledby="household-title">
+              <div className={styles.panelHead}>
+                <h2 id="household-title" className={styles.panelTitle}>
+                  {household.name}
+                </h2>
+                <Button to="/portal/household" variant="line" size="sm">
+                  View
+                </Button>
               </div>
-            ) : (
-              <p className={styles.empty}>Nothing pinned right now.</p>
-            )}
+              <dl className={styles.facts}>
+                <div>
+                  <dt>Who is in it</dt>
+                  <dd>{describeSize(household)}</dd>
+                </div>
+                <div>
+                  <dt>Main contact</dt>
+                  <dd>{household.contactName}</dd>
+                </div>
+                <div>
+                  <dt>Member since</dt>
+                  <dd>{formatDateWithYear(household.memberSince)}</dd>
+                </div>
+              </dl>
+            </section>
+          ) : null}
+
+          {(() => {
+            /*
+             * Only when there is something to do: a poll this household has not answered, or a
+             * quiz it has not played. A panel saying "nothing open" every visit is a panel
+             * people learn to skip, and then miss the week there is.
+             */
+            const poll = (polls ?? []).find((v) => v.myVote === undefined && stateOf(v.poll, now) === 'open')
+            const quiz = (quizzes ?? []).find((c) => !c.played && stateOf(c.quiz, now) === 'open')
+            if (!poll && !quiz) return null
+            return (
+              <section className={styles.panel} aria-labelledby="say-title">
+                <div className={styles.pad}>
+                  <p className={styles.statLabel}>Have your say</p>
+                  <h2 id="say-title" className={styles.panelTitle} style={{ marginTop: 8 }}>
+                    {poll ? poll.poll.title : quiz!.quiz.title}
+                  </h2>
+                  <p className={`${styles.muted} ${styles.tiny}`} style={{ marginTop: 6 }}>
+                    {poll
+                      ? quiz
+                        ? 'Your household has not voted yet — and there is a quiz to play.'
+                        : 'Your household has not voted yet.'
+                      : `A quiz, ${quiz!.questionCount} questions. One go per household.`}
+                  </p>
+                  <div className={styles.actions} style={{ marginTop: 12 }}>
+                    <Button to={poll ? '/portal/play' : `/portal/play/${quiz!.quiz.id}`} variant="gold" size="sm">
+                      {poll ? 'Vote' : 'Play'}
+                    </Button>
+                  </div>
+                </div>
+              </section>
+            )
+          })()}
+
+          <section className={styles.panel} aria-labelledby="help-title">
+            <div className={styles.pad}>
+              <h2 id="help-title" className={styles.panelTitle}>
+                Something not right?
+              </h2>
+              <p className={`${styles.muted} ${styles.tiny}`} style={{ marginTop: 6 }}>
+                A name spelt wrong, a renewal you have paid, a photograph you would rather was not up — the
+                committee would like to know.
+              </p>
+              <div className={styles.actions} style={{ marginTop: 12 }}>
+                <Button to="/contact" variant="line" size="sm">
+                  Message the committee
+                </Button>
+              </div>
+            </div>
           </section>
         </div>
       </div>

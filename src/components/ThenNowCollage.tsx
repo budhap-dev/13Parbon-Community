@@ -107,7 +107,7 @@ export function ThenNowCollage({ images, credit, label }: Props) {
                 if (startRef.current?.moved) return
                 setOpen(index)
               }}
-              aria-label={`See ${image.caption ?? image.alt} full size`}
+              aria-label={`See ${image.caption || image.alt || 'this photograph'} full size`}
             >
               <img
                 className={styles.image}

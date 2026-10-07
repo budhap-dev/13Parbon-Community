@@ -24,7 +24,6 @@ export const testEvents: Event[] = [
     registrationOpen: true,
     registrationUrl: 'https://forms.example.org/attend',
     performerFormUrl: 'https://forms.example.org/perform',
-    householdsRegistered: 31,
     theme: {
       bengali: 'দুর্গাপূজার সেকাল ও একাল',
       bengaliSubtitle: 'ঐতিহ্যের সাথে আধুনিকতা',
@@ -46,7 +45,6 @@ export const testEvents: Event[] = [
     festivalId: 'saraswati-puja',
     isPublic: true,
     registrationOpen: true,
-    householdsRegistered: 0,
     status: 'published',
   },
   {
@@ -59,7 +57,6 @@ export const testEvents: Event[] = [
     festivalId: 'holi',
     isPublic: true,
     registrationOpen: false,
-    householdsRegistered: 0,
     status: 'published',
   },
   {
@@ -72,7 +69,6 @@ export const testEvents: Event[] = [
     festivalId: 'boishakhi',
     isPublic: true,
     registrationOpen: false,
-    householdsRegistered: 0,
     status: 'published',
   },
   {
@@ -85,7 +81,6 @@ export const testEvents: Event[] = [
     festivalId: 'boishakhi',
     isPublic: true,
     registrationOpen: false,
-    householdsRegistered: 40,
     status: 'past',
   },
   {
@@ -97,7 +92,6 @@ export const testEvents: Event[] = [
     venue: 'Online',
     isPublic: false,
     registrationOpen: false,
-    householdsRegistered: 0,
     status: 'published',
   },
   {
@@ -109,7 +103,6 @@ export const testEvents: Event[] = [
     venue: 'TBC',
     isPublic: true,
     registrationOpen: false,
-    householdsRegistered: 0,
     status: 'draft',
   },
 ]

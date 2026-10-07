@@ -1,0 +1,161 @@
+import { describe, expect, it } from 'vitest'
+import { createApi } from '../create'
+import { createMockApi } from '../mock'
+import { withAuditTrail } from '../audit'
+import { withSupabaseAudit } from './audit'
+import { withSupabaseEvents } from './events'
+import { withSupabaseFeedback } from './feedback'
+import { withSupabaseGallery } from './gallery'
+import { withSupabasePortal } from './portal'
+import { withSupabaseNews } from './news'
+import { withSupabaseSettings } from './settings'
+import { withSupabasePlay } from './play'
+
+/**
+ * Which parts of the app talk to the database, and which are still fixtures.
+ *
+ * Worth a test because the answer is invisible from a screen: fixture data and real data look
+ * identical, and the moment they differ is the moment somebody is looking at sample households
+ * believing they are real ones.
+ */
+const configured = { VITE_SUPABASE_URL: 'https://project.supabase.co', VITE_SUPABASE_ANON_KEY: 'anon-key' }
+
+describe('with no project configured', () => {
+  const api = createApi({})
+
+  it('is fixtures throughout', async () => {
+    expect((await api.portal.listHouseholds({ householdId: 'x', role: 'admin' })).length).toBeGreaterThan(0)
+  })
+
+  it('says the contact form does not deliver, rather than pretending', async () => {
+    expect(api.delivers).toBe(false)
+  })
+})
+
+describe('with a project configured', () => {
+  it('says the contact form delivers', () => {
+    expect(createApi(configured).delivers).toBe(true)
+  })
+
+  /*
+   * Against the *same* base object, and every key of it rather than a list typed out here.
+   *
+   * Both details are the test. An earlier version compared two separately built fixture clients,
+   * and every method of one differs by identity from every method of another whether it is wired
+   * or not — so it passed no matter what `withSupabasePortal` left out. And a hand-written list
+   * of method names cannot fail for the case worth catching: a fourteenth portal method added to
+   * the interface, implemented in the mock, and never wired to the database.
+   */
+  it('sends the whole portal to the database, not half of it', () => {
+    const base = createMockApi()
+    const wired = withSupabasePortal(base, { url: configured.VITE_SUPABASE_URL, anonKey: configured.VITE_SUPABASE_ANON_KEY })
+
+    const names = Object.keys(base.portal) as (keyof typeof base.portal)[]
+    expect(names.length).toBeGreaterThan(0)
+
+    // Half is worse than none: a screen with real households and sample documents is one
+    // nobody can reason about, and the first thing anybody does is doubt the half that is right.
+    const stillFixtures = names.filter((name) => wired.portal[name] === base.portal[name])
+    expect(stillFixtures).toEqual([])
+  })
+
+  /*
+   * The inbox, which was the half-wired section this test was written to catch and did not.
+   * `withSupabaseWrites` posted a visitor's message to the real table while the screen the
+   * committee reads it on stayed on fixtures — so every message sent through the live site
+   * went into a table nobody in the app could see, and the inbox showed sample data instead.
+   */
+  it('reads the inbox from the same table the contact form writes to', () => {
+    const base = createMockApi()
+    const wired = withSupabasePortal(base, { url: configured.VITE_SUPABASE_URL, anonKey: configured.VITE_SUPABASE_ANON_KEY })
+
+    expect(wired.contact.listMessages).not.toBe(base.contact.listMessages)
+    expect(wired.contact.markHandled).not.toBe(base.contact.markHandled)
+    // `send` belongs to the public website, which has no session and posts under the anon key.
+    expect(wired.contact.send).toBe(base.contact.send)
+  })
+
+  it('reads the site\'s own switches from the database', () => {
+    // What the committee can change about the public site without a developer. On fixtures these
+    // were an in-memory object: a switch thrown on the live site survived until the next reload.
+    const base = createMockApi()
+    const wired = withSupabaseSettings(base, { url: configured.VITE_SUPABASE_URL, anonKey: configured.VITE_SUPABASE_ANON_KEY })
+    expect(wired.settings.get).not.toBe(base.settings.get)
+    expect(wired.settings.save).not.toBe(base.settings.save)
+  })
+
+  it('reads the year’s festivals from that same row', () => {
+    // They are the committee's to edit now. Left on the base client the home page would show
+    // the code's four for ever, and a festival added in the portal would save and never appear.
+    const base = createMockApi()
+    const wired = withSupabaseSettings(base, { url: configured.VITE_SUPABASE_URL, anonKey: configured.VITE_SUPABASE_ANON_KEY })
+    expect(wired.festivals.list).not.toBe(base.festivals.list)
+  })
+
+  it('writes what the committee writes to the database', () => {
+    // News posts, notices and newsletters. On fixtures these lived in memory, so an admin
+    // publishing a piece on the live site watched it save and lost it on the next reload.
+    const base = createMockApi()
+    const wired = withSupabaseNews(base, { url: configured.VITE_SUPABASE_URL, anonKey: configured.VITE_SUPABASE_ANON_KEY })
+    const names = Object.keys(base.news) as (keyof typeof base.news)[]
+    expect(names.filter((name) => wired.news[name] === base.news[name])).toEqual([])
+  })
+
+  it('reads the audit trail from the database, not from this tab', () => {
+    /*
+     * `withAuditTrail` keeps its own list in memory, which is built in one browser, thrown away
+     * on reload, and missing everything done from another tab or by anybody else. The trail
+     * worth reading is the one the triggers write, so the read has to come from outside it.
+     */
+    const base = withAuditTrail(createMockApi())
+    const wired = withSupabaseAudit(base, { url: configured.VITE_SUPABASE_URL, anonKey: configured.VITE_SUPABASE_ANON_KEY })
+    // Against the same object. Two separately built clients share no method identity at all,
+    // so comparing those would pass whether anything were wired or not.
+    expect(wired.audit.list).not.toBe(base.audit.list)
+  })
+
+  it('keeps the gallery in the database', () => {
+    const base = createMockApi()
+    const wired = withSupabaseGallery(base, { url: configured.VITE_SUPABASE_URL, anonKey: configured.VITE_SUPABASE_ANON_KEY }, {})
+    const names = Object.keys(base.gallery) as (keyof typeof base.gallery)[]
+    expect(names.filter((name) => wired.gallery[name] === base.gallery[name])).toEqual([])
+  })
+
+  /*
+   * Feedback is the half-wired failure the inbox test above was written for, all over again
+   * and worse: the form writes to the real table, and a queue left on fixtures would show the
+   * committee four sample notes while what the public actually sent sat unread and unapproved
+   * — invisible, because sample data looks exactly like real data.
+   */
+  it('reads the feedback queue from the same table the form writes to', () => {
+    const base = createMockApi()
+    const wired = withSupabaseFeedback(base, { url: configured.VITE_SUPABASE_URL, anonKey: configured.VITE_SUPABASE_ANON_KEY })
+    const names = Object.keys(base.feedback) as (keyof typeof base.feedback)[]
+    expect(names.filter((name) => wired.feedback[name] === base.feedback[name])).toEqual([])
+  })
+
+  it('keeps events in the database, front of house being what this site owns', () => {
+    /*
+     * The committee's separate planner app holds the logistics — tasks, phases, who is bringing
+     * the urn. This holds what a visitor sees. They overlap on a title, a date and a venue and
+     * nowhere else, so this is the other half of the same evening, not a copy of the planner.
+     */
+    const base = createMockApi()
+    const wired = withSupabaseEvents(base, { url: configured.VITE_SUPABASE_URL, anonKey: configured.VITE_SUPABASE_ANON_KEY })
+    const names = Object.keys(base.events) as (keyof typeof base.events)[]
+    expect(names.filter((name) => wired.events[name] === base.events[name])).toEqual([])
+  })
+
+  /*
+   * Polls, quizzes and suggestions, every method of all three. Left half on fixtures, a member
+   * on the live site would vote, see their vote counted, and lose it on the next reload — and
+   * the committee would be approving sample suggestions while the real ones waited unseen.
+   */
+  it.each(['polls', 'quizzes', 'suggestions'] as const)('keeps %s in the database', (section) => {
+    const base = createMockApi()
+    const wired = withSupabasePlay(base, { url: configured.VITE_SUPABASE_URL, anonKey: configured.VITE_SUPABASE_ANON_KEY })
+    const names = Object.keys(base[section]) as (keyof (typeof base)[typeof section])[]
+    expect(names.length).toBeGreaterThan(0)
+    expect(names.filter((name) => wired[section][name] === base[section][name])).toEqual([])
+  })
+})

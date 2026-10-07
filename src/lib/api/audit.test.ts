@@ -1,0 +1,247 @@
+import { describe, expect, it } from 'vitest'
+import type { Viewer } from '@/domain/household'
+import { PIECE_MIN } from '@/domain/news'
+import { withAuditTrail } from './audit'
+import { createMockApi } from './mock'
+import type { ApiClient } from './types'
+
+const member: Viewer = { householdId: 'hh-sen', role: 'member' }
+const admin: Viewer = { householdId: 'hh-chatterjee', role: 'admin' }
+
+const api = () => withAuditTrail(createMockApi())
+
+/**
+ * Every method the contract has, found by looking rather than by remembering.
+ *
+ * The lists below are the decision, made once, about which methods change something and which
+ * only read. Adding anything to `ApiClient` without putting it in one of them fails this test —
+ * which is the only mechanism available here for the guarantee the database gets from a
+ * trigger. In Postgres nothing reaching the tables can avoid the trail; here, something can,
+ * so the something has to be caught at the door.
+ */
+const READS = [
+  'events.listUpcoming', 'events.listPast', 'events.getNext', 'events.getBySlug', 'events.listAll',
+  'festivals.list',
+  'gallery.listRecentMedia', 'gallery.listAlbums', 'gallery.getAlbum', 'gallery.listAllAlbums',
+  'news.listPosts', 'news.getPost', 'news.listAnnouncements', 'news.listNewsletters',
+  'news.listAllPosts', 'news.listAllAnnouncements',
+  'contact.listMessages',
+  'feedback.listApproved', 'feedback.listAll',
+  'portal.identify', 'portal.getHousehold', 'portal.listHouseholds',
+  'portal.listSignInAttempts', 'portal.exportHousehold', 'portal.listAttendance',
+  'audit.list', 'settings.get',
+  'volunteering.listOpenRoles', 'volunteering.listRolesForEvent',
+  'polls.list', 'polls.listAll',
+  'quizzes.list', 'quizzes.get', 'quizzes.leaderboard', 'quizzes.listAll', 'quizzes.attempts', 'quizzes.bank',
+  'suggestions.listMine', 'suggestions.listAll',
+]
+
+/** Writes that leave a line in the trail. */
+const AUDITED = [
+  'contact.markHandled', 'contact.deleteMessage',
+  'feedback.review', 'feedback.remove',
+  'portal.addHousehold', 'portal.updateHousehold', 'portal.deleteHousehold', 'portal.resolveSignInAttempt', 'portal.recordAttendance',
+  'gallery.createAlbum', 'gallery.updateAlbum', 'gallery.addMedia', 'gallery.setCover', 'gallery.setCaption',
+  'gallery.reorder', 'gallery.deleteMedia',
+  'settings.save', 'events.save', 'events.create', 'events.archive', 'events.remove',
+  'news.createPost', 'news.updatePost', 'news.removePost',
+  'news.createAnnouncement', 'news.updateAnnouncement', 'news.removeAnnouncement',
+  'polls.create', 'polls.update', 'polls.remove',
+  'quizzes.create', 'quizzes.update', 'quizzes.remove',
+  'quizzes.createQuestion', 'quizzes.updateQuestion', 'quizzes.removeQuestion',
+  'suggestions.review', 'suggestions.remove',
+]
+
+/**
+ * Writes that deliberately do not. `send` matches the trigger, which is attached to
+ * contact_messages for updates only: a line per visitor using the contact form would say
+ * nothing the table does not already say.
+ *
+ * A vote and a quiz play are left out for a stronger reason: a line per vote, naming the
+ * household, is exactly the list of who voted which way that an unnamed poll promises does not
+ * exist. polls-quizzes.sql puts no trigger on poll_votes or quiz_attempts for the same reason.
+ */
+const NOT_AUDITED = ['contact.send', 'feedback.send', 'polls.vote', 'quizzes.submit', 'suggestions.send']
+
+function methodsOf(client: ApiClient): string[] {
+  const found: string[] = []
+  for (const [group, value] of Object.entries(client)) {
+    if (typeof value !== 'object' || value === null) continue
+    for (const [name, member] of Object.entries(value)) {
+      if (typeof member === 'function') found.push(`${group}.${name}`)
+    }
+  }
+  return found.sort()
+}
+
+describe('the contract', () => {
+  it('has no method that nobody has decided about', () => {
+    const declared = [...READS, ...AUDITED, ...NOT_AUDITED].sort()
+    expect(methodsOf(api())).toEqual(declared)
+  })
+})
+
+describe('every audited write', () => {
+  /**
+   * The bug this catches was written three times before it was noticed.
+   *
+   * The mock changes rows in place. Hold the row, write, then read the "before" values off it
+   * and you get the new values twice, diff to nothing, and record nothing at all — a silently
+   * empty trail, which is the one failure an audit trail must not have. It is invisible: the
+   * write works, the screen updates, and only the line that was supposed to be kept is missing.
+   */
+  it('leaves a line behind, for each one', async () => {
+    const a = api()
+    const album = (await a.gallery.listAllAlbums(admin)).find((x) => x.media.length > 2)!
+    const post = await a.news.createPost(
+      { title: 'A first piece', excerpt: 'Something worth reading about.', body: 'x'.repeat(PIECE_MIN), tags: [], author: 'Someone', published: true },
+      admin,
+    )
+    const notice = await a.news.createAnnouncement(
+      { title: 'Doors at six', body: 'The hall opens at six on Saturday.', pinned: false, audience: 'public', publishAt: '', expiresAt: '' },
+      admin,
+    )
+
+    const writes: [string, () => Promise<unknown>][] = [
+      ['contact.markHandled', async () => {
+        const message = (await a.contact.listMessages(admin)).find((m) => !m.handledBy && m.kind !== 'photo')!
+        return a.contact.markHandled(message.id, admin)
+      }],
+      ['contact.deleteMessage', async () => {
+        // The last one, so it cannot take a message another write below still needs.
+        const messages = await a.contact.listMessages(admin)
+        return a.contact.deleteMessage(messages[messages.length - 1].id, admin)
+      }],
+      ['gallery.updateAlbum', () => a.gallery.updateAlbum(album.id, { title: 'A different name', visibility: 'public' }, admin)],
+      ['gallery.setCover', () => a.gallery.setCover(album.id, album.media[1].id, admin)],
+      ['gallery.setCaption', () => a.gallery.setCaption(album.media[0].id, 'A caption', admin)],
+      ['gallery.reorder', () => a.gallery.reorder(album.id, [...album.media].reverse().map((m) => m.id), admin)],
+      // After the reorder, not before: adding one makes `album.media` a partial list of the
+      // album, and reorder refuses a partial list on purpose.
+      ['gallery.addMedia', () => a.gallery.addMedia(album.id, { url: 'https://photos.13parbon.org.uk/full/added-99.jpg', thumbnailUrl: 'https://photos.13parbon.org.uk/thumb/added-99.jpg' }, admin)],
+      ['news.updatePost', () => a.news.updatePost(post.id, { title: post.title, excerpt: post.excerpt, body: post.body, tags: [], author: post.author, published: false }, admin)],
+      ['news.updateAnnouncement', () => a.news.updateAnnouncement(notice.id, { title: 'Doors at half five', body: notice.body, pinned: true, audience: 'public', publishAt: '', expiresAt: '' }, admin)],
+      ['news.removeAnnouncement', () => a.news.removeAnnouncement(notice.id, admin)],
+      // After the update above, which needs the piece to still be there.
+      ['news.removePost', () => a.news.removePost(post.id, admin)],
+      ['gallery.deleteMedia', () => a.gallery.deleteMedia(album.media[2].id, admin)],
+      ['polls.create', () => a.polls.create({ title: 'Tea or coffee?', detail: '', options: ['Tea', 'Coffee'], named: false, results: 'after_vote', opensAt: '', closesAt: '' }, admin)],
+      ['polls.update', () => a.polls.update('poll-draft', { title: 'Bengali class on Saturdays?', detail: '', options: ['Yes', 'No'], named: false, results: 'after_vote', opensAt: '', closesAt: '' }, admin)],
+      ['polls.remove', () => a.polls.remove('poll-draft', admin)],
+      ['quizzes.createQuestion', () => a.quizzes.createQuestion({ prompt: 'Two plus two?', options: ['3', '4'], correct: 1, explanation: '', tags: [], imageUrl: '', creditedTo: '' }, admin)],
+      ['quizzes.updateQuestion', () => a.quizzes.updateQuestion('q-kojagori', { prompt: 'Kojagori falls on which night?', options: ['The full moon after Durga Puja', 'The new moon of Kartik', 'The first night of Navaratri'], correct: 0, explanation: '', tags: [], imageUrl: '', creditedTo: '' }, admin)],
+      ['quizzes.create', () => a.quizzes.create({ title: 'A new quiz', intro: '', audience: 'members', opensAt: '', closesAt: '', questionIds: [] }, admin)],
+      ['quizzes.update', () => a.quizzes.update('quiz-draft', { title: 'Lakshmi Puja', intro: '', audience: 'members', opensAt: '', closesAt: '', questionIds: [] }, admin)],
+      ['quizzes.removeQuestion', () => a.quizzes.removeQuestion('q-kojagori', admin)],
+      ['quizzes.remove', () => a.quizzes.remove('quiz-draft', admin)],
+      ['suggestions.review', () => a.suggestions.review('sg-1', 'approved', admin)],
+      ['suggestions.remove', () => a.suggestions.remove('sg-2', admin)],
+    ]
+
+    for (const [name, run] of writes) {
+      const before = (await a.audit.list(admin, 1000)).length
+      await run()
+      const after = (await a.audit.list(admin, 1000)).length
+      expect(after, `${name} recorded nothing`).toBeGreaterThan(before)
+    }
+  })
+})
+
+describe('the audit trail', () => {
+  it('records a write without the caller asking it to', async () => {
+    const a = api()
+    const message = (await a.contact.listMessages(admin)).find((m) => !m.handledBy && m.kind !== 'photo')!
+    await a.contact.markHandled(message.id, admin)
+
+    const trail = await a.audit.list(admin)
+    expect(trail).toHaveLength(1)
+    expect(trail[0].action).toBe('messages:handle')
+    expect(trail[0].subject).toEqual({ kind: 'contact_messages', id: message.id })
+  })
+
+  it('keeps what the value was as well as what it became', async () => {
+    const a = api()
+    const message = (await a.contact.listMessages(admin)).find((m) => !m.handledBy && m.kind !== 'photo')!
+    await a.contact.markHandled(message.id, admin)
+
+    const [entry] = await a.audit.list(admin)
+    // The name rather than the id: this is what the inbox prints, and the trail should record
+    // what a reader would have seen. Who did it is kept separately, as `actorHouseholdId`.
+    expect(entry.changes.handledBy).toEqual({ from: undefined, to: 'The Chatterjees' })
+  })
+
+  it('names who did it', async () => {
+    const a = api()
+    const message = (await a.contact.listMessages(admin)).find((m) => !m.handledBy && m.kind !== 'photo')!
+    await a.contact.markHandled(message.id, admin)
+
+    const [entry] = await a.audit.list(admin)
+    expect(entry.actorHouseholdId).toBe('hh-chatterjee')
+    // And by name, because a uuid answers "who did this?" with something nobody can read. It is
+    // resolved on the way out rather than written down at the time, so a household renamed
+    // since reads as it is called now.
+    expect(entry.actor).toBe('The Chatterjees')
+  })
+
+  it('records nothing when the write was refused', async () => {
+    const a = api()
+    await expect(a.contact.markHandled('cm-1', member)).rejects.toThrow()
+    expect(await a.audit.list(admin)).toEqual([])
+  })
+
+  it('does not record a visitor using the contact form', async () => {
+    const a = api()
+    await a.contact.send({ name: 'A Visitor', email: 'v@example.com', subject: 'Hello', message: 'Long enough to pass.' })
+    expect(await a.audit.list(admin)).toEqual([])
+  })
+
+  it('keeps no line for a vote, a quiz played or a suggestion sent', async () => {
+    const a = api()
+    await a.polls.vote('poll-picnic', 0, member)
+    await a.quizzes.submit('quiz-words', [0, 1, 1], true, member)
+    await a.suggestions.send({ kind: 'poll', prompt: 'Film night in January?', options: ['Yes', 'No'], note: '', credit: false }, member)
+    expect(await a.audit.list(admin)).toEqual([])
+  })
+
+  it('is the committee\'s to read, and nobody else\'s', async () => {
+    const a = api()
+    const message = (await a.contact.listMessages(admin)).find((m) => !m.handledBy && m.kind !== 'photo')!
+    await a.contact.markHandled(message.id, admin)
+
+    expect(await a.audit.list(member)).toEqual([])
+    expect(await a.audit.list(null)).toEqual([])
+  })
+
+  it('writes no line for a change that changed nothing', async () => {
+    const a = api()
+    const message = (await a.contact.listMessages(admin)).find((m) => !m.handledBy && m.kind !== 'photo')!
+    await a.contact.markHandled(message.id, admin)
+    await a.contact.markHandled(message.id, admin)
+    // Twice, same value the second time. One line, not two.
+    expect(await a.audit.list(admin)).toHaveLength(1)
+  })
+
+  it('says what an erased household was, since nothing else will', async () => {
+    const a = api()
+    await a.portal.deleteHousehold('hh-sen', admin)
+
+    const [entry] = await a.audit.list(admin)
+    expect(entry.action).toBe('household:remove')
+    expect(entry.subject).toEqual({ kind: 'households', id: 'hh-sen' })
+    // Read before the row went: afterwards there is nothing left to describe.
+    expect(entry.changes.name.from).toBe('The Sens')
+    expect(entry.changes.name.to).toBeUndefined()
+  })
+
+  it('reads newest first, and stops where it is asked to', async () => {
+    const a = api()
+    const messages = await a.contact.listMessages(admin)
+    // A takedown needs a note, so it is left out of a test that is about ordering.
+    const unhandled = messages.filter((m) => !m.handledBy && m.kind !== 'photo').slice(0, 2)
+    for (const m of unhandled) await a.contact.markHandled(m.id, admin)
+
+    const trail = await a.audit.list(admin, 1)
+    expect(trail).toHaveLength(1)
+    expect((await a.audit.list(admin)).length).toBe(unhandled.length)
+  })
+})

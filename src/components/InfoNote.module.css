@@ -1,0 +1,79 @@
+.info + .info {
+  margin-top: 2px;
+}
+
+/* A quiet line, not a box: the page's own text colour, muted, with the accent on the icon. */
+.summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  width: fit-content;
+  max-width: 100%;
+  padding: 0 10px 0 6px;
+  margin-left: -6px;
+  border-radius: 8px;
+  color: var(--color-fg-muted);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+
+.summary::-webkit-details-marker {
+  display: none;
+}
+
+.summary:hover {
+  background: var(--color-hover-wash);
+  color: var(--color-fg);
+}
+
+.summary:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.icon {
+  flex-shrink: 0;
+  color: var(--color-accent);
+}
+
+.label {
+  min-width: 0;
+}
+
+.chevron {
+  flex-shrink: 0;
+  line-height: 1;
+  transition: transform var(--motion-fast, 150ms) ease;
+}
+
+.info[open] .chevron {
+  transform: rotate(180deg);
+}
+
+/* Opened, it reads as the note it used to be. */
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 4px 0 8px;
+  padding: 13px 16px;
+  border-radius: var(--portal-radius, 10px);
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-accent) 34%, transparent);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.body p {
+  margin: 0;
+  max-width: 70ch;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chevron {
+    transition: none;
+  }
+}

@@ -1,4 +1,4 @@
-import type { ThemeName } from './themes'
+import type { PublicThemeName, ThemeName } from './themes'
 import motion from './backdrops.module.css'
 
 type Props = { className?: string }
@@ -279,16 +279,173 @@ function Kash({ className }: Props) {
   )
 }
 
-const backdrops: Record<ThemeName, (props: Props) => React.JSX.Element> = {
+/** A point on a quadratic curve, for laying things along a drawn line. */
+function along(p0: readonly [number, number], c: readonly [number, number], p1: readonly [number, number], t: number) {
+  const u = 1 - t
+  return [u * u * p0[0] + 2 * u * t * c[0] + t * t * p1[0], u * u * p0[1] + 2 * u * t * c[1] + t * t * p1[1]] as const
+}
+
+/** One alpona footprint, heel at the origin, toes pointing up. */
+const FOOT =
+  'M0 0 c-7 0 -10 -9 -9 -20 c1 -11 5 -16 9 -16 c4 0 8 5 9 16 c1 11 -2 20 -9 20 Z ' +
+  'M-7 -42 a3 3 0 1 0 0.1 0 M-2 -45 a3 3 0 1 0 0.1 0 M3 -45 a3 3 0 1 0 0.1 0 M8 -42 a2.6 2.6 0 1 0 0.1 0'
+
+/** The full moon over drifting cloud, and Lakshmi's footprints walking in. Kojagori. */
+function Moon({ className }: Props) {
+  // Left, right, left, right: up from the bottom corner towards the door at the middle.
+  const steps = [
+    { x: 70, y: 372, turn: 28, side: -1 },
+    { x: 104, y: 338, turn: 32, side: 1 },
+    { x: 124, y: 296, turn: 26, side: -1 },
+    { x: 160, y: 266, turn: 34, side: 1 },
+    { x: 178, y: 222, turn: 24, side: -1 },
+    { x: 214, y: 196, turn: 36, side: 1 },
+  ]
+  return (
+    <svg viewBox="0 0 400 400" className={className} data-backdrop="moon" aria-hidden="true" focusable="false">
+      <g {...lines} className={motion.faint}>
+        <circle cx="292" cy="96" r="58" />
+        <circle cx="292" cy="96" r="74" strokeDasharray="2 10" />
+        <circle cx="272" cy="82" r="9" />
+        <circle cx="306" cy="112" r="6" />
+        <circle cx="314" cy="78" r="4" />
+        <g className={motion.cloud} data-animate="cloud">
+          <path d="M196 150 q4 -22 26 -18 q8 -18 30 -10 q20 -6 26 14 q20 2 16 18 h-98 q-12 -2 0 -4 Z" />
+        </g>
+        <g className={motion.cloudSlow} data-animate="cloud">
+          <path d="M30 70 q4 -18 22 -15 q8 -15 26 -8 q16 -4 22 12 q16 2 13 15 h-82 q-10 -2 -1 -4 Z" />
+        </g>
+        <g data-animate="steps">
+          {steps.map((step, i) => (
+            <g key={i} transform={`translate(${step.x} ${step.y}) rotate(${step.turn}) scale(${step.side} 1)`}>
+              <path className={motion.step} d={FOOT} style={{ animationDelay: `${i * 0.6}s` }} />
+            </g>
+          ))}
+        </g>
+        <path d="M300 388 c0 -40 -6 -70 -20 -96 M312 388 c2 -36 10 -62 26 -84 M324 388 c6 -30 18 -52 40 -66" />
+        <path d="M280 292 l-10 -14 M284 304 l-14 -8 M338 304 l6 -16 M344 316 l12 -10 M364 322 l4 -16 M368 330 l14 -6" />
+      </g>
+    </svg>
+  )
+}
+
+/** Diyas along the sill with their flames moving, and fireworks opening above. Deepavali. */
+function Diyas({ className }: Props) {
+  const lamps = [60, 140, 220, 300, 372]
+  const sparks = [
+    { x: 110, y: 90, r: 46 },
+    { x: 300, y: 70, r: 38 },
+    { x: 210, y: 150, r: 30 },
+  ]
+  return (
+    <svg viewBox="0 0 400 400" className={className} data-backdrop="diyas" aria-hidden="true" focusable="false">
+      <g {...lines} className={motion.faint}>
+        <path d="M0 360 H400" />
+        {lamps.map((x, i) => (
+          <g key={x} transform={`translate(${x} 344)`}>
+            <path d="M-30 0 q30 28 60 0 q-10 -6 -30 -6 q-20 0 -30 6 Z" />
+            <path d="M22 -2 l12 -8" />
+            <path
+              className={motion.flame}
+              data-animate="flame"
+              d="M0 -6 c-9 -10 -8 -24 0 -36 c8 12 9 26 0 36 Z"
+              fill="currentColor"
+              style={{ animationDelay: `${-i * 0.37}s` }}
+            />
+          </g>
+        ))}
+        {sparks.map((spark, i) => (
+          <g key={i} transform={`translate(${spark.x} ${spark.y})`}>
+            <g className={motion.spark} data-animate="spark" style={{ animationDelay: `${i * 1.3}s` }}>
+            {Array.from({ length: 12 }, (_, k) => {
+              const a = (k / 12) * Math.PI * 2
+              const inner = spark.r * 0.35
+              return (
+                <path
+                  key={k}
+                  d={`M${(Math.cos(a) * inner).toFixed(1)} ${(Math.sin(a) * inner).toFixed(1)} L${(Math.cos(a) * spark.r).toFixed(1)} ${(Math.sin(a) * spark.r).toFixed(1)}`}
+                />
+              )
+            })}
+              <circle r="3" fill="currentColor" stroke="none" />
+            </g>
+          </g>
+        ))}
+      </g>
+    </svg>
+  )
+}
+
+/** Two strings of fairy lights twinkling, a star, and a little snow. Borodin. */
+function Lights({ className }: Props) {
+  const swags = [
+    { from: [0, 70], via: [110, 160], to: [220, 60] },
+    { from: [180, 150], via: [300, 250], to: [400, 120] },
+  ] as const
+  return (
+    <svg viewBox="0 0 400 400" className={className} data-backdrop="lights" aria-hidden="true" focusable="false">
+      <g {...lines} className={motion.faint}>
+        <g className={motion.star} data-animate="star">
+          <path d="M330 30 l9 24 h25 l-20 15 l8 25 l-22 -15 l-22 15 l8 -25 l-20 -15 h25 Z" />
+        </g>
+        {swags.map((swag, s) => (
+          <g key={s}>
+            <path d={`M${swag.from.join(' ')} Q${swag.via.join(' ')} ${swag.to.join(' ')}`} />
+            {Array.from({ length: 9 }, (_, i) => {
+              const [x, y] = along(swag.from, swag.via, swag.to, (i + 0.5) / 9)
+              return (
+                <g key={i} transform={`translate(${x.toFixed(1)} ${y.toFixed(1)})`}>
+                  <path d="M-3 0 v5 h6 v-5" strokeWidth={1.5} />
+                  <ellipse
+                    className={motion.bulb}
+                    data-animate="bulb"
+                    cx="0"
+                    cy="13"
+                    rx="5.5"
+                    ry="8"
+                    fill="currentColor"
+                    style={{ animationDelay: `${((i * 7 + s * 3) % 9) * 0.35}s` }}
+                  />
+                </g>
+              )
+            })}
+          </g>
+        ))}
+        <g data-animate="snow">
+          {[40, 96, 150, 238, 282, 352].map((x, i) => (
+            <circle
+              key={x}
+              className={motion.flake}
+              cx={x}
+              cy="0"
+              r={i % 2 ? 3 : 4.5}
+              fill="currentColor"
+              stroke="none"
+              style={{ animationDelay: `${-i * 1.7}s` }}
+            />
+          ))}
+        </g>
+        <path d="M60 392 l30 -60 l30 60 Z M76 360 h28 M70 376 h40 M90 392 v8" />
+      </g>
+    </svg>
+  )
+}
+
+// The festivals only. The portal's own looks carry no motif: a drawn alpona behind a table of
+// names is the sort of decoration that makes a back office harder to read, not friendlier.
+const backdrops: Record<PublicThemeName, (props: Props) => React.JSX.Element> = {
   festival: Alpona,
   'poila-boishakh': Fish,
   saraswati: Veena,
   holi: Splash,
   mahalaya: Kash,
+  kojagori: Moon,
+  deepavali: Diyas,
+  borodin: Lights,
 }
 
 /** The decorative, gently animated motif behind the hero for the active theme. */
 export function Backdrop({ theme, className }: Props & { theme: ThemeName }) {
-  const Motif = backdrops[theme]
-  return <Motif className={className} />
+  const Motif = backdrops[theme as PublicThemeName]
+  return Motif ? <Motif className={className} /> : null
 }

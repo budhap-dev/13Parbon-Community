@@ -1,0 +1,383 @@
+import { describe, expect, it } from 'vitest'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { HouseholdDraft } from '@/domain/household'
+import { householdMethods, inboxMethods } from './portalData'
+
+/**
+ * A stand-in for PostgREST that records what was asked of it.
+ *
+ * The queries are the thing worth testing here — which schema, which table, which column — and
+ * they are also the part that fails silently. A wrong column name returns no rows rather than
+ * an error, and an empty screen looks the same as an empty account.
+ */
+function fakeClient(answers: Record<string, unknown> = {}, errors: Record<string, { code: string; message: string }> = {}) {
+  const calls: string[] = []
+  const chain = (table: string): Record<string, unknown> => {
+    const self: Record<string, unknown> = {}
+    for (const method of ['select', 'eq', 'order', 'in', 'insert', 'update', 'delete']) {
+      self[method] = (...args: unknown[]) => {
+        calls.push(`${table}.${method}(${args.map((a) => (typeof a === 'string' ? a : '…')).join(',')})`)
+        return self
+      }
+    }
+    const failure = errors[table] ?? null
+    self.maybeSingle = async () => ({ data: failure ? null : (answers[table] ?? null), error: failure })
+    self.single = async () => ({ data: failure ? null : (answers[table] ?? null), error: failure })
+    self.then = (resolve: (v: unknown) => unknown) => resolve({ data: failure ? [] : (answers[table] ?? []), error: failure })
+    return self
+  }
+  const client = {
+    schema: (name: string) => {
+      calls.push(`schema(${name})`)
+      return { from: (table: string) => chain(table) }
+    },
+  } as unknown as SupabaseClient
+  return { client, calls }
+}
+
+const draft: HouseholdDraft = {
+  name: 'The Sens',
+  contactName: 'Rina Sen',
+  email: 'rina@example.com',
+  people: [{ name: 'Rina Sen', ageGroup: 'adult' }],
+  interests: [],
+}
+
+describe('which database it talks to', () => {
+  it('asks the portal schema, never public', async () => {
+    const { client, calls } = fakeClient()
+    await householdMethods(async () => client).listHouseholds()
+    // public belongs to the committee's event planner, which has a people table of its own.
+    expect(calls).toContain('schema(portal)')
+    expect(calls.some((c) => c.includes('schema(public)'))).toBe(false)
+  })
+})
+
+describe('identifying somebody at sign-in', () => {
+  it('matches the address lowercased and trimmed', async () => {
+    const { client, calls } = fakeClient()
+    await householdMethods(async () => client).identify('  Rina.Sen@GMAIL.com ')
+    // Google returns whatever case the account was made in; the column stores it lowercased.
+    expect(calls).toContain('households.eq(google_email,rina.sen@gmail.com)')
+  })
+
+  it('returns nothing for an address with no household', async () => {
+    const { client } = fakeClient()
+    expect(await householdMethods(async () => client).identify('stranger@example.com')).toBeNull()
+  })
+
+  it('throws when the lookup fails, rather than answering that there is no household', async () => {
+    // "No household" sends somebody to be told the committee has never heard of them, which is
+    // not what a dropped connection means.
+    const { client } = fakeClient({}, { households: { code: '', message: 'fetch failed' } })
+    await expect(householdMethods(async () => client).identify('rina.sen@gmail.com')).rejects.toThrow(
+      'Your household could not be looked up: fetch failed',
+    )
+  })
+})
+
+describe('reading a household', () => {
+  it('asks for the people alongside it, in one request', async () => {
+    const { client, calls } = fakeClient()
+    await householdMethods(async () => client).getHousehold('hh-1')
+    expect(calls).toContain('households.select(*,people(*))')
+  })
+
+  it('says the household could not be read, rather than that it is not there, when the read fails', async () => {
+    const { client } = fakeClient({}, { households: { code: 'PGRST301', message: 'JWT expired' } })
+    await expect(householdMethods(async () => client).getHousehold('hh-1')).rejects.toThrow('The household could not be read: JWT expired')
+    await expect(householdMethods(async () => client).listHouseholds()).rejects.toThrow('The households could not be read: JWT expired')
+  })
+
+  it('answers "not there" for one the policies hide', async () => {
+    // A household somebody may not see comes back as no rows, exactly as a missing one does.
+    // Telling those two apart would itself be a leak.
+    const { client } = fakeClient()
+    expect(await householdMethods(async () => client).getHousehold('hh-someone-else')).toBeNull()
+  })
+})
+
+describe('saving the people of a household', () => {
+  it('puts the new ones in before taking the old ones out', async () => {
+    // With people already there: nothing is deleted otherwise, and the order cannot be seen.
+    const { client, calls } = fakeClient({ households: { id: 'hh-1' }, people: [{ id: 'p-old' }] })
+    await householdMethods(async () => client).updateHousehold('hh-1', draft, { householdId: 'hh-1', role: 'member' })
+
+    const insert = calls.findIndex((c) => c.startsWith('people.insert'))
+    const remove = calls.findIndex((c) => c.startsWith('people.delete'))
+    // There is no transaction across two PostgREST calls. Delete-then-fail loses a family's
+    // details; insert-then-fail lists everybody twice, which somebody can fix in a minute.
+    expect(insert).toBeGreaterThan(-1)
+    expect(remove).toBeGreaterThan(insert)
+  })
+
+  /**
+   * None of the three steps used to be checked. A read that failed looked like nobody, so
+   * nothing old was deleted; a delete that failed or matched nothing did the same; and either
+   * way everybody was listed twice under a screen that said it had saved.
+   */
+  describe('when a step fails', () => {
+    type Outcome = { data?: unknown; error?: { code?: string; message: string } | null }
+    function peopleClient(outcomes: { read?: Outcome; insert?: Outcome; remove?: Outcome[] }) {
+      const deletes: unknown[][] = []
+      const removes = [...(outcomes.remove ?? [])]
+      const chain = (tableName: string) => {
+        let verb = ''
+        let ids: unknown[] = []
+        const self: Record<string, unknown> = {}
+        for (const method of ['select', 'eq', 'order', 'insert', 'update', 'delete']) {
+          self[method] = () => {
+            verb ||= method
+            return self
+          }
+        }
+        self.in = (_column: string, values: unknown[]) => {
+          ids = values
+          return self
+        }
+        const answer = (): Outcome => {
+          if (tableName === 'households') return { data: { id: 'hh-1' } }
+          if (verb === 'select') return outcomes.read ?? { data: [{ id: 'p-old' }] }
+          if (verb === 'insert') return outcomes.insert ?? { data: [{ id: 'p-new' }] }
+          if (verb === 'delete') {
+            deletes.push(ids)
+            return removes.shift() ?? { data: ids.map((id) => ({ id })) }
+          }
+          return { data: null }
+        }
+        self.maybeSingle = async () => ({ error: null, ...answer() })
+        self.single = self.maybeSingle
+        self.then = (resolve: (v: unknown) => unknown) => resolve({ error: null, ...answer() })
+        return self
+      }
+      const client = { schema: () => ({ from: chain }) } as unknown as SupabaseClient
+      return { client, deletes }
+    }
+    const save = (client: SupabaseClient) =>
+      householdMethods(async () => client).updateHousehold('hh-1', draft, { householdId: 'hh-1', role: 'member' })
+
+    it('stops before writing anything when the people cannot be read', async () => {
+      const { client, deletes } = peopleClient({ read: { data: null, error: { message: 'JWT expired' } } })
+      await expect(save(client)).rejects.toThrow(/JWT expired/)
+      expect(deletes).toEqual([])
+    })
+
+    it('takes the new people back out when the old ones will not go', async () => {
+      const { client, deletes } = peopleClient({ remove: [{ data: null, error: { message: 'connection failure' } }] })
+      await expect(save(client)).rejects.toThrow(/connection failure/)
+      expect(deletes).toEqual([['p-old'], ['p-new']])
+    })
+
+    it('treats a delete the policy matched nothing of as a failure, not a success', async () => {
+      const { client, deletes } = peopleClient({ remove: [{ data: [] }] })
+      await expect(save(client)).rejects.toThrow(/could not be saved/)
+      expect(deletes).toEqual([['p-old'], ['p-new']])
+    })
+
+    it('says plainly when even putting it back fails', async () => {
+      const { client } = peopleClient({
+        remove: [{ data: null, error: { message: 'connection failure' } }, { error: { message: 'still down' } }],
+      })
+      await expect(save(client)).rejects.toThrow(/listed twice\. Reload to check/)
+    })
+  })
+
+  it('refuses a household with nobody grown up in it before asking the database', async () => {
+    const { client, calls } = fakeClient()
+    const children: HouseholdDraft = { ...draft, people: [{ name: 'Mira', ageGroup: 'child', age: 7 }] }
+    await expect(
+      householdMethods(async () => client).addHousehold(children, { householdId: 'x', role: 'admin' }),
+    ).rejects.toThrow(/not complete/i)
+    expect(calls).toEqual([])
+  })
+
+  /*
+   * One sign-in address, one household — a partial unique index, and deliberate. But the clash
+   * arrived on screen as `duplicate key value violates unique constraint
+   * "households_google_email_idx"`, which is Postgres talking to a committee member who has no
+   * reason to know what an index is. Albums, news and events had all been given a sentence for
+   * this weeks ago; households was the one nobody had come back to.
+   */
+  it('says who the address belongs to rather than naming the index', async () => {
+    const { client } = fakeClient({}, {
+      households: {
+        code: '23505',
+        message: 'duplicate key value violates unique constraint "households_google_email_idx"',
+      },
+    })
+    await expect(
+      householdMethods(async () => client).addHousehold(draft, { householdId: 'x', role: 'admin' }),
+    ).rejects.toThrow(/already signs in as another household/)
+  })
+
+  it('says the general thing for a clash it does not recognise', async () => {
+    const { client } = fakeClient({}, {
+      households: { code: '23505', message: 'duplicate key value violates unique constraint "something_else_idx"' },
+    })
+    await expect(
+      householdMethods(async () => client).addHousehold(draft, { householdId: 'x', role: 'admin' }),
+    ).rejects.toThrow(/already a record with those details/)
+  })
+})
+
+
+/**
+ * The committee's inbox.
+ *
+ * Worth its own block because the visitor's half of this table and the committee's half are in
+ * different files, under different keys, and were out of step: the website wrote real messages
+ * to the database while this screen went on showing fixtures, so nothing a visitor sent ever
+ * reached the people it was addressed to.
+ */
+describe('the inbox', () => {
+  const row = (over: Partial<Record<string, unknown>> = {}) => ({
+    id: 'cm-1',
+    name: 'A Visitor',
+    email: 'v@example.com',
+    subject: 'Parking',
+    message: 'Where do we park?',
+    kind: 'general',
+    handled_by: null,
+    handled_note: null,
+    created_at: '2026-09-01T10:00:00Z',
+    ...over,
+  })
+
+  it('reads the portal schema, not public', async () => {
+    const { client, calls } = fakeClient()
+    await inboxMethods(async () => client).listMessages()
+    expect(calls).toContain('schema(portal)')
+    expect(calls.some((c) => c.startsWith('contact_messages.select'))).toBe(true)
+  })
+
+  it('says the messages could not be read, rather than showing an empty inbox, when the read fails', async () => {
+    const { client } = fakeClient({}, { contact_messages: { code: '', message: 'fetch failed' } })
+    await expect(inboxMethods(async () => client).listMessages()).rejects.toThrow('The messages could not be read: fetch failed')
+  })
+
+  it('still shows an empty inbox when nobody has written', async () => {
+    const { client } = fakeClient()
+    expect(await inboxMethods(async () => client).listMessages()).toEqual([])
+  })
+
+  it('puts takedowns nobody has dealt with at the top', async () => {
+    const { client } = fakeClient({
+      contact_messages: [
+        row({ id: 'newest', created_at: '2026-09-09T10:00:00Z' }),
+        row({ id: 'handled-takedown', kind: 'photo', handled_by: 'The Chatterjees', handled_note: 'Deleted it' }),
+        row({ id: 'waiting-takedown', kind: 'photo', created_at: '2026-09-02T10:00:00Z' }),
+      ],
+    })
+    const messages = await inboxMethods(async () => client).listMessages()
+    // Older than the other two, and still first: a request to take a child's photograph down
+    // is not something to read in the order it happened to arrive.
+    expect(messages.map((m) => m.id)).toEqual(['waiting-takedown', 'newest', 'handled-takedown'])
+  })
+
+  it('leaves handledBy off entirely when nobody has, rather than setting it empty', async () => {
+    const { client } = fakeClient({ contact_messages: [row()] })
+    const [message] = await inboxMethods(async () => client).listMessages()
+    // Every screen asks `message.handledBy ? …`, and the unread count is built from it.
+    expect('handledBy' in message).toBe(false)
+    expect('handledNote' in message).toBe(false)
+  })
+
+  it('records who dealt with it by name, because that is what the screen prints', async () => {
+    const { client, calls } = fakeClient({
+      households: { name: 'The Chatterjees' },
+      contact_messages: row({ handled_by: 'The Chatterjees' }),
+    })
+    const updated = await inboxMethods(async () => client).markHandled('cm-1', { householdId: 'hh-chatterjee', role: 'admin' })
+
+    expect(updated.handledBy).toBe('The Chatterjees')
+    expect(calls).toContain('households.select(name)')
+  })
+
+  it('turns the takedown rule into a sentence a person can read', async () => {
+    // The database refuses this with a check constraint, so the note cannot be skipped by
+    // anything that talks to the table — including a request this app never made.
+    const { client } = fakeClient({ households: { name: 'The Chatterjees' } }, {
+      contact_messages: { code: '23514', message: 'new row violates check constraint "contact_messages_takedown_note_check"' },
+    })
+    await expect(
+      inboxMethods(async () => client).markHandled('cm-1', { householdId: 'hh-chatterjee', role: 'admin' }),
+    ).rejects.toThrow(/what happened to the photograph/)
+  })
+
+  it('refuses when the policy matched nothing, the same as when it is not there', async () => {
+    const { client } = fakeClient({ households: { name: 'The Sens' } })
+    await expect(
+      inboxMethods(async () => client).markHandled('cm-1', { householdId: 'hh-sen', role: 'member' }),
+    ).rejects.toThrow(/no such message/)
+  })
+})
+
+describe('the household the rest of the committee cannot remove', () => {
+  /*
+   * The database refuses with a sentence of its own, under a code of its own (45002). The
+   * adapter's job is to hand that sentence on untouched: it says what cannot be done and not
+   * why, and the app knows no more than that.
+   */
+  it('hands on the sentence the database gave when a removal is refused', async () => {
+    const { client } = fakeClient({}, { households: { code: '45002', message: 'That household cannot be removed.' } })
+    await expect(householdMethods(async () => client).deleteHousehold('hh-1')).rejects.toThrow(
+      'That household cannot be removed.',
+    )
+  })
+
+  it('does the same when a role or a sign-in address will not change', async () => {
+    const { client } = fakeClient(
+      {},
+      { households: { code: '45002', message: "That household's role and sign-in address cannot be changed." } },
+    )
+    await expect(
+      householdMethods(async () => client).updateHousehold('hh-1', draft, { householdId: 'hh-2', role: 'admin' }),
+    ).rejects.toThrow(/role and sign-in address cannot be changed/)
+  })
+})
+
+describe('the copy a household asks for', () => {
+  const householdRow = {
+    id: 'hh-sen',
+    name: 'The Sens',
+    contact_name: 'Rina Sen',
+    email: 'rina@example.com',
+    phone: null,
+    google_email: 'rina.sen@gmail.com',
+    interests: [],
+    member_since: '2024-03-01',
+    membership_status: 'active',
+    membership_paid_to: null,
+    role: 'member',
+    people: [],
+  }
+
+  it('includes their votes, quiz scores and suggestions, by household', async () => {
+    const { client, calls } = fakeClient({
+      households: householdRow,
+      poll_votes: [
+        { option: 1, voted_at: '2026-09-02T10:00:00Z', polls: { title: 'Which Sunday?', options: ['18th', '25th'] } },
+        { option: 0, voted_at: '2026-09-01T10:00:00Z', polls: null },
+      ],
+      quiz_attempts: [{ score: 2, total: 3, show_name: false, played_at: '2026-09-03T10:00:00Z', quizzes: [{ title: 'Bengali words' }] }],
+      suggestions: [{ kind: 'poll', prompt: 'Film night?', status: 'pending', created_at: '2026-09-01T10:00:00Z' }],
+    })
+    const copy = await householdMethods(async () => client).exportHousehold('hh-sen')
+    expect(copy.votes).toEqual([
+      { poll: 'Which Sunday?', choice: '25th', votedAt: '2026-09-02T10:00:00Z' },
+      { poll: 'A poll since deleted', choice: 'Choice 1', votedAt: '2026-09-01T10:00:00Z' },
+    ])
+    expect(copy.quizScores).toEqual([{ quiz: 'Bengali words', score: 2, total: 3, shownOnLeaderboard: false, playedAt: '2026-09-03T10:00:00Z' }])
+    expect(copy.suggestions).toEqual([{ kind: 'poll', prompt: 'Film night?', status: 'pending', sentAt: '2026-09-01T10:00:00Z' }])
+    for (const table of ['poll_votes', 'quiz_attempts', 'suggestions']) expect(calls).toContain(`${table}.eq(household_id,hh-sen)`)
+    expect(copy.notes.some((n) => /committee included/.test(n))).toBe(true)
+  })
+
+  it('fails the whole copy when one part of it cannot be read, rather than leaving that part empty', async () => {
+    // An export with the votes quietly missing tells a household we hold less than we do.
+    const { client } = fakeClient({ households: householdRow }, { poll_votes: { code: '', message: 'fetch failed' } })
+    await expect(householdMethods(async () => client).exportHousehold('hh-sen')).rejects.toThrow(
+      "The household's votes could not be read: fetch failed",
+    )
+  })
+})

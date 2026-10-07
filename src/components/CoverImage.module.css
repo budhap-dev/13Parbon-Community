@@ -1,0 +1,231 @@
+.frame {
+  position: relative;
+  overflow: hidden;
+  background: var(--tint, rgba(0, 0, 0, 0.06));
+}
+
+.image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* The frame clips, so a moving photograph never pushes the page about. */
+  will-change: transform;
+}
+
+.image[data-ready] {
+  will-change: auto;
+}
+
+/*
+ * Each movement has two parts. Its first frame holds from the start — nothing yet, for a fade —
+ * and the movement itself plays only once `data-ready` says the photograph has arrived.
+ *
+ * Every one keeps the photograph covering the frame at every moment: wherever it moves, it has
+ * first been made large enough that no edge of the tint behind can show.
+ */
+
+/* ---- Once, as the page opens ---------------------------------------------------------- */
+
+.fade {
+  opacity: 0;
+}
+
+.fade[data-ready] {
+  animation: fade 1.5s ease-out both;
+}
+
+.rise {
+  opacity: 0;
+}
+
+/* Settles up into place while it fades in. Scaled a little first, so the move never shows a gap. */
+.rise[data-ready] {
+  animation: rise 1.4s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+/*
+ * Into colour: the sweep from the theme's then-and-now photographs. One property drives the
+ * clip and the seam together, so they cannot part company; it has to be registered to animate.
+ * Before the photograph arrives it is all black and white, and the sweep starts from the left.
+ */
+@property --cover-seam {
+  syntax: '<percentage>';
+  inherits: true;
+  initial-value: 0%;
+}
+
+.sweep {
+  --cover-seam: 0%;
+}
+
+.sweep[data-ready] {
+  animation: sweep 3.6s cubic-bezier(0.45, 0, 0.25, 1) 0.2s both;
+}
+
+.then {
+  filter: grayscale(1) contrast(1.06) brightness(0.94);
+}
+
+.now {
+  position: absolute;
+  inset: 0;
+  clip-path: inset(0 calc(100% - var(--cover-seam)) 0 0);
+}
+
+/* The line the colour travels behind; it goes once the colour has reached the far side. */
+.seam {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--cover-seam);
+  width: 2px;
+  margin-left: -1px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.35);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.sweep[data-ready] .seam {
+  animation: seam 3.6s cubic-bezier(0.45, 0, 0.25, 1) 0.2s both;
+}
+
+/* ---- Keeps moving, slowly ------------------------------------------------------------- *
+ * Linear, so the movement can be seen from the first seconds: eased in, the first quarter of
+ * a twelve-second zoom moved the photograph by about one per cent, which nobody would notice
+ * before they had scrolled past it.
+ */
+
+.zoom[data-ready] {
+  animation: zoom 12s linear infinite alternate;
+}
+
+.drift {
+  /* Wider than the frame, so there is somewhere to travel to. */
+  width: 115%;
+  max-width: none;
+}
+
+.drift[data-ready] {
+  animation: drift 14s linear infinite alternate;
+}
+
+.kenburns[data-ready] {
+  animation: kenburns 16s linear infinite alternate;
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+    transform: scale(1.03);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(3%) scale(1.08);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes sweep {
+  from {
+    --cover-seam: 0%;
+  }
+  to {
+    --cover-seam: 100%;
+  }
+}
+
+@keyframes seam {
+  0% {
+    opacity: 0;
+  }
+  8%,
+  88% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes zoom {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.15);
+  }
+}
+
+/* 115% wide, moved by 15/115 of itself: its right edge lands exactly on the frame's. */
+@keyframes drift {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-13.04%);
+  }
+}
+
+/* Zoom and travel together. The scale always leaves more overhang than the travel uses. */
+@keyframes kenburns {
+  from {
+    transform: scale(1.06) translate(0, 0);
+  }
+  to {
+    transform: scale(1.2) translate(-3%, -2%);
+  }
+}
+
+/*
+ * Somebody who has asked their machine for less movement gets the photograph and nothing else.
+ *
+ * index.css already shortens every animation to a hair, which stops the motion but leaves each
+ * one on its last frame — a zoom would sit permanently zoomed in, a drift permanently shoved to
+ * one side. So these are turned off properly rather than hurried, first frames included: a
+ * fade's first frame is an empty box.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .fade,
+  .rise,
+  .zoom,
+  .drift,
+  .kenburns {
+    animation: none !important;
+    transform: none;
+    filter: none;
+    opacity: 1;
+    width: 100%;
+  }
+
+  /* Into colour is simply the photograph in colour. */
+  .sweep,
+  .sweep[data-ready] {
+    --cover-seam: 100%;
+    animation: none !important;
+  }
+
+  .seam {
+    display: none;
+  }
+}
+
+.empty {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  font-size: 13px;
+  opacity: 0.6;
+}

@@ -70,6 +70,39 @@ describe('EventPage', () => {
     expect(screen.queryByRole('region', { name: 'Would you like to perform?' })).not.toBeInTheDocument()
   })
 
+  /*
+   * The morning after. The evening is over but nobody has pressed Archive yet, which is the
+   * ordinary state of a Sunday: the page used to answer "Now — happening now" to anybody who
+   * opened it, for as long as it took somebody to file the evening.
+   */
+  it('says an evening has happened once its date has passed, archived or not', async () => {
+    renderWithProviders(
+      <Routes>
+        <Route path="/events/:slug" element={<EventPage />} />
+      </Routes>,
+      { route: '/events/mahalaya-cultural-programme-2026', now: new Date('2026-10-11T09:00:00') },
+    )
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Cultural programme' })).toBeInTheDocument()
+    expect(screen.getByText('This evening has happened.')).toBeInTheDocument()
+    expect(screen.queryByText(/days to go/)).not.toBeInTheDocument()
+    expect(screen.queryByText('happening now')).not.toBeInTheDocument()
+  })
+
+  it('counts down on the day itself rather than calling it past', async () => {
+    renderWithProviders(
+      <Routes>
+        <Route path="/events/:slug" element={<EventPage />} />
+      </Routes>,
+      // Ten in the morning, four and a half hours before the doors. Still today all day, and
+      // still today at eight in the evening once everybody has gone home.
+      { route: '/events/mahalaya-cultural-programme-2026', now: new Date('2026-10-10T10:00:00') },
+    )
+
+    expect(await screen.findByText('Today')).toBeInTheDocument()
+    expect(screen.queryByText('This evening has happened.')).not.toBeInTheDocument()
+  })
+
   it('says there is nothing to book when the event has no form', async () => {
     renderEvent('saraswati-puja-2027')
     expect(await screen.findByRole('heading', { level: 1, name: 'Saraswati Puja' })).toBeInTheDocument()

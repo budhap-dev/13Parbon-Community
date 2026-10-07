@@ -18,13 +18,22 @@ body {
   min-height: 100vh;
   font-family: var(--font-body);
   color: var(--color-fg);
-  /* A soft accent glow in the top corner over a gentle top-to-bottom shift. Solid colour as the fallback. */
+  /*
+   * The theme's own texture, then a soft accent glow in the top corner over a gentle
+   * top-to-bottom shift. Solid colour as the fallback. The textures are in tokens.css.
+   */
   background-color: var(--color-bg);
   background-image:
+    var(--bg-texture-a, none),
+    var(--bg-texture-b, none),
     radial-gradient(1100px 640px at 88% -8%, var(--color-bg-glow), transparent 65%),
     linear-gradient(180deg, var(--color-bg-top) 0%, var(--color-bg) 45%, var(--color-bg-bottom) 100%);
-  background-repeat: no-repeat;
-  background-size: 100% 100%;
+  background-repeat: repeat, repeat, no-repeat, no-repeat;
+  background-size:
+    var(--bg-texture-a-size, auto),
+    var(--bg-texture-b-size, auto),
+    100% 100%,
+    100% 100%;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   transition:
@@ -73,6 +82,74 @@ ul {
 
 button {
   font: inherit;
+}
+
+/*
+ * Dropdowns.
+ *
+ * The list a native <select> opens belongs to the operating system, not to the page, and a
+ * current Mac draws it as glass: see-through, and in the system's colours rather than the
+ * theme's. Over the portal's light forms that was a dark, translucent list with the field's own
+ * text showing through it, and nothing in a stylesheet can reach it.
+ *
+ * `base-select` hands the list to the page instead, so it is opaque and in the theme. A browser
+ * without it skips this whole block and keeps its native menu, which is what everybody had
+ * before.
+ */
+@supports (appearance: base-select) {
+  select,
+  select::picker(select) {
+    appearance: base-select;
+  }
+
+  select {
+    align-items: center;
+    cursor: pointer;
+  }
+
+  select::picker-icon {
+    margin-inline-start: auto;
+    opacity: 0.7;
+    transition: rotate var(--motion-fast) ease;
+  }
+
+  select:open::picker-icon {
+    rotate: 180deg;
+  }
+
+  select::picker(select) {
+    margin-block: 6px;
+    padding: 4px;
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    /* A solid colour in every theme, which is the whole point of the block. */
+    background: var(--color-bg-raised);
+    color: var(--color-fg);
+    box-shadow: 0 14px 36px rgba(0, 0, 0, 0.28);
+  }
+
+  select option {
+    min-height: 44px;
+    padding: 0 12px;
+    border-radius: 8px;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+  }
+
+  select option:hover,
+  select option:focus-visible {
+    background: var(--color-hover-wash);
+  }
+
+  select option:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: -2px;
+  }
+
+  select option:checked {
+    font-weight: 700;
+  }
 }
 
 /* Visually hidden, still read by screen readers. */

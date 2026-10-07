@@ -10,6 +10,8 @@ export type IconName =
   | 'facebook'
   | 'instagram'
   | 'whatsapp'
+  | 'youtube'
+  | 'link'
   | 'palette'
   | 'check'
   | 'home'
@@ -28,6 +30,12 @@ export type IconName =
   | 'sparkle'
   | 'badge'
   | 'share'
+  | 'image'
+  | 'trash'
+  | 'logout'
+  | 'search'
+  | 'info'
+  | 'help'
 
 const paths: Record<IconName, ReactElement> = {
   users: (
@@ -57,6 +65,19 @@ const paths: Record<IconName, ReactElement> = {
     </>
   ),
   whatsapp: <path d="M21 11.5a8.4 8.4 0 0 1-12.6 7.3L3 21l2.2-5.4A8.5 8.5 0 1 1 21 11.5z" />,
+  youtube: (
+    <>
+      <rect x="2" y="5" width="20" height="14" rx="4" />
+      <path d="M10 9l5 3-5 3z" />
+    </>
+  ),
+  // For a channel there is no drawing of: a chain link, which says "this goes somewhere".
+  link: (
+    <>
+      <path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1" />
+      <path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" />
+    </>
+  ),
   palette: (
     <>
       <path d="M12 3a9 9 0 0 0 0 18h1.5a2.5 2.5 0 0 0 0-5H12a2 2 0 0 1 0-4h2.5A6.5 6.5 0 0 0 12 3z" />
@@ -155,6 +176,47 @@ const paths: Record<IconName, ReactElement> = {
     </>
   ),
   message: <path d="M4 5h16v12H8l-4 4z" />,
+  trash: (
+    <>
+      <path d="M4 7h16M10 7V5h4v2M6 7l1 13h10l1-13" />
+      <path d="M10 11v6M14 11v6" />
+    </>
+  ),
+  // A framed picture with a hill and a sun in it, which is what a photograph looks like at 18px.
+  image: (
+    <>
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <circle cx="8.5" cy="10" r="1.5" />
+      <path d="M21 16l-5-5-6 6" />
+    </>
+  ),
+  logout: (
+    <>
+      <path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3" />
+      <path d="M10 17l-5-5 5-5" />
+      <path d="M5 12h11" />
+    </>
+  ),
+  search: (
+    <>
+      <circle cx="11" cy="11" r="6.5" />
+      <path d="M20 20l-4.4-4.4" />
+    </>
+  ),
+  info: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 11v5.5" />
+      <path d="M12 7.6v.01" />
+    </>
+  ),
+  help: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M9.5 9.5a2.5 2.5 0 0 1 4.9.7c0 1.7-2.4 2.1-2.4 3.6" />
+      <path d="M12 17v.01" />
+    </>
+  ),
   external: (
     <>
       <path d="M14 4h6v6" />

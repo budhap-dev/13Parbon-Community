@@ -9,11 +9,12 @@ describe('when the data does not arrive', () => {
   it('tells the viewer instead of loading for ever, and offers another go', async () => {
     renderWithProviders(<EventsPage />, { route: '/events', api: createFailingApi() })
 
-    const alert = await screen.findByRole('alert')
-    expect(alert).toHaveTextContent('We could not load the calendar just now.')
+    // The calendar and the earlier evenings each say so, rather than one hiding the other.
+    const alert = await screen.findByText('We could not load the calendar just now.')
+    expect(alert.closest('[role="alert"]')).not.toBeNull()
     // The loading state must be gone: waiting on something that is never coming is the bug.
     expect(screen.queryByText('Loading the calendar…')).not.toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: 'Try again' }))
+    await userEvent.click(screen.getAllByRole('button', { name: 'Try again' })[0])
   })
 
   it('does not pass off an unreachable event as one that does not exist', async () => {

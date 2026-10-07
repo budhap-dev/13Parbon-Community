@@ -1,3 +1,4 @@
+import type { CoverAnimation } from './cover'
 export type EventStatus = 'draft' | 'published' | 'cancelled' | 'past'
 
 export type Event = {
@@ -33,7 +34,6 @@ export type Event = {
    * the contact page instead.
    */
   performerFormUrl?: string
-  householdsRegistered: number
   /**
    * The theme the committee has set for the programme. Written in Bengali, with a plain
    * English rendering so it reads to everyone: nobody has to be Bengali to come.
@@ -44,6 +44,23 @@ export type Event = {
     bengaliSubtitle?: string
     english?: string
   }
+  /**
+   * The picture that fronts the event on the home page and its own page.
+   *
+   * In the bucket like every other photograph, never in the repository — an event cover is
+   * usually a picture of last year's evening, with members' faces in it.
+   */
+  coverImageUrl?: string
+  /** How the cover behaves. Absent is still. */
+  coverAnimation?: CoverAnimation
+  /**
+   * The running order: what happens when.
+   *
+   * "Speakers" is the wrong word for this community — nobody is booked. The stage is filled by
+   * members who put their names down, which is what `performerCall` asks for, so this is a
+   * programme rather than a line-up.
+   */
+  programme?: { time: string; what: string }[]
   /** A plain request for helpers, shown with registration. No slots: people mention it when they register. */
   volunteerCall?: string
   /**
@@ -53,4 +70,168 @@ export type Event = {
    */
   performerCall?: string
   status: EventStatus
+}
+
+/**
+ * The parts of an event this site owns.
+ *
+ * The committee's planner app holds the logistics — tasks, teams, who is bringing the urn. This
+ * is front of house: what somebody sees when they arrive wondering what is on. The two overlap
+ * only on the title, the date and the venue, so the design screen is not a second copy of the
+ * planner so much as the other half of the same evening.
+ */
+export type EventDraft = {
+  title: string
+  summary: string
+  /** ISO 8601, as a datetime-local input gives it. */
+  startsAt: string
+  endsAt: string
+  venue: string
+  venueAddress: string
+  coordinates: { lat: number; lon: number } | null
+  /**
+   * Which of the year's festivals this evening is, by its id. Empty is none of them.
+   *
+   * It is what marks a festival "Next up" on the home page and what the filter on Events
+   * sorts by — and until the form asked for it, the only way to set it was in the database.
+   */
+  festivalId: string
+  coverImageUrl: string
+  coverAnimation: CoverAnimation
+  theme: { bengali: string; bengaliSubtitle: string; english: string }
+  programme: { time: string; what: string }[]
+  registrationUrl: string
+  performerFormUrl: string
+  registrationOpen: boolean
+  volunteerCall: string
+  performerCall: string
+  status: EventStatus
+  isPublic: boolean
+}
+
+export type EventErrors = Partial<Record<'title' | 'summary' | 'startsAt' | 'venue' | 'registrationUrl' | 'coverImageUrl', string>>
+
+const URL_LIKE = /^https?:\/\/\S+$/
+
+export function validateEvent(draft: EventDraft): EventErrors {
+  const errors: EventErrors = {}
+  if (draft.title.trim().length < 3) errors.title = 'Give the evening a name.'
+  if (draft.summary.trim().length < 10) errors.summary = 'A line for somebody deciding whether to come.'
+  if (!draft.startsAt) errors.startsAt = 'When does it start?'
+  if (draft.endsAt && draft.endsAt <= draft.startsAt) errors.startsAt = 'It cannot finish before it starts.'
+  if (draft.venue.trim().length < 2) errors.venue = 'Where is it?'
+
+  // A broken booking link is worse than none: the button still looks like it works.
+  if (draft.registrationUrl.trim() && !URL_LIKE.test(draft.registrationUrl.trim())) {
+    errors.registrationUrl = 'That does not look like a web address.'
+  }
+  if (draft.coverImageUrl.trim() && !URL_LIKE.test(draft.coverImageUrl.trim())) {
+    errors.coverImageUrl = 'That does not look like a web address.'
+  }
+  return errors
+}
+
+export function isValidEvent(draft: EventDraft): boolean {
+  return Object.keys(validateEvent(draft)).length === 0
+}
+
+/** The running order with the blank rows dropped, in time order. */
+export function tidyProgramme(programme: { time: string; what: string }[]): { time: string; what: string }[] {
+  return programme
+    .filter((line) => line.what.trim())
+    .map((line) => ({ time: line.time.trim(), what: line.what.trim() }))
+    .sort((a, b) => a.time.localeCompare(b.time))
+}
+
+/**
+ * A blank evening.
+ *
+ * It starts as a draft and not public. Nothing should reach the website because somebody opened
+ * a form and was called away — the committee says when it goes up, and has to mean it.
+ */
+/** Called off. Still has a page, and that page says so. */
+export function isCancelled(event: Pick<Event, 'status'>): boolean {
+  return event.status === 'cancelled'
+}
+
+/** The draft, with the empty strings turned back into absent fields. */
+export function shapeOfEvent(draft: EventDraft) {
+  const text = (value: string) => (value.trim() ? value.trim() : undefined)
+  const programme = tidyProgramme(draft.programme)
+  return {
+    title: draft.title.trim(),
+    summary: draft.summary.trim(),
+    startsAt: draft.startsAt,
+    endsAt: text(draft.endsAt),
+    venue: draft.venue.trim(),
+    venueAddress: text(draft.venueAddress),
+    coordinates: draft.coordinates ?? undefined,
+    festivalId: text(draft.festivalId),
+    coverImageUrl: text(draft.coverImageUrl),
+    coverAnimation: draft.coverAnimation,
+    // An empty theme is absent rather than three empty strings, or the page draws a blank kicker.
+    theme: draft.theme.bengali.trim()
+      ? {
+          bengali: draft.theme.bengali.trim(),
+          bengaliSubtitle: text(draft.theme.bengaliSubtitle),
+          english: text(draft.theme.english),
+        }
+      : undefined,
+    programme: programme.length > 0 ? programme : undefined,
+    registrationUrl: text(draft.registrationUrl),
+    performerFormUrl: text(draft.performerFormUrl),
+    registrationOpen: draft.registrationOpen,
+    volunteerCall: text(draft.volunteerCall),
+    performerCall: text(draft.performerCall),
+    status: draft.status,
+    isPublic: draft.isPublic,
+  }
+}
+
+/**
+ * The draft as the public page would show it once saved, for the designer's full-page preview.
+ *
+ * Shaped by the same function that shapes a save, so the preview cannot show a field the page
+ * would not. A photograph chosen but not yet in the bucket is shown too, from this machine, or
+ * choosing one and previewing would look as though the choice had not taken.
+ */
+export function previewOfDraft(draft: EventDraft, localCover?: string): Event {
+  const shaped = shapeOfEvent(draft)
+  return { id: 'preview', slug: 'preview', ...shaped, coverImageUrl: shaped.coverImageUrl ?? (localCover || undefined) }
+}
+
+export function blankEvent(): EventDraft {
+  return {
+    title: '',
+    summary: '',
+    startsAt: '',
+    endsAt: '',
+    venue: '',
+    venueAddress: '',
+    coordinates: null,
+    festivalId: '',
+    coverImageUrl: '',
+    coverAnimation: 'none',
+    theme: { bengali: '', bengaliSubtitle: '', english: '' },
+    programme: [],
+    registrationUrl: '',
+    performerFormUrl: '',
+    registrationOpen: false,
+    volunteerCall: '',
+    performerCall: '',
+    status: 'draft',
+    isPublic: true,
+  }
+}
+
+/**
+ * Whether an evening has been and gone but is still filed as though it were coming.
+ *
+ * Not archived automatically: a date passing is not the same as the committee being finished
+ * with it, and an event that tidied itself away while somebody was still writing the round-up
+ * would be its own small annoyance. The screen offers, and a person decides.
+ */
+export function readyToArchive(event: Pick<Event, 'startsAt' | 'endsAt' | 'status'>, now: Date): boolean {
+  if (event.status === 'past' || event.status === 'draft') return false
+  return new Date(event.endsAt ?? event.startsAt) < now
 }

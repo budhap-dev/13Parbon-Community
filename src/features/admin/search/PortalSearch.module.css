@@ -1,0 +1,269 @@
+/* The button in the header: in the frame's own colours, with an outline to say "type here". */
+.trigger {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 38px;
+  padding: 0 8px 0 10px;
+  border: 1px solid var(--side-border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--side-muted);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+}
+
+.trigger:hover {
+  background: var(--side-wash);
+  color: var(--side-fg);
+}
+
+.trigger:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.kbd {
+  margin-left: auto;
+  padding: 1px 6px;
+  border: 1px solid var(--side-border);
+  border-radius: 5px;
+  color: var(--side-faint);
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  /* The same floor as the confirmation dialog: above the photo viewer and every sticky header. */
+  z-index: 200;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  /* Near the top rather than the middle, so the answers have the rest of the window to grow into. */
+  padding: 12vh 16px 16px;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  width: min(640px, 100%);
+  max-height: min(620px, 80vh);
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-bg-raised);
+  color: var(--color-fg);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+.field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px 0 16px;
+  border-bottom: 1px solid var(--color-border-faint);
+}
+
+.fieldIcon {
+  flex-shrink: 0;
+  color: var(--color-fg-muted);
+}
+
+.input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 56px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 17px;
+  outline: none;
+}
+
+.input::placeholder {
+  color: var(--color-fg-faint);
+}
+
+/* The browser's own clear button doubles the Esc beside it. */
+.input::-webkit-search-cancel-button {
+  appearance: none;
+}
+
+.close {
+  flex-shrink: 0;
+  min-height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-fg-muted);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.close:hover {
+  background: var(--color-hover-wash);
+  color: var(--color-fg);
+}
+
+.close:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.results {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 6px 8px 8px;
+}
+
+.group + .group {
+  margin-top: 6px;
+}
+
+.groupLabel {
+  padding: 10px 10px 4px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-fg-faint);
+}
+
+.more {
+  letter-spacing: normal;
+  text-transform: none;
+  font-weight: 500;
+}
+
+.option,
+.optionOn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 46px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.optionOn {
+  background: color-mix(in srgb, var(--color-accent) 13%, transparent);
+}
+
+.optionIcon {
+  flex-shrink: 0;
+  color: var(--color-fg-muted);
+}
+
+.optionOn .optionIcon {
+  color: var(--color-accent);
+}
+
+.optionText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.optionTitle {
+  font-weight: 600;
+  font-size: 14.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.optionDetail {
+  font-size: 12.5px;
+  color: var(--color-fg-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.empty {
+  margin: 0;
+  padding: 28px 12px;
+  text-align: center;
+  color: var(--color-fg-muted);
+}
+
+.foot {
+  margin: 0;
+  padding: 9px 16px;
+  border-top: 1px solid var(--color-border-faint);
+  color: var(--color-fg-faint);
+  font-size: 12px;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .backdrop {
+    padding-top: 16px;
+  }
+
+  .panel {
+    max-height: calc(100dvh - 32px);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .panel {
+    animation: rise 140ms ease-out;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+/* On a phone the header has room for the glass and nothing else. */
+@media (max-width: 900px) {
+  .trigger {
+    justify-content: center;
+    width: 44px;
+    min-height: 44px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-pill);
+    color: inherit;
+  }
+
+  .label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .kbd {
+    display: none;
+  }
+}

@@ -46,7 +46,7 @@ describe('createMockApi', () => {
   })
 
   it('lists live public announcements, pinned first', async () => {
-    const live = await api.news.listAnnouncements()
+    const live = await api.news.listAnnouncements(null)
     expect(live.map((a) => a.id)).toEqual(['an-register', 'an-volunteers'])
   })
 
@@ -55,9 +55,11 @@ describe('createMockApi', () => {
   })
 
   it('accepts a valid contact message and rejects an invalid one', async () => {
+    // A receipt, not the stored row — the same narrow answer the real adapter can give.
     const sent = await api.contact.send({ name: 'Rina Sen', email: 'rina@example.com', subject: 'Parking', message: 'Where do we park on the night?' })
-    expect(sent.id).toBe('cm-1')
-    expect(sent.createdAt).toBe(now().toISOString())
+    expect(sent).toEqual({ name: 'Rina Sen', email: 'rina@example.com' })
+    // The message itself is kept, so the committee's inbox still has it.
+    expect((await api.contact.listMessages({ householdId: 'hh-chatterjee', role: 'admin' })).some((x) => x.subject === 'Parking')).toBe(true)
     await expect(api.contact.send({ name: '', email: '', subject: '', message: '' })).rejects.toThrow(/check the form/)
   })
 
@@ -68,6 +70,17 @@ describe('createMockApi', () => {
 
   it('lists the four occasions in the community year', async () => {
     expect((await api.festivals.list()).map((f) => f.id)).toEqual(['boishakhi', 'mahalaya', 'saraswati-puja', 'holi'])
+  })
+
+  it('lists the festivals the committee saved, not the ones it started with', async () => {
+    // Its own client: saving here must not change the year for every test below.
+    const own = createMockApi({ now, events: testEvents })
+    const settings = await own.settings.get()
+    await own.settings.save(
+      { ...settings, festivals: [{ id: 'holi', name: 'Dol Jatra' }] },
+      { householdId: 'hh-chatterjee', role: 'admin' },
+    )
+    expect(await own.festivals.list()).toEqual([{ id: 'holi', name: 'Dol Jatra' }])
   })
 
   it('returns only approved media from public albums', async () => {

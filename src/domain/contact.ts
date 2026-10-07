@@ -1,15 +1,54 @@
+/**
+ * What the message is about.
+ *
+ * `photo` is somebody asking for a photograph of themselves or their child to be taken down.
+ * It is marked rather than left to read like any other message, because it is the one promise
+ * on the site with a person waiting behind it — and because an inbox where it arrives between a
+ * parking question and a request to sing is an inbox where it waits a week.
+ */
+export type ContactKind = 'general' | 'photo'
+
 export type ContactInput = {
   name: string
   email: string
   subject: string
   message: string
+  kind?: ContactKind
 }
 
 export type ContactMessage = ContactInput & {
   id: string
   /** ISO 8601 timestamp */
   createdAt: string
+  /** Who on the committee dealt with it. Absent means nobody has yet. */
+  handledBy?: string
+  /**
+   * What was done about it.
+   *
+   * Only asked for on a takedown, where "handled" on its own does not say whether the
+   * photograph actually came out of the bucket — which is the only part that matters.
+   */
+  handledNote?: string
 }
+
+/**
+ * What the site promises, in one place so the gallery, the form and the inbox cannot each
+ * promise something slightly different.
+ */
+export const TAKEDOWN_PROMISE = 'within three days, and you do not have to give a reason'
+
+/**
+ * What the app can honestly say once a message has been sent.
+ *
+ * Not the stored row, and deliberately not a `ContactMessage`. A visitor's message goes into a
+ * table the public website has no way to read back — that is the whole security property, and
+ * asking PostgREST for the row back turned the insert into an `INSERT ... RETURNING`, which is
+ * a read, which the policies refused. The form was broken on the live site for exactly as long
+ * as this return type promised something the database was never going to hand over.
+ *
+ * So it is the message as it was sent, which is all the thank-you screen ever displayed.
+ */
+export type ContactReceipt = { name: string; email: string }
 
 export type ContactErrors = Partial<Record<keyof ContactInput, string>>
 

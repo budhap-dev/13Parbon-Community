@@ -1,19 +1,37 @@
 import { useState } from 'react'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
+import { useOpenFromAddress } from '@/app/useOpenFromAddress'
 import { Button } from '@/components/Button'
+import { ConfirmDialog } from '@/components/ConfirmDialog'
+import { Icon } from '@/components/Icon'
+import { LoadFailed } from '@/components/LoadFailed'
 import { formatLongDate, formatTime } from '@/domain/dates'
 import { paragraphs } from '@/domain/news'
-import { useContactMessages } from '@/lib/api'
+import { TAKEDOWN_PROMISE } from '@/domain/contact'
+import { useContactMessages, useDeleteMessage, useMarkMessageHandled, useViewer } from '@/lib/api'
+import { can } from '@/lib/auth/permissions'
 import styles from '@/features/portal/Portal.module.css'
 
 export function AdminMessagesPage() {
   useDocumentTitle('Messages')
-  const { data: messages, isPending } = useContactMessages()
+  const { data: messages, isPending, isError, refetch } = useContactMessages()
+  const markHandled = useMarkMessageHandled()
+  const removeMessage = useDeleteMessage()
+  const viewer = useViewer()
+  const mayHandle = can(viewer, 'messages:handle')
+  const mayDelete = can(viewer, 'messages:delete')
   const [openId, setOpenId] = useState<string | null>(null)
+  const [note, setNote] = useState('')
+  const [confirming, setConfirming] = useState(false)
+  useOpenFromAddress(messages, (message) => {
+    setOpenId(message.id)
+    setConfirming(false)
+  })
 
   const list = messages ?? []
   const open = list.find((m) => m.id === openId) ?? list[0]
   const unread = list.filter((m) => !m.handledBy).length
+  const waitingPhotos = list.filter((m) => m.kind === 'photo' && !m.handledBy).length
 
   return (
     <div className={styles.page}>
@@ -28,6 +46,8 @@ export function AdminMessagesPage() {
         <p className={styles.empty} aria-busy="true">
           Loading…
         </p>
+      ) : isError ? (
+        <LoadFailed what="the messages" onRetry={() => void refetch()} />
       ) : list.length === 0 ? (
         <p className={styles.empty}>No messages yet.</p>
       ) : (
@@ -37,7 +57,12 @@ export function AdminMessagesPage() {
               <h2 id="inbox-title" className={styles.panelTitle}>
                 Inbox
               </h2>
-              <span className={`${styles.muted} ${styles.tiny}`}>{unread} unread</span>
+              <span className={`${styles.muted} ${styles.tiny}`}>
+                {unread} unread
+                {waitingPhotos > 0
+                  ? ` · ${waitingPhotos} ${waitingPhotos === 1 ? 'photograph' : 'photographs'} to take down`
+                  : ''}
+              </span>
             </div>
             <ul className={styles.list}>
               {list.map((message) => (
@@ -46,12 +71,18 @@ export function AdminMessagesPage() {
                     type="button"
                     className={styles.listItem}
                     style={{ width: '100%', background: 'transparent', border: 0, color: 'inherit', textAlign: 'left', cursor: 'pointer' }}
-                    onClick={() => setOpenId(message.id)}
+                    onClick={() => {
+                      setOpenId(message.id)
+                      setConfirming(false)
+                    }}
                     aria-current={message.id === open?.id ? 'true' : undefined}
                   >
                     {message.handledBy ? null : <span className={styles.dot} />}
                     <span className={styles.listBody}>
-                      <strong>{message.subject}</strong>
+                      <strong>
+                        {message.kind === 'photo' ? '📷 ' : ''}
+                        {message.subject}
+                      </strong>
                       <span className={`${styles.muted} ${styles.tiny}`}>
                         {message.name} · {formatLongDate(message.createdAt)}
                         {message.handledBy ? ` · handled by ${message.handledBy}` : ''}
@@ -81,14 +112,90 @@ export function AdminMessagesPage() {
                     {text}
                   </p>
                 ))}
+                {open.kind === 'photo' && !open.handledBy ? (
+                  <div className={styles.pad} style={{ padding: 0 }}>
+                    <p className={styles.note}>
+                      <strong>Somebody wants a photograph taken down.</strong> We said {TAKEDOWN_PROMISE}.
+                      Take it out of the album on the Photographs page first — deleting there really
+                      deletes it — then say here what you did.
+                    </p>
+                    <label className={`${styles.label}`} htmlFor="handled-note" style={{ display: 'block', marginTop: 12 }}>
+                      What happened to the photograph
+                    </label>
+                    <input
+                      id="handled-note"
+                      className={styles.input}
+                      value={note}
+                      placeholder="Deleted boishakhi-2026-14 from the album"
+                      onChange={(e) => setNote(e.target.value)}
+                    />
+                  </div>
+                ) : null}
+                {open.handledNote ? (
+                  <p className={`${styles.muted} ${styles.tiny}`}>What was done: {open.handledNote}</p>
+                ) : null}
                 <div className={styles.actions}>
                   <Button variant="gold" size="sm" href={`mailto:${open.email}`}>
                     Reply by email
                   </Button>
-                  <Button variant="line" size="sm" onClick={() => {}}>
-                    {open.handledBy ? 'Handled' : 'Mark handled'}
+                  {mayDelete ? (
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      disabled={removeMessage.isPending}
+                      onClick={() => setConfirming(true)}
+                    >
+                      <Icon name="trash" size={15} />
+                      Delete
+                    </Button>
+                  ) : null}
+                  <Button
+                    variant="line"
+                    size="sm"
+                    disabled={
+                      !mayHandle ||
+                      Boolean(open.handledBy) ||
+                      markHandled.isPending ||
+                      // A takedown cannot be marked done until somebody says what was done.
+                      (open.kind === 'photo' && !note.trim())
+                    }
+                    onClick={() => markHandled.mutate({ id: open.id, note }, { onSuccess: () => setNote('') })}
+                  >
+                    {open.handledBy ? 'Handled' : markHandled.isPending ? 'Marking…' : 'Mark handled'}
                   </Button>
                 </div>
+                <ConfirmDialog
+                  open={confirming}
+                  title="Delete this message?"
+                  confirmLabel="Delete"
+                  busyLabel="Deleting…"
+                  busy={removeMessage.isPending}
+                  // In the dialog, which stays open when it fails: behind it, nobody would see it.
+                  error={removeMessage.isError ? `That did not delete. ${removeMessage.error.message}` : undefined}
+                  onCancel={() => {
+                    setConfirming(false)
+                    removeMessage.reset()
+                  }}
+                  onConfirm={() =>
+                    removeMessage.mutate(open.id, {
+                      onSuccess: () => {
+                        setConfirming(false)
+                        // Whatever is left is the next thing to read, chosen by the list.
+                        setOpenId(null)
+                      },
+                    })
+                  }
+                >
+                  It goes for good, and it is the only record the committee holds of what was asked
+                  {open.kind === 'photo' ? ', including that a photograph was asked about' : ''}. A line
+                  stays in the audit trail saying you deleted it. To keep it and clear the unread count,
+                  mark it handled instead.
+                </ConfirmDialog>
+                {markHandled.isError ? (
+                  <p className={`${styles.muted} ${styles.tiny}`} role="alert">
+                    That did not save. {markHandled.error.message}
+                  </p>
+                ) : null}
                 <p className={`${styles.muted} ${styles.tiny}`}>
                   Replies go from your own email, so the visitor sees a person rather than a no-reply address.
                 </p>

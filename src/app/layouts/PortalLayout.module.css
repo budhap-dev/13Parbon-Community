@@ -1,114 +1,195 @@
 /*
- * The portal sits on the ink token rather than the site's sindoor ground: calmer behind
- * tables, and it tells the viewer they have moved from the noticeboard into the back office.
+ * The portal follows the theme the person chose, the same as every public page.
+ *
+ * It used to sit on ink whatever the theme — calmer behind tables, and a signal that you had
+ * left the noticeboard for the back office. That cost more than it bought: ink is dark in all
+ * five themes, so the shell had to carry its own cream foreground, every card that painted
+ * itself light had to put the page's colours back, and two themes still came out wrong the
+ * first time anyone looked. Now it is the page's background and the page's text, and the
+ * cards are raised the way they are everywhere else. The sidebar is what says "back office".
  */
 .shell {
   display: grid;
-  grid-template-columns: 250px minmax(0, 1fr);
+  grid-template-columns: 252px minmax(0, 1fr);
+  /* The header and the footer their own heights, and the page the rest. */
+  grid-template-rows: auto 1fr auto;
   min-height: 100vh;
-  background: var(--color-ink);
   color: var(--color-fg);
+  /* The theme's own ground: ruled lines, a weave, a dot grid — see the end of tokens.css. */
+  background-color: var(--color-bg);
+  background-image: var(--bg-texture-a, none), var(--bg-texture-b, none);
+  background-size: var(--bg-texture-a-size, auto), var(--bg-texture-b-size, auto);
+  background-attachment: fixed;
+  /*
+   * The portal's buttons: smaller, squarer, with a quieter outline. The public site's pills are
+   * sized for a thumb on a phone; in here they sat in every table row the height of the row
+   * itself, and a screen of them read as a form to fill in rather than a place to work. The
+   * corners are the theme's: square for Linen, pills for Denim.
+   */
+  --button-radius: var(--portal-button-radius, 8px);
+  --button-border: 1px;
+  --button-lift: 0;
+  --button-line-border: var(--color-border);
+  --button-sm-height: 36px;
+  --button-sm-pad: 14px;
+  --button-sm-font: 14px;
+  --button-md-height: 42px;
+  --button-md-pad: 20px;
+  --button-md-font: 15px;
+  /*
+   * The frame's colours — sidebar, header and footer — which a theme may set apart from the
+   * page's: Mist puts a dark frame around a light page. Everything in the frame paints with these.
+   */
+  --side-fg: var(--portal-side-fg, var(--color-fg));
+  --side-muted: var(--portal-side-muted, var(--color-fg-muted));
+  --side-faint: var(--portal-side-faint, var(--color-fg-faint));
+  --side-border: var(--portal-side-border, var(--color-border-faint));
+  --side-wash: var(--portal-side-wash, var(--color-hover-wash));
+  --side-accent: var(--portal-side-accent, var(--color-accent));
+  --side-on-accent: var(--portal-side-on-accent, var(--color-on-accent));
 }
 
+/*
+ * The sidebar holds still while the page scrolls, so the way to the next screen and the person
+ * signed in are always where they were. Only the list of screens scrolls inside it, and only on
+ * a window too short to show it all.
+ */
 .side {
+  position: sticky;
+  top: 0;
   display: flex;
   flex-direction: column;
-  gap: 26px;
-  padding: 22px 16px;
-  background: var(--color-ink-hover);
-  border-right: 1px solid var(--color-border-faint);
+  gap: 18px;
+  height: 100vh;
+  height: 100dvh;
+  padding: 0 12px 14px;
+  grid-column: 1;
+  grid-row: 1 / span 3;
+  background: var(--portal-side-bg, var(--color-bg-raised));
+  color: var(--side-fg);
+  border-right: 1px solid var(--side-border);
 }
 
 .brand {
   display: flex;
   align-items: center;
   gap: 10px;
-  min-height: 44px;
+  min-height: 40px;
   padding: 0 8px;
-  color: var(--color-fg);
+  color: var(--side-fg);
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: 19px;
+  font-size: 18px;
   letter-spacing: -0.02em;
 }
 
 .brand:hover {
-  color: var(--color-fg);
+  color: var(--side-fg);
 }
 
 .emblem {
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   border: 2px solid var(--color-accent);
   object-fit: cover;
   background: #fff;
 }
 
+.navs {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  margin: 0 -4px;
+  padding: 0 4px;
+}
+
 .group {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
 }
 
 .groupLabel {
-  padding: 0 12px 6px;
-  font-size: 10px;
+  padding: 0 10px 6px;
+  font-size: 10.5px;
   font-weight: 600;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--color-fg-faint);
+  color: var(--side-faint);
 }
 
 .link,
 .linkOn {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 11px;
-  min-height: 44px;
-  padding: 0 12px;
-  border-radius: 9px;
-  color: var(--color-fg);
-  font-weight: 600;
-  font-size: 15px;
+  gap: 10px;
+  min-height: 38px;
+  padding: 0 10px;
+  border-radius: 8px;
+  color: var(--side-muted);
+  font-weight: 500;
+  font-size: 14.5px;
+  transition:
+    background-color var(--motion-fast) ease,
+    color var(--motion-fast) ease;
 }
 
 .link:hover {
-  background: var(--color-hover-wash);
-  color: var(--color-fg);
+  background: var(--side-wash);
+  color: var(--side-fg);
 }
 
+/*
+ * Where you are: a tint and a bar, not a solid block of the accent. The block shouted louder
+ * than anything on the page beside it, and the page is the thing being worked on.
+ */
 .linkOn {
-  background: var(--color-accent);
-  color: var(--color-on-accent);
+  background: var(--portal-nav-on-bg, color-mix(in srgb, var(--color-accent) 13%, transparent));
+  color: var(--portal-nav-on-fg, var(--color-accent));
+  font-weight: 600;
+}
+
+.linkOn::before {
+  content: '';
+  position: absolute;
+  left: -12px;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--portal-nav-on-mark, var(--color-accent));
 }
 
 .linkOn:hover {
-  color: var(--color-on-accent);
+  color: var(--portal-nav-on-fg, var(--color-accent));
 }
 
 .count {
   margin-left: auto;
-  min-width: 22px;
-  height: 22px;
-  padding: 0 7px;
-  border-radius: 11px;
-  background: var(--color-photo-d);
-  color: var(--color-fg);
-  font-size: 12px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: var(--side-accent);
+  color: var(--side-on-accent);
+  font-size: 11.5px;
+  font-weight: 600;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-}
-
-.linkOn .count {
-  background: var(--color-ink);
-  color: var(--color-accent);
+  font-variant-numeric: tabular-nums;
 }
 
 .externalMark {
   margin-left: auto;
-  color: var(--color-fg-faint);
+  color: var(--side-faint);
   flex-shrink: 0;
 }
 
@@ -122,64 +203,142 @@
 }
 
 .who {
-  margin-top: auto;
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  padding: 14px 12px 4px;
-  border-top: 1px solid var(--color-border-faint);
+  gap: 8px;
+  padding: 12px 4px 0;
+  border-top: 1px solid var(--side-border);
+}
+
+.whoCard {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 4px;
+}
+
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--side-accent);
+  color: var(--side-on-accent);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.whoText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
 }
 
 .whoName {
   font-weight: 600;
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .whoDetail {
-  font-size: 13px;
-  color: var(--color-fg-muted);
+  font-size: 12.5px;
+  color: var(--side-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.whoEmail {
+  padding: 0 4px;
+  font-size: 12px;
+  color: var(--side-faint);
   overflow-wrap: anywhere;
 }
 
 .rolePill {
-  align-self: flex-start;
-  margin-top: 5px;
-  padding: 3px 9px;
-  border-radius: 11px;
+  flex-shrink: 0;
+  padding: 2px 7px;
+  border-radius: 6px;
   font-size: 10px;
   font-weight: 600;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  background: var(--color-hover-wash);
-  color: var(--color-fg-muted);
+  background: var(--side-wash);
+  color: var(--side-muted);
 }
 
 .rolePillAdmin {
   composes: rolePill;
-  background: color-mix(in srgb, var(--color-accent) 22%, transparent);
-  color: var(--color-accent);
+  background: color-mix(in srgb, var(--side-accent) 16%, transparent);
+  /* The sidebar's accent, which is the page's except where the sidebar is dark on a light page. */
+  color: var(--side-accent);
 }
 
+.whoActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* The theme switcher's own trigger is sized for the public header; in here it is one of a pair. */
+.whoActions [aria-haspopup='true'] {
+  color: var(--side-fg);
+  border-color: var(--side-border);
+  min-height: 34px;
+  padding: 0 10px;
+  border-width: 1px;
+  border-radius: 8px;
+  font-size: 13px;
+  gap: 6px;
+}
+
+.whoActions [aria-haspopup='true'] svg {
+  width: 16px;
+  height: 16px;
+}
+
+/*
+ * Red, as leaving is: the one button down here that ends something. On a light sidebar that is
+ * red writing in a red outline; on a dark or colourful one, where red writing would not read,
+ * a deeper red to stand on with light writing. A theme with its own sidebar says which.
+ */
 .signOut {
   display: inline-flex;
   align-items: center;
-  min-height: 44px;
-  padding: 0 12px;
-  border: 0;
-  background: transparent;
-  color: var(--color-fg-muted);
+  gap: 6px;
+  min-height: 34px;
+  margin-left: auto;
+  padding: 0 10px;
+  border: 1px solid var(--portal-side-danger-border, color-mix(in srgb, var(--error) 55%, transparent));
+  border-radius: 8px;
+  background: var(--portal-side-danger-bg, color-mix(in srgb, var(--error) 8%, transparent));
+  color: var(--portal-side-danger, var(--error));
   font-weight: 600;
-  font-size: 14px;
-  text-align: left;
+  font-size: 13px;
+  /* Two words on two lines read as a button that had been squashed, which it had. */
+  white-space: nowrap;
   cursor: pointer;
 }
 
 .signOut:hover {
-  color: var(--color-fg);
+  background: var(--portal-side-danger-hover, var(--error));
+  border-color: var(--portal-side-danger-hover, var(--error));
+  color: var(--portal-side-danger-hover-fg, var(--color-bg-raised));
 }
 
 .main {
+  grid-column: 2;
+  grid-row: 2;
   display: flex;
   flex-direction: column;
+  min-width: 0;
   outline: none;
 }
 
@@ -188,10 +347,10 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 10px 16px;
-  padding: 12px 34px;
-  background: color-mix(in srgb, var(--color-accent) 18%, transparent);
-  border-bottom: 1px solid color-mix(in srgb, var(--color-accent) 40%, transparent);
-  font-size: 14px;
+  padding: 9px 36px;
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-accent) 30%, transparent);
+  font-size: 13.5px;
 }
 
 .previewStrong {
@@ -199,9 +358,20 @@
   color: var(--color-accent);
 }
 
+.previewLink {
+  color: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* A ceiling on the width, so a big monitor gets margins rather than a table forty inches long. */
 .content {
   flex: 1 0 auto;
-  padding: 28px 34px 56px;
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 28px 36px 56px;
 }
 
 .skip {
@@ -220,33 +390,444 @@
   top: 16px;
 }
 
+/* The same element on a wide screen; the drawer, pulled out, on a phone. */
+.sideOpen {
+  composes: side;
+}
+
+/*
+ * The name at the top of the sidebar, the same height as the header beside it and ruled off at
+ * the same line, so the two read as one band across the top of the screen.
+ */
+.sideHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: var(--portal-bar-height, 60px);
+  margin: 0 -12px;
+  padding: 0 12px 0 14px;
+  border-bottom: 1px solid var(--side-border);
+}
+
+/* Only a phone has these: the drawer's own close, the shade behind it, the menu button and the
+   name in the bar (on a wider screen the sidebar carries the name). */
+.drawerClose,
+.scrim,
+.scrimOn,
+.menuButton,
+.barBrand {
+  display: none;
+}
+
+/*
+ * The header, in the frame's colours. Where you are on the left; the search and the way out to
+ * the public site on the right. Sticky, so both are there however far down a long table goes.
+ */
+.bar {
+  grid-column: 2;
+  grid-row: 1;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: var(--portal-bar-height, 60px);
+  padding: 0 24px 0 36px;
+  background: var(--portal-side-bg, var(--color-bg-raised));
+  color: var(--side-fg);
+  border-bottom: 1px solid var(--side-border);
+}
+
+.crumbs {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  font-size: 14.5px;
+}
+
+.crumbGroup {
+  color: var(--side-muted);
+  white-space: nowrap;
+}
+
+.crumbSep {
+  color: var(--side-faint);
+}
+
+.crumbHere {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.barEnd {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.barSearch {
+  width: auto;
+  min-width: 240px;
+}
+
+.siteLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 0 12px;
+  border-radius: 8px;
+  color: var(--side-muted);
+  font-size: 13.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.siteLink:hover {
+  background: var(--side-wash);
+  color: var(--side-fg);
+}
+
+/* The foot of every page, in the frame's colours: whose this is, which version, and the way out. */
+.foot {
+  grid-column: 2;
+  grid-row: 3;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 16px;
+  padding: 14px 36px;
+  background: var(--portal-side-bg, var(--color-bg-raised));
+  color: var(--side-muted);
+  border-top: 1px solid var(--side-border);
+  font-size: 12.5px;
+}
+
+.footLinks {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 14px;
+}
+
+.foot a {
+  color: var(--side-muted);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.foot a:hover {
+  color: var(--side-fg);
+}
+
 @media (max-width: 900px) {
   .shell {
     grid-template-columns: minmax(0, 1fr);
   }
 
+  /*
+   * The bar: the menu, the name, and the search. Sticky, because on a phone the way to another
+   * screen is otherwise a scroll back up a long table away.
+   */
+  .bar,
+  .main,
+  .foot {
+    grid-column: 1;
+  }
+
+  .bar {
+    gap: 4px;
+    min-height: 56px;
+    padding: 0 8px;
+  }
+
+  .crumbs,
+  .siteLink {
+    display: none;
+  }
+
+  .barSearch {
+    min-width: 0;
+  }
+
+  .foot {
+    padding: 14px 16px;
+  }
+
+  .menuButton,
+  .drawerClose {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+  }
+
+  .menuButton:hover,
+  .drawerClose:hover {
+    background: var(--portal-side-wash, var(--color-hover-wash));
+  }
+
+  .menuButton:focus-visible,
+  .drawerClose:focus-visible {
+    outline: 3px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+
+  .barBrand {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-width: 0;
+    min-height: 44px;
+    padding: 0 4px;
+    color: inherit;
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 17px;
+    letter-spacing: -0.02em;
+  }
+
+  .barBrand:hover {
+    color: inherit;
+  }
+
+  .barBrand .emblem {
+    width: 30px;
+    height: 30px;
+  }
+
+
+  /*
+   * The sidebar, as a drawer out from the left. Kept in the document when shut so the movement
+   * can be animated, and out of reach by visibility so nothing in it can be tabbed to off screen.
+   */
   .side {
-    border-right: 0;
-    border-bottom: 1px solid var(--color-border-faint);
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 50;
+    width: min(320px, 86vw);
+    height: auto;
+    padding-top: 6px;
+    border-right: 3px solid var(--color-accent);
+    border-radius: 0 20px 20px 0;
+    box-shadow: 24px 0 60px rgba(0, 0, 0, 0.4);
+    visibility: hidden;
+    transform: translateX(-100%);
+    transition:
+      transform 280ms cubic-bezier(0.2, 0.7, 0.2, 1),
+      visibility 0s linear 280ms;
   }
 
-  .group {
-    flex-direction: row;
-    flex-wrap: wrap;
+  .sideOpen {
+    visibility: visible;
+    transform: none;
+    transition:
+      transform 280ms cubic-bezier(0.2, 0.7, 0.2, 1),
+      visibility 0s;
   }
 
-  .groupLabel {
-    width: 100%;
-    padding-bottom: 2px;
+  .drawerClose {
+    color: var(--side-fg);
   }
 
-  .who {
+  /*
+   * One scroll for the whole drawer, rather than the links scrolling in a box of their own: the
+   * theme list opens in the drawer's flow, and on a short phone it would otherwise squeeze the
+   * links to nothing to make room for itself.
+   */
+  .side {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    /* Up and down is the drawer's own scroll; sideways is the finger pushing it shut. */
+    touch-action: pan-y;
+  }
+
+  .navs {
+    flex: none;
+    overflow: visible;
+  }
+
+  /*
+   * Theme and Sign out share a row, and the theme list opens the full width of the drawer below
+   * them. The switcher's own box is dissolved so its button and its list can sit in this grid
+   * separately; otherwise the list was only as wide as the button, half the drawer, and its
+   * names and descriptions ran over each other.
+   */
+  .whoActions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px 6px;
+    align-items: center;
+  }
+
+  .whoActions > :first-child {
+    display: contents;
+  }
+
+  .whoActions [role='radiogroup'] {
+    grid-column: 1 / -1;
+    grid-row: 2;
     margin-top: 0;
+  }
+
+  .signOut {
+    grid-row: 1;
+    grid-column: 2;
+    margin-left: 0;
+  }
+
+  /*
+   * The shade behind the open drawer. Always there on a phone, so that it can fade out as the
+   * drawer slides away rather than vanishing a beat before it.
+   */
+  .scrim,
+  .scrimOn {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 45;
+    background: rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 280ms ease;
+  }
+
+  .scrimOn {
+    opacity: 1;
+    pointer-events: auto;
+    cursor: pointer;
+    touch-action: none;
+  }
+
+  /* The links are a list down the drawer, the same as the sidebar, and only as big as a thumb. */
+  .link,
+  .linkOn {
+    min-height: 44px;
+  }
+
+  .linkOn::before {
+    left: -8px;
   }
 
   .content,
   .preview {
-    padding-left: 20px;
-    padding-right: 20px;
+    padding-left: 16px;
+    padding-right: 16px;
   }
+
+  .content {
+    padding-top: 22px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .side,
+  .sideOpen,
+  .scrim,
+  .scrimOn {
+    transition: none;
+  }
+}
+
+/*
+ * The walkthrough, tucked into the sidebar under the person's own details.
+ *
+ * A disclosure rather than two buttons on show: it is a rare, deliberate thing to do, and the
+ * sidebar is where somebody looks to find out who they are, not to be offered a costume.
+ */
+.walkthrough {
+  margin-top: 4px;
+}
+
+.walkthroughToggle {
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  padding: 0 4px;
+  color: var(--side-muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+
+.walkthroughToggle::-webkit-details-marker {
+  display: none;
+}
+
+.walkthroughToggle::before {
+  content: '▸';
+  margin-right: 8px;
+  font-size: 11px;
+}
+
+.walkthrough[open] .walkthroughToggle::before {
+  content: '▾';
+}
+
+.walkthroughToggle:hover {
+  color: var(--side-fg);
+}
+
+.walkthroughAccount {
+  display: flex;
+  width: 100%;
+  min-height: 32px;
+  align-items: center;
+  padding: 0 4px 0 20px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--side-muted);
+  font-size: 13px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+}
+
+.walkthroughAccount:hover {
+  background: var(--side-wash);
+  color: var(--side-fg);
+}
+
+.walkthroughNote {
+  padding: 0 4px 6px 20px;
+  margin: 0;
+  color: var(--side-faint);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.leavePreview {
+  margin-left: auto;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-fg);
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.leavePreview:hover {
+  background: var(--color-hover-wash);
 }

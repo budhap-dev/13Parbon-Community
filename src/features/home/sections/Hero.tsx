@@ -1,5 +1,5 @@
 import { useLocation } from 'react-router'
-import { site } from '@/app/site'
+import { useSettings } from '@/app/SettingsContext'
 import { Backdrop } from '@/app/theme/backdrops'
 import { useTheme } from '@/app/theme/ThemeContext'
 import { themes } from '@/app/theme/themes'
@@ -9,6 +9,7 @@ import { LogoAssembly } from '../LogoAssembly'
 import styles from '../Home.module.css'
 
 export function Hero() {
+  const { text } = useSettings()
   const { theme } = useTheme()
   const { key: navigationKey } = useLocation()
   const heroImage = themes.find((t) => t.id === theme)?.heroImage
@@ -22,13 +23,17 @@ export function Hero() {
       <Container className={styles.heroInner}>
         <div className={styles.heroCopy}>
           <h1 id="hero-title" className={styles.heroTitle}>
-            <span lang="bn" className={styles.heroTitleLead}>
-              {site.bengaliTitleLead}
-            </span>{' '}
-            <span className={styles.heroTitleName}>{site.groupName}</span>
+            {text.heroLead ? (
+              <>
+                <span lang="bn" className={styles.heroTitleLead}>
+                  {text.heroLead}
+                </span>{' '}
+              </>
+            ) : null}
+            <span className={styles.heroTitleName}>{text.heroName}</span>
           </h1>
           <p className={styles.lead}>
-            {site.tagline}
+            {text.tagline}
             <Icon name="sparkle" size={22} className={styles.leadSparkle} />
           </p>
         </div>

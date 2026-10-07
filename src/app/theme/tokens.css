@@ -29,6 +29,8 @@
   --color-on-accent: #3a0a06;
   --color-focus: #ffd166;
   --color-green: #8fc39b;
+  /* Refusals and warnings. A dark red on a dark red page is invisible, so this is the light side. */
+  --error: #ffb4a8;
   --color-photo-a: #a63b2a;
   --color-photo-b: #b8482f;
   --color-photo-c: #93281c;
@@ -81,6 +83,8 @@
   --color-on-accent: #fff6ea;
   --color-focus: #c8102e;
   --color-green: #3d6b46;
+  /* Refusals and warnings. Light theme, so the red can be the red people expect. */
+  --error: #9e2b1f;
   --color-photo-a: #d94b4b;
   --color-photo-b: #e26b5a;
   --color-photo-c: #c73a3a;
@@ -112,6 +116,8 @@
   --color-on-accent: #fff7d6;
   --color-focus: #1f5fbf;
   --color-green: #3d6b46;
+  /* Refusals and warnings. */
+  --error: #a32218;
   --color-photo-a: #f2c94c;
   --color-photo-b: #e9b73a;
   --color-photo-c: #d9a52a;
@@ -143,6 +149,8 @@
   --color-on-accent: #3d0a2f;
   --color-focus: #ffe45c;
   --color-green: #a8e6b8;
+  /* Refusals and warnings, warmed away from the magenta behind them. */
+  --error: #ffd0c6;
   --color-photo-a: #e0369a;
   --color-photo-b: #2bb3a0;
   --color-photo-c: #f28c28;
@@ -174,8 +182,733 @@
   --color-on-accent: #1c1b4a;
   --color-focus: #ffb35f;
   --color-green: #8fc39b;
+  /* Refusals and warnings. */
+  --error: #ff9d92;
   --color-photo-a: #3a3985;
   --color-photo-b: #524fa8;
   --color-photo-c: #6b64c4;
   --color-photo-d: #ff9a3c;
+}
+
+/* Kojagori Lakshmi Puja: a full-moon night, moonlit blue with a pale gold moon. Dark. */
+[data-theme='kojagori'] {
+  --color-scheme: dark;
+  --logo-lineart-filter: invert(1) brightness(1.15);
+  --logo-lineart-blend: screen;
+  --color-bg: #13294b;
+  --color-bg-top: #1a335a;
+  --color-bg-bottom: #0b1a33;
+  --color-bg-glow: rgba(242, 213, 138, 0.14);
+  --color-bg-raised: #1c3660;
+  --color-bg-raised-hover: #23406d;
+  --color-ink: #081325;
+  --color-ink-hover: #040a16;
+  --color-on-ink: #f2d58a;
+  --color-fg: #f4f1e8;
+  --color-fg-muted: rgba(244, 241, 232, 0.78);
+  --color-fg-faint: rgba(244, 241, 232, 0.45);
+  --color-border: rgba(244, 241, 232, 0.35);
+  --color-border-faint: rgba(244, 241, 232, 0.2);
+  --color-hover-wash: rgba(255, 255, 255, 0.1);
+  --color-accent: #f2d58a;
+  --color-accent-hover: #f8e3ab;
+  --color-on-accent: #13294b;
+  --color-focus: #f8e3ab;
+  --color-green: #9fd8ae;
+  /* Refusals and warnings. */
+  --error: #ffaea3;
+  --color-photo-a: #2a4a7d;
+  --color-photo-b: #3a5d94;
+  --color-photo-c: #22406f;
+  --color-photo-d: #c9b16e;
+}
+
+/* Deepavali, and Kali Puja: a dark night lit by diyas, in lamp gold. Dark. */
+[data-theme='deepavali'] {
+  --color-scheme: dark;
+  --logo-lineart-filter: invert(1) brightness(1.15);
+  --logo-lineart-blend: screen;
+  --color-bg: #1b120c;
+  --color-bg-top: #24180f;
+  --color-bg-bottom: #110b07;
+  --color-bg-glow: rgba(255, 180, 46, 0.16);
+  --color-bg-raised: #2a1c12;
+  --color-bg-raised-hover: #352416;
+  --color-ink: #0b0704;
+  --color-ink-hover: #050302;
+  --color-on-ink: #ffb42e;
+  --color-fg: #fcefdc;
+  --color-fg-muted: rgba(252, 239, 220, 0.78);
+  --color-fg-faint: rgba(252, 239, 220, 0.45);
+  --color-border: rgba(252, 239, 220, 0.33);
+  --color-border-faint: rgba(252, 239, 220, 0.18);
+  --color-hover-wash: rgba(255, 255, 255, 0.08);
+  --color-accent: #ffb42e;
+  --color-accent-hover: #ffc85e;
+  --color-on-accent: #1b120c;
+  --color-focus: #ffc85e;
+  --color-green: #a5d6a7;
+  /* Refusals and warnings. */
+  --error: #ffa594;
+  --color-photo-a: #4a2c16;
+  --color-photo-b: #6b3d1a;
+  --color-photo-c: #3a2312;
+  --color-photo-d: #c9822a;
+}
+
+/* Borodin: Christmas in Park Street, winter white with holly green. Light. */
+[data-theme='borodin'] {
+  --color-scheme: light;
+  --logo-lineart-filter: none;
+  --logo-lineart-blend: multiply;
+  --color-bg: #f5f8f3;
+  --color-bg-top: #fafcf8;
+  --color-bg-bottom: #e9f0e6;
+  --color-bg-glow: rgba(178, 34, 52, 0.06);
+  --color-bg-raised: #e6efe2;
+  --color-bg-raised-hover: #dae6d5;
+  --color-ink: #0f2a1c;
+  --color-ink-hover: #081a11;
+  --color-on-ink: #f5d06b;
+  --color-fg: #1b2a21;
+  --color-fg-muted: rgba(27, 42, 33, 0.75);
+  --color-fg-faint: rgba(27, 42, 33, 0.4);
+  --color-border: rgba(27, 42, 33, 0.3);
+  --color-border-faint: rgba(27, 42, 33, 0.15);
+  --color-hover-wash: rgba(27, 42, 33, 0.06);
+  --color-accent: #1d6b43;
+  --color-accent-hover: #155234;
+  --color-on-accent: #ffffff;
+  --color-focus: #1d6b43;
+  --color-green: #2f6b46;
+  /* Refusals and warnings: the berry red, which is the theme's own second colour. */
+  --error: #a8202f;
+  --color-photo-a: #b22234;
+  --color-photo-b: #2f7d55;
+  --color-photo-c: #c9a227;
+  --color-photo-d: #8fb89c;
+}
+
+/* ===========================================================================
+   The committee's own looks.
+   ===========================================================================
+   Not festivals. Nobody picks a Holi magenta to spend an hour checking a roll of
+   names against, and the portal followed the public themes until 2026-09-17, which
+   meant exactly that. These are made to be looked past: a neutral ground, one
+   restrained accent, and contrast chosen for reading a table rather than for
+   celebrating anything. The festival palettes stay where they belong — the public
+   site, and an evening being designed. */
+
+/* Paper: warm white and ink, with a deep blue. The default in the portal. */
+[data-theme='paper'] {
+  --color-scheme: light;
+  --logo-lineart-filter: none;
+  --logo-lineart-blend: multiply;
+  --color-bg: #f7f7f5;
+  --color-bg-top: #fbfbfa;
+  --color-bg-bottom: #f1f1ee;
+  --color-bg-glow: rgba(31, 78, 121, 0.05);
+  --color-bg-raised: #ffffff;
+  --color-bg-raised-hover: #f2f4f7;
+  --color-ink: #1c1d1f;
+  --color-ink-hover: #000000;
+  --color-on-ink: #f7f7f5;
+  --color-fg: #1c1d1f;
+  --color-fg-muted: rgba(28, 29, 31, 0.72);
+  --color-fg-faint: rgba(28, 29, 31, 0.45);
+  --color-border: rgba(28, 29, 31, 0.24);
+  --color-border-faint: rgba(28, 29, 31, 0.12);
+  --color-hover-wash: rgba(28, 29, 31, 0.05);
+  --color-accent: #1f4e79;
+  --color-accent-hover: #173a5a;
+  --color-on-accent: #ffffff;
+  --color-focus: #1f4e79;
+  --color-green: #2f6b46;
+  --error: #a5251b;
+  --color-photo-a: #cfd6dd;
+  --color-photo-b: #dde3e9;
+  --color-photo-c: #c2cbd4;
+  --color-photo-d: #e6eaee;
+}
+
+/* Linen: oatmeal and muted teal. The same quiet, a degree warmer. */
+[data-theme='linen'] {
+  --color-scheme: light;
+  --logo-lineart-filter: none;
+  --logo-lineart-blend: multiply;
+  --color-bg: #f6f3ed;
+  --color-bg-top: #faf8f4;
+  --color-bg-bottom: #efeae1;
+  --color-bg-glow: rgba(140, 47, 57, 0.05);
+  --color-bg-raised: #fffdf9;
+  --color-bg-raised-hover: #f3efe7;
+  --color-ink: #23211d;
+  --color-ink-hover: #100f0d;
+  --color-on-ink: #f6f3ed;
+  --color-fg: #23211d;
+  --color-fg-muted: rgba(35, 33, 29, 0.72);
+  --color-fg-faint: rgba(35, 33, 29, 0.45);
+  --color-border: rgba(35, 33, 29, 0.24);
+  --color-border-faint: rgba(35, 33, 29, 0.12);
+  --color-hover-wash: rgba(35, 33, 29, 0.05);
+  --color-accent: #8c2f39;
+  --color-accent-hover: #6e2430;
+  --color-on-accent: #fffdf9;
+  --color-focus: #8c2f39;
+  --color-green: #33684a;
+  --error: #b4441c;
+  --color-photo-a: #d8d2c6;
+  --color-photo-b: #e4dfd4;
+  --color-photo-c: #cbc4b5;
+  --color-photo-d: #eee9e0;
+}
+
+/* Slate: blue-grey dark, for the evenings this work actually gets done in. */
+[data-theme='slate'] {
+  --color-scheme: dark;
+  --logo-lineart-filter: invert(1) brightness(1.1);
+  --logo-lineart-blend: screen;
+  --color-bg: #16181d;
+  --color-bg-top: #1b1e24;
+  --color-bg-bottom: #101216;
+  --color-bg-glow: rgba(106, 169, 255, 0.08);
+  --color-bg-raised: #1f2229;
+  --color-bg-raised-hover: #272b33;
+  --color-ink: #0d1117;
+  --color-ink-hover: #05070a;
+  --color-on-ink: #e8eaed;
+  --color-fg: #e8eaed;
+  --color-fg-muted: rgba(232, 234, 237, 0.72);
+  --color-fg-faint: rgba(232, 234, 237, 0.45);
+  --color-border: rgba(232, 234, 237, 0.26);
+  --color-border-faint: rgba(232, 234, 237, 0.13);
+  --color-hover-wash: rgba(255, 255, 255, 0.07);
+  --color-accent: #6aa9ff;
+  --color-accent-hover: #8dbcff;
+  --color-on-accent: #0d1117;
+  --color-focus: #8dbcff;
+  --color-green: #7fd39b;
+  --error: #ff9d92;
+  --color-photo-a: #2b303a;
+  --color-photo-b: #343a45;
+  --color-photo-c: #232831;
+  --color-photo-d: #3d4450;
+}
+
+/* Denim (id 'sage', its name when it was green): pale blue-grey with a denim blue. */
+[data-theme='sage'] {
+  --color-scheme: light;
+  --logo-lineart-filter: none;
+  --logo-lineart-blend: multiply;
+  --color-bg: #f1f4f8;
+  --color-bg-top: #f7f9fb;
+  --color-bg-bottom: #e8edf3;
+  --color-bg-glow: rgba(47, 93, 138, 0.05);
+  --color-bg-raised: #ffffff;
+  --color-bg-raised-hover: #eaf0f6;
+  --color-ink: #1a2330;
+  --color-ink-hover: #0c111a;
+  --color-on-ink: #f1f4f8;
+  --color-fg: #1a2330;
+  --color-fg-muted: rgba(26, 35, 48, 0.72);
+  --color-fg-faint: rgba(26, 35, 48, 0.45);
+  --color-border: rgba(26, 35, 48, 0.24);
+  --color-border-faint: rgba(26, 35, 48, 0.12);
+  --color-hover-wash: rgba(26, 35, 48, 0.05);
+  --color-accent: #2f5d8a;
+  --color-accent-hover: #244a6f;
+  --color-on-accent: #ffffff;
+  --color-focus: #2f5d8a;
+  --color-green: #2f6b46;
+  --error: #a5251b;
+  --color-photo-a: #cfd8e3;
+  --color-photo-b: #dde4ec;
+  --color-photo-c: #c2cedb;
+  --color-photo-d: #e6ecf2;
+}
+
+/* Mist: cool grey with indigo. The crispest of the light ones. */
+[data-theme='mist'] {
+  --color-scheme: light;
+  --logo-lineart-filter: none;
+  --logo-lineart-blend: multiply;
+  --color-bg: #f3f4f8;
+  --color-bg-top: #f8f9fb;
+  --color-bg-bottom: #eceef4;
+  --color-bg-glow: rgba(67, 56, 202, 0.05);
+  --color-bg-raised: #ffffff;
+  --color-bg-raised-hover: #f0f1f7;
+  --color-ink: #1a1b2e;
+  --color-ink-hover: #0b0c18;
+  --color-on-ink: #f3f4f8;
+  --color-fg: #1a1b2e;
+  --color-fg-muted: rgba(26, 27, 46, 0.7);
+  --color-fg-faint: rgba(26, 27, 46, 0.45);
+  --color-border: rgba(26, 27, 46, 0.22);
+  --color-border-faint: rgba(26, 27, 46, 0.11);
+  --color-hover-wash: rgba(26, 27, 46, 0.05);
+  --color-accent: #4338ca;
+  --color-accent-hover: #3730a3;
+  --color-on-accent: #ffffff;
+  --color-focus: #4338ca;
+  --color-green: #2f6b46;
+  --error: #b42318;
+  --color-photo-a: #d3d6e4;
+  --color-photo-b: #e0e2ee;
+  --color-photo-c: #c6cadc;
+  --color-photo-d: #e9ebf3;
+}
+
+/* Midnight: deep navy with teal. Slate's companion, a shade bluer. */
+[data-theme='midnight'] {
+  --color-scheme: dark;
+  --logo-lineart-filter: invert(1) brightness(1.1);
+  --logo-lineart-blend: screen;
+  --color-bg: #0e1726;
+  --color-bg-top: #121c2e;
+  --color-bg-bottom: #0a111d;
+  --color-bg-glow: rgba(78, 205, 196, 0.07);
+  --color-bg-raised: #152135;
+  --color-bg-raised-hover: #1c2a42;
+  --color-ink: #070c15;
+  --color-ink-hover: #03060b;
+  --color-on-ink: #e6edf5;
+  --color-fg: #e6edf5;
+  --color-fg-muted: rgba(230, 237, 245, 0.72);
+  --color-fg-faint: rgba(230, 237, 245, 0.45);
+  --color-border: rgba(230, 237, 245, 0.24);
+  --color-border-faint: rgba(230, 237, 245, 0.12);
+  --color-hover-wash: rgba(255, 255, 255, 0.06);
+  --color-accent: #4ecdc4;
+  --color-accent-hover: #74dbd4;
+  --color-on-accent: #0e1726;
+  --color-focus: #74dbd4;
+  --color-green: #7fd39b;
+  --error: #ff9d92;
+  --color-photo-a: #1f2c42;
+  --color-photo-b: #27364f;
+  --color-photo-c: #192438;
+  --color-photo-d: #30405b;
+}
+
+/* ===========================================================================
+   Each theme's character, beyond its colours.
+   ===========================================================================
+   Colour alone made the themes read as one design with the paint changed. These
+   give each its own ground (a faint texture under everything), its own corners,
+   and in the portal its own sidebar, highlight, shadow and heading face. The
+   textures are kept faint enough that text over them is judged against the
+   plain colour, not the pattern.
+
+   --bg-texture-a / -b       up to two repeating layers under the page
+   --radius-card/panel/tile  corners on the public pages
+   --button-radius           a button's corners (falls back to a pill)
+   --portal-*                the committee's screens only */
+
+:root {
+  --bg-texture-a: none;
+  --bg-texture-b: none;
+  --bg-texture-a-size: auto;
+  --bg-texture-b-size: auto;
+}
+
+/* Festival: a scatter of marigold dots, like an alpona's border. Round pills, as before. */
+[data-theme='festival'] {
+  --bg-texture-a: radial-gradient(circle, rgba(247, 183, 51, 0.09) 1.3px, transparent 1.8px);
+  --bg-texture-a-size: 26px 26px;
+}
+
+/* Boishakhi: a woven gamchha check, and square, printed corners. */
+[data-theme='poila-boishakh'] {
+  --bg-texture-a: repeating-linear-gradient(0deg, rgba(200, 16, 46, 0.04) 0 2px, transparent 2px 30px);
+  --bg-texture-b: repeating-linear-gradient(90deg, rgba(200, 16, 46, 0.04) 0 2px, transparent 2px 30px);
+  --radius-card: 6px;
+  --radius-panel: 8px;
+  --radius-tile: 4px;
+  --button-radius: 6px;
+}
+
+/* Saraswati: fine blue diagonals, like ruled paper turned for writing, and soft round corners. */
+[data-theme='saraswati'] {
+  --bg-texture-a: repeating-linear-gradient(135deg, rgba(31, 95, 191, 0.05) 0 1px, transparent 1px 18px);
+  --radius-card: 28px;
+  --radius-panel: 32px;
+  --radius-tile: 22px;
+}
+
+/* Holi: blots of thrown powder, and the roundest corners of all. */
+[data-theme='holi'] {
+  --bg-texture-a: radial-gradient(circle at 30% 30%, rgba(255, 214, 10, 0.08) 0 7px, transparent 8px);
+  --bg-texture-a-size: 72px 72px;
+  --bg-texture-b: radial-gradient(circle at 70% 70%, rgba(43, 179, 160, 0.09) 0 5px, transparent 6px);
+  --bg-texture-b-size: 56px 56px;
+  --radius-card: 30px;
+  --radius-panel: 36px;
+  --radius-tile: 26px;
+}
+
+/* Mahalaya: the last stars before dawn, and crisp, early-morning corners. */
+[data-theme='mahalaya'] {
+  --bg-texture-a: radial-gradient(circle, rgba(255, 255, 255, 0.22) 0.8px, transparent 1.4px);
+  --bg-texture-a-size: 47px 47px;
+  --bg-texture-b: radial-gradient(circle, rgba(255, 154, 60, 0.18) 0.7px, transparent 1.3px);
+  --bg-texture-b-size: 83px 83px;
+  --radius-card: 10px;
+  --radius-panel: 12px;
+  --radius-tile: 8px;
+  --button-radius: 10px;
+}
+
+/* Kojagori: alpona scallops in moonlight. */
+[data-theme='kojagori'] {
+  --bg-texture-a: radial-gradient(circle at 50% 100%, transparent 11px, rgba(242, 213, 138, 0.08) 11px 12.5px, transparent 13px);
+  --bg-texture-a-size: 28px 14px;
+  --radius-card: 18px;
+  --radius-panel: 22px;
+  --radius-tile: 14px;
+  --button-radius: 12px;
+}
+
+/* Deepavali: sparks of lamp gold in the dark. */
+[data-theme='deepavali'] {
+  --bg-texture-a: radial-gradient(circle, rgba(255, 180, 46, 0.2) 1px, transparent 1.7px);
+  --bg-texture-a-size: 34px 34px;
+  --bg-texture-b: radial-gradient(circle, rgba(255, 120, 60, 0.14) 0.8px, transparent 1.4px);
+  --bg-texture-b-size: 61px 61px;
+  --radius-card: 14px;
+  --radius-panel: 18px;
+  --radius-tile: 10px;
+}
+
+/* Borodin: a light fall of snow, and neat card corners. */
+[data-theme='borodin'] {
+  --bg-texture-a: radial-gradient(circle, rgba(29, 107, 67, 0.08) 1.6px, transparent 2.2px);
+  --bg-texture-a-size: 30px 30px;
+  --bg-texture-b: radial-gradient(circle, rgba(178, 34, 52, 0.07) 1.2px, transparent 1.8px);
+  --bg-texture-b-size: 53px 53px;
+  --radius-card: 12px;
+  --radius-panel: 16px;
+  --radius-tile: 10px;
+  --button-radius: 10px;
+}
+
+/* The portal's own. Each is a different way of being quiet, not the same way in other colours. */
+
+/* Paper: ruled lines, a white sidebar, crisp shadows. A ledger. */
+[data-theme='paper'] {
+  --bg-texture-a: repeating-linear-gradient(0deg, rgba(31, 78, 121, 0.04) 0 1px, transparent 1px 32px);
+  --portal-radius: 10px;
+  --portal-button-radius: 6px;
+  --portal-shadow: 0 1px 2px rgba(28, 29, 31, 0.06);
+  --portal-side-bg: #ffffff;
+  --portal-nav-on-bg: color-mix(in srgb, var(--color-accent) 11%, transparent);
+  --portal-nav-on-fg: var(--color-accent);
+}
+
+/* Linen: a woven ground, a serif for headings, and flat bordered cards. A notebook. */
+[data-theme='linen'] {
+  --bg-texture-a: repeating-linear-gradient(45deg, rgba(35, 33, 29, 0.028) 0 1px, transparent 1px 6px);
+  --bg-texture-b: repeating-linear-gradient(-45deg, rgba(35, 33, 29, 0.028) 0 1px, transparent 1px 6px);
+  --font-display: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
+  --portal-radius: 4px;
+  --portal-button-radius: 4px;
+  --portal-shadow: none;
+  --portal-panel-border: rgba(35, 33, 29, 0.2);
+  /* The frame in the theme's own wine red, deep enough that pale writing reads on it. */
+  --portal-side-bg: #6b2230;
+  --portal-side-fg: #f8efe8;
+  --portal-side-muted: rgba(248, 239, 232, 0.82);
+  --portal-side-faint: rgba(248, 239, 232, 0.56);
+  --portal-side-border: rgba(248, 239, 232, 0.18);
+  --portal-side-wash: rgba(255, 255, 255, 0.08);
+  --portal-side-accent: #f3dcd3;
+  --portal-side-on-accent: #6b2230;
+  --portal-nav-on-bg: rgba(255, 255, 255, 0.14);
+  --portal-nav-on-fg: #ffffff;
+  --portal-nav-on-mark: #f3dcd3;
+  --portal-side-danger: #fecaca;
+  --portal-side-danger-bg: rgba(220, 38, 38, 0.26);
+  --portal-side-danger-border: rgba(254, 202, 202, 0.45);
+  --portal-side-danger-hover: #dc2626;
+  --portal-side-danger-hover-fg: #ffffff;
+}
+
+/* Denim (stored as 'sage', its old name, so a saved choice carries over): a dot grid, pill
+   buttons and soft floating cards, in pale blue-grey with a denim frame. */
+[data-theme='sage'] {
+  --bg-texture-a: radial-gradient(circle, rgba(47, 93, 138, 0.14) 1px, transparent 1.5px);
+  --bg-texture-a-size: 22px 22px;
+  --portal-radius: 18px;
+  --portal-button-radius: 999px;
+  --portal-shadow: 0 6px 22px rgba(26, 35, 48, 0.07);
+  --portal-panel-border: transparent;
+  /* The frame in denim blue; the screen you are on is a pale pill in it, this theme's own shape. */
+  --portal-side-bg: #1f3a5a;
+  --portal-side-fg: #eef3f9;
+  --portal-side-muted: rgba(238, 243, 249, 0.82);
+  --portal-side-faint: rgba(238, 243, 249, 0.56);
+  --portal-side-border: rgba(238, 243, 249, 0.18);
+  --portal-side-wash: rgba(255, 255, 255, 0.09);
+  --portal-side-accent: #cddcee;
+  --portal-side-on-accent: #1f3a5a;
+  --portal-nav-on-bg: #eef3f9;
+  --portal-nav-on-fg: #1f3a5a;
+  --portal-nav-on-mark: transparent;
+  --portal-side-danger: #fecaca;
+  --portal-side-danger-bg: rgba(220, 38, 38, 0.26);
+  --portal-side-danger-border: rgba(254, 202, 202, 0.45);
+  --portal-side-danger-hover: #dc2626;
+  --portal-side-danger-hover-fg: #ffffff;
+}
+
+/* Mist: a fine graph grid, a system face and layered shadows. A modern app. */
+[data-theme='mist'] {
+  --bg-texture-a: linear-gradient(rgba(67, 56, 202, 0.045) 1px, transparent 1px);
+  --bg-texture-a-size: 24px 24px;
+  --bg-texture-b: linear-gradient(90deg, rgba(67, 56, 202, 0.045) 1px, transparent 1px);
+  --bg-texture-b-size: 24px 24px;
+  --font-display: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  --portal-radius: 12px;
+  --portal-button-radius: 8px;
+  --portal-shadow: 0 1px 3px rgba(26, 27, 46, 0.08), 0 10px 28px rgba(26, 27, 46, 0.05);
+  --portal-panel-border: transparent;
+  --portal-side-bg: #1a1b2e;
+  --portal-side-fg: #e8e9f3;
+  --portal-side-muted: rgba(232, 233, 243, 0.72);
+  --portal-side-faint: rgba(232, 233, 243, 0.45);
+  --portal-side-border: rgba(232, 233, 243, 0.16);
+  --portal-side-wash: rgba(255, 255, 255, 0.07);
+  --portal-side-accent: #a5b4fc;
+  --portal-side-on-accent: #1a1b2e;
+  --portal-nav-on-bg: rgba(255, 255, 255, 0.12);
+  --portal-nav-on-fg: #ffffff;
+  --portal-nav-on-mark: #a5b4fc;
+  --portal-side-danger: #fecaca;
+  --portal-side-danger-bg: rgba(220, 38, 38, 0.26);
+  --portal-side-danger-border: rgba(254, 202, 202, 0.45);
+  --portal-side-danger-hover: #dc2626;
+  --portal-side-danger-hover-fg: #ffffff;
+}
+
+/* Slate: plain, square and flat. Nothing to look at but the work. */
+[data-theme='slate'] {
+  --font-display: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  --portal-radius: 6px;
+  --portal-button-radius: 4px;
+  --portal-shadow: none;
+  --portal-side-bg: #101216;
+  --portal-nav-on-bg: color-mix(in srgb, var(--color-accent) 14%, transparent);
+  --portal-nav-on-fg: var(--color-accent);
+  --portal-side-danger: #fecaca;
+  --portal-side-danger-bg: rgba(220, 38, 38, 0.26);
+  --portal-side-danger-border: rgba(254, 202, 202, 0.45);
+  --portal-side-danger-hover: #dc2626;
+  --portal-side-danger-hover-fg: #ffffff;
+}
+
+/* Midnight: a few faint stars, glowing cards, rounded. The night shift. */
+[data-theme='midnight'] {
+  --bg-texture-a: radial-gradient(circle, rgba(78, 205, 196, 0.16) 0.8px, transparent 1.4px);
+  --bg-texture-a-size: 38px 38px;
+  --bg-texture-b: radial-gradient(1200px 600px at 100% 0%, rgba(78, 205, 196, 0.07), transparent 60%);
+  --bg-texture-b-size: 100% 100%;
+  --portal-radius: 14px;
+  --portal-button-radius: 10px;
+  --portal-shadow: 0 0 0 1px rgba(78, 205, 196, 0.06), 0 12px 32px rgba(0, 0, 0, 0.35);
+  --portal-panel-border: rgba(78, 205, 196, 0.14);
+  /* Teal round a navy page. Navy on navy made a second all-dark theme, which Slate already is. */
+  --portal-side-bg: linear-gradient(180deg, #115e59 0%, #134e4a 100%);
+  --portal-side-fg: #ecfeff;
+  --portal-side-muted: rgba(236, 254, 255, 0.82);
+  --portal-side-faint: rgba(236, 254, 255, 0.58);
+  --portal-side-border: rgba(236, 254, 255, 0.2);
+  --portal-side-wash: rgba(255, 255, 255, 0.1);
+  --portal-side-accent: #ccfbf1;
+  --portal-side-on-accent: #134e4a;
+  --portal-nav-on-bg: rgba(255, 255, 255, 0.16);
+  --portal-nav-on-fg: #ffffff;
+  --portal-nav-on-mark: #ccfbf1;
+  --portal-side-danger: #fecaca;
+  --portal-side-danger-bg: rgba(220, 38, 38, 0.26);
+  --portal-side-danger-border: rgba(254, 202, 202, 0.45);
+  --portal-side-danger-hover: #dc2626;
+  --portal-side-danger-hover-fg: #ffffff;
+}
+
+/* ===========================================================================
+   The committee's colourful looks.
+   ===========================================================================
+   For whoever would rather the back office were not quiet. The colour is in the
+   frame — a gradient sidebar, a glow behind the page, a strong accent — while the
+   cards the work is done on stay plain enough to read a table of names in. */
+
+/* Marigold: a sunset sidebar, orange into pink, over warm cream. */
+[data-theme='marigold'] {
+  --color-scheme: light;
+  --logo-lineart-filter: none;
+  --logo-lineart-blend: multiply;
+  --color-bg: #fff6ea;
+  --color-bg-top: #fffaf3;
+  --color-bg-bottom: #ffeedd;
+  --color-bg-glow: rgba(232, 70, 124, 0.08);
+  --color-bg-raised: #ffffff;
+  --color-bg-raised-hover: #fff3e6;
+  --color-ink: #3b1206;
+  --color-ink-hover: #260b03;
+  --color-on-ink: #ffd8a8;
+  --color-fg: #2b1608;
+  --color-fg-muted: rgba(43, 22, 8, 0.72);
+  --color-fg-faint: rgba(43, 22, 8, 0.45);
+  --color-border: rgba(43, 22, 8, 0.24);
+  --color-border-faint: rgba(43, 22, 8, 0.12);
+  --color-hover-wash: rgba(234, 88, 12, 0.07);
+  --color-accent: #c2410c;
+  --color-accent-hover: #9a3412;
+  --color-on-accent: #ffffff;
+  --color-focus: #c2410c;
+  --color-green: #2f6b46;
+  --error: #b42318;
+  --color-photo-a: #ffb27a;
+  --color-photo-b: #ff8fb1;
+  --color-photo-c: #ffd27a;
+  --color-photo-d: #ffc6a8;
+
+  --bg-texture-a: radial-gradient(circle, rgba(234, 88, 12, 0.13) 1.2px, transparent 1.8px);
+  --bg-texture-a-size: 24px 24px;
+  --bg-texture-b: radial-gradient(900px 520px at 100% 0%, rgba(232, 70, 124, 0.14), transparent 65%);
+  --bg-texture-b-size: 100% 100%;
+  --portal-radius: 16px;
+  --portal-button-radius: 999px;
+  --portal-shadow: 0 8px 24px rgba(194, 65, 12, 0.08);
+  --portal-panel-border: rgba(234, 88, 12, 0.14);
+  --portal-side-bg: linear-gradient(170deg, #c2410c 0%, #b9370f 38%, #be185d 100%);
+  --portal-side-fg: #ffffff;
+  --portal-side-muted: rgba(255, 255, 255, 0.95);
+  --portal-side-faint: rgba(255, 255, 255, 0.66);
+  --portal-side-border: rgba(255, 255, 255, 0.28);
+  --portal-side-wash: rgba(255, 255, 255, 0.14);
+  --portal-side-accent: #ffffff;
+  --portal-side-on-accent: #c2410c;
+  --portal-nav-on-bg: rgba(255, 255, 255, 0.22);
+  --portal-nav-on-fg: #ffffff;
+  --portal-nav-on-mark: #ffffff;
+  --portal-side-danger: #ffffff;
+  --portal-side-danger-bg: rgba(127, 29, 29, 0.5);
+  --portal-side-danger-border: rgba(255, 255, 255, 0.4);
+  --portal-side-danger-hover: #991b1b;
+  --portal-side-danger-hover-fg: #ffffff;
+}
+
+/* Lagoon: teal into ocean blue, with bright sea light behind the page. */
+[data-theme='lagoon'] {
+  --color-scheme: light;
+  --logo-lineart-filter: none;
+  --logo-lineart-blend: multiply;
+  --color-bg: #ecfaf8;
+  --color-bg-top: #f4fdfb;
+  --color-bg-bottom: #e0f4f2;
+  --color-bg-glow: rgba(37, 99, 235, 0.08);
+  --color-bg-raised: #ffffff;
+  --color-bg-raised-hover: #eef9f8;
+  --color-ink: #062a33;
+  --color-ink-hover: #031a20;
+  --color-on-ink: #a7f3e4;
+  --color-fg: #0b2730;
+  --color-fg-muted: rgba(11, 39, 48, 0.72);
+  --color-fg-faint: rgba(11, 39, 48, 0.45);
+  --color-border: rgba(11, 39, 48, 0.24);
+  --color-border-faint: rgba(11, 39, 48, 0.12);
+  --color-hover-wash: rgba(14, 116, 144, 0.07);
+  --color-accent: #0e7490;
+  --color-accent-hover: #155e75;
+  --color-on-accent: #ffffff;
+  --color-focus: #0e7490;
+  --color-green: #2f6b46;
+  --error: #b42318;
+  --color-photo-a: #7dd3c8;
+  --color-photo-b: #93c5fd;
+  --color-photo-c: #5eead4;
+  --color-photo-d: #bfdbfe;
+
+  --bg-texture-a: radial-gradient(circle at 50% 100%, transparent 9px, rgba(14, 116, 144, 0.09) 9px 10.5px, transparent 11px);
+  --bg-texture-a-size: 24px 12px;
+  --bg-texture-b: radial-gradient(1000px 560px at 100% 0%, rgba(37, 99, 235, 0.13), transparent 65%);
+  --bg-texture-b-size: 100% 100%;
+  --portal-radius: 14px;
+  --portal-button-radius: 10px;
+  --portal-shadow: 0 6px 20px rgba(14, 116, 144, 0.09);
+  --portal-panel-border: rgba(14, 116, 144, 0.14);
+  --portal-side-bg: linear-gradient(170deg, #0f766e 0%, #155e75 45%, #1e40af 100%);
+  --portal-side-fg: #ffffff;
+  --portal-side-muted: rgba(255, 255, 255, 0.95);
+  --portal-side-faint: rgba(255, 255, 255, 0.66);
+  --portal-side-border: rgba(255, 255, 255, 0.26);
+  --portal-side-wash: rgba(255, 255, 255, 0.13);
+  --portal-side-accent: #a7f3e4;
+  --portal-side-on-accent: #062a33;
+  --portal-nav-on-bg: rgba(255, 255, 255, 0.2);
+  --portal-nav-on-fg: #ffffff;
+  --portal-nav-on-mark: #a7f3e4;
+  --portal-side-danger: #ffffff;
+  --portal-side-danger-bg: rgba(127, 29, 29, 0.5);
+  --portal-side-danger-border: rgba(255, 255, 255, 0.4);
+  --portal-side-danger-hover: #991b1b;
+  --portal-side-danger-hover-fg: #ffffff;
+}
+
+/* Peacock: violet into magenta on a deep plum night, with gold. Dark. */
+[data-theme='peacock'] {
+  --color-scheme: dark;
+  --logo-lineart-filter: invert(1) brightness(1.1);
+  --logo-lineart-blend: screen;
+  --color-bg: #1a0f2e;
+  --color-bg-top: #21133a;
+  --color-bg-bottom: #120a21;
+  --color-bg-glow: rgba(219, 39, 119, 0.12);
+  --color-bg-raised: #251741;
+  --color-bg-raised-hover: #2f1e52;
+  --color-ink: #0d0717;
+  --color-ink-hover: #06030c;
+  --color-on-ink: #fcd34d;
+  --color-fg: #f5effe;
+  --color-fg-muted: rgba(245, 239, 254, 0.74);
+  --color-fg-faint: rgba(245, 239, 254, 0.46);
+  --color-border: rgba(245, 239, 254, 0.26);
+  --color-border-faint: rgba(245, 239, 254, 0.13);
+  --color-hover-wash: rgba(255, 255, 255, 0.07);
+  --color-accent: #fcd34d;
+  --color-accent-hover: #fde68a;
+  --color-on-accent: #1a0f2e;
+  --color-focus: #fde68a;
+  --color-green: #86efac;
+  --error: #fda4af;
+  --color-photo-a: #4c1d95;
+  --color-photo-b: #831843;
+  --color-photo-c: #3b0764;
+  --color-photo-d: #0f766e;
+
+  --bg-texture-a: radial-gradient(900px 560px at 100% 0%, rgba(219, 39, 119, 0.2), transparent 62%);
+  --bg-texture-a-size: 100% 100%;
+  --bg-texture-b: radial-gradient(800px 600px at 0% 100%, rgba(13, 148, 136, 0.16), transparent 62%);
+  --bg-texture-b-size: 100% 100%;
+  --portal-radius: 16px;
+  --portal-button-radius: 10px;
+  --portal-shadow: 0 0 0 1px rgba(252, 211, 77, 0.06), 0 14px 34px rgba(0, 0, 0, 0.4);
+  --portal-panel-border: rgba(196, 181, 253, 0.16);
+  --portal-side-bg: linear-gradient(170deg, #6d28d9 0%, #9333ea 45%, #db2777 100%);
+  --portal-side-fg: #ffffff;
+  --portal-side-muted: rgba(255, 255, 255, 0.86);
+  --portal-side-faint: rgba(255, 255, 255, 0.64);
+  --portal-side-border: rgba(255, 255, 255, 0.24);
+  --portal-side-wash: rgba(255, 255, 255, 0.12);
+  --portal-side-accent: #fcd34d;
+  --portal-side-on-accent: #3b0764;
+  --portal-nav-on-bg: rgba(255, 255, 255, 0.2);
+  --portal-nav-on-fg: #ffffff;
+  --portal-nav-on-mark: #fcd34d;
+  --portal-side-danger: #ffffff;
+  --portal-side-danger-bg: rgba(127, 29, 29, 0.5);
+  --portal-side-danger-border: rgba(255, 255, 255, 0.4);
+  --portal-side-danger-hover: #991b1b;
+  --portal-side-danger-hover-fg: #ffffff;
 }

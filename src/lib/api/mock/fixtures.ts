@@ -1,5 +1,6 @@
 import type { Event } from '@/domain/event'
 import type { Festival } from '@/domain/festival'
+import { festivals as defaultFestivals } from '@/app/festivals'
 import type { Album, Media } from '@/domain/gallery'
 import type { Announcement, NewsPost, Newsletter } from '@/domain/news'
 import type { VolunteerRole } from '@/domain/volunteer'
@@ -11,7 +12,12 @@ import type { VolunteerRole } from '@/domain/volunteer'
  *
  * Confirmed: the Mahalaya programme on 10 October 2026, its time taken from the registration
  * form, which is what people are told when they sign up.
- * To confirm with the committee: the 2027 dates, venues and headcounts below.
+ * To confirm with the committee: the 2027 dates and venues below.
+ *
+ * No headcounts anywhere. The invented ones — households booked, children at the hatekhori —
+ * came out on 2026-09-17: nobody counted, and a number on a page is read as a record of what
+ * happened. "Households booked so far" went with them, field and column and all: nothing was
+ * reading the booking form, so the number could only ever be somebody's guess, typed in.
  */
 export function buildFixtures() {
   const events: Event[] = [
@@ -32,7 +38,6 @@ export function buildFixtures() {
         'https://docs.google.com/forms/d/e/1FAIpQLScmX_VTO-_FDfb8Wn2YD43HSK9Xa6fHQYBQNGfuSKnEzKg9tg/viewform',
       performerFormUrl:
         'https://docs.google.com/forms/d/e/1FAIpQLSerCd_B2SfsuOmPtPkH66bZfCjasCd7fLm1X4dnjO6n6h9XZw/viewform',
-      householdsRegistered: 31,
       theme: {
         bengali: 'দুর্গাপূজার সেকাল ও একাল',
         bengaliSubtitle: 'ঐতিহ্যের সাথে আধুনিকতা',
@@ -54,7 +59,6 @@ export function buildFixtures() {
       festivalId: 'saraswati-puja',
       isPublic: true,
       registrationOpen: true,
-      householdsRegistered: 0,
       status: 'published',
     },
     {
@@ -67,7 +71,6 @@ export function buildFixtures() {
       festivalId: 'holi',
       isPublic: true,
       registrationOpen: false,
-      householdsRegistered: 0,
       status: 'published',
     },
     {
@@ -80,7 +83,6 @@ export function buildFixtures() {
       festivalId: 'boishakhi',
       isPublic: true,
       registrationOpen: false,
-      householdsRegistered: 0,
       status: 'published',
     },
     {
@@ -93,7 +95,6 @@ export function buildFixtures() {
       festivalId: 'boishakhi',
       isPublic: true,
       registrationOpen: false,
-      householdsRegistered: 40,
       status: 'past',
     },
     {
@@ -105,7 +106,6 @@ export function buildFixtures() {
       venue: 'Online',
       isPublic: false,
       registrationOpen: false,
-      householdsRegistered: 0,
       status: 'published',
     },
     {
@@ -117,48 +117,14 @@ export function buildFixtures() {
       venue: 'TBC',
       isPublic: true,
       registrationOpen: false,
-      householdsRegistered: 0,
       status: 'draft',
     },
   */
     ]
 
-  /** The community's year, in Bengali-calendar order from the month of Boishakh. */
-  const festivals: Festival[] = [
-    {
-      id: 'boishakhi',
-      name: 'Boishakhi',
-      bengaliName: 'বৈশাখী',
-      season: 'April or May',
-      /*
-       * Not Poila Boishakh itself: the community does not hold a programme on the day. This is
-       * whatever we put on during the month of Boishakh, which is often Rabindra Jayanti.
-       */
-      description:
-        'Our gathering in the month of Boishakh, often around Rabindra Jayanti. Songs, recitation and a meal to open the Bengali year together.',
-    },
-    {
-      id: 'mahalaya',
-      name: 'Mahalaya programme',
-      bengaliName: 'মহালয়া',
-      season: 'September or October',
-      description: 'The dawn that opens the Puja season. Our cultural programme: songs, recitation and the stage.',
-    },
-    {
-      id: 'saraswati-puja',
-      name: 'Saraswati Puja',
-      bengaliName: 'সরস্বতী পূজা',
-      season: 'January or February',
-      description: 'Morning pujo for learning, the children’s hatekhori and their first letters, then lunch.',
-    },
-    {
-      id: 'holi',
-      name: 'Holi',
-      bengaliName: 'দোল',
-      season: 'March',
-      description: 'Colours, songs and a shared lunch, outdoors when the weather allows it.',
-    },
-  ]
+  // The year's occasions are the committee's to edit now, so they live with the rest of what
+  // the site falls back to rather than here among the sample data.
+  const festivals: Festival[] = defaultFestivals.map((festival) => ({ ...festival }))
 
   const albums: Album[] = [
     { id: 'al-boishakhi-2026', slug: 'boishakhi-2026', title: 'Boishakhi 2026', description: 'Our Boishakh evening at St Andrew’s Community Hall, April 2026.', festivalId: 'boishakhi', publishedAt: '2026-04-20T12:00:00', visibility: 'public' },
@@ -274,8 +240,8 @@ const albumPhotos = (albumId: string, slug: string, count: number): Media[] =>
       id: 'np-saraswati-thanks',
       slug: 'saraswati-puja-2026-thank-you',
       title: 'Saraswati Puja 2026: thank you',
-      excerpt: 'Forty households came, twelve children had their hatekhori, and nobody went home hungry.',
-      body: 'Thank you to everyone who came, cooked, decorated and cleared up.\n\nTwelve children had their hatekhori this year, the most we have ever had.\n\nPhotos are in the gallery.',
+      excerpt: 'Morning pujo, hatekhori for the children, and lunch together — thank you to everybody who made it happen.',
+      body: 'Thank you to everyone who came, cooked, decorated and cleared up.\n\nThe children had their hatekhori, and the photographs from the morning are in the gallery.',
       tags: ['Success stories'],
       publishedAt: '2026-02-14T10:00:00',
       author: 'The committee',

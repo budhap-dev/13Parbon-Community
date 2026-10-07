@@ -1,3 +1,4 @@
+import { useSettings } from '@/app/SettingsContext'
 import { Button } from '@/components/Button'
 import { Container } from '@/components/Container'
 import styles from '../Home.module.css'
@@ -7,17 +8,15 @@ import styles from '../Home.module.css'
  * come to something rather than to fill in a form that does not exist.
  */
 export function JoinCta() {
+  const { text } = useSettings()
   return (
     <Container>
       <section className={styles.join} aria-labelledby="join-title">
         <div className={styles.joinBody}>
           <h2 id="join-title" className={styles.joinTitle}>
-            Come for one evening.
+            {text.joinTitle}
           </h2>
-          <p className={styles.joinText}>
-            Everyone is welcome at our programmes, member or not. Come along, say hello, and if you would like to
-            stay, talk to the committee.
-          </p>
+          <p className={styles.joinText}>{text.joinText}</p>
         </div>
         <div className={styles.joinActions}>
           <Button to="/events">See what’s on</Button>

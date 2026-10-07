@@ -30,7 +30,7 @@ describe('GalleryPage', () => {
     renderWithProviders(<GalleryPage />, { route: '/gallery' })
     await screen.findAllByRole('heading', { level: 2 })
     expect(screen.getByText(/rather not be/)).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'tell us' })).toHaveAttribute('href', '/contact')
+    expect(screen.getByRole('link', { name: 'tell us' })).toHaveAttribute('href', '/contact?about=photo')
   })
 })
 
@@ -61,7 +61,7 @@ describe('AlbumPage', () => {
   it('repeats the takedown offer beside the photographs themselves', async () => {
     renderAlbum('saraswati-puja-2026')
     await screen.findByRole('heading', { level: 1, name: 'Saraswati Puja 2026' })
-    expect(screen.getByRole('link', { name: 'tell us' })).toHaveAttribute('href', '/contact')
+    expect(screen.getByRole('link', { name: 'tell us' })).toHaveAttribute('href', '/contact?about=photo')
   })
 
   it('shows not found for a members-only or unknown album', async () => {

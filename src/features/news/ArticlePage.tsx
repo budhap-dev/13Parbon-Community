@@ -36,7 +36,7 @@ export function ArticlePage() {
         ← All news
       </Link>
       <p className={styles.postMeta}>
-        <span>{formatLongDate(post.publishedAt)}</span>
+        {post.publishedAt ? <span>{formatLongDate(post.publishedAt)}</span> : null}
         <span>{post.author}</span>
         {post.tags.map((t) => (
           <span key={t}>{t}</span>

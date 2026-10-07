@@ -126,3 +126,19 @@
     min-height: 0;
   }
 }
+
+/* Kept in the calendar rather than dropped from it: an evening that quietly disappears is
+   indistinguishable from one that was never announced. */
+.cardCancelled {
+  composes: card;
+  border-color: var(--error, #b3261e);
+}
+
+.cancelled {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--error, #b3261e);
+}

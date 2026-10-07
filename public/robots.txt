@@ -6,5 +6,7 @@ Allow: /
 # Taking it out of the index is also what makes the promise on the privacy page cheap to keep.
 # This rule stays inside the group above: a blank line here would end the record.
 Disallow: /gallery
+# The event designer's preview frame: a draft that is not a page, and nothing to find.
+Disallow: /preview
 
 Sitemap: https://13parbon.org.uk/sitemap.xml

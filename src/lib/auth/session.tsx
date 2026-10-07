@@ -9,6 +9,14 @@ export type SignedIn = {
   householdName: string
   name: string
   email: string
+  /**
+   * Set only by the preview sign-in, so the portal can say which one you are in.
+   *
+   * Without it the banner saying "nothing you change is saved yet" was drawn for everybody,
+   * including somebody signed in with Google against the real database — who is told their
+   * real edits are make-believe, which is the one thing a back office must never get wrong.
+   */
+  preview?: true
 }
 
 export type Session = { role: 'visitor' } | ({ role: Role } & SignedIn)
@@ -21,6 +29,9 @@ type SessionContextValue = {
   session: Session
   signIn: (who: SignedIn) => void
   signOut: () => void
+  /** Step into a sample household, keeping your own session to come back to. */
+  enterPreview: (who: SignedIn) => void
+  leavePreview: () => void
 }
 
 const SessionContext = createContext<SessionContextValue | null>(null)
@@ -34,6 +45,8 @@ const SessionContext = createContext<SessionContextValue | null>(null)
  */
 export function SessionProvider({ initial, children }: { initial?: Session; children: ReactNode }) {
   const [session, setSession] = useState<Session>(() => initial ?? readStoredSession() ?? visitor)
+  /** Whoever was really signed in before a preview was opened, to come back to. */
+  const [held, setHeld] = useState<SignedIn | null>(null)
 
   const signIn = useCallback((who: SignedIn) => {
     setSession(who)
@@ -42,10 +55,34 @@ export function SessionProvider({ initial, children }: { initial?: Session; chil
 
   const signOut = useCallback(() => {
     setSession(visitor)
+    setHeld(null)
     writeStoredSession(null)
   }, [])
 
-  const value = useMemo(() => ({ session, signIn, signOut }), [session, signIn, signOut])
+  /*
+   * Deliberately not written to storage.
+   *
+   * The real session stays the stored one, so a reload puts you back in your own account
+   * rather than stranding you in a sample household with no way out — which is what would
+   * happen the moment somebody opened a preview and hit refresh.
+   */
+  const enterPreview = useCallback(
+    (who: SignedIn) => {
+      if (session.role !== 'visitor' && !session.preview) setHeld(session)
+      setSession({ ...who, preview: true })
+    },
+    [session],
+  )
+
+  const leavePreview = useCallback(() => {
+    setSession(held ?? readStoredSession() ?? visitor)
+    setHeld(null)
+  }, [held])
+
+  const value = useMemo(
+    () => ({ session, signIn, signOut, enterPreview, leavePreview }),
+    [session, signIn, signOut, enterPreview, leavePreview],
+  )
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>
 }
 

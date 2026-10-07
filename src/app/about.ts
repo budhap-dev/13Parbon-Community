@@ -1,14 +1,14 @@
+import type { StoryBlock, ValueCard } from '@/domain/siteContent'
 import { site } from './site'
 
-/** A paragraph, a run of bullets, or a heading part-way down the story. */
-export type StoryBlock =
-  | { kind: 'text'; text: string }
-  | { kind: 'list'; items: readonly string[] }
-  | { kind: 'heading'; text: string }
+export type { StoryBlock }
 
 /**
- * Content for the About page. The committee edits this file; bracketed values are
- * placeholders that must be filled before launch. Nothing here is fabricated.
+ * Content for the About page, as it stands until the committee saves their own.
+ *
+ * Everything here is edited from the portal now — Content → The pages — and what is saved
+ * there is what a visitor reads. This file is what the page starts from, and what it falls
+ * back to if the saved version cannot be read. Nothing here is fabricated.
  */
 export const about = {
   /**
@@ -75,7 +75,7 @@ export const about = {
     { icon: 'users', title: 'A family is a unit', text: 'One registration per household. The more, the merrier, bring the kids and your neighbours along!' },
     { icon: 'door', title: 'Open door', text: 'You do not have to be Bengali, or a member, to come to an event. Come once and see.' },
     { icon: 'heart', title: 'Run by volunteers', text: 'The committee is elected each year at the AGM, and our events are delivered by community members who volunteer their time and effort.' },
-  ],
+  ] as const satisfies readonly ValueCard[],
   /* In the order the committee gave them, which is not a ranking. */
   committee: [
     { role: 'Secretary', name: 'Mr. Dalim Ghosh' },

@@ -1,0 +1,22 @@
+#!/bin/sh
+#
+# Lint, types and the whole suite, before anything leaves this machine.
+#
+# CI runs the same four commands, so this catches nothing CI would miss — it catches it
+# sixteen seconds from now rather than four minutes from now, and before the branch other
+# people pull has a broken commit on it.
+#
+# Kept to what is already in package.json rather than a list of its own: `npm run check` is
+# the gate this project already means when it says "does it pass?", and two lists of checks
+# drift apart the first time one of them is amended.
+#
+# In a hurry, or pushing a work-in-progress branch nobody builds on:
+#
+#   git push --no-verify
+#
+echo "Checking before push: lint, types, tests (npm run check)…"
+npm run check || {
+  echo ""
+  echo "Not pushed. Fix the above, or push anyway with --no-verify."
+  exit 1
+}

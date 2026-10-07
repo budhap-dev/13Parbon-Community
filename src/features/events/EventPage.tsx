@@ -1,14 +1,17 @@
 import { Link, useParams } from 'react-router'
-import { activeSocial, site } from '@/app/site'
+import { site } from '@/app/site'
+import { useSettings } from '@/app/SettingsContext'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { Button } from '@/components/Button'
 import { Container } from '@/components/Container'
+import { CoverImage } from '@/components/CoverImage'
 import { Icon } from '@/components/Icon'
 import { LoadFailed } from '@/components/LoadFailed'
 import { ShareButton } from '@/components/ShareButton'
 import { ThenNowCollage } from '@/components/ThenNowCollage'
 import { VenueMap } from '@/components/VenueMap'
 import { daysUntil, describeCountdown, formatLongDate, formatTime } from '@/domain/dates'
+import { isCancelled, type Event } from '@/domain/event'
 import { NotFoundPage } from '@/features/placeholder'
 import { useEvent } from '@/lib/api'
 import { useNow } from '@/lib/clock'
@@ -20,10 +23,8 @@ function sameDay(a: string, b: string): boolean {
 }
 
 export function EventPage() {
-  const facebook = activeSocial().find((channel) => channel.name === 'Facebook')
   const { slug = '' } = useParams()
   const { data: event, isPending, isError, refetch } = useEvent(slug)
-  const now = useNow()
   useDocumentTitle(event?.title)
 
   if (isPending) {
@@ -42,12 +43,33 @@ export function EventPage() {
     )
   }
   if (!event) return <NotFoundPage />
+  return <EventView event={event} />
+}
+
+/**
+ * An evening's page, drawn from the event it is given.
+ *
+ * Apart from the fetching so the event designer can show a draft on the real page, in its full
+ * preview, rather than on an impression of it that could drift from what visitors see.
+ */
+export function EventView({ event }: { event: Event }) {
+  const { social, collage, volunteerFormUrl } = useSettings()
+  // By its mark rather than its name: the committee may call the channel "Facebook group".
+  const facebook = social.find((channel) => channel.icon === 'facebook' && channel.href)
+  const now = useNow()
 
   const days = daysUntil(event.startsAt, now)
   /* A form is only worth offering while registration is open; otherwise the page has nothing to book. */
-  const registrationUrl = event.registrationOpen ? event.registrationUrl : undefined
+  const cancelled = isCancelled(event)
+  // Nothing to book, nothing to count down to, and no form to put your name on the stage.
+  const registrationUrl = cancelled || !event.registrationOpen ? undefined : event.registrationUrl
   const countdown = describeCountdown(days)
-  const isPast = days < 0 && event.status === 'past'
+  // Two different questions. The date has passed on its own; whether the committee has
+  // finished with the evening is a decision somebody makes at /admin/events, and archiving is
+  // deliberately not automatic. Only the second hides the booking and the calls for help — but
+  // the countdown follows the date, or the page goes on counting down to last Saturday.
+  const hasHappened = days < 0
+  const isPast = hasHappened && event.status === 'past'
 
   return (
     <Container className={styles.detail}>
@@ -62,6 +84,25 @@ export function EventPage() {
           {event.title}
         </h1>
       </header>
+
+      {/* Before anything else on the page, and phrased as a sentence rather than a badge: the
+          person reading has probably arrived to find out when to turn up. */}
+      {cancelled ? (
+        <p className={styles.cancelled} role="status">
+          <strong>This event has been cancelled.</strong> It is not going ahead on{' '}
+          {formatLongDate(event.startsAt)}. We are sorry — please do not come to {event.venue}.
+        </p>
+      ) : null}
+
+      {event.coverImageUrl ? (
+        <CoverImage
+          src={event.coverImageUrl}
+          animation={event.coverAnimation}
+          alt=""
+          ratio="21 / 9"
+          className={styles.cover}
+        />
+      ) : null}
 
       {event.theme ? (
           <section className={styles.theme} aria-labelledby="theme-label">
@@ -78,9 +119,9 @@ export function EventPage() {
             ) : null}
             {event.theme.english ? <p className={styles.themeEnglish}>{event.theme.english}</p> : null}
             <ThenNowCollage
-              label="Calcutta then, Kolkata now"
-              images={site.themeImages}
-              credit={site.themeImageCredit}
+              label={collage.label}
+              images={collage.photos}
+              credit={collage.credit || undefined}
             />
         </section>
       ) : null}
@@ -113,9 +154,9 @@ export function EventPage() {
         {!isPast ? (
           <div className={styles.actions}>
             {registrationUrl ? <Button href={registrationUrl}>Register to come</Button> : null}
-            {event.volunteerCall ? (
-              site.volunteerFormUrl ? (
-                <Button href={site.volunteerFormUrl} variant="line">
+            {event.volunteerCall && !cancelled ? (
+              volunteerFormUrl ? (
+                <Button href={volunteerFormUrl} variant="line">
                   Volunteer
                 </Button>
               ) : (
@@ -164,7 +205,13 @@ export function EventPage() {
           </section>
         ) : null}
 
-        {!isPast ? (
+        {/* Not merely hidden: a countdown to an evening that is not happening should not be in
+            the page at all, for anything reading it aloud or scraping it. */}
+        {hasHappened && !cancelled ? (
+          <p className={styles.note}>This evening has happened.</p>
+        ) : null}
+
+        {!hasHappened && !cancelled ? (
           <p className={styles.countdown}>
           <span className="sr-only">{`${countdown.value} ${countdown.label}`}</span>
             <span className={styles.countValue} aria-hidden="true">
@@ -176,7 +223,7 @@ export function EventPage() {
           </p>
         ) : null}
 
-        {!isPast && event.performerCall ? (
+        {!isPast && !cancelled && event.performerCall ? (
           <section className={styles.roles} aria-labelledby="perform-title">
             <h2 id="perform-title" className={styles.rolesTitle}>
               <Icon name="mic" size={22} className={styles.rolesIcon} />
@@ -195,7 +242,7 @@ export function EventPage() {
           </section>
         ) : null}
 
-        {!isPast && event.volunteerCall ? (
+        {!isPast && !cancelled && event.volunteerCall ? (
           <section className={styles.roles} aria-labelledby="roles-title">
             <h2 id="roles-title" className={styles.rolesTitle}>
               <Icon name="heart" size={22} className={styles.rolesIcon} />
