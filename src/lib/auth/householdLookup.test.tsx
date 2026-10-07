@@ -138,6 +138,38 @@ describe('a member already in, checked again', () => {
   })
 })
 
+/*
+ * The household is what lets a member in. The allowlist used to be the only gate, so somebody
+ * the committee had added on the People screen was still turned away until a hosting setting
+ * was edited and the site rebuilt.
+ */
+describe('an address the committee has added to a household', () => {
+  it('is let in without being on the allowlist, as the household it belongs to', async () => {
+    renderWith(async () => ({ id: 'hh-roy', name: 'The Roys', role: 'member' }))
+    await vi.waitFor(() => expect(listener).not.toBeNull())
+
+    await act(async () => listener!('SIGNED_IN', { user: user('ami.subhendu@gmail.com') }))
+
+    expect(screen.getByText('state: signedIn')).toBeInTheDocument()
+    expect(screen.getByText('household: The Roys')).toBeInTheDocument()
+    expect(signOutOfGoogle).not.toHaveBeenCalled()
+  })
+
+  it('is told the check failed, not that nobody has heard of them, when the lookup fails', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    renderWith(async () => {
+      throw new Error('fetch failed')
+    })
+    await vi.waitFor(() => expect(listener).not.toBeNull())
+
+    await act(async () => listener!('SIGNED_IN', { user: user('ami.subhendu@gmail.com') }))
+
+    expect(screen.getByText('state: failed')).toBeInTheDocument()
+    expect(screen.getByText('household: none')).toBeInTheDocument()
+    vi.restoreAllMocks()
+  })
+})
+
 describe('an address that is not invited', () => {
   it('is still refused when signing it out of Google fails', async () => {
     signOutFails = true

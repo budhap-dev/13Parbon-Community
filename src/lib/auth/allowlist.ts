@@ -1,19 +1,20 @@
 /**
- * Who may sign in while sign-in is being built.
+ * Addresses let in without a household.
  *
- * Membership is by invitation, and the long-term answer is the `googleEmail` on a household:
- * the committee records the address, and that address gets in. Until there are households to
- * match against, this env-configured list is the gate — set it to the developer's address
- * alone and nobody else can get a session, whatever they do at the Google prompt.
+ * Membership is by invitation, and the answer for members is the `googleEmail` on a household:
+ * the committee records the address on the People screen, and that address gets in. This list
+ * is for the few who have no household to be found by — the developer's own address — and an
+ * address on it with no household comes in as an admin (see `sessionFor`).
  *
- * Empty or unset means nobody: a build with Supabase configured but no list still shows the
- * sign-in as not switched on, rather than letting the first stranger with a Google account in.
+ * It is also the switch for the members' door. Empty or unset means the door is off: a build
+ * with Supabase configured but no list shows sign-in as not switched on, rather than opening
+ * to whoever the database happens to hold.
  *
  *   VITE_MEMBER_ALLOWLIST=someone@example.com,someone.else@example.com
  *
- * To open it to everyone the committee has invited, drop the variable and let the household
- * lookup decide. Nothing here is a security boundary on its own — see the note in
- * supabaseAuth.ts.
+ * Until 2026-10-07 this list was the only gate, so a household added in the portal still could
+ * not sign in without an edit here and a redeploy. Nothing here is a security boundary on its
+ * own — see the note in supabaseAuth.ts.
  */
 export function readAllowlist(env: Record<string, string | undefined>): string[] {
   return (env.VITE_MEMBER_ALLOWLIST ?? '')
