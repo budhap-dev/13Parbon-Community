@@ -665,6 +665,19 @@ describe('somebody knocking', () => {
     await waitFor(() => expect(people).toHaveTextContent('1'))
   })
 
+  it('takes it out of the overview’s count too, which is the first thing the committee sees', async () => {
+    renderAt('/admin/people', admin)
+    await userEvent.click(await screen.findByRole('button', { name: /Add household for priya.dutta@gmail.com/ }))
+    await userEvent.type(await screen.findByLabelText('Household name'), 'The Duttas')
+    await userEvent.click(screen.getByRole('button', { name: 'Add the household' }))
+    await screen.findByRole('heading', { level: 1, name: 'People' })
+
+    await userEvent.click(screen.getByRole('link', { name: /Overview/ }))
+    const waitingOnYou = (await screen.findByText('Waiting on you')).parentElement!
+    await waitFor(() => expect(within(waitingOnYou).getByText('1')).toBeInTheDocument())
+    expect(screen.queryByText(/priya.dutta@gmail.com/)).not.toBeInTheDocument()
+  })
+
   it('takes a knock off the list once it has been dealt with', async () => {
     renderAt('/admin/people', admin)
     expect(await screen.findByText('amit.bose@gmail.com')).toBeInTheDocument()
