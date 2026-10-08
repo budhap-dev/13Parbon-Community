@@ -4,6 +4,7 @@ import { Button } from '@/components/Button'
 import { LoadFailed } from '@/components/LoadFailed'
 import { formatLongDate } from '@/domain/dates'
 import { peopleAt } from '@/domain/attendance'
+import { unresolved } from '@/domain/document'
 import { waiting } from '@/domain/feedback'
 import { useAllFeedback, useAttendance, useContactMessages, useHouseholds, useSignInAttempts } from '@/lib/api'
 import styles from '@/features/portal/Portal.module.css'
@@ -38,7 +39,17 @@ export function AdminOverviewPage() {
   const attendanceQuery = useAttendance()
   const feedbackQuery = useAllFeedback()
   const households = householdsQuery.data
-  const attempts = attemptsQuery.data?.filter((a) => !a.resolved)
+  /*
+   * The same rule as the People screen and the sidebar: an address that now belongs to a
+   * household has had its answer. Filtered on `resolved` alone, somebody added from People
+   * went on being counted here as waiting, on the one screen that is meant to say what is.
+   */
+  const attempts = attemptsQuery.data ? unresolved(attemptsQuery.data, households ?? []) : undefined
+  // Which knocks have been answered depends on who is on the list, so neither half is enough.
+  const knocks: Read = {
+    isPending: attemptsQuery.isPending || householdsQuery.isPending,
+    isError: attemptsQuery.isError || householdsQuery.isError,
+  }
   const messages = messagesQuery.data
   const attendance = attendanceQuery.data
   const feedback = feedbackQuery.data
@@ -48,7 +59,7 @@ export function AdminOverviewPage() {
   const failed = queries.filter((q) => q.isError)
   const retry = () => failed.forEach((q) => void q.refetch())
   // The decisions list is only "nothing waiting" when every queue it reads from has answered.
-  const decisionQueries = [attemptsQuery, messagesQuery, feedbackQuery]
+  const decisionQueries = [attemptsQuery, householdsQuery, messagesQuery, feedbackQuery]
   const decisionsPending = decisionQueries.some((q) => q.isPending)
   const decisionsFailed = decisionQueries.some((q) => q.isError)
 
@@ -74,8 +85,8 @@ export function AdminOverviewPage() {
       <div className={styles.stats} aria-busy={queries.some((q) => q.isPending) || undefined}>
         <Stat
           label="Waiting on you"
-          value={figure(attemptsQuery, () => attempts?.length ?? 0)}
-          note={noteFor(attemptsQuery, () => 'tried to sign in, not on the list')}
+          value={figure(knocks, () => attempts?.length ?? 0)}
+          note={noteFor(knocks, () => 'tried to sign in, not on the list')}
           accent
         />
         <Stat
