@@ -512,6 +512,18 @@
   --bg-texture-b-size: auto;
 }
 
+/*
+ * A sponsor's tile is white in every theme: a logo is drawn for paper, and the upload flattens a
+ * transparent one onto white. The ink is for a name drawn in place of a logo, and must not be
+ * --color-fg, which is cream in the dark themes and would vanish on the tile. The ring keeps the
+ * tile's edge visible on the pale themes, where white meets nearly white.
+ */
+:root {
+  --sponsor-tile-bg: #fff;
+  --sponsor-tile-ink: #2b1a14;
+  --sponsor-tile-ring: var(--color-border-faint);
+}
+
 /* Festival: a scatter of marigold dots, like an alpona's border. Round pills, as before. */
 [data-theme='festival'] {
   --bg-texture-a: radial-gradient(circle, rgba(247, 183, 51, 0.09) 1.3px, transparent 1.8px);

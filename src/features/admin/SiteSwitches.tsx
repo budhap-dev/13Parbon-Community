@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router'
+import { ActionBar } from '@/components/ActionBar'
 import { Button } from '@/components/Button'
 import {
   HOME_SECTIONS,
@@ -45,6 +46,7 @@ import {
 } from './SettingsEditors'
 import styles from './ContentForms.module.css'
 import { isSectionKey, SITE_SECTIONS, type SectionKey } from './siteSections'
+
 
 const AUDIENCES: { value: SectionAudience; label: string }[] = [
   { value: 'public', label: 'Anybody' },
@@ -158,22 +160,24 @@ function Section({
       <div id={`section-${k}`} className={open ? styles.bodyOpen : styles.body}>
         <div className={styles.bodyInner}>
           <div className={styles.form}>
-            {drawn ? children : null}
-            <div className={styles.actions}>
+            <ActionBar
+              status={
+                error ? (
+                  <span className={styles.error} role="alert">
+                    {error}
+                  </span>
+                ) : saved && !unsaved ? (
+                  <span className={styles.hint} role="status">
+                    Saved. The site changes for everybody straight away.
+                  </span>
+                ) : null
+              }
+            >
               <Button variant="gold" type="submit" size="sm" disabled={saving || !unsaved}>
                 {saving ? 'Saving…' : saveLabel}
               </Button>
-              {saved && !unsaved ? (
-                <span className={styles.hint} role="status">
-                  Saved. The site changes for everybody straight away.
-                </span>
-              ) : null}
-              {error ? (
-                <span className={styles.error} role="alert">
-                  {error}
-                </span>
-              ) : null}
-            </div>
+            </ActionBar>
+            {drawn ? children : null}
           </div>
         </div>
       </div>
@@ -515,6 +519,7 @@ export function SiteSwitches({
         <FestivalEditor rows={draft.festivals} onChange={(festivals) => setDraft({ ...draft, festivals })} />
       </Section>
 
+
       <h3 className={styles.groupTitle}>The About page</h3>
 
       <Section {...sectionProps('story')} label={SITE_SECTIONS.story} summary={`${storyFromText(story).length} paragraphs, headings and lists`} saveLabel="Save the story">
@@ -551,6 +556,15 @@ export function SiteSwitches({
           As shown on the About page, in this order — which is not a ranking. It changes at the AGM
           every year, which is exactly the sort of thing that should not need a developer.
         </p>
+        <ActionBar sticky={false}>
+          <Button
+            variant="line"
+            size="sm"
+            onClick={() => setDraft({ ...draft, committee: [...draft.committee, { role: '', name: '' }] })}
+          >
+            Add somebody
+          </Button>
+        </ActionBar>
         {draft.committee.map((row, i) => (
           <div key={i} className={styles.row}>
             <div className={styles.field}>
@@ -587,15 +601,6 @@ export function SiteSwitches({
             </div>
           </div>
         ))}
-        <div className={styles.actions}>
-          <Button
-            variant="line"
-            size="sm"
-            onClick={() => setDraft({ ...draft, committee: [...draft.committee, { role: '', name: '' }] })}
-          >
-            Add somebody
-          </Button>
-        </div>
       </Section>
 
       <Section {...sectionProps('roll')} label={SITE_SECTIONS.roll} summary={`${rollFromText(roll).length} names`} saveLabel="Save the roll">
@@ -624,6 +629,15 @@ export function SiteSwitches({
           On the About page, in this order. Anything left in [square brackets] is shown to visitors exactly
           as it appears, so finish a sentence before you save it.
         </p>
+        <ActionBar sticky={false}>
+          <Button
+            variant="line"
+            size="sm"
+            onClick={() => setDraft({ ...draft, faq: [...draft.faq, { question: '', answer: '' }] })}
+          >
+            Add a question
+          </Button>
+        </ActionBar>
         {draft.faq.map((row, i) => (
           <div key={i} className={styles.field}>
             <label className={styles.label} htmlFor={`question-${i}`}>
@@ -657,15 +671,6 @@ export function SiteSwitches({
             </div>
           </div>
         ))}
-        <div className={styles.actions}>
-          <Button
-            variant="line"
-            size="sm"
-            onClick={() => setDraft({ ...draft, faq: [...draft.faq, { question: '', answer: '' }] })}
-          >
-            Add a question
-          </Button>
-        </div>
       </Section>
 
       <h3 className={styles.groupTitle}>Events</h3>

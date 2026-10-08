@@ -26,4 +26,4 @@ export type SectionKey = keyof typeof SITE_SECTIONS
 export const isSectionKey = (value: string): value is SectionKey => Object.hasOwn(SITE_SECTIONS, value)
 
 /** The address that opens one section and brings it into view. */
-export const sectionHref = (key: SectionKey) => `/admin/content?tab=content&section=${key}`
+export const sectionHref = (key: SectionKey) => `/admin/content?section=${key}`

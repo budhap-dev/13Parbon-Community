@@ -1,3 +1,4 @@
+import { shownLabel } from '@/domain/household'
 import { useState } from 'react'
 import { Button } from './Button'
 import { exportFilename, type HouseholdExport } from '@/domain/subjectAccess'
@@ -76,6 +77,7 @@ export function DownloadExport({
           {household.people.map((person) => (
             <li key={person.id}>
               <strong>{person.name}</strong> — {person.ageGroup === 'adult' ? 'adult' : `child, age ${person.age}`}
+              {person.shownAs ? `, pictured as a ${shownLabel(person)}` : ''}
               {person.note ? <span className={styles.note}> · “{person.note}”</span> : null}
             </li>
           ))}

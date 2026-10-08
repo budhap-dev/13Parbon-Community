@@ -380,6 +380,12 @@
   text-wrap: pretty;
 }
 
+.occasionSponsors {
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--color-fg-muted);
+}
+
 .occasionWhen {
   margin-top: auto;
   padding-top: 6px;
@@ -769,5 +775,273 @@
   .notices::before,
   .noticesIcon {
     animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Our sponsors: logos on white tiles, gold largest. Never moving.
+   --------------------------------------------------------------------------- */
+
+.sponsors {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding-top: 64px;
+  padding-bottom: 24px;
+}
+
+.sponsorGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sponsorGroupTitle {
+  font-size: 18px;
+  color: var(--color-fg-muted);
+}
+
+.sponsorsGold,
+.sponsorsSilver,
+.sponsorsFriend {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/*
+ * Two, three and four across on a phone. The tracks stretch to fill the row, and the list is
+ * capped instead, so a single sponsor stays one tile wide rather than spanning the page:
+ * auto-fill keeps the empty tracks.
+ */
+.sponsorsGold {
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  max-inline-size: calc(4 * 220px + 3 * 12px);
+}
+
+.sponsorsSilver {
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  max-inline-size: calc(5 * 160px + 4 * 12px);
+}
+
+.sponsorsFriend {
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  gap: 10px;
+  max-inline-size: calc(6 * 120px + 5 * 10px);
+}
+
+.tileSilver {
+  padding: 10px;
+}
+
+.tileFriend {
+  padding: 8px;
+}
+
+.sponsorLink {
+  display: block;
+  border-radius: var(--radius-tile, 16px);
+}
+
+.sponsorLink:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+/* ---------------------------------------------------------------------------
+   The garland and the diyas. Still is the finished picture; `waiting` hides what is about to
+   move, and `playing` moves it, once. See usePlayOnce.
+   --------------------------------------------------------------------------- */
+
+.garlanded {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding-top: 34px;
+}
+
+.garland {
+  position: absolute;
+  inset: 0 0 auto 0;
+  inline-size: 100%;
+  block-size: 40px;
+  overflow: visible;
+}
+
+.garlandThread {
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-width: 1.5;
+  opacity: 0.7;
+}
+
+/* Two colours of marigold, as beads: dashes of no length with round ends. */
+.garlandMarigold,
+.garlandMarigoldDeep {
+  fill: none;
+  stroke-linecap: round;
+  stroke-dasharray: 0 26;
+}
+
+.garlandMarigold {
+  stroke: #f7b733;
+  stroke-width: 9;
+}
+
+.garlandMarigoldDeep {
+  stroke: #ff8c1a;
+  stroke-width: 6;
+  stroke-dashoffset: -13;
+}
+
+.diyas {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  margin: 8px 0 0;
+  padding: 0 4px;
+  list-style: none;
+}
+
+.diya {
+  position: relative;
+  inline-size: 44px;
+  block-size: 44px;
+  flex: none;
+}
+
+/* The glow round the flame. Fire is fire whatever the theme, so these colours are its own. */
+.diya::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 2px;
+  inline-size: 46px;
+  block-size: 46px;
+  translate: -50% -30%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 209, 102, 0.55), rgba(255, 140, 26, 0.18) 45%, transparent 70%);
+}
+
+.diya svg {
+  position: relative;
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  overflow: visible;
+}
+
+.diyaFlame {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+}
+
+@media (max-width: 420px) {
+  .diya:nth-child(even) {
+    display: none;
+  }
+}
+
+/* Waiting to be seen: the string not yet drawn, the logos not yet hung, the lamps not yet lit. */
+.sponsors[data-motion='waiting'] .garland {
+  clip-path: inset(0 100% 0 0);
+}
+
+.sponsors[data-motion='waiting'] .hanging,
+.sponsors[data-motion='waiting'] .diyaFlame,
+.sponsors[data-motion='waiting'] .diya::before {
+  opacity: 0;
+}
+
+.sponsors[data-motion='playing'] .garland {
+  animation: garland-draw 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.sponsors[data-motion='playing'] .hanging {
+  transform-origin: 50% 0;
+  animation: garland-hang 760ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation-delay: calc(560ms + var(--i) * 80ms);
+}
+
+/* Lit left to right as the last logos settle; a flicker for about four seconds, then still. */
+.sponsors[data-motion='playing'] .diyaFlame {
+  animation:
+    diya-light 520ms cubic-bezier(0.34, 1.56, 0.64, 1) both,
+    diya-flicker 900ms ease-in-out 4 alternate;
+  animation-delay: calc(1500ms + var(--i) * 130ms), calc(2020ms + var(--i) * 130ms);
+}
+
+.sponsors[data-motion='playing'] .diya::before {
+  animation: diya-halo 700ms ease-out both;
+  animation-delay: calc(1500ms + var(--i) * 130ms);
+}
+
+@keyframes garland-draw {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes garland-hang {
+  0% {
+    opacity: 0;
+    transform: translateY(-18px) rotate(-4deg);
+  }
+  55% {
+    opacity: 1;
+    transform: translateY(2px) rotate(1.5deg);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes diya-light {
+  from {
+    opacity: 0;
+    transform: scale(0);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* An even number of alternating runs, so the flame comes to rest exactly where it started. */
+@keyframes diya-flicker {
+  from {
+    transform: scale(1, 1) skewX(0deg);
+  }
+  to {
+    transform: scale(0.93, 1.07) skewX(3deg);
+  }
+}
+
+@keyframes diya-halo {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sponsors .garland,
+  .sponsors .hanging,
+  .sponsors .diyaFlame,
+  .sponsors .diya::before {
+    animation: none !important;
+    clip-path: none !important;
+    opacity: 1 !important;
   }
 }

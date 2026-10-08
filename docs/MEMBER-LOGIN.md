@@ -152,7 +152,7 @@ exactly.
 | Add registration links | Built (`registrationUrl`, `performerFormUrl`) | — |
 | Add countdown timer | Built, in days | — |
 | Display event schedule | **New.** No running order in the model | Same field as "the programme" above. One feature, not two |
-| Highlight sponsors | — | **Dropped 2026-09-15: there are none.** Nothing to build, and nothing left in the model owing it a field |
+| Highlight sponsors | — | Dropped 2026-09-15 when there were none; **reopened 2026-10-08.** Built as a list in the site settings, edited under Content → Our sponsors, behind the Sponsors switch |
 
 ---
 
@@ -268,7 +268,7 @@ which is where progress is kept. This table is the reasoning behind the order.
 
 1. **Video**: host it, embed it from YouTube, or leave it out? (§6)
 2. **Profile photographs**: worth the takedown obligation they create? (§1)
-3. **Sponsors**: are there any to show? (§4)
+3. **Sponsors**: answered 2026-10-08 — yes, with levels, individuals with their agreement, and co-sponsors per festival (§4)
 4. **Retention**: how long do we keep attendance records? (§5, §8) Registrations are the committee's own sheet, and keep their own clock
 5. **Backups**: does the R2 bucket need a second copy? (§8)
 6. **Event summaries**: written by the committee, or drafted for them to edit? (§5)

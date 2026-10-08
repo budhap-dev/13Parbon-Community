@@ -25,7 +25,7 @@ import styles from './Play.module.css'
  * household chose to show.
  */
 export function PlayPage() {
-  useDocumentTitle('Polls and quizzes')
+  useDocumentTitle('Vote and play')
   const viewer = useViewer()
   const who = useSignedIn()
   const now = useNow()
@@ -46,7 +46,7 @@ export function PlayPage() {
     <div className={portal.page}>
       <div className={portal.top}>
         <div>
-          <h1 className={portal.title}>Polls and quizzes</h1>
+          <h1 className={portal.title}>Vote and play</h1>
           <p className={portal.sub}>Have your say on what the committee is planning, and test what you know. One vote and one go per household.</p>
         </div>
       </div>

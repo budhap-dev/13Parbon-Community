@@ -99,6 +99,10 @@ const browserOps: ImageOps = {
     canvas.height = height
     const context = canvas.getContext('2d')
     if (!context) throw new Error('This browser would not give us a canvas to work on.')
+    // A JPEG has no transparency, and a canvas left clear comes out black: a sponsor's PNG logo,
+    // dark lettering on nothing, would arrive as dark lettering on black. White underneath first.
+    context.fillStyle = '#fff'
+    context.fillRect(0, 0, width, height)
     // A canvas holds pixels and nothing else. This is the step that loses the metadata.
     context.drawImage(source as ImageBitmap, 0, 0, width, height)
     const blob = await new Promise<Blob | null>((resolve) =>

@@ -8,19 +8,19 @@ import { TestDataProviders } from '@/test/render'
 
 const admin = previewAccounts[1]
 
-function renderPage(tab?: 'Noticeboard' | 'Writing') {
-  const router = createMemoryRouter(routes, { initialEntries: ['/admin/content'] })
+const PATHS = { Noticeboard: '/admin/notices', Writing: '/admin/writing' } as const
+
+/** The noticeboard and the writing are screens of their own; with neither named, Content. */
+function renderPage(screenName?: keyof typeof PATHS, path?: string) {
+  const router = createMemoryRouter(routes, {
+    initialEntries: [path ?? (screenName ? PATHS[screenName] : '/admin/content')],
+  })
   render(
     <TestDataProviders session={admin}>
       <RouterProvider router={router} />
     </TestDataProviders>,
   )
-  // The page opens on the pages tab; the noticeboard and the writing each have their own.
-  return tab ? openTab(tab).then(() => router) : Promise.resolve(router)
-}
-
-async function openTab(name: 'The pages' | 'Noticeboard' | 'Writing') {
-  await userEvent.click(await screen.findByRole('tab', { name }))
+  return Promise.resolve(router)
 }
 
 describe('writing a piece', () => {
@@ -342,26 +342,56 @@ describe('the noticeboard', () => {
  * then returned you to the top of everything — the site's wording, the switches, the albums —
  * with no word of what had happened and nothing to say where the notice had gone.
  */
-describe('the three tabs', () => {
-  it('opens on the pages, with the other two a click away', async () => {
-    renderPage()
-    expect(await screen.findByRole('tab', { name: 'The pages', selected: true })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: 'Noticeboard', selected: false })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: 'Writing', selected: false })).toBeInTheDocument()
+/** Whether `a` comes before `b` in the page, which is what "at the top" means to a screen reader too. */
+const before = (a: Element, b: Element) => Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING)
+
+describe('the buttons that save, at the top', () => {
+  it('puts a piece’s Save and Cancel above the form, not below it', async () => {
+    await renderPage('Writing')
+    await userEvent.click(await screen.findByRole('button', { name: 'Write something' }))
+    expect(before(screen.getByRole('button', { name: 'Write it' }), screen.getByLabelText('Title'))).toBe(true)
+    expect(before(screen.getByRole('button', { name: 'Cancel' }), screen.getByLabelText('Title'))).toBe(true)
   })
 
-  it('shows one tab at a time', async () => {
+  it('puts a notice’s Put it up above the form', async () => {
     await renderPage('Noticeboard')
-    expect(await screen.findByRole('region', { name: 'The noticeboard' })).toBeInTheDocument()
-    // The pages and the writing are not merely scrolled past: they are not there.
+    await userEvent.click((await screen.findAllByRole('button', { name: 'Put up a notice' }))[0])
+    expect(before(screen.getByRole('button', { name: 'Put it up' }), screen.getByLabelText('Notice'))).toBe(true)
+  })
+
+  it('puts each section’s Save at the top of the section, and Add at the top of its list', async () => {
+    await renderPage()
+    const panel = await screen.findByRole('region', { name: 'What the site shows' })
+    await userEvent.click(await within(panel).findByRole('button', { name: /The year’s festivals/ }))
+    const save = within(panel).getByRole('button', { name: 'Save the festivals' })
+    const add = within(panel).getByRole('button', { name: 'Add a festival' })
+    const first = within(panel).getByLabelText('Festival 1')
+    expect(before(save, first)).toBe(true)
+    expect(before(add, first)).toBe(true)
+  })
+})
+
+describe('a screen each', () => {
+  it('puts the noticeboard and the writing in the sidebar, beside the pages and settings', async () => {
+    await renderPage()
+    expect(await screen.findByRole('heading', { level: 1, name: 'Pages and settings' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Noticeboard/ })).toHaveAttribute('href', '/admin/notices')
+    expect(screen.getByRole('link', { name: /Writing/ })).toHaveAttribute('href', '/admin/writing')
+    // Content is the site's own words and switches now, not the notices or the writing.
+    expect(screen.queryByRole('tab')).not.toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'The noticeboard' })).not.toBeInTheDocument()
     expect(screen.queryByRole('region', { name: 'News' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('region', { name: 'Pages' })).not.toBeInTheDocument()
+  })
+
+  it('keeps the newsletters with the writing, which is where the News page gets both', async () => {
+    await renderPage('Writing')
+    expect(await screen.findByRole('region', { name: 'News' })).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'Newsletters' })).toBeInTheDocument()
   })
 
   /*
-   * The point of the split. Saving used to drop you back at the top of a page carrying five
-   * other things, and you had to find your way to the noticeboard again to see what you had
-   * done — which is how an afternoon went on a notice that was in the database all along.
+   * Saving used to drop you back at the top of a page carrying five other things, and you had to
+   * find your way to the noticeboard again to see what you had done.
    */
   it('leaves you on the noticeboard after putting one up, and says what happened', async () => {
     await renderPage('Noticeboard')
@@ -371,13 +401,13 @@ describe('the three tabs', () => {
     await userEvent.type(screen.getByLabelText('What is happening'), 'The hall is open from six on Saturday.')
     await userEvent.click(screen.getByRole('button', { name: 'Put it up' }))
 
-    expect(await screen.findByRole('tab', { name: 'Noticeboard', selected: true })).toBeInTheDocument()
     expect(await screen.findByText(/Up now, on the website/)).toBeInTheDocument()
     expect(await screen.findByRole('region', { name: 'The noticeboard' })).toBeInTheDocument()
   })
 
-  it('keeps the tab in the address, so a reload does not lose your place', async () => {
-    const router = await renderPage('Writing')
-    await waitFor(() => expect(router.state.location.search).toContain('tab=writing'))
+  it('sends an address from before the split to the screen it meant', async () => {
+    const router = await renderPage(undefined, '/admin/content?tab=writing')
+    await waitFor(() => expect(router.state.location.pathname).toBe('/admin/writing'))
+    expect(await screen.findByRole('heading', { level: 1, name: 'Writing' })).toBeInTheDocument()
   })
 })

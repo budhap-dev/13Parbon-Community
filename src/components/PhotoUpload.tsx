@@ -47,6 +47,7 @@ export function PhotoUpload({
   onDone,
   onPreview,
   label = 'Choose a photograph',
+  dropTitle = 'Drag a photograph here',
   multiple = false,
 }: {
   canSend: boolean
@@ -71,6 +72,8 @@ export function PhotoUpload({
    */
   onPreview?: (url: string | null) => void
   label?: string
+  /** What the drop area asks for, when it takes one: a logo is not a photograph. */
+  dropTitle?: string
   multiple?: boolean
 }) {
   const [items, setItems] = useState<Item[]>([])
@@ -247,7 +250,7 @@ export function PhotoUpload({
         <p className={styles.zoneTitle}>
           {multiple
             ? dragging ? 'Let go to add them' : 'Drag photographs here'
-            : dragging ? 'Let go to add it' : 'Drag a photograph here'}
+            : dragging ? 'Let go to add it' : dropTitle}
         </p>
         <p className={styles.zoneOr}>or</p>
         <Button variant="line" size="sm" disabled={busy} aria-describedby={dropId} onClick={() => input.current?.click()}>

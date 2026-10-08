@@ -1,0 +1,44 @@
+.tile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  inline-size: 100%;
+  aspect-ratio: 3 / 2;
+  padding: 12px;
+  border-radius: var(--radius-tile, 16px);
+  background: var(--sponsor-tile-bg);
+  box-shadow: 0 0 0 1px var(--sponsor-tile-ring);
+  overflow: hidden;
+}
+
+.logo {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: contain;
+}
+
+.name,
+.longName {
+  color: var(--sponsor-tile-ink);
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: 1.15;
+  text-align: center;
+  overflow-wrap: normal;
+  hyphens: auto;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
+}
+
+.name {
+  font-size: 1rem;
+}
+
+.longName {
+  font-size: 0.8125rem;
+}

@@ -71,12 +71,13 @@ beforeEach(() => {
  * Longer than the usual five seconds, on purpose.
  *
  * Each of these draws the committee's whole settings screen, changes it, saves, and then draws
- * a public page — two of the largest screens in the app in one test. On a laptop that is under
- * a second. Under coverage on a shared CI runner, with every other file running beside it, it
- * has been five times that, and a test that fails only when the machine is busy teaches people
- * to re-run rather than to read.
+ * a public page — two of the largest screens in the app in one test. On a laptop that is a few
+ * seconds. Under coverage on a shared CI runner, with every other file running beside it, it
+ * has been five to seven times that — 21 seconds for the longest once the portal grew its
+ * Sponsors, Noticeboard and Writing screens — and a test that fails only when the machine is busy
+ * teaches people to re-run rather than to read.
  */
-vi.setConfig({ testTimeout: 20_000 })
+vi.setConfig({ testTimeout: 45_000 })
 
 describe('the year’s festivals', () => {
   it('adds one from the portal, and the home page has it', async () => {

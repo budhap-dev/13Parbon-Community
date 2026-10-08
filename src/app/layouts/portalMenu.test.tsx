@@ -145,7 +145,7 @@ describe('the portal’s header and footer', () => {
     expect(here).toHaveTextContent('Committee/Events')
 
     renderAt('/portal/play')
-    expect((await screen.findAllByLabelText('You are in')).at(-1)).toHaveTextContent('Your household/Polls and quizzes')
+    expect((await screen.findAllByLabelText('You are in')).at(-1)).toHaveTextContent('Your household/Vote and play')
   })
 
   it('offers the public site, in a new tab, from every screen', async () => {
@@ -161,5 +161,42 @@ describe('the portal’s header and footer', () => {
     expect(footer).toHaveTextContent(`© ${new Date().getFullYear()} 13Parbon Community`)
     expect(footer).toHaveTextContent(`Portal v${__APP_VERSION__}`)
     expect(within(footer).getByRole('link', { name: 'Privacy notice' })).toHaveAttribute('href', '/privacy')
+  })
+})
+
+describe('the committee’s menu, in sections', () => {
+  const committee = () => screen.findByRole('navigation', { name: 'Committee' })
+
+  it('groups the screens under a heading each, so nobody reads thirteen names to find one', async () => {
+    renderAt('/admin')
+    const nav = await committee()
+    for (const heading of ['Community', 'What’s on', 'The website']) {
+      expect(within(nav).getByText(heading)).toBeInTheDocument()
+    }
+    // Two of the website's, to show they landed together.
+    expect(within(nav).getByRole('link', { name: /Sponsors/ })).toHaveAttribute('href', '/admin/sponsors')
+    expect(within(nav).getByRole('link', { name: /Pages and settings/ })).toHaveAttribute('href', '/admin/content')
+  })
+
+  it('folds their own household away while they are on the committee’s screens', async () => {
+    renderAt('/admin')
+    const household = await screen.findByRole('navigation', { name: 'Your household' })
+    expect(household.querySelector('details')).not.toHaveAttribute('open')
+    // Opened on a press, as any disclosure is.
+    await userEvent.click(within(household).getByText('Your household'))
+    expect(household.querySelector('details')).toHaveAttribute('open')
+  })
+
+  it('has it open whenever they are on one of its screens, so where they are is never hidden', async () => {
+    renderAt('/portal/household')
+    const household = await screen.findByRole('navigation', { name: 'Your household' })
+    expect(household.querySelector('details')).toHaveAttribute('open')
+  })
+
+  it('shows a member their household plainly, with nothing folded', async () => {
+    renderAt('/portal', member)
+    const household = await screen.findByRole('navigation', { name: 'Your household' })
+    expect(household.querySelector('details')).toBeNull()
+    expect(screen.queryByRole('navigation', { name: 'Committee' })).not.toBeInTheDocument()
   })
 })

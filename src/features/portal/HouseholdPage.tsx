@@ -9,6 +9,8 @@ import { formatDateWithYear } from '@/domain/dates'
 import { useHousehold, useUpdateHousehold, useViewer } from '@/lib/api'
 import { can } from '@/lib/auth/permissions'
 import { useSignedIn } from '@/lib/auth/session'
+import { PersonAvatar } from '@/components/PersonAvatar'
+import people from './HouseholdPeople.module.css'
 import styles from './Portal.module.css'
 
 function Field({ label, value }: { label: string; value?: string }) {
@@ -147,29 +149,22 @@ export function HouseholdPage() {
                 {children(household) > 0 ? `, ${children(household)} under 18` : ''}
               </span>
             </div>
-            <div className={styles.scroll}>
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Age group</th>
-                    <th>Notes for organisers</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {household.people.map((person) => (
-                    <tr key={person.id}>
-                      <td>
-                        <strong>{person.name}</strong>
-                      </td>
-                      <td className={styles.muted}>
-                        {person.ageGroup === 'adult' ? 'Adult' : `Child${person.age ? `, ${person.age}` : ''}`}
-                      </td>
-                      <td className={`${styles.muted} ${styles.tiny}`}>{person.note ?? '—'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className={styles.pad}>
+              <ul className={people.people}>
+                {household.people.map((person) => (
+                  <li key={person.id} className={people.person}>
+                    <PersonAvatar person={person} />
+                    <div className={people.words}>
+                      <span className={people.name}>{person.name}</span>
+                      <span className={people.who}>
+                        <span className={people.tag}>{person.ageGroup === 'adult' ? 'Adult' : 'Child'}</span>
+                        {person.ageGroup === 'child' && person.age !== undefined ? `${person.age} years old` : null}
+                      </span>
+                      {person.note ? <span className={people.note}>{person.note}</span> : null}
+                    </div>
+                  </li>
+                ))}
+              </ul>
             </div>
             <div className={styles.pad} style={{ paddingTop: 14 }}>
               <p className={`${styles.muted} ${styles.tiny}`}>

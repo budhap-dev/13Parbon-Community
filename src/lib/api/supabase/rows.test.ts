@@ -114,3 +114,35 @@ describe('writing a household', () => {
     expect(child).toMatchObject({ name: 'Mira Sen', age_group: 'child', age: 7, note: 'Dance group' })
   })
 })
+
+describe('the picture and member since', () => {
+  it('reads the picture where one was chosen, and leaves it out where not', () => {
+    const base = row.people![0]
+    expect(toPerson({ ...base, shown_as: 'female' }).shownAs).toBe('female')
+    expect(toPerson({ ...base, shown_as: null })).not.toHaveProperty('shownAs')
+    // A database the column has not reached yet hands back no such field at all.
+    expect(toPerson(base)).not.toHaveProperty('shownAs')
+  })
+
+  it('sends the picture only when somebody chose one, so a save works before the column exists', () => {
+    const draft = {
+      name: 'The Sens',
+      contactName: 'Rina Sen',
+      people: [
+        { name: 'Rina Sen', ageGroup: 'adult', shownAs: 'female' },
+        { name: 'Arjun Sen', ageGroup: 'adult' },
+      ],
+      interests: [],
+    } as HouseholdDraft
+    const [chosen, unsaid] = peopleRows('hh-1', draft)
+    expect(chosen).toMatchObject({ shown_as: 'female' })
+    expect(unsaid).not.toHaveProperty('shown_as')
+  })
+
+  it('sends member since from the committee, never empty, and never from a member', () => {
+    const draft = { name: 'The Sens', contactName: 'Rina Sen', people: [], interests: [], memberSince: '2019-10-05' } as HouseholdDraft
+    expect(fromDraft(draft, true)).toMatchObject({ member_since: '2019-10-05' })
+    expect(fromDraft(draft, false)).not.toHaveProperty('member_since')
+    expect(fromDraft({ ...draft, memberSince: '' }, true)).not.toHaveProperty('member_since')
+  })
+})

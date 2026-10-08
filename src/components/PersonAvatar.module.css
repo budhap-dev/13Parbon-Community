@@ -1,0 +1,14 @@
+.avatar {
+  display: block;
+  flex: none;
+  border-radius: 50%;
+}
+
+.disc {
+  fill: color-mix(in srgb, var(--color-accent) 14%, var(--color-bg-raised, transparent));
+}
+
+/* Somebody whose picture was never chosen: a silhouette in the page's own ink, neither. */
+.plain {
+  fill: color-mix(in srgb, var(--color-fg) 38%, transparent);
+}

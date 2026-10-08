@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import { ActionBar } from '@/components/ActionBar'
 import { Button } from '@/components/Button'
 import type { Event } from '@/domain/event'
 import {
@@ -80,6 +81,24 @@ export function AttendanceForm({
 
   return (
     <form className={styles.form} onSubmit={submit} noValidate>
+      <ActionBar
+        sticky={false}
+        status={
+          error ? (
+            <span className={styles.error} role="alert">
+              {error}
+            </span>
+          ) : saved && !saving ? (
+            <span className={styles.hint} role="status">
+              Saved.
+            </span>
+          ) : null
+        }
+      >
+        <Button variant="gold" type="submit" size="sm" disabled={saving}>
+          {saving ? 'Saving…' : already ? 'Correct the count' : 'Record it'}
+        </Button>
+      </ActionBar>
       <div className={styles.row}>
         <div className={styles.field}>
           <label className={styles.label} htmlFor="eventId">
@@ -129,22 +148,6 @@ export function AttendanceForm({
           ? ` There is already a count for this event — ${already.households} households, ${peopleAt(already)} people. Saving replaces it.`
           : ' Nobody is named: this is the number, and nothing about who.'}
       </p>
-
-      <div className={styles.actions}>
-        <Button variant="gold" type="submit" size="sm" disabled={saving}>
-          {saving ? 'Saving…' : already ? 'Correct the count' : 'Record it'}
-        </Button>
-        {saved && !saving && !error ? (
-          <span className={styles.hint} role="status">
-            Saved.
-          </span>
-        ) : null}
-        {error ? (
-          <span className={styles.error} role="alert">
-            {error}
-          </span>
-        ) : null}
-      </div>
     </form>
   )
 }

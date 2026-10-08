@@ -33,25 +33,61 @@ function initialsOf(name: string): string {
 const memberNav: Item[] = [
   { label: 'Dashboard', to: '/portal', icon: 'home', end: true },
   { label: 'My household', to: '/portal/household', icon: 'users' },
-  { label: 'Polls and quizzes', to: '/portal/play', icon: 'sparkle' },
+  // Not "Polls and quizzes": that is the committee's screen for writing them, and two links of
+  // one name in one menu left people guessing which was which. This is where you take part.
+  { label: 'Vote and play', to: '/portal/play', icon: 'sparkle' },
   { label: 'Help', to: '/portal/help', icon: 'help' },
 ]
 
-const committeeScreens: Item[] = [
-  { label: 'Overview', to: '/admin', icon: 'grid', end: true },
-  { label: 'People', to: '/admin/people', icon: 'users' },
-  { label: 'Events', to: '/admin/events', icon: 'calendar' },
-  { label: 'Content', to: '/admin/content', icon: 'layout' },
-  { label: 'Photographs', to: '/admin/media', icon: 'image' },
-  { label: 'Messages', to: '/admin/messages', icon: 'message' },
-  { label: 'Feedback', to: '/admin/feedback', icon: 'heart' },
-  { label: 'Polls and quizzes', to: '/admin/play', icon: 'sparkle' },
-  { label: 'What has changed', to: '/admin/audit', icon: 'clock' },
+type Section = { label?: string; items: Item[] }
+
+/**
+ * The committee's screens, in sections by what they are about.
+ *
+ * Thirteen in one list was a column to read down every time, with the last of them under the
+ * fold on a laptop. Grouped, somebody looking for where to put up a notice reads three headings,
+ * not thirteen names. The two that are about everything — what needs a decision, and what has
+ * been changed — sit at the top with no heading of their own.
+ */
+const committeeSections: Section[] = [
+  {
+    items: [
+      { label: 'Overview', to: '/admin', icon: 'grid', end: true },
+      { label: 'What has changed', to: '/admin/audit', icon: 'clock' },
+    ],
+  },
+  {
+    label: 'Community',
+    items: [
+      { label: 'People', to: '/admin/people', icon: 'users' },
+      { label: 'Messages', to: '/admin/messages', icon: 'message' },
+      { label: 'Feedback', to: '/admin/feedback', icon: 'heart' },
+    ],
+  },
+  {
+    label: 'What’s on',
+    items: [
+      { label: 'Events', to: '/admin/events', icon: 'calendar' },
+      { label: 'Noticeboard', to: '/admin/notices', icon: 'megaphone' },
+      { label: 'Polls and quizzes', to: '/admin/play', icon: 'sparkle' },
+    ],
+  },
+  {
+    label: 'The website',
+    items: [
+      { label: 'Writing', to: '/admin/writing', icon: 'book' },
+      { label: 'Photographs', to: '/admin/media', icon: 'image' },
+      { label: 'Sponsors', to: '/admin/sponsors', icon: 'badge' },
+      { label: 'Pages and settings', to: '/admin/content', icon: 'layout' },
+    ],
+  },
 ]
+
+const committeeScreens: Item[] = committeeSections.flatMap((section) => section.items)
 
 /**
  * Which screen this is, and which part of the portal, for the header: the screen whose address
- * is the longest start of this one, so a quiz under /portal/play is still Polls and quizzes.
+ * is the longest start of this one, so a quiz under /portal/play is still Vote and play.
  */
 function whereIs(pathname: string): { group: string; label: string } {
   const groups = [
@@ -71,7 +107,7 @@ function whereIs(pathname: string): { group: string; label: string } {
 /** Every screen, for the search to jump to. The member ones say whose they are. */
 const searchScreens: SearchScreen[] = [
   ...committeeScreens,
-  ...memberNav.map((item) => ({ ...item, label: item.label === 'Polls and quizzes' ? 'Polls and quizzes, as a member' : item.label })),
+  ...memberNav,
 ]
 
 export function PortalLayout() {
@@ -190,24 +226,26 @@ export function PortalLayout() {
     '/admin/feedback': waiting(feedback ?? []).length,
     '/admin/play': waitingSuggestions(suggestions ?? []).length,
   }
-  const committeeNav: Item[] = committeeScreens.map((item) => ({ ...item, count: counts[item.to] }))
   const where = whereIs(pathname)
+  const inHousehold = memberNav.some((item) => pathname === item.to || pathname.startsWith(`${item.to}/`))
 
-  const renderGroup = (label: string, items: Item[]) => (
+  const renderLinks = (items: Item[]) =>
+    items.map((item) => (
+      <NavLink
+        key={item.to}
+        to={item.to}
+        end={item.end}
+        className={({ isActive }) => (isActive ? styles.linkOn : styles.link)}
+      >
+        <Icon name={item.icon} size={18} />
+        <span className={styles.linkText}>{item.label}</span>
+        {counts[item.to] ? <span className={styles.count}>{counts[item.to]}</span> : null}
+      </NavLink>
+    ))
+  const renderGroup = (label: string | undefined, items: Item[]) => (
     <div className={styles.group}>
-      <span className={styles.groupLabel}>{label}</span>
-      {items.map((item) => (
-        <NavLink
-          key={item.to}
-          to={item.to}
-          end={item.end}
-          className={({ isActive }) => (isActive ? styles.linkOn : styles.link)}
-        >
-          <Icon name={item.icon} size={18} />
-          {item.label}
-          {item.count ? <span className={styles.count}>{item.count}</span> : null}
-        </NavLink>
-      ))}
+      {label ? <span className={styles.groupLabel}>{label}</span> : null}
+      {renderLinks(items)}
     </div>
   )
 
@@ -277,13 +315,32 @@ export function PortalLayout() {
           </button>
         </div>
         <div className={styles.navs}>
-        <nav aria-label="Your household">{renderGroup('Your household', memberNav)}</nav>
         {onTheCommittee ? (
           <>
-            <nav aria-label="Committee">{renderGroup('Committee', committeeNav)}</nav>
+            <nav aria-label="Committee" className={styles.sections}>
+              {committeeSections.map((section) => (
+                <div key={section.label ?? 'top'}>{renderGroup(section.label, section.items)}</div>
+              ))}
+            </nav>
+            {/*
+              * Their own household, folded away: on the committee it is the screen they visit
+              * least, and open it was four more links between the committee's and the bottom.
+              * Open whenever they are on one of its screens, so where they are is never hidden.
+              */}
+            <nav aria-label="Your household">
+              <details key={inHousehold ? 'here' : 'away'} className={styles.fold} open={inHousehold || undefined}>
+                <summary className={styles.foldHead}>
+                  <span className={styles.groupLabel}>Your household</span>
+                  <span className={styles.foldMark} aria-hidden="true">
+                    ⌄
+                  </span>
+                </summary>
+                <div className={styles.group}>{renderLinks(memberNav)}</div>
+              </details>
+            </nav>
             {/* A heading over an empty list is noise: with no tools saved there is no group. */}
             {tools.length > 0 ? (
-            <nav aria-label="Other tools">
+            <nav aria-label="Other tools" className={styles.toolsNav}>
               <div className={styles.group}>
                 <span className={styles.groupLabel}>Other tools</span>
                 {tools.map((tool) => (
@@ -305,19 +362,30 @@ export function PortalLayout() {
             </nav>
             ) : null}
           </>
-        ) : null}
+        ) : (
+          <nav aria-label="Your household">{renderGroup('Your household', memberNav)}</nav>
+        )}
         </div>
         <div className={styles.who}>
+          {/*
+            * The name has the width to itself: the role sat beside it and took a third of the
+            * room, so "Budhaditya Pandit" read "Budhaditya Pa…". It wraps to a second line before
+            * it is ever cut, and the whole of it is in the title for anything longer still.
+            */}
           <div className={styles.whoCard}>
             <span className={styles.avatar} aria-hidden="true">
               {initialsOf(who.name)}
             </span>
             <span className={styles.whoText}>
-              <span className={styles.whoName}>{who.name}</span>
-              <span className={styles.whoDetail}>{who.householdName}</span>
-            </span>
-            <span className={who.role === 'admin' ? styles.rolePillAdmin : styles.rolePill}>
-              {who.role === 'admin' ? 'Admin' : 'Member'}
+              <span className={styles.whoName} title={who.name}>
+                {who.name}
+              </span>
+              <span className={styles.whoDetail} title={who.householdName}>
+                {who.householdName}
+              </span>
+              <span className={who.role === 'admin' ? styles.rolePillAdmin : styles.rolePill}>
+                {who.role === 'admin' ? 'Admin' : 'Member'}
+              </span>
             </span>
           </div>
           <span className={styles.whoEmail}>{who.email}</span>

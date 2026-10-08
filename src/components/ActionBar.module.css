@@ -1,0 +1,40 @@
+.bar,
+.barSticky {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px 14px;
+  min-width: 0;
+}
+
+/*
+ * Just under the portal's bar, on a wash of the surface it sits on so what scrolls beneath it
+ * does not show through the buttons.
+ */
+.barSticky {
+  position: sticky;
+  top: calc(var(--portal-bar-height, 60px) + 8px);
+  z-index: 20;
+  margin: -6px -8px 0;
+  padding: 6px 8px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--color-bg-raised, var(--color-bg)) 96%, transparent);
+  backdrop-filter: blur(6px);
+  /* A soft edge underneath, so the bar reads as resting on the form rather than cut into it. */
+  box-shadow: 0 8px 14px -12px color-mix(in srgb, var(--color-fg) 45%, transparent);
+}
+
+.status {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: right;
+  font-size: 14px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}

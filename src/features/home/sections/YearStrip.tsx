@@ -1,6 +1,7 @@
 import { Link } from 'react-router'
 import { Container } from '@/components/Container'
 import { SectionHeading } from '@/components/SectionHeading'
+import { SponsoredBy } from '@/features/sponsors/SponsoredBy'
 import { useFestivals, useNextEvent } from '@/lib/api'
 import { FestivalGlyph } from '../FestivalGlyph'
 import styles from '../Home.module.css'
@@ -42,6 +43,8 @@ export function YearStrip() {
                   ) : null}
                 </div>
                 {festival.description ? <p className={styles.occasionText}>{festival.description}</p> : null}
+                {/* Unlinked: the whole card is already the link to this festival's evenings. */}
+                <SponsoredBy festivalId={festival.id} linked={false} className={styles.occasionSponsors} />
                 <p className={styles.occasionWhen}>
                   {isNext ? 'Next up' : festival.season}
                 </p>

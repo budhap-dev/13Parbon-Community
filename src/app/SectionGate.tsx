@@ -1,5 +1,5 @@
 import { Outlet } from 'react-router'
-import { useSettings } from './SettingsContext'
+import { useSettings, useSettingsFailed, useSettingsLoaded } from './SettingsContext'
 import { NotFoundPage } from '@/features/placeholder'
 
 /**
@@ -19,8 +19,15 @@ import { NotFoundPage } from '@/features/placeholder'
  * works for anybody who knows the address" — because a member who is already signed in should
  * not be locked out of their own household by a switch about a link in the header.
  */
-export function SectionGate({ setting }: { setting: 'showPhotos' | 'showNews' | 'showFeedback' | 'showQuizzes' }) {
+export function SectionGate({ setting }: { setting: 'showPhotos' | 'showNews' | 'showFeedback' | 'showQuizzes' | 'showSponsors' }) {
   const settings = useSettings()
+  const loaded = useSettingsLoaded()
+  const { failed } = useSettingsFailed()
+  // Nothing until the switches have arrived. Drawn on the code's values, a link somebody shared
+  // to a section the committee has switched on showed "not found" first and then the page —
+  // and lost its #anchor on the way. A read that failed outright falls back to the code's
+  // values, as everywhere else, rather than leaving the page blank for good.
+  if (!loaded && !failed) return null
   // Not found rather than a message saying it has been turned off: whether the committee is
   // still getting a section ready is nobody else's business, and a page that says "come back
   // later" is a page that invites somebody to keep trying.
