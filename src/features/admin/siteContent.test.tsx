@@ -10,6 +10,15 @@ import type { ApiClient } from '@/lib/api'
 import { previewAccounts } from '@/lib/auth/previewAccounts'
 import { createTestApi, TestDataProviders } from '@/test/render'
 
+/*
+ * Longer than the rest. Each test here edits a section and then reads the public page it changes,
+ * a dozen steps through the whole portal, and CI's coverage run takes five to seven times as long
+ * as a laptop: the longest took 16.8 of its 20 seconds there before the portal grew a few more
+ * screens, and 21 after. Raised for this file rather than for every test, so a test elsewhere that
+ * slows down still says so.
+ */
+vi.setConfig({ testTimeout: 45_000 })
+
 /**
  * The parts of the site that used to be files, edited from the portal and then looked at as a
  * visitor would.
