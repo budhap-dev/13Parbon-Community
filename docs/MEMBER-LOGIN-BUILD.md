@@ -757,7 +757,7 @@ because jsdom does not paint — that one belongs in a browser.
 |---|---|
 | **Video** | Not needed now. A placeholder where it will go, and no hosting decision taken |
 | **Profile photographs** | Placeholders, not real ones — which also means no faces stored, and so no takedown obligation created |
-| **Sponsors** | None. Dropped from step 4 |
+| **Sponsors** | None at first, dropped from step 4. Reopened 2026-10-08: see `src/domain/sponsors.ts` |
 | **Uploads** | JPG, JPEG and PNG only |
 | **Retention** | Moot, in the end: the committee types the count in, so no attendance row naming a household is ever held. Nothing to retain and nothing to delete |
 | **Erasure** | The registrations go too — decided 2026-09-15, and what `on delete cascade` already does |

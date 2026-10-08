@@ -11,7 +11,7 @@
  */
 export const privacy = {
   /* Change this whenever anything on this page changes: it is the date the notice took effect. */
-  updatedOn: '1 October 2026',
+  updatedOn: '8 October 2026',
   controller: '13Parbon, Leeds.',
   sections: [
     {
@@ -20,6 +20,7 @@ export const privacy = {
         'When you contact us: your name, email address and message.',
         'When you apply to join: the household name, a contact name, email, phone if you give it, and how many adults and children are in the household.',
         'When you register for an event: who is coming from your household and anything you tell us, such as an offer to volunteer.',
+        'In the member area, for each person in your household: their name, whether they are an adult or a child, a child’s age, anything you tell the organisers, and, only if you choose, whether to draw them as a woman or a man, a girl or a boy. That last one is used for nothing but the small picture beside their name on your own household’s page.',
         'When you leave feedback: what you wrote. If you sign in with Google first and tick the box, we also keep your name as your Google account gives it, so that what you said can be attributed to you. We never keep your email address with it, which means we cannot reply to feedback and cannot tie it to anything else we hold about you. Sent without signing in, it carries nothing about you at all.',
         'When your household answers a poll or plays a quiz in the member area: the choice your household made, your quiz score, and whether you chose to show your household’s name on the leaderboard. If you suggest a quiz question or a poll, we keep what you sent and which household sent it. When somebody plays a quiz on the public website without signing in, we only count that it was played.',
       ],
@@ -45,6 +46,7 @@ export const privacy = {
       title: 'Your name and your photographs',
       body: [
         'We list the committee and our members by name on the About page, and we publish photographs from our events in the gallery.',
+        'We thank our sponsors by name on this website, with their logo if they give us one. When a sponsor is a person or a family, we only name them once they have agreed, and we take the name off whenever they ask.',
         'If you would rather your name was not on this website, tell us through the contact form or by email and we will take it off. The same goes for any photograph you or your child appear in, and for any feedback of yours we have put up.',
         'You do not have to give a reason, and asking makes no difference to your membership or your welcome at anything we put on.',
       ],

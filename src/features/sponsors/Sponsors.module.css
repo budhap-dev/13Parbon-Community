@@ -1,0 +1,152 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+  padding-top: 48px;
+  padding-bottom: 96px;
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.title {
+  font-size: clamp(40px, 5vw, 72px);
+}
+
+.intro {
+  max-width: 560px;
+  font-size: 20px;
+  color: var(--color-fg-muted);
+  text-wrap: pretty;
+}
+
+.none {
+  font-size: 18px;
+  color: var(--color-fg-muted);
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.groupTitle {
+  font-size: clamp(24px, 2.6vw, 34px);
+}
+
+.list,
+.bigList {
+  display: grid;
+  gap: 20px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bigList {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+  gap: 28px;
+}
+
+.list {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+}
+
+/* The sticky header would otherwise sit over a sponsor arrived at by its anchor. */
+.entry,
+.entryNoLogo,
+.bigEntry {
+  scroll-margin-top: 112px;
+}
+
+.entryNoLogo {
+  display: block;
+}
+
+.bigEntry {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.entry {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: 14px;
+  align-items: start;
+}
+
+.bigLogo {
+  aspect-ratio: 3 / 1;
+  padding: 16px;
+}
+
+.logo {
+  padding: 8px;
+}
+
+.words {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.name {
+  font-size: 20px;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+
+.blurb,
+.helps {
+  margin: 0;
+  color: var(--color-fg-muted);
+  text-wrap: pretty;
+}
+
+.helps {
+  font-size: 15px;
+}
+
+.visit {
+  display: inline-block;
+  align-self: flex-start;
+  padding-block: 10px;
+  font-weight: 600;
+  color: var(--color-accent);
+}
+
+.visit:hover {
+  color: var(--color-accent-hover);
+}
+
+.foot {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 24px;
+  border-top: 1px solid var(--color-border-faint);
+  color: var(--color-fg-muted);
+}
+
+.foot p {
+  margin: 0;
+}
+
+.foot a {
+  color: var(--color-accent);
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

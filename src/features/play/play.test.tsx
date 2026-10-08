@@ -37,12 +37,12 @@ describe('polls and quizzes, for a member', () => {
   it('is in the sidebar', async () => {
     renderAt('/portal', member)
     const nav = await screen.findByRole('navigation', { name: 'Your household' })
-    expect(within(nav).getByRole('link', { name: /Polls and quizzes/ })).toHaveAttribute('href', '/portal/play')
+    expect(within(nav).getByRole('link', { name: /Vote and play/ })).toHaveAttribute('href', '/portal/play')
   })
 
   it('asks for a vote, then shows the totals with their choice marked', async () => {
     renderAt('/portal/play', member)
-    await screen.findByRole('heading', { level: 1, name: 'Polls and quizzes' })
+    await screen.findByRole('heading', { level: 1, name: 'Vote and play' })
     const poll = (await screen.findByRole('heading', { name: /autumn picnic/ })).closest('section')!
     const vote = within(poll).getByRole('button', { name: 'Vote' })
     expect(vote).toBeDisabled()

@@ -129,7 +129,7 @@ export function buildSearchIndex(sources: SearchSources): SearchItem[] {
       key: `post:${post.id}`,
       title: post.title,
       detail: line(state, post.author),
-      to: `/admin/content?tab=writing&open=${post.id}`,
+      to: `/admin/writing?open=${post.id}`,
       text: words(post.title, post.excerpt, post.body, post.author, ...post.tags),
     })
   }
@@ -140,7 +140,7 @@ export function buildSearchIndex(sources: SearchSources): SearchItem[] {
       key: `notice:${notice.id}`,
       title: notice.title,
       detail: notice.audience === 'public' ? 'For anybody' : 'For members',
-      to: `/admin/content?tab=notices&open=${notice.id}`,
+      to: `/admin/notices?open=${notice.id}`,
       text: words(notice.title, notice.body),
     })
   }

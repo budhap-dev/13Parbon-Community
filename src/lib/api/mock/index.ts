@@ -62,6 +62,7 @@ function shapeOf(draft: HouseholdDraft) {
     ageGroup: person.ageGroup,
     ...(person.ageGroup === 'child' && person.age !== undefined ? { age: person.age } : {}),
     ...(person.note?.trim() ? { note: person.note.trim() } : {}),
+    ...(person.shownAs ? { shownAs: person.shownAs } : {}),
   }))
   return {
     name: draft.name.trim(),
@@ -140,6 +141,9 @@ function checkDraft(draft: HouseholdDraft, viewer: Viewer, existing?: Household)
       (draft.membershipStatus !== undefined && draft.membershipStatus !== current?.membership.status) ||
       (draft.membershipPaidTo !== undefined && offered !== held)
     ) {
+      return new NotAllowed('only the committee can change membership')
+    }
+    if (draft.memberSince && draft.memberSince !== current?.memberSince) {
       return new NotAllowed('only the committee can change membership')
     }
   }
@@ -686,7 +690,7 @@ export function createMockApi({
           id: `hh-${portal.households.length + 1}-${draft.name.toLowerCase().replace(/[^a-z]+/g, '') || 'new'}`,
           ...shapeOf(draft),
           googleEmail: draft.googleEmail ?? null,
-          memberSince: now().toISOString().slice(0, 10),
+          memberSince: draft.memberSince || now().toISOString().slice(0, 10),
           membership: { status: draft.membershipStatus ?? 'active', paidTo: draft.membershipPaidTo || null },
           role: listed(draft.googleEmail) ? 'admin' : (draft.role ?? 'member'),
         }
@@ -803,6 +807,7 @@ export function createMockApi({
             // to Postgres, and the two have to agree or the mock is teaching the wrong thing.
             paidTo: draft.membershipPaidTo === undefined ? existing.membership.paidTo : draft.membershipPaidTo || null,
           }
+          if (draft.memberSince) existing.memberSince = draft.memberSince
         }
         return delay(existing, latencyMs)
       },

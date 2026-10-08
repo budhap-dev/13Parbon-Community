@@ -134,7 +134,7 @@ describe('the committee’s search', () => {
     await waitFor(() => expect(head).toHaveAttribute('aria-expanded', 'true'))
     expect(head).toHaveFocus()
     // Done with, so closing the section is not undone by the address.
-    await waitFor(() => expect(router.state.location.search).toBe('?tab=content'))
+    await waitFor(() => expect(router.state.location.search).toBe(''))
   })
 
   it('says so when nothing matches', async () => {
@@ -174,9 +174,15 @@ describe('a link to one thing', () => {
     await waitFor(() => expect(router.state.location.search).toBe(''))
   })
 
-  it('opens a piece of writing on its own tab', async () => {
+  it('opens a piece of writing on its own screen', async () => {
+    const post = buildFixtures().posts[0]
+    renderAt(`/admin/writing?open=${post.id}`)
+    expect(await screen.findByRole('heading', { level: 1, name: 'Edit the piece' })).toBeInTheDocument()
+  })
+
+  it('still opens one from an address made before the writing had a screen of its own', async () => {
     const post = buildFixtures().posts[0]
     renderAt(`/admin/content?tab=writing&open=${post.id}`)
-    expect(await screen.findByRole('heading', { level: 2, name: 'Edit the piece' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: 'Edit the piece' })).toBeInTheDocument()
   })
 })

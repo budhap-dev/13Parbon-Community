@@ -231,9 +231,22 @@ describe('member pages', () => {
     renderAt('/portal/household', member)
     expect(await screen.findByRole('heading', { level: 1, name: 'My household' })).toBeInTheDocument()
     expect(screen.getByText('Mira Sen')).toBeInTheDocument()
-    expect(screen.getByText('Child, 7')).toBeInTheDocument()
+    expect(screen.getByText('7 years old')).toBeInTheDocument()
     // In the page, not just the sidebar's note of who is signed in.
     expect(within(screen.getByRole('main')).getByText('rina.sen@gmail.com')).toBeInTheDocument()
+  })
+
+  it('shows each person as a card, with a picture for a woman, a man, a girl', async () => {
+    renderAt('/portal/household', member)
+    const people = await screen.findByRole('region', { name: 'Who is in the household' })
+    const card = (name: string) => within(people).getByText(name).closest('li')!
+    expect(card('Rina Sen').querySelector('svg')).toHaveAttribute('data-look', 'woman')
+    expect(card('Arjun Sen').querySelector('svg')).toHaveAttribute('data-look', 'man')
+    expect(card('Mira Sen').querySelector('svg')).toHaveAttribute('data-look', 'girl')
+    // Decorative: the words on the card already say adult or child.
+    expect(card('Mira Sen').querySelector('svg')).toHaveAttribute('aria-hidden', 'true')
+    expect(within(card('Mira Sen')).getByText('Child')).toBeInTheDocument()
+    expect(within(card('Rina Sen')).getByText('Sings, happy to help on stage')).toBeInTheDocument()
   })
 
 

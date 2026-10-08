@@ -11,7 +11,7 @@ function stubPrepare() {
   const clean = new Uint8Array([0xff, 0xd8, 0xff, 0xdb, 0x00, 0x04, 0x41, 0x41, 0xff, 0xda, 0x00, 0x02, 0x11, 0xff, 0xd9])
   vi.stubGlobal('createImageBitmap', async () => ({ width: 4000, height: 3000, close: vi.fn() }))
   // toBlob and arrayBuffer, the two bits of the browser the preparing leans on.
-  HTMLCanvasElement.prototype.getContext = vi.fn(() => ({ drawImage: vi.fn() })) as never
+  HTMLCanvasElement.prototype.getContext = vi.fn(() => ({ drawImage: vi.fn(), fillRect: vi.fn() })) as never
   HTMLCanvasElement.prototype.toBlob = function (cb: BlobCallback) {
     cb(new Blob([clean], { type: 'image/jpeg' }))
   } as never

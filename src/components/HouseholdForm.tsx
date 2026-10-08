@@ -1,5 +1,6 @@
 import { useId, useRef, useState, type FormEvent } from 'react'
 import { flushSync } from 'react-dom'
+import { ActionBar } from './ActionBar'
 import { Button } from './Button'
 import {
   normaliseGoogleEmail,
@@ -46,6 +47,7 @@ function draftFrom(household?: Household, prefill?: Partial<HouseholdDraft>): Ho
       role: 'member',
       membershipStatus: 'active',
       membershipPaidTo: '',
+      memberSince: '',
       ...prefill,
     }
   }
@@ -54,13 +56,14 @@ function draftFrom(household?: Household, prefill?: Partial<HouseholdDraft>): Ho
     contactName: household.contactName,
     email: household.email ?? '',
     phone: household.phone ?? '',
-    people: household.people.map(({ name, ageGroup, age, note }) => ({ name, ageGroup, age, note })),
+    people: household.people.map(({ name, ageGroup, age, note, shownAs }) => ({ name, ageGroup, age, note, shownAs })),
     interests: [...household.interests],
     googleEmail: household.googleEmail,
     role: household.role,
     membershipStatus: household.membership.status,
     // A date input takes a string; there being no date is the empty one.
     membershipPaidTo: household.membership.paidTo ?? '',
+    memberSince: household.memberSince,
   }
 }
 
@@ -146,6 +149,23 @@ export function HouseholdForm({ household, prefill, viewer, onSave, saving, save
 
   return (
     <form ref={formRef} className={styles.form} onSubmit={onSubmit} noValidate>
+      <ActionBar
+        status={
+          error ? (
+            <p className={styles.error} role="alert">
+              {error}
+            </p>
+          ) : saved ? (
+            <p className={styles.saved} role="status">
+              Saved.
+            </p>
+          ) : null
+        }
+      >
+        <Button variant="gold" type="submit" size="sm" disabled={saving}>
+          {saving ? 'Saving…' : adding ? 'Add the household' : 'Save changes'}
+        </Button>
+      </ActionBar>
       <fieldset className={styles.section}>
         <legend className={styles.legend}>The household</legend>
 
@@ -208,6 +228,11 @@ export function HouseholdForm({ household, prefill, viewer, onSave, saving, save
 
       <fieldset className={styles.section}>
         <legend className={styles.legend}>Who lives here</legend>
+        <ActionBar sticky={false}>
+          <Button variant="line" size="sm" onClick={addPerson}>
+            Add someone
+          </Button>
+        </ActionBar>
         <p className={styles.hint}>
           Adults and children are counted separately, so the caterer knows the numbers and the
           children’s programme knows the ages. Names of children are never shown to anybody outside
@@ -267,6 +292,26 @@ export function HouseholdForm({ household, prefill, viewer, onSave, saving, save
                 </select>
               </div>
 
+              <div className={styles.field}>
+                <label className={styles.label} htmlFor={`${ids}-person-${i}-shown`}>
+                  Picture <span className={styles.hint}>(optional)</span>
+                </label>
+                <select
+                  id={`${ids}-person-${i}-shown`}
+                  className={styles.select}
+                  value={person.shownAs ?? ''}
+                  aria-describedby={`${ids}-person-${i}-shown-note`}
+                  onChange={(e) => setPerson(i, { shownAs: (e.target.value || undefined) as PersonInput['shownAs'] })}
+                >
+                  <option value="">Not said</option>
+                  <option value="female">{person.ageGroup === 'child' ? 'A girl' : 'A woman'}</option>
+                  <option value="male">{person.ageGroup === 'child' ? 'A boy' : 'A man'}</option>
+                </select>
+                <p id={`${ids}-person-${i}-shown-note`} className={styles.hint}>
+                  Only for the picture beside their name on your household’s page.
+                </p>
+              </div>
+
               {person.ageGroup === 'child' ? (
                 <div className={styles.field}>
                   <label className={styles.label} htmlFor={`${ids}-person-${i}-age`}>
@@ -308,12 +353,6 @@ export function HouseholdForm({ household, prefill, viewer, onSave, saving, save
             </div>
           </div>
         ))}
-
-        <div className={styles.actions}>
-          <Button variant="line" size="sm" onClick={addPerson}>
-            Add someone
-          </Button>
-        </div>
       </fieldset>
 
       {onTheCommittee ? (
@@ -389,27 +428,29 @@ export function HouseholdForm({ household, prefill, viewer, onSave, saving, save
                     onChange={(e) => set('membershipPaidTo', e.target.value)}
                   />
                 </div>
+
+                <div className={styles.field}>
+                  <label className={styles.label} htmlFor={`${ids}-since`}>
+                    Member since
+                  </label>
+                  <input
+                    id={`${ids}-since`}
+                    className={styles.input}
+                    type="date"
+                    max={new Date().toISOString().slice(0, 10)}
+                    value={draft.memberSince ?? ''}
+                    aria-describedby={`${ids}-since-note`}
+                    onChange={(e) => set('memberSince', e.target.value)}
+                  />
+                  <p id={`${ids}-since-note`} className={styles.hint}>
+                    When they first joined, not the day they were added here.{adding ? ' Empty is today.' : ''}
+                  </p>
+                </div>
               </>
             ) : null}
           </div>
         </fieldset>
       ) : null}
-
-      <div className={styles.actions}>
-        <Button variant="gold" type="submit" disabled={saving}>
-          {saving ? 'Saving…' : adding ? 'Add the household' : 'Save changes'}
-        </Button>
-        {saved ? (
-          <p className={styles.saved} role="status">
-            Saved.
-          </p>
-        ) : null}
-        {error ? (
-          <p className={styles.error} role="alert">
-            {error}
-          </p>
-        ) : null}
-      </div>
     </form>
   )
 }

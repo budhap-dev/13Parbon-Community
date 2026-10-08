@@ -299,6 +299,19 @@
   text-wrap: pretty;
 }
 
+.sponsoredBy {
+  max-width: 640px;
+  font-size: 16px;
+  color: var(--color-fg-muted);
+  text-wrap: pretty;
+}
+
+.sponsoredBy a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .actions {
   display: flex;
   flex-wrap: wrap;

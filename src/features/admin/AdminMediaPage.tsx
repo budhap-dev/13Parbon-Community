@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { useOpenFromAddress } from '@/app/useOpenFromAddress'
 import { useScrollToTopOn } from '@/app/useScrollToTopOn'
+import { ActionBar } from '@/components/ActionBar'
 import { Button } from '@/components/Button'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { Icon } from '@/components/Icon'
@@ -193,6 +194,19 @@ function AlbumForm({
             onSave()
           }}
         >
+          <ActionBar
+            status={
+              error ? (
+                <span className={media.error} role="alert">
+                  {error}
+                </span>
+              ) : null
+            }
+          >
+            <Button variant="gold" type="submit" size="sm" disabled={saving}>
+              {saving ? 'Saving…' : existing ? 'Save the album' : 'Make the album'}
+            </Button>
+          </ActionBar>
           <label className={media.field}>
             <span className={media.label}>Name</span>
             <input
@@ -228,17 +242,6 @@ function AlbumForm({
             album on the website. Switching it back to Not yet takes it off again. Taking a photograph
             down for good is done from the album itself.
           </p>
-
-          <div className={styles.actions}>
-            <Button variant="gold" type="submit" size="sm" disabled={saving}>
-              {saving ? 'Saving…' : existing ? 'Save the album' : 'Make the album'}
-            </Button>
-            {error ? (
-              <span className={media.error} role="alert">
-                {error}
-              </span>
-            ) : null}
-          </div>
         </form>
       </section>
     </div>

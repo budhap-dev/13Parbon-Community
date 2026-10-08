@@ -119,7 +119,11 @@ describe('when the committee screens cannot load', () => {
     // No Save to press: opened on the fallback, it would write the code's version over theirs.
     expect(screen.queryByRole('button', { name: /^Save/ })).not.toBeInTheDocument()
     expect(screen.getByText('We could not load the albums just now.')).toBeInTheDocument()
-    expect(screen.getByText('We could not load the newsletters just now.')).toBeInTheDocument()
+  })
+
+  it('the writing screen says the newsletters could not load', async () => {
+    renderAt('/admin/writing', createFailingApi())
+    expect(await screen.findByText('We could not load the newsletters just now.')).toBeInTheDocument()
   })
 
   it('the content screen opens the settings form once a retry reads them', async () => {

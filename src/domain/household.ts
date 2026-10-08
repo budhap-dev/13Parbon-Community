@@ -28,6 +28,26 @@ export type Person = {
   age?: number
   /** Dietary needs, what they would like to do on stage, anything the organisers should know. */
   note?: string
+  /** How they are drawn beside their name. Absent is "not said", and a neutral picture. See `Shown`. */
+  shownAs?: Shown
+}
+
+/**
+ * Whether somebody is drawn as a woman or girl, a man or boy, or neither.
+ *
+ * Asked only for the picture beside their name on their own household's page, and optional:
+ * left unsaid, they get a picture that is neither. Nothing is decided by it — not the catering
+ * count, not who is asked to help — and it is never shown to another household or the public.
+ * Adult or child is already a separate question, so this one has two answers, not four.
+ */
+export type Shown = 'female' | 'male'
+
+/** The words for a person's picture, as their age group would have it said. */
+export function shownLabel(person: Pick<Person, 'ageGroup' | 'shownAs'>): string {
+  const child = person.ageGroup === 'child'
+  if (person.shownAs === 'female') return child ? 'girl' : 'woman'
+  if (person.shownAs === 'male') return child ? 'boy' : 'man'
+  return child ? 'child' : 'adult'
 }
 
 export type Household = {
@@ -103,6 +123,7 @@ export type PersonInput = {
   /** Children only. Organisers plan the programme around who is coming. */
   age?: number
   note?: string
+  shownAs?: Shown
 }
 
 /**
@@ -142,6 +163,13 @@ export type CommitteeFields = {
   membershipStatus: MembershipStatus
   /** ISO 8601 date, or empty for not recorded. */
   membershipPaidTo: string
+  /**
+   * When they first joined, as an ISO 8601 date. Empty on a new household is today.
+   *
+   * It was only ever the day the household was typed in here, and nothing could change it — so
+   * a family who had come to every Durga Puja since 2019 read "Member since 7 October 2026".
+   */
+  memberSince: string
 }
 
 /**

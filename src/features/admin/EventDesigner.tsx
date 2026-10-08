@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { useSettings } from '@/app/SettingsContext'
+import { ActionBar } from '@/components/ActionBar'
 import { Button } from '@/components/Button'
 import { CoverImage } from '@/components/CoverImage'
 import { PhotoUpload } from '@/components/PhotoUpload'
@@ -152,6 +153,22 @@ export function EventDesigner({
   return (
     <div className={design.split}>
       <form className={styles.form} onSubmit={submit} noValidate>
+        <ActionBar
+          status={
+            error ? (
+              <span className={styles.error} role="alert">
+                {error}
+              </span>
+            ) : null
+          }
+        >
+          <Button variant="line" size="sm" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button variant="gold" type="submit" size="sm" disabled={saving}>
+            {saving ? 'Saving…' : event ? 'Save the event' : 'Add the event'}
+          </Button>
+        </ActionBar>
         {live ? (
           <p className={design.live} role="status">
             <strong>This event is on the website.</strong> Anything you save here changes what
@@ -418,20 +435,6 @@ export function EventDesigner({
             <option value="cancelled">Cancelled</option>
             <option value="past">Past</option>
           </select>
-        </div>
-
-        <div className={styles.actions}>
-          <Button variant="gold" type="submit" size="sm" disabled={saving}>
-            {saving ? 'Saving…' : event ? 'Save the event' : 'Add the event'}
-          </Button>
-          <Button variant="line" size="sm" onClick={onCancel}>
-            Cancel
-          </Button>
-          {error ? (
-            <span className={styles.error} role="alert">
-              {error}
-            </span>
-          ) : null}
         </div>
       </form>
 

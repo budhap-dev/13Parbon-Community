@@ -50,24 +50,24 @@ describe('the committee search', () => {
     expect(messages?.items.map((item) => item.to)).toEqual(['/admin/messages?open=cm-2'])
   })
 
-  it('opens writing and notices on their own tabs', () => {
+  it('opens writing and notices on their own screens', () => {
     const post = site.posts[0]
-    expect(group(post.title, 'Writing')?.items[0].to).toBe(`/admin/content?tab=writing&open=${post.id}`)
+    expect(group(post.title, 'Writing')?.items[0].to).toBe(`/admin/writing?open=${post.id}`)
     const notice = site.announcements[0]
-    expect(group(notice.title, 'Noticeboard')?.items[0].to).toBe(`/admin/content?tab=notices&open=${notice.id}`)
+    expect(group(notice.title, 'Noticeboard')?.items[0].to).toBe(`/admin/notices?open=${notice.id}`)
   })
 
   it('finds a festival under the section that edits it', () => {
     const settings = group('holi', 'On the public pages')
     expect(settings?.items).toContainEqual(
-      expect.objectContaining({ title: 'Holi', detail: 'The year’s festivals', to: '/admin/content?tab=content&section=festivals' }),
+      expect.objectContaining({ title: 'Holi', detail: 'The year’s festivals', to: '/admin/content?section=festivals' }),
     )
   })
 
   it('finds a section by its own name', () => {
     expect(group('questions people ask', 'On the public pages')?.items[0]).toMatchObject({
       title: 'Questions people ask',
-      to: '/admin/content?tab=content&section=faq',
+      to: '/admin/content?section=faq',
     })
   })
 

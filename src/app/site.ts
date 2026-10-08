@@ -133,6 +133,11 @@ export const site = {
    */
   showQuizzes: false,
   /**
+   * Sponsors on the public site. Off until the committee has the list right — a sponsor thanked
+   * with the wrong logo is worse than one not yet thanked.
+   */
+  showSponsors: false,
+  /**
    * The next-event banner pinned under the wordmark on the home page. Parked for now at the
    * committee's request; the component and its styles are untouched, so setting this to true
    * brings it back exactly as it was.
@@ -155,6 +160,9 @@ export const site = {
     // The committee only, until there is something approved worth putting on the front page.
     // A home page section that is empty most of the time teaches people to scroll past it.
     feedback: 'admins',
+    // Anybody, once the switch is on: thanking a sponsor where only members can see it is not
+    // much of a thank-you. The switch is what keeps it hidden while the list is being made.
+    sponsors: 'public',
   } satisfies Record<string, 'public' | 'members' | 'admins'>,
   /**
    * Other tools the committee runs. Separate apps with their own sign-in, linked from the

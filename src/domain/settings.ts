@@ -17,6 +17,7 @@ import {
   type Tool,
   type ValueCard,
 } from './siteContent'
+import { readSponsors, type Sponsor } from './sponsors'
 
 /**
  * Who a section of the home page is for.
@@ -28,7 +29,16 @@ import {
 export type SectionAudience = 'public' | 'members' | 'admins'
 
 /** The sections of the home page whose audience the committee can change. */
-export const HOME_SECTIONS = ['notices', 'nextEvent', 'upcoming', 'volunteer', 'yearStrip', 'photos', 'feedback'] as const
+export const HOME_SECTIONS = [
+  'notices',
+  'nextEvent',
+  'upcoming',
+  'volunteer',
+  'yearStrip',
+  'photos',
+  'feedback',
+  'sponsors',
+] as const
 export type HomeSection = (typeof HOME_SECTIONS)[number]
 
 /**
@@ -49,6 +59,7 @@ export const HOME_BLOCKS = [
   'upcoming',
   'volunteer',
   'feedback',
+  'sponsors',
 ] as const satisfies readonly (HomeSection | 'whoWeAre')[]
 export type HomeBlock = (typeof HOME_BLOCKS)[number]
 
@@ -193,6 +204,12 @@ export type SiteSettings = {
    * it starts off so a half-written quiz is never the first thing a visitor finds.
    */
   showQuizzes: boolean
+  /**
+   * Whether the sponsors are thanked on the public site: the Sponsors page, the logos on the
+   * home page and the "sponsored by" line on a festival's evenings. One switch for all three,
+   * so the committee can get the list right before any of it is seen.
+   */
+  showSponsors: boolean
   /** Who each home page section is for. */
   home: Record<HomeSection, SectionAudience>
   /**
@@ -253,6 +270,8 @@ export type SiteSettings = {
   privacy: PrivacyNotice
   /** The committee's other apps, linked from the portal. */
   tools: Tool[]
+  /** Who helps pay for the year, in the committee's order. See `domain/sponsors`. */
+  sponsors: Sponsor[]
 }
 
 /** The lists and blocks, which are everything that is neither a switch nor an audience. */
@@ -272,6 +291,7 @@ type ContentKey =
   | 'collage'
   | 'privacy'
   | 'tools'
+  | 'sponsors'
 
 export type SettingsDraft = SiteSettings
 
@@ -302,6 +322,10 @@ export const SETTING_LABELS: Record<keyof Omit<SiteSettings, ContentKey>, { labe
     label: 'Quizzes on the public website',
     note: 'The Quizzes page, in the navigation, carrying any quiz the committee has opened to everyone. Members play every quiz in the portal whatever this says.',
   },
+  showSponsors: {
+    label: 'Sponsors',
+    note: 'The Sponsors page, in the navigation, their logos on the home page, and “sponsored by” on a festival’s evenings. Turn it on once the list on the Sponsors screen is right.',
+  },
   showMemberSignIn: {
     label: 'Member sign-in',
     note: 'The sign-in link in the header and footer. The portal still works for anybody who knows the address.',
@@ -317,6 +341,7 @@ export const HOME_SECTION_LABELS: Record<HomeBlock, string> = {
   yearStrip: 'Our year',
   photos: 'Photographs',
   feedback: 'What people say',
+  sponsors: 'Our sponsors',
 }
 
 /** Nothing here can be wrong in a way a form allows, but a bad saved value should not get through. */
@@ -331,7 +356,7 @@ export function validateSettings(draft: SettingsDraft): boolean {
   // The same for the rest: what is in each list is tidied on the way out of the database, so
   // all that is asked here is that a list is a list. A save that sent a string where the
   // festivals go would otherwise replace four festivals with none.
-  const lists = [draft.homeOrder, draft.social, draft.festivals, draft.story, draft.values, draft.tools]
+  const lists = [draft.homeOrder, draft.social, draft.festivals, draft.story, draft.values, draft.tools, draft.sponsors]
   if (!lists.every(Array.isArray)) return false
   if (!isSiteTheme(draft.defaultTheme) || typeof draft.volunteerFormUrl !== 'string') return false
   if (!draft.collage || !Array.isArray(draft.collage.photos)) return false
@@ -440,6 +465,7 @@ export function mergeSettings(stored: unknown, defaults: SiteSettings): SiteSett
     showNextEventStrip: bool('showNextEventStrip'),
     showPhotos: bool('showPhotos'),
     showQuizzes: bool('showQuizzes'),
+    showSponsors: bool('showSponsors'),
     home,
     homeOrder: Array.isArray(row.homeOrder) ? tidyHomeOrder(row.homeOrder) : defaults.homeOrder,
     defaultTheme: isSiteTheme(row.defaultTheme) ? row.defaultTheme : defaults.defaultTheme,
@@ -457,5 +483,6 @@ export function mergeSettings(stored: unknown, defaults: SiteSettings): SiteSett
     collage: readCollage(row.collage, defaults.collage),
     privacy: readPrivacy(row.privacy, defaults.privacy),
     tools: readTools(row.tools) ?? defaults.tools,
+    sponsors: readSponsors(row.sponsors) ?? defaults.sponsors,
   }
 }

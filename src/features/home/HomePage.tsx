@@ -10,6 +10,7 @@ import { JoinCta } from './sections/JoinCta'
 import { NextEvent } from './sections/NextEvent'
 import { NoticeStrip } from './sections/NoticeStrip'
 import { PhotoStrip } from './sections/PhotoStrip'
+import { SponsorsStrip } from './sections/SponsorsStrip'
 import { UpcomingEvents } from './sections/UpcomingEvents'
 import { VolunteerStrip } from './sections/VolunteerStrip'
 import { WhoWeAre } from './sections/WhoWeAre'
@@ -38,6 +39,7 @@ export function HomePage() {
     upcoming: () => (show('upcoming') ? <UpcomingEvents /> : null),
     volunteer: () => (show('volunteer') ? <VolunteerStrip /> : null),
     feedback: () => (settings.showFeedback && show('feedback') ? <FeedbackStrip /> : null),
+    sponsors: () => (settings.showSponsors && show('sponsors') ? <SponsorsStrip /> : null),
   }
 
   return (

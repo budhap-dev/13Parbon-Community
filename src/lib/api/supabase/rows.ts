@@ -33,6 +33,8 @@ export type PersonRow = {
   age_group: 'adult' | 'child'
   age: number | null
   note: string | null
+  /** Absent until `people-shown-as.sql` has been run, and null where nobody has said. */
+  shown_as?: 'female' | 'male' | null
 }
 
 /** Everything this app reads about a household, including the people in it. */
@@ -46,6 +48,7 @@ export function toPerson(row: PersonRow): Person {
     // Absent rather than null: the domain says a field is missing by not being there.
     ...(row.age === null ? {} : { age: row.age }),
     ...(row.note === null ? {} : { note: row.note }),
+    ...(row.shown_as === 'female' || row.shown_as === 'male' ? { shownAs: row.shown_as } : {}),
   }
 }
 
@@ -87,6 +90,8 @@ export function fromDraft(draft: HouseholdDraft, committee: boolean): Record<str
           role: draft.role ?? 'member',
           membership_status: draft.membershipStatus ?? 'active',
           membership_paid_to: draft.membershipPaidTo || null,
+          // Never sent empty: the column has no blank, and its default is the day of adding.
+          ...(draft.memberSince ? { member_since: draft.memberSince } : {}),
         }
       : {}),
   }
@@ -100,6 +105,10 @@ export function peopleRows(householdId: string, draft: HouseholdDraft): Omit<Per
     age_group: person.ageGroup,
     age: person.ageGroup === 'child' && person.age !== undefined ? person.age : null,
     note: person.note?.trim() ? person.note.trim() : null,
+    // Only when somebody has said. Rows are replaced whole, so leaving it out is the column's
+    // own null — and a database the new column has not reached yet still takes every save that
+    // does not use it.
+    ...(person.shownAs ? { shown_as: person.shownAs } : {}),
   }))
 }
 

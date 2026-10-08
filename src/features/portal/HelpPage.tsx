@@ -143,7 +143,7 @@ export function HelpPage() {
         </>,
         <>
           Got a good question? <strong>Got an idea?</strong> on the{' '}
-          <Link className={styles.inlineLink} to="/portal/play">Polls and quizzes</Link> page sends it to
+          <Link className={styles.inlineLink} to="/portal/play">Vote and play</Link> page sends it to
           the committee, who read every one. <Emoji>💡</Emoji>
         </>,
       ],

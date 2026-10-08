@@ -1,5 +1,6 @@
 import { forDateTimeInput, fromDateTimeInput } from '@/domain/dates'
 import { useState, type FormEvent } from 'react'
+import { ActionBar } from '@/components/ActionBar'
 import { Button } from '@/components/Button'
 import {
   ANNOUNCEMENT_MAX,
@@ -171,6 +172,20 @@ export function NewsForm({
 
   return (
     <form className={styles.form} onSubmit={submit} noValidate>
+      <ActionBar
+        status={error ? (
+          <span className={styles.error} role="alert">
+            {error}
+          </span>
+        ) : null}
+      >
+        <Button variant="line" size="sm" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button variant="gold" type="submit" size="sm" disabled={saving}>
+          {saving ? 'Saving…' : post ? 'Save' : 'Write it'}
+        </Button>
+      </ActionBar>
       {/* Only on a blank one. Somebody editing has already decided what it is about. */}
       {!post ? (
         <div className={styles.ideas}>
@@ -182,7 +197,7 @@ export function NewsForm({
           </ul>
           <p className={styles.hint} style={{ marginTop: 8 }}>
             If it is one sentence and it stops being true next week, it is a notice rather than a
-            piece — the noticeboard is the other tab.
+            piece — that goes on the Noticeboard, in the menu.
           </p>
         </div>
       ) : null}
@@ -266,20 +281,6 @@ export function NewsForm({
           </span>
         </span>
       </div>
-
-      <div className={styles.actions}>
-        <Button variant="gold" type="submit" size="sm" disabled={saving}>
-          {saving ? 'Saving…' : post ? 'Save' : 'Write it'}
-        </Button>
-        <Button variant="line" size="sm" onClick={onCancel}>
-          Cancel
-        </Button>
-        {error ? (
-          <span className={styles.error} role="alert">
-            {error}
-          </span>
-        ) : null}
-      </div>
     </form>
   )
 }
@@ -317,6 +318,20 @@ export function AnnouncementForm({
 
   return (
     <form className={styles.form} onSubmit={submit} noValidate>
+      <ActionBar
+        status={error ? (
+          <span className={styles.error} role="alert">
+            {error}
+          </span>
+        ) : null}
+      >
+        <Button variant="line" size="sm" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button variant="gold" type="submit" size="sm" disabled={saving}>
+          {saving ? 'Saving…' : announcement ? 'Save' : 'Put it up'}
+        </Button>
+      </ActionBar>
       <Field label="Notice" error={errors.title} need={{ value: draft.title, min: TITLE_MIN, max: TITLE_MAX }}>
         {(p) => (
           <input {...p} className={styles.input} value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} />
@@ -393,20 +408,6 @@ export function AnnouncementForm({
             Pin the one thing that matters most. Pin everything and nothing is pinned.
           </span>
         </span>
-      </div>
-
-      <div className={styles.actions}>
-        <Button variant="gold" type="submit" size="sm" disabled={saving}>
-          {saving ? 'Saving…' : announcement ? 'Save' : 'Put it up'}
-        </Button>
-        <Button variant="line" size="sm" onClick={onCancel}>
-          Cancel
-        </Button>
-        {error ? (
-          <span className={styles.error} role="alert">
-            {error}
-          </span>
-        ) : null}
       </div>
     </form>
   )

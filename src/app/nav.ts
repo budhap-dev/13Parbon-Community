@@ -23,6 +23,7 @@ export function publicNav(settings: SiteSettings): NavItem[] {
     ...(settings.showNews ? [{ label: 'News', to: '/news' }] : []),
     ...(settings.showQuizzes ? [{ label: 'Quizzes', to: '/quizzes' }] : []),
     { label: 'About', to: '/about' },
+    ...(settings.showSponsors ? [{ label: 'Sponsors', to: '/sponsors' }] : []),
     ...(settings.showFeedback ? [{ label: 'Feedback', to: '/feedback' }] : []),
     { label: 'Contact', to: '/contact' },
   ]
@@ -33,6 +34,7 @@ export function footerNav(settings: SiteSettings): NavItem[] {
     { label: 'Contact', to: '/contact' },
     { label: 'Privacy', to: '/privacy' },
     { label: 'Committee', to: '/about' },
+    ...(settings.showSponsors ? [{ label: 'Sponsors', to: '/sponsors' }] : []),
     ...(settings.showMemberSignIn ? [{ label: 'Member sign-in', to: '/login' }] : []),
   ]
 }

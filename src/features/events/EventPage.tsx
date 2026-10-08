@@ -1,6 +1,7 @@
 import { Link, useParams } from 'react-router'
 import { site } from '@/app/site'
 import { useSettings } from '@/app/SettingsContext'
+import { SponsoredBy } from '@/features/sponsors/SponsoredBy'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { Button } from '@/components/Button'
 import { Container } from '@/components/Container'
@@ -151,6 +152,8 @@ export function EventView({ event }: { event: Event }) {
           </li>
         </ul>
         <p className={styles.summary}>{event.summary}</p>
+        {/* On past evenings too: a thank-you does not expire with the night. */}
+        <SponsoredBy festivalId={event.festivalId} className={styles.sponsoredBy} />
         {!isPast ? (
           <div className={styles.actions}>
             {registrationUrl ? <Button href={registrationUrl}>Register to come</Button> : null}

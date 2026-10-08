@@ -182,3 +182,38 @@ describe('saving', () => {
   })
 })
 
+
+describe('the picture beside each name', () => {
+  it('asks it of everybody, optionally, in words for an adult or a child', async () => {
+    setup(member)
+    const [adult, child] = screen.getAllByLabelText(/Picture/)
+    expect(adult).toHaveValue('')
+    expect(screen.getAllByRole('option', { name: 'A woman' })).toHaveLength(1)
+    expect(child).toContainElement(screen.getByRole('option', { name: 'A girl' }))
+    expect(screen.getAllByText(/Only for the picture beside their name/)).toHaveLength(2)
+  })
+
+  it('saves the choice with the person', async () => {
+    const { onSave } = setup(member)
+    await userEvent.selectOptions(screen.getAllByLabelText(/Picture/)[1], 'A girl')
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+    expect(onSave.mock.calls[0][0].people[1]).toMatchObject({ name: 'Mira Sen', shownAs: 'female' })
+  })
+})
+
+describe('member since', () => {
+  it('is the committee’s to change, and not offered to a member', () => {
+    setup(member)
+    expect(screen.queryByLabelText('Member since')).not.toBeInTheDocument()
+  })
+
+  it('lets the committee put the real year they joined', async () => {
+    const { onSave } = setup(admin)
+    const since = screen.getByLabelText('Member since')
+    expect(since).toHaveValue('2024-04-01')
+    await userEvent.clear(since)
+    await userEvent.type(since, '2019-10-05')
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+    expect(onSave.mock.calls[0][0].memberSince).toBe('2019-10-05')
+  })
+})

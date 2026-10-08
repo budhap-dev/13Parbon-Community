@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import { ActionBar } from '@/components/ActionBar'
 import { Button } from '@/components/Button'
 import { PhotoUpload } from '@/components/PhotoUpload'
 import { forDateTimeInput, fromDateTimeInput } from '@/domain/dates'
@@ -166,19 +167,22 @@ function Dates({
 
 function Actions({ saving, label, onCancel, error }: { saving?: boolean; label: string; onCancel: () => void; error?: string }) {
   return (
-    <div className={formStyles.actions}>
-      <Button variant="gold" type="submit" size="sm" disabled={saving}>
-        {saving ? 'Saving…' : label}
-      </Button>
+    <ActionBar
+      status={
+        error ? (
+          <span className={formStyles.error} role="alert">
+            {error}
+          </span>
+        ) : null
+      }
+    >
       <Button variant="line" size="sm" onClick={onCancel}>
         Cancel
       </Button>
-      {error ? (
-        <span className={formStyles.error} role="alert">
-          {error}
-        </span>
-      ) : null}
-    </div>
+      <Button variant="gold" type="submit" size="sm" disabled={saving}>
+        {saving ? 'Saving…' : label}
+      </Button>
+    </ActionBar>
   )
 }
 
@@ -214,6 +218,7 @@ export function PollForm({
 
   return (
     <form className={formStyles.form} onSubmit={submit} noValidate>
+      <Actions saving={saving} label={poll ? 'Save' : 'Make the poll'} onCancel={onCancel} error={error} />
       <Field label="The question" error={errors.title} need={{ value: draft.title, min: POLL_TITLE_MIN, max: POLL_TITLE_MAX }}>
         {(p) => <input {...p} className={formStyles.input} value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} />}
       </Field>
@@ -255,7 +260,6 @@ export function PollForm({
       </div>
 
       <Dates what="poll" opensAt={draft.opensAt} closesAt={draft.closesAt} error={errors.closesAt} onChange={(d) => setDraft({ ...draft, ...d })} />
-      <Actions saving={saving} label={poll ? 'Save' : 'Make the poll'} onCancel={onCancel} error={error} />
     </form>
   )
 }
@@ -294,6 +298,7 @@ export function QuestionForm({
 
   return (
     <form className={formStyles.form} onSubmit={submit} noValidate>
+      <Actions saving={saving} label={question ? 'Save' : 'Add to the bank'} onCancel={onCancel} error={error} />
       {locked ? (
         <p className={formStyles.hint}>
           <strong>Somebody has answered this in a quiz,</strong> so the wording and the right answer are fixed. The explanation, tags and
@@ -347,7 +352,6 @@ export function QuestionForm({
         }}
         onDone={(url) => setDraft((d) => ({ ...d, imageUrl: url }))}
       />
-      <Actions saving={saving} label={question ? 'Save' : 'Add to the bank'} onCancel={onCancel} error={error} />
     </form>
   )
 }
@@ -396,6 +400,7 @@ export function QuizForm({
 
   return (
     <form className={formStyles.form} onSubmit={submit} noValidate>
+      <Actions saving={saving} label={quiz ? 'Save' : 'Make the quiz'} onCancel={onCancel} error={error} />
       <Field label="Name" error={errors.title} need={{ value: draft.title, min: QUIZ_TITLE_MIN, max: QUIZ_TITLE_MAX }}>
         {(p) => <input {...p} className={formStyles.input} value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} />}
       </Field>
@@ -501,7 +506,6 @@ export function QuizForm({
       ) : null}
 
       <Dates what="quiz" opensAt={draft.opensAt} closesAt={draft.closesAt} error={errors.closesAt} onChange={(d) => setDraft({ ...draft, ...d })} />
-      <Actions saving={saving} label={quiz ? 'Save' : 'Make the quiz'} onCancel={onCancel} error={error} />
     </form>
   )
 }
@@ -543,6 +547,7 @@ export function SuggestionForm({
 
   return (
     <form className={formStyles.form} onSubmit={submit} noValidate>
+      <Actions saving={sending} label="Send to the committee" onCancel={onCancel} error={error} />
       <Field label="What are you suggesting?">
         {(p) => (
           <select
@@ -579,7 +584,6 @@ export function SuggestionForm({
           <label htmlFor="credit">Credit {householdName ?? 'our household'} if it is used</label>
         </span>
       </div>
-      <Actions saving={sending} label="Send to the committee" onCancel={onCancel} error={error} />
     </form>
   )
 }

@@ -9,6 +9,7 @@ import { LoginPage } from '@/features/membership'
 import { PrivacyPage } from '@/features/privacy'
 import { HomePage } from '@/features/home'
 import { ArticlePage, NewsPage } from '@/features/news'
+import { SponsorsPage } from '@/features/sponsors'
 import { NotFoundPage } from '@/features/placeholder'
 import { AdminPlayPage, PlayPage, PortalQuizPage, QuizPage, QuizzesPage } from '@/features/play'
 import { SectionGate } from './SectionGate'
@@ -19,8 +20,11 @@ import {
   AdminFeedbackPage,
   AdminMediaPage,
   AdminMessagesPage,
+  AdminNoticesPage,
   AdminOverviewPage,
   AdminPeoplePage,
+  AdminSponsorsPage,
+  AdminWritingPage,
 } from '@/features/admin'
 import { DashboardPage, HelpPage, HouseholdPage } from '@/features/portal'
 import { PortalLayout } from './layouts/PortalLayout'
@@ -68,6 +72,12 @@ export const routes: RouteObject[] = [
           { path: 'quizzes/:id', Component: QuizPage },
         ],
       },
+      {
+        // The sponsors, their logos on the home page and "sponsored by" on the evenings, all
+        // behind the one switch.
+        element: <SectionGate setting="showSponsors" />,
+        children: [{ path: 'sponsors', Component: SponsorsPage }],
+      },
       { path: 'about', Component: AboutPage },
       { path: 'contact', Component: ContactPage },
       { path: 'login', Component: LoginPage },
@@ -103,7 +113,10 @@ export const routes: RouteObject[] = [
           { path: '/admin', Component: AdminOverviewPage },
           { path: '/admin/people', Component: AdminPeoplePage },
           { path: '/admin/events', Component: AdminEventsPage },
+          { path: '/admin/notices', Component: AdminNoticesPage },
+          { path: '/admin/writing', Component: AdminWritingPage },
           { path: '/admin/content', Component: AdminContentPage },
+          { path: '/admin/sponsors', Component: AdminSponsorsPage },
           { path: '/admin/media', Component: AdminMediaPage },
           { path: '/admin/messages', Component: AdminMessagesPage },
           { path: '/admin/feedback', Component: AdminFeedbackPage },

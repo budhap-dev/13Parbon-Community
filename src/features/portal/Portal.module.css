@@ -52,6 +52,9 @@
   border-radius: var(--portal-radius, 14px);
   box-shadow: var(--portal-shadow, none);
   overflow: hidden;
+  /* Clip, not hidden, where the browser knows it: hidden makes a scroll box, and a scroll box
+     stops the Save bar inside a panel from holding in view. Clip keeps the rounded corners. */
+  overflow: clip;
   /*
    * `.page` is a flex column, and a flex item will not shrink below its content unless it is
    * told it may: the default is min-width: auto. Without this a wide table inside a panel —

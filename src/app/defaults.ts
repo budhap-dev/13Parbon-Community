@@ -23,6 +23,7 @@ export const defaultSettings: SiteSettings = {
   showPhotos: site.showPhotos,
   showFeedback: site.showFeedback,
   showQuizzes: site.showQuizzes,
+  showSponsors: site.showSponsors,
   home: { ...site.home },
   homeOrder: [...HOME_BLOCKS],
   defaultTheme: 'festival',
@@ -69,4 +70,6 @@ export const defaultSettings: SiteSettings = {
     sections: privacy.sections.map((section) => ({ title: section.title, body: [...section.body] })),
   },
   tools: site.tools.map((tool) => ({ ...tool })),
+  // None until the committee adds them. There is nothing a developer should be typing in here.
+  sponsors: [],
 }
