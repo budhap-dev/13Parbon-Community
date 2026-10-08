@@ -10,15 +10,6 @@ import type { ApiClient } from '@/lib/api'
 import { previewAccounts } from '@/lib/auth/previewAccounts'
 import { createTestApi, TestDataProviders } from '@/test/render'
 
-/*
- * Longer than the rest. Each test here edits a section and then reads the public page it changes,
- * a dozen steps through the whole portal, and CI's coverage run takes five to seven times as long
- * as a laptop: the longest took 16.8 of its 20 seconds there before the portal grew a few more
- * screens, and 21 after. Raised for this file rather than for every test, so a test elsewhere that
- * slows down still says so.
- */
-vi.setConfig({ testTimeout: 45_000 })
-
 /**
  * The parts of the site that used to be files, edited from the portal and then looked at as a
  * visitor would.
@@ -80,12 +71,13 @@ beforeEach(() => {
  * Longer than the usual five seconds, on purpose.
  *
  * Each of these draws the committee's whole settings screen, changes it, saves, and then draws
- * a public page — two of the largest screens in the app in one test. On a laptop that is under
- * a second. Under coverage on a shared CI runner, with every other file running beside it, it
- * has been five times that, and a test that fails only when the machine is busy teaches people
- * to re-run rather than to read.
+ * a public page — two of the largest screens in the app in one test. On a laptop that is a few
+ * seconds. Under coverage on a shared CI runner, with every other file running beside it, it
+ * has been five to seven times that — 21 seconds for the longest once the portal grew its
+ * Sponsors, Noticeboard and Writing screens — and a test that fails only when the machine is busy
+ * teaches people to re-run rather than to read.
  */
-vi.setConfig({ testTimeout: 20_000 })
+vi.setConfig({ testTimeout: 45_000 })
 
 describe('the year’s festivals', () => {
   it('adds one from the portal, and the home page has it', async () => {
