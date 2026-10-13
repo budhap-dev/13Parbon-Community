@@ -1,28 +1,116 @@
+import { useId, useLayoutEffect, useRef } from 'react'
 import type { PublicThemeName, ThemeName } from './themes'
 import motion from './backdrops.module.css'
 
-type Props = { className?: string }
+type Props = {
+  className?: string
+  /** In the hero: the Festival alpona rolls along its floor. Elsewhere (the phone menu) it stays put. */
+  roll?: boolean
+}
 
 const lines = { fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' } as const
 
-/** Alpona: concentric rings and petals that roll a little way and back. Festival. */
-function Alpona({ className }: Props) {
+/*
+ * The Festival alpona, in the manner of the ones drawn at the door for Lakshmi Puja: a lotus at
+ * the heart, a ring of dots, double petals, a band of leaves, paisleys with their curl, a
+ * scalloped edge, a ring of dots and an outermost ring of petals. The view is widened to hold
+ * the petals, so the rest keeps its own coordinates. Every piece is drawn pointing up from the
+ * centre and turned into place, so one path serves each ring.
+ */
+const AC = 200
+const turn = (deg: number) => `rotate(${deg.toFixed(2)} ${AC} ${AC})`
+const each = (n: number, offset = 0) => Array.from({ length: n }, (_, i) => (i * 360) / n + offset)
+/** A petal pointing straight up, from radius `r1` out to `r2`, half `w` wide. */
+const upPetal = (r1: number, r2: number, w: number) =>
+  `M${AC} ${AC - r1} C${AC - w} ${AC - r1 - (r2 - r1) * 0.35} ${AC - w} ${AC - r2 + (r2 - r1) * 0.3} ${AC} ${AC - r2} C${AC + w} ${AC - r2 + (r2 - r1) * 0.3} ${AC + w} ${AC - r1 - (r2 - r1) * 0.35} ${AC} ${AC - r1} Z`
+/** A paisley — the kolka — leaning off the vertical, with its tip curled in. */
+const PAISLEY = `M${AC} ${AC - 150} C${AC - 15} ${AC - 158} ${AC - 13} ${AC - 178} ${AC + 2} ${AC - 180} C${AC + 14} ${AC - 181} ${AC + 15} ${AC - 168} ${AC + 6} ${AC - 166} C${AC} ${AC - 165} ${AC - 1} ${AC - 172} ${AC + 4} ${AC - 172}`
+/** One scallop of the edge, a little arch standing on the r=180 circle. */
+const SCALLOP = `M${AC - 15.7} ${AC - 179.3} A15.7 15.7 0 0 1 ${AC + 15.7} ${AC - 179.3}`
+
+/**
+ * Alpona: in the hero, a wheel rolling along the floor — 60% of the way across and back, turning
+ * exactly as far as it travels, so it rolls rather than slides. Drawn from the centre out at the
+ * start of each run and rubbed out near its end, then drawn again for the way back. Festival.
+ */
+function Alpona({ className, roll }: Props) {
+  const box = useRef<SVGSVGElement>(null)
+  // Each line's length for the dash that draws it; see WhoAlpona for why not pathLength.
+  useLayoutEffect(() => {
+    box.current?.querySelectorAll<SVGGeometryElement>(`.${motion.build}`).forEach((line) => {
+      if (typeof line.getTotalLength === 'function') line.style.setProperty('--len', line.getTotalLength().toFixed(1))
+    })
+  }, [])
+  /*
+   * How far to roll and how far that turns it, from the width it rolls across: a wheel of
+   * radius r turns one radian for every r it travels. Measured, and again on a resize, because
+   * a phone and a desktop give the same wheel very different floors.
+   */
+  useLayoutEffect(() => {
+    const svg = box.current
+    const floor = svg?.parentElement
+    if (!roll || !svg || !floor) return
+    const measure = () => {
+      const size = svg.getBoundingClientRect().width
+      const distance = Math.max(0, Math.min(floor.clientWidth * 0.6, floor.clientWidth - size))
+      svg.style.setProperty('--roll-distance', `${distance.toFixed(0)}px`)
+      svg.style.setProperty('--roll-turn', `${((distance / (size / 2)) * (180 / Math.PI)).toFixed(0)}deg`)
+    }
+    measure()
+    if (typeof ResizeObserver === 'undefined') return
+    const watch = new ResizeObserver(measure)
+    watch.observe(floor)
+    return () => watch.disconnect()
+  }, [roll])
+  const step = (n: number) => ({ className: motion.build, style: { ['--step' as string]: n } })
+  const dot = (n: number) => ({ className: motion.buildDot, style: { ['--step' as string]: n }, fill: 'currentColor', stroke: 'none' })
   return (
-    <svg viewBox="0 0 400 400" className={className} data-backdrop="alpona" aria-hidden="true" focusable="false">
-      <g className={`${motion.wheelTrack} ${motion.faint}`} data-animate="wheel">
-        <g className={motion.wheel} {...lines}>
-          <circle cx="200" cy="200" r="60" />
-          <circle cx="200" cy="200" r="110" />
-          <circle cx="200" cy="200" r="170" />
-          <path d="M200 30 C230 90 230 130 200 140 C170 130 170 90 200 30 Z" />
-          <path d="M370 200 C310 230 270 230 260 200 C270 170 310 170 370 200 Z" />
-          <path d="M200 370 C170 310 170 270 200 260 C230 270 230 310 200 370 Z" />
-          <path d="M30 200 C90 170 130 170 140 200 C130 230 90 230 30 200 Z" />
-          <path d="M320 80 C290 140 250 160 240 160 C240 130 260 100 320 80 Z" />
-          <path d="M320 320 C260 300 240 260 240 240 C270 250 300 270 320 320 Z" />
-          <path d="M80 320 C110 260 150 240 160 240 C160 270 140 300 80 320 Z" />
-          <path d="M80 80 C140 100 160 140 160 160 C130 150 100 130 80 80 Z" />
-          <circle cx="200" cy="200" r="8" fill="currentColor" stroke="none" />
+    <svg ref={box} viewBox="-40 -40 480 480" className={`${className ?? ''} ${roll ? motion.roll : ''}`} data-backdrop="alpona" aria-hidden="true" focusable="false">
+      <g className={motion.faint} data-animate="wheel">
+        <g {...lines}>
+          {/* The lotus at the heart. */}
+          <circle cx={AC} cy={AC} r={6} {...dot(0)} />
+          <circle cx={AC} cy={AC} r={16} {...step(0)} />
+          {each(8).map((d) => (
+            <g key={`lotus-${d}`} transform={turn(d)}>
+              <path d={upPetal(18, 54, 16)} {...step(0)} />
+              <path d={upPetal(24, 46, 6)} {...step(0)} />
+            </g>
+          ))}
+          {/* A ring of dots. */}
+          <circle cx={AC} cy={AC} r={60} {...step(1)} />
+          {each(16, 11.25).map((d) => (
+            <circle key={`dot-${d}`} cx={AC} cy={AC - 67} r={2.6} transform={turn(d)} {...dot(1)} />
+          ))}
+          {/* Double petals. */}
+          {each(12, 15).map((d) => (
+            <g key={`petal-${d}`} transform={turn(d)}>
+              <path d={upPetal(74, 122, 18)} {...step(2)} />
+              <path d={upPetal(84, 112, 8)} {...step(2)} />
+            </g>
+          ))}
+          {/* A band of leaves. */}
+          <circle cx={AC} cy={AC} r={127} {...step(3)} />
+          {each(24).map((d) => (
+            <path key={`leaf-${d}`} d={upPetal(129, 146, 5)} transform={turn(d)} {...step(3)} />
+          ))}
+          {/* Paisleys, each with its curl. */}
+          {each(12, 15).map((d) => (
+            <path key={`kolka-${d}`} d={PAISLEY} transform={turn(d)} {...step(4)} />
+          ))}
+          {/* The scalloped edge. */}
+          <circle cx={AC} cy={AC} r={180} {...step(5)} />
+          {each(36).map((d) => (
+            <path key={`scallop-${d}`} d={SCALLOP} transform={turn(d)} {...step(5)} />
+          ))}
+          {/* And a last ring of dots, one on each scallop. */}
+          {each(36).map((d) => (
+            <circle key={`edge-${d}`} cx={AC} cy={AC - 192} r={2.2} transform={turn(d)} {...dot(6)} />
+          ))}
+          {/* And the outermost ring: petals, as the alpona by "Who we are" ends. */}
+          {each(24, 7.5).map((d) => (
+            <path key={`outer-${d}`} d={upPetal(200, 236, 8)} transform={turn(d)} {...step(7)} />
+          ))}
         </g>
       </g>
     </svg>
@@ -329,50 +417,116 @@ function Moon({ className }: Props) {
   )
 }
 
-/** Diyas along the sill with their flames moving, and fireworks opening above. Deepavali. */
-function Diyas({ className }: Props) {
-  const lamps = [60, 140, 220, 300, 372]
-  const sparks = [
-    { x: 110, y: 90, r: 46 },
-    { x: 300, y: 70, r: 38 },
-    { x: 210, y: 150, r: 30 },
-  ]
+/*
+ * Deepavali's night: fireworks of every colour and four kinds across the whole sky of the hero,
+ * and a sill of diyas along its foot, each flame glowing in its own pool of light. Not a corner
+ * motif — the dark is the point of the theme, and the left-hand corner alone left most of it
+ * empty.
+ */
+type Firework = { x: number; y: number; r: number; colour: string; kind: 'rays' | 'dots' | 'peony' | 'willow' }
+
+// In viewBox units of a 1240-wide sky. Kept to the dark between the words and the logo, over
+// the logo's shoulders and along the top, so no burst opens behind the headline itself.
+const FIREWORKS: Firework[] = [
+  { x: 640, y: 80, r: 62, colour: '#ffb42e', kind: 'rays' },
+  { x: 780, y: 250, r: 74, colour: '#5fd3ff', kind: 'peony' },
+  { x: 610, y: 330, r: 34, colour: '#ff5fa2', kind: 'dots' },
+  { x: 1150, y: 60, r: 46, colour: '#b98cff', kind: 'rays' },
+  { x: 1205, y: 320, r: 40, colour: '#ff6b4a', kind: 'dots' },
+  { x: 900, y: 55, r: 30, colour: '#ffffff', kind: 'rays' },
+  { x: 480, y: 40, r: 26, colour: '#7ee36b', kind: 'peony' },
+  { x: 730, y: 150, r: 46, colour: '#ff4f5e', kind: 'willow' },
+  { x: 1010, y: 360, r: 28, colour: '#ffd166', kind: 'dots' },
+  { x: 1060, y: 150, r: 54, colour: '#ffb42e', kind: 'willow' },
+  { x: 20, y: 30, r: 36, colour: '#ff5fa2', kind: 'peony' },
+]
+
+function FireworkShape({ r, colour, kind }: Omit<Firework, 'x' | 'y'>) {
+  const arms = kind === 'peony' ? 18 : kind === 'dots' ? 14 : 12
   return (
-    <svg viewBox="0 0 400 400" className={className} data-backdrop="diyas" aria-hidden="true" focusable="false">
-      <g {...lines} className={motion.faint}>
-        <path d="M0 360 H400" />
-        {lamps.map((x, i) => (
-          <g key={x} transform={`translate(${x} 344)`}>
-            <path d="M-30 0 q30 28 60 0 q-10 -6 -30 -6 q-20 0 -30 6 Z" />
-            <path d="M22 -2 l12 -8" />
+    <>
+      {Array.from({ length: arms }, (_, k) => {
+        const a = (k / arms) * Math.PI * 2
+        const at = (d: number) => `${(Math.cos(a) * d).toFixed(1)} ${(Math.sin(a) * d).toFixed(1)}`
+        if (kind === 'dots')
+          return [0.45, 0.72, 1].map((f) => (
+            <circle key={`${k}-${f}`} cx={(Math.cos(a) * r * f).toFixed(1)} cy={(Math.sin(a) * r * f).toFixed(1)} r={f === 1 ? 2.6 : 1.8} fill={colour} />
+          ))
+        if (kind === 'willow')
+          // Arms that droop as they fall, like the gold willows that hang after the bang.
+          return (
+            <path
+              key={k}
+              d={`M${at(r * 0.2)} Q${at(r * 0.8)} ${(Math.cos(a) * r).toFixed(1)} ${(Math.sin(a) * r + r * 0.45).toFixed(1)}`}
+              stroke={colour}
+              strokeWidth={2}
+              fill="none"
+              strokeLinecap="round"
+            />
+          )
+        return (
+          <g key={k}>
+            <path d={`M${at(r * 0.3)} L${at(r)}`} stroke={colour} strokeWidth={kind === 'peony' ? 1.8 : 2.4} strokeLinecap="round" />
+            {kind === 'peony' ? <circle cx={(Math.cos(a) * r).toFixed(1)} cy={(Math.sin(a) * r).toFixed(1)} r={2.4} fill={colour} /> : null}
+          </g>
+        )
+      })}
+      {kind === 'peony' ? <circle r={r * 0.55} fill="none" stroke={colour} strokeWidth={1} strokeDasharray="2 5" /> : null}
+      <circle r={3} fill={colour} />
+    </>
+  )
+}
+
+const DIYAS = 14
+
+function Diyas({ className }: Props) {
+  // The motif is drawn twice on a page — the hero and the phone menu — and a gradient's id must
+  // be the page's only one, or the flames take their colour from the copy that is hidden.
+  const id = useId()
+  const glow = `${id}-glow`
+  const flame = `${id}-flame`
+  return (
+    <div className={`${className ?? ''} ${motion.night}`} data-backdrop="diyas" aria-hidden="true">
+      <svg viewBox="0 0 1240 420" preserveAspectRatio="xMidYMid slice" className={motion.sky} focusable="false">
+        <g className={motion.glowing}>
+          {FIREWORKS.map((firework, i) => (
+            <g key={i} transform={`translate(${firework.x} ${firework.y})`}>
+              <g className={motion.firework} data-animate="spark" style={{ animationDelay: `${-((i * 0.83) % 5)}s` }}>
+                <FireworkShape r={firework.r} colour={firework.colour} kind={firework.kind} />
+              </g>
+            </g>
+          ))}
+        </g>
+      </svg>
+      <svg viewBox={`0 0 ${DIYAS * 90} 90`} preserveAspectRatio="xMidYMax slice" className={motion.sill} focusable="false">
+        <defs>
+          <radialGradient id={glow}>
+            <stop offset="0" stopColor="#ffd27a" stopOpacity="0.75" />
+            <stop offset="0.45" stopColor="#ff9a3c" stopOpacity="0.25" />
+            <stop offset="1" stopColor="#ff9a3c" stopOpacity="0" />
+          </radialGradient>
+          <linearGradient id={flame} x1="0" y1="1" x2="0" y2="0">
+            <stop offset="0" stopColor="#ff6b1a" />
+            <stop offset="0.55" stopColor="#ffb42e" />
+            <stop offset="1" stopColor="#fff3c4" />
+          </linearGradient>
+        </defs>
+        {Array.from({ length: DIYAS }, (_, i) => (
+          <g key={i} transform={`translate(${i * 90 + 45} 78)`}>
+            <circle className={motion.glow} cy={-30} r={34} fill={`url(#${glow})`} style={{ animationDelay: `${-i * 0.53}s` }} />
+            <path d="M-26 0 q26 22 52 0 q-9 -5 -26 -5 q-17 0 -26 5 Z" fill="#8a3b12" stroke="#d9822b" strokeWidth={1.5} />
+            <path d="M-20 -1 q20 6 40 0" fill="none" stroke="#f2b24c" strokeWidth={1} strokeDasharray="2 3" />
             <path
               className={motion.flame}
               data-animate="flame"
-              d="M0 -6 c-9 -10 -8 -24 0 -36 c8 12 9 26 0 36 Z"
-              fill="currentColor"
+              d="M0 -5 c-8 -9 -7 -21 0 -32 c7 11 8 23 0 32 Z"
+              fill={`url(#${flame})`}
               style={{ animationDelay: `${-i * 0.37}s` }}
             />
           </g>
         ))}
-        {sparks.map((spark, i) => (
-          <g key={i} transform={`translate(${spark.x} ${spark.y})`}>
-            <g className={motion.spark} data-animate="spark" style={{ animationDelay: `${i * 1.3}s` }}>
-            {Array.from({ length: 12 }, (_, k) => {
-              const a = (k / 12) * Math.PI * 2
-              const inner = spark.r * 0.35
-              return (
-                <path
-                  key={k}
-                  d={`M${(Math.cos(a) * inner).toFixed(1)} ${(Math.sin(a) * inner).toFixed(1)} L${(Math.cos(a) * spark.r).toFixed(1)} ${(Math.sin(a) * spark.r).toFixed(1)}`}
-                />
-              )
-            })}
-              <circle r="3" fill="currentColor" stroke="none" />
-            </g>
-          </g>
-        ))}
-      </g>
-    </svg>
+      </svg>
+    </div>
   )
 }
 
@@ -445,7 +599,7 @@ const backdrops: Record<PublicThemeName, (props: Props) => React.JSX.Element> = 
 }
 
 /** The decorative, gently animated motif behind the hero for the active theme. */
-export function Backdrop({ theme, className }: Props & { theme: ThemeName }) {
+export function Backdrop({ theme, className, roll }: Props & { theme: ThemeName }) {
   const Motif = backdrops[theme as PublicThemeName]
-  return Motif ? <Motif className={className} /> : null
+  return Motif ? <Motif className={className} roll={roll} /> : null
 }

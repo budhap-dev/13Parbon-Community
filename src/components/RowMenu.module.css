@@ -66,6 +66,13 @@
   outline: none;
 }
 
+.itemDanger,
+.itemDanger:hover,
+.itemDanger:focus-visible {
+  color: var(--error);
+  font-weight: 600;
+}
+
 @media (max-width: 900px) {
   .item {
     min-height: 44px;

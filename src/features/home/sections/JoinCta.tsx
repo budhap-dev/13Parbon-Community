@@ -20,8 +20,9 @@ export function JoinCta() {
         </div>
         <div className={styles.joinActions}>
           <Button to="/events">See what’s on</Button>
-          <Button to="/about" variant="line">
-            Our story
+          {/* Not "Our story" again, which the hero has: the copy above ends "talk to the committee". */}
+          <Button to="/contact" variant="line">
+            Talk to us
           </Button>
         </div>
       </section>

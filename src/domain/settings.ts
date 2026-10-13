@@ -1,3 +1,4 @@
+import type { Event } from './event'
 import type { Festival } from './festival'
 import {
   isSiteTheme,
@@ -69,6 +70,46 @@ export function tidyHomeOrder(order: readonly unknown[]): HomeBlock[] {
   const once = known.filter((block, i) => known.indexOf(block) === i)
   // A block added to the code after the order was saved still has to be drawn somewhere.
   return [...once, ...HOME_BLOCKS.filter((block) => !once.includes(block))]
+}
+
+/**
+ * The card beside the buttons at the top of the home page.
+ *
+ * The committee's choice, made in the portal: the next evening on the website, one evening they
+ * pick, or no card. The site never fills the space with a guess of its own — a festival named
+ * from its usual season was once shown there with nobody having chosen it.
+ */
+export type HeroCard = {
+  show: 'next' | 'chosen' | 'none'
+  /** The evening picked, when `show` is 'chosen'. */
+  eventId: string
+}
+
+export const HERO_CARD_CHOICES: { value: HeroCard['show']; label: string }[] = [
+  { value: 'next', label: 'The next evening on the website' },
+  { value: 'chosen', label: 'An evening I choose' },
+  { value: 'none', label: 'No card' },
+]
+
+/** A saved card that makes sense, or null. */
+export function readHeroCard(value: unknown): HeroCard | null {
+  if (!value || typeof value !== 'object') return null
+  const { show, eventId } = value as Record<string, unknown>
+  if (!HERO_CARD_CHOICES.some((choice) => choice.value === show)) return null
+  return { show: show as HeroCard['show'], eventId: typeof eventId === 'string' ? eventId : '' }
+}
+
+/**
+ * The evening the card shows, or null for no card.
+ *
+ * A chosen evening shows only while it is on the website and still to come. Once it has passed,
+ * been cancelled or been taken down, the card goes rather than quietly showing another one —
+ * the portal says so, and the committee chooses again.
+ */
+export function heroEvent(card: HeroCard, next: Event | null | undefined, upcoming: Event[] | undefined): Event | null {
+  if (card.show === 'none') return null
+  if (card.show === 'next') return next ?? null
+  return upcoming?.find((event) => event.id === card.eventId && event.status === 'published') ?? null
 }
 
 /**
@@ -179,8 +220,11 @@ export const SITE_TEXT_FIELDS: Record<
     required: true,
   },
   town: { label: 'Town', note: 'Beside the name at the foot of every page.', required: true },
-  venue: { label: 'Where we usually meet', note: 'The hall’s name, as people would say it.' },
-  address: { label: 'Address', note: 'Used on the contact page and to place the map.' },
+  venue: {
+    label: 'Where we usually meet',
+    note: 'Kept for the record, and not shown on the site: the evenings move between halls, so the footer names the next evening’s venue instead.',
+  },
+  address: { label: 'Address', note: 'Kept with the hall above, and not shown on the site either.' },
   email: { label: 'Email', note: 'Where the contact page points, and where replies come from.' },
   galleryNote: {
     label: 'Note on the gallery',
@@ -239,6 +283,8 @@ export type SiteSettings = {
    * and the next evening belong at the top — and the month after one, when the photographs do.
    */
   homeOrder: HomeBlock[]
+  /** The card beside the buttons at the top of the home page. See `HeroCard`. */
+  heroCard: HeroCard
   /**
    * The colours a visitor sees before they have chosen any.
    *
@@ -298,6 +344,7 @@ export type SiteSettings = {
 type ContentKey =
   | 'home'
   | 'homeOrder'
+  | 'heroCard'
   | 'defaultTheme'
   | 'text'
   | 'committee'
@@ -379,6 +426,7 @@ export function validateSettings(draft: SettingsDraft): boolean {
   const lists = [draft.homeOrder, draft.social, draft.festivals, draft.story, draft.values, draft.tools, draft.sponsors]
   if (!lists.every(Array.isArray)) return false
   if (!isSiteTheme(draft.defaultTheme) || typeof draft.volunteerFormUrl !== 'string') return false
+  if (!readHeroCard(draft.heroCard)) return false
   if (!draft.collage || !Array.isArray(draft.collage.photos)) return false
   return Boolean(draft.privacy) && Array.isArray(draft.privacy.sections) && draft.privacy.sections.length > 0
 }
@@ -488,6 +536,7 @@ export function mergeSettings(stored: unknown, defaults: SiteSettings): SiteSett
     showSponsors: bool('showSponsors'),
     home,
     homeOrder: Array.isArray(row.homeOrder) ? tidyHomeOrder(row.homeOrder) : defaults.homeOrder,
+    heroCard: readHeroCard(row.heroCard) ?? defaults.heroCard,
     defaultTheme: isSiteTheme(row.defaultTheme) ? row.defaultTheme : defaults.defaultTheme,
     text,
     committee,

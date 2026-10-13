@@ -364,6 +364,8 @@
     min-height: 96px;
     max-height: 220px;
     margin-top: 16px;
+    /* A box for a motif drawn in layers, Deepavali's sky and sill, to be placed inside. */
+    position: relative;
     overflow: visible;
     pointer-events: none;
   }

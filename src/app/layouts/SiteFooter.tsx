@@ -1,6 +1,8 @@
 import { Link } from 'react-router'
 import { Container } from '@/components/Container'
 import { Icon } from '@/components/Icon'
+import { formatDayLongMonth } from '@/domain/dates'
+import { useNextEvent } from '@/lib/api'
 import { footerNav } from '../nav'
 import { linkedSocial } from '@/domain/siteContent'
 import { isPlaceholder, site } from '../site'
@@ -18,6 +20,7 @@ export function SiteFooter() {
   const social = linkedSocial(settings.social)
   const signOff = given(text.signOff)
   const email = given(text.email)
+  const { data: next } = useNextEvent()
 
   return (
     <footer className={styles.footer}>
@@ -37,9 +40,19 @@ export function SiteFooter() {
         </div>
 
         <div className={styles.footerCol}>
-          <p className={styles.footerHead}>Visit</p>
-          {given(text.venue) ? <p>{text.venue}</p> : null}
-          {given(text.address) ? <p className={styles.footerText}>{text.address}</p> : null}
+          {/* Not one hall: the evenings move around, so this names the next one's rather than a
+              fixed address that is wrong half the year. */}
+          <p className={styles.footerHead}>Where we meet</p>
+          {next ? (
+            <>
+              <p>{next.venue}</p>
+              <p className={styles.footerText}>
+                {next.title}, {formatDayLongMonth(next.startsAt)}
+              </p>
+            </>
+          ) : (
+            <p className={styles.footerText}>Halls around {text.town}. Each evening’s page says where.</p>
+          )}
           <Link to="/events" className={styles.footerLink}>
             What’s on
           </Link>

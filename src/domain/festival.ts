@@ -53,21 +53,6 @@ export function heldThisYear(id: string, past: Dated[], now: Date): Dated | unde
     .sort((a, b) => b.startsAt.localeCompare(a.startsAt))[0]
 }
 
-/**
- * The festival that comes round next, judged by its season alone: for when nothing has a date
- * and the page still wants to name what is coming. This month counts as next, unless this
- * year's evening has already been held.
- */
-export function nextFestivalBySeason(festivals: Festival[], now: Date, past: Dated[] = []): Festival | undefined {
-  let best: { festival: Festival; wait: number } | undefined
-  for (const festival of festivals) {
-    const wait = monthsUntilSeason(festival.season, now)
-    if (wait === null || heldThisYear(festival.id, past, now)) continue
-    if (!best || wait < best.wait) best = { festival, wait }
-  }
-  return best?.festival ?? festivals[0]
-}
-
 export type FestivalStatus =
   | { kind: 'next'; startsAt: string }
   | { kind: 'set'; startsAt: string }

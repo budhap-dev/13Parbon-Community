@@ -11,7 +11,7 @@ export function RemovalNotice({ className }: { className?: string }) {
   return (
     <p className={className ?? styles.notice}>
       If you or your child are in a photograph here and would rather not be,{' '}
-      <Link to="/contact?about=photo">tell us</Link> and we will take it down — {TAKEDOWN_PROMISE}.
+      <Link to="/contact?about=photo">tell us</Link> and we will take it down {TAKEDOWN_PROMISE}.
     </p>
   )
 }

@@ -23,6 +23,15 @@ export type Album = {
   visibility: Visibility
 }
 
+/**
+ * Whether the photographs from an evening are still to come: nothing filed under its festival
+ * has been published since the day. Last year's album is not this year's photographs.
+ */
+export function photosAwaited(festivalId: string, heldOn: string, albums: Pick<Album, 'festivalId' | 'publishedAt'>[]): boolean {
+  const held = new Date(heldOn).getTime()
+  return !albums.some((album) => album.festivalId === festivalId && new Date(album.publishedAt).getTime() >= held)
+}
+
 /** An album with its approved media and the cover to show in lists. */
 export type AlbumWithMedia = Album & { media: Media[]; cover?: Media }
 

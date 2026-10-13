@@ -122,15 +122,15 @@
   border-radius: 999px;
   cursor: pointer;
   color: #fff;
-  /* Dark behind it rather than the page colour: it sits on a photograph, and a photograph can
-     be any colour at all. */
-  background: rgba(20, 16, 14, 0.62);
-  backdrop-filter: blur(2px);
+  /* Red, like every remove in the app, and solid: it sits on a photograph, and a photograph
+     can be any colour at all. A white ring keeps it apart from a red one. */
+  background: #b3261e;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.85);
 }
 
 .trash:hover,
 .trash:focus-visible {
-  background: var(--error, #b3261e);
+  background: #8c1d17;
 }
 
 .trash:focus-visible {

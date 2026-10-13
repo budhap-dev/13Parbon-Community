@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createEmptyApi, renderWithProviders } from '@/test/render'
 import { HomePage } from './HomePage'
@@ -27,7 +27,8 @@ describe('HomePage', () => {
     renderWithProviders(<HomePage />)
     const closing = screen.getByRole('region', { name: 'Come for one evening.' })
     expect(within(closing).getByRole('link', { name: 'See what’s on' })).toHaveAttribute('href', '/events')
-    expect(within(closing).getByRole('link', { name: 'Our story' })).toHaveAttribute('href', '/about')
+    // Not the hero's "Our story" again: the copy ends "talk to the committee".
+    expect(within(closing).getByRole('link', { name: 'Talk to us' })).toHaveAttribute('href', '/contact')
   })
 
   it('shows the next event, the year and the photographs', async () => {
@@ -120,11 +121,13 @@ describe('HomePage', () => {
     expect(screen.getByText(/Everyone is welcome at our programmes/)).toBeInTheDocument()
   })
 
-  it('names what comes round next when nothing has a date', async () => {
+  it('shows no card beside the buttons when nothing is on the website, rather than guessing one', async () => {
     renderWithProviders(<HomePage />, { api: createEmptyApi() })
     const hero = screen.getByRole('heading', { level: 1 }).closest('section')!
-    expect(await within(hero).findByText(/date being settled/)).toBeInTheDocument()
-    expect(within(hero).getByRole('link', { name: 'See what’s on' })).toHaveAttribute('href', '/events')
+    expect(await within(hero).findByRole('link', { name: 'See what’s on' })).toHaveAttribute('href', '/events')
+    // The festival list still has seasons in it; none of them is named by the hero.
+    await waitFor(() => expect(within(hero).queryByText(/date being settled/)).not.toBeInTheDocument())
+    expect(within(hero).queryByRole('complementary')).not.toBeInTheDocument()
   })
 
   it('gives each festival where it stands this year', async () => {

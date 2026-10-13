@@ -1,10 +1,13 @@
 import { Link } from 'react-router'
+import { useSettings } from '@/app/SettingsContext'
 import { Container } from '@/components/Container'
+import { Icon } from '@/components/Icon'
 import { SectionHeading } from '@/components/SectionHeading'
 import { formatDayLongMonth } from '@/domain/dates'
 import { festivalStatus, type FestivalStatus } from '@/domain/festival'
+import { photosAwaited } from '@/domain/gallery'
 import { SponsoredBy } from '@/features/sponsors/SponsoredBy'
-import { useFestivals, useNextEvent, usePastEvents, useUpcomingEvents } from '@/lib/api'
+import { useAlbums, useFestivals, useNextEvent, usePastEvents, useUpcomingEvents } from '@/lib/api'
 import { useNow } from '@/lib/clock'
 import { FestivalGlyph } from '../FestivalGlyph'
 import styles from '../Home.module.css'
@@ -31,6 +34,8 @@ export function YearStrip() {
   const { data: next } = useNextEvent()
   const { data: upcoming } = useUpcomingEvents(50)
   const { data: past } = usePastEvents(10)
+  const { showPhotos } = useSettings()
+  const { data: albums } = useAlbums()
   const now = useNow()
   const dated = (upcoming ?? []).filter((event) => event.status !== 'cancelled')
 
@@ -68,6 +73,13 @@ export function YearStrip() {
                     <div className={styles.occasionMeta}>
                       {festival.season ? <span className={styles.occasionSeason}>{festival.season}</span> : null}
                       <span className={styles.occasionChip}>{describe(status)}</span>
+                      {/* Just held, and nothing in the gallery from it yet: say the pictures are on their way.
+                          Goes by itself once an album for this festival is published. */}
+                      {status.kind === 'held' && showPhotos && albums && photosAwaited(festival.id, status.startsAt, albums) ? (
+                        <span className={styles.occasionPhotos}>
+                          <Icon name="image" size={16} /> Photographs coming soon
+                        </span>
+                      ) : null}
                     </div>
                     {festival.description ? <p className={styles.occasionText}>{festival.description}</p> : null}
                     {/* Unlinked: the whole card is already the link to this festival's evenings. */}

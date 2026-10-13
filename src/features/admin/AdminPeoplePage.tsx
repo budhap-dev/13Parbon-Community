@@ -475,6 +475,7 @@ export function AdminPeoplePage() {
                               ? [
                                   {
                                     label: 'Remove…',
+                                    danger: true,
                                     onSelect: () => {
                                       setOpen(household)
                                       setToRemove(true)

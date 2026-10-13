@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { PhotoUpload } from './PhotoUpload'
+import { confirmRemove } from '@/test/confirm'
 
 const jpeg = () => new File([new Uint8Array([1, 2, 3])], 'holi.jpg', { type: 'image/jpeg' })
 const heic = () => new File([new Uint8Array([1])], 'IMG_0421.heic', { type: 'image/heic' })
@@ -79,6 +80,7 @@ describe('once it is ready', () => {
 
     // The object URL is revoked here, so a caller still drawing it would show a broken picture.
     await userEvent.click(await screen.findByRole('button', { name: 'Take it off the list' }))
+    await confirmRemove()
     await waitFor(() => expect(onPreview).toHaveBeenLastCalledWith(null))
   })
 

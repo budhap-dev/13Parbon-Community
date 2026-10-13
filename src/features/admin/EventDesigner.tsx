@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { useSettings } from '@/app/SettingsContext'
 import { ActionBar } from '@/components/ActionBar'
 import { Button } from '@/components/Button'
+import { ConfirmButton, UNTIL_SAVED } from '@/components/ConfirmButton'
 import { CoverImage } from '@/components/CoverImage'
 import { PhotoUpload } from '@/components/PhotoUpload'
 import { Icon } from '@/components/Icon'
@@ -376,14 +377,14 @@ export function EventDesigner({
                   set('programme', draft.programme.map((l, j) => (i === j ? { ...l, what: e.target.value } : l)))
                 }
               />
-              <Button
-                variant="line"
-                size="sm"
+              <ConfirmButton
                 aria-label={`Remove item ${i + 1}`}
-                onClick={() => set('programme', draft.programme.filter((_, j) => j !== i))}
+                title={`Remove ${line.what.trim() ? `“${line.what.trim()}”` : `item ${i + 1}`} from the programme?`}
+                body={UNTIL_SAVED}
+                onConfirm={() => set('programme', draft.programme.filter((_, j) => j !== i))}
               >
                 <Icon name="trash" />
-              </Button>
+              </ConfirmButton>
             </div>
           ))}
           <div className={styles.actions}>

@@ -26,6 +26,8 @@ export const defaultSettings: SiteSettings = {
   showSponsors: site.showSponsors,
   home: { ...site.home },
   homeOrder: [...HOME_BLOCKS],
+  // What the card did before it was a choice: the next evening, and nothing when there is none.
+  heroCard: { show: 'next', eventId: '' },
   defaultTheme: 'festival',
   text: {
     heroLead: site.bengaliTitleLead,

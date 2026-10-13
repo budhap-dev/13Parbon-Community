@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { Container } from '@/components/Container'
@@ -6,7 +7,9 @@ import { EventCard } from '@/components/EventCard'
 import { formatDateWithYear, formatDayLongMonth, formatMonthYear, monthKey } from '@/domain/dates'
 import type { Event } from '@/domain/event'
 import { heldThisYear, monthsUntilSeason, type Festival } from '@/domain/festival'
-import { useFestivals, usePastEvents, useUpcomingEvents } from '@/lib/api'
+import { photosAwaited } from '@/domain/gallery'
+import { useSettings } from '@/app/SettingsContext'
+import { useAlbums, useFestivals, usePastEvents, useUpcomingEvents } from '@/lib/api'
 import { useNow } from '@/lib/clock'
 import { FestivalAlbum } from './FestivalAlbum'
 import styles from './Events.module.css'
@@ -24,6 +27,33 @@ function groupByMonth(events: Event[]): { key: string; label: string; events: Ev
 
 
 type Stop = { festival: Festival; event?: Event; wait: number }
+
+/*
+ * Bunting along the year: paper flags in the festivals' colours, with a marigold string every
+ * few flags, each swaying a little out of step with its neighbours. Decoration only — hidden
+ * from screen readers, and still for anybody whose device asks for less motion. On a phone,
+ * where the year runs down the page, it is strung across the top of it instead.
+ */
+const FLAG_COLOURS = ['#f7b733', '#c8102e', '#be185d', '#1f5fbf', '#ea580c', '#1d6b43', '#8e1a6b', '#0e9aa7']
+const FLAGS = 30
+
+function Bunting() {
+  return (
+    <div className={styles.bunting} aria-hidden="true">
+      {Array.from({ length: FLAGS }, (_, i) =>
+        i % 5 === 2 ? (
+          <span key={i} className={styles.marigolds} style={{ '--i': i } as CSSProperties}>
+            <span />
+            <span />
+            <span />
+          </span>
+        ) : (
+          <span key={i} className={styles.flag} style={{ '--i': i, '--flag': FLAG_COLOURS[i % FLAG_COLOURS.length] } as CSSProperties} />
+        ),
+      )}
+    </div>
+  )
+}
 
 /**
  * The year's festivals in the order they come round from now: a dated one by its date, the rest
@@ -53,6 +83,17 @@ export function EventsPage() {
   const { data: upcoming, isPending, isError, isSuccess, refetch } = useUpcomingEvents(50)
   const { data: past, isError: pastFailed, refetch: refetchPast } = usePastEvents(6)
   const now = useNow()
+  const { showPhotos } = useSettings()
+  const { data: albums } = useAlbums()
+  /** This year's evening of its festival, with nothing in the gallery from it yet. */
+  const photosComing = (event: Event) =>
+    Boolean(
+      showPhotos &&
+        albums &&
+        event.festivalId &&
+        heldThisYear(event.festivalId, past ?? [], now)?.startsAt === event.startsAt &&
+        photosAwaited(event.festivalId, event.startsAt, albums),
+    )
 
   const matches = (event: Event) => !festivalId || event.festivalId === festivalId
   const upcomingMonths = groupByMonth((upcoming ?? []).filter(matches))
@@ -134,6 +175,8 @@ export function EventsPage() {
           <h2 id="year-title" className={styles.yearTitle}>
             The year ahead
           </h2>
+          <div className={styles.timelineWrap}>
+          <Bunting />
           <ol className={styles.timeline}>
             {stops.map(({ festival, event }) => (
               <li key={festival.id} className={event ? styles.stopSet : styles.stop} data-festival={festival.id}>
@@ -158,6 +201,7 @@ export function EventsPage() {
               </li>
             ))}
           </ol>
+          </div>
           {arranging ? (
             <p className={styles.yearNote}>
               Would you like to hear when the dates are settled?{' '}
@@ -188,6 +232,7 @@ export function EventsPage() {
                 <span className={styles.pastMeta}>
                   {formatDateWithYear(event.startsAt)}
                   {event.status === 'cancelled' ? ' · cancelled' : ''}
+                  {photosComing(event) ? ' · photographs coming soon' : ''}
                 </span>
               </li>
             ))}

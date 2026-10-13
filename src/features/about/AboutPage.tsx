@@ -77,6 +77,21 @@ export function AboutPage() {
       </section>
       ) : null}
 
+      {/* The questions visitors come with, before the committee and the roll, which are long. */}
+      <section className={styles.section} aria-labelledby="faq-title">
+        <h2 id="faq-title" className={styles.sectionTitle}>
+          Questions people ask
+        </h2>
+        <div className={styles.faq}>
+          {faq.map((item) => (
+            <details key={item.question} className={styles.item}>
+              <summary className={styles.question}>{item.question}</summary>
+              <p className={styles.answer}>{item.answer}</p>
+            </details>
+          ))}
+        </div>
+      </section>
+
       <section className={styles.section} aria-labelledby="committee-title">
         <h2 id="committee-title" className={styles.sectionTitle}>
           Current committee
@@ -118,19 +133,6 @@ export function AboutPage() {
         </ul>
       </section>
 
-      <section className={styles.section} aria-labelledby="faq-title">
-        <h2 id="faq-title" className={styles.sectionTitle}>
-          Questions people ask
-        </h2>
-        <div className={styles.faq}>
-          {faq.map((item) => (
-            <details key={item.question} className={styles.item}>
-              <summary className={styles.question}>{item.question}</summary>
-              <p className={styles.answer}>{item.answer}</p>
-            </details>
-          ))}
-        </div>
-      </section>
     </Container>
   )
 }

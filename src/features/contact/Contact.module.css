@@ -36,6 +36,7 @@
 }
 
 .channel {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -52,6 +53,25 @@
 .channel:hover {
   border-color: var(--color-accent);
   transform: translateY(-2px);
+}
+
+/* A card with nothing to open does not pretend it can be tapped. */
+.channel:not(:has(a)):hover {
+  border-color: var(--color-border);
+  transform: none;
+}
+
+/* The whole card opens its link, not just the line of small text in it. */
+.channelLink::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.channel:has(.channelLink:focus-visible) {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
 }
 
 .channelIcon {

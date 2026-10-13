@@ -178,7 +178,7 @@ export function AdminNoticesPage() {
                         </Button>
                         <RowMenu
                           about={notice.title}
-                          items={[{ label: 'Take off the board…', onSelect: () => setRemoving(notice.id) }]}
+                          items={[{ label: 'Take off the board…', danger: true, onSelect: () => setRemoving(notice.id) }]}
                         />
                         <ConfirmDialog
                           open={removing === notice.id}

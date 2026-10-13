@@ -1,5 +1,4 @@
-import { festivalStatus, monthsUntilSeason, nextFestivalBySeason, seasonMonth, seasonMonths } from './festival'
-import { festivals } from '@/app/festivals'
+import { festivalStatus, heldThisYear, monthsUntilSeason, seasonMonth, seasonMonths } from './festival'
 
 describe('seasonMonth', () => {
   it('reads the first month a season names', () => {
@@ -26,26 +25,17 @@ describe('monthsUntilSeason', () => {
   })
 })
 
-describe('nextFestivalBySeason', () => {
-  it('names a festival in the second month of its season, not eleven months off', () => {
-    expect(nextFestivalBySeason(festivals, new Date('2026-10-13'))?.id).toBe('mahalaya')
-  })
+describe('heldThisYear', () => {
+  const past = [{ festivalId: 'boishakhi', startsAt: '2026-04-15T17:00:00' }]
 
-  it('passes over a festival whose evening this year has been held', () => {
-    const past = [{ festivalId: 'boishakhi', startsAt: '2026-04-15T17:00:00' }]
-    expect(nextFestivalBySeason(festivals, new Date('2026-04-25'), past)?.id).not.toBe('boishakhi')
-    // A year on, it comes round again.
-    expect(nextFestivalBySeason(festivals, new Date('2027-04-10'), past)?.id).toBe('boishakhi')
+  it('counts an evening from the last six months as this year\'s', () => {
+    expect(heldThisYear('boishakhi', past, new Date('2026-04-25'))?.startsAt).toBe('2026-04-15T17:00:00')
+    // A year on, it is coming round again.
+    expect(heldThisYear('boishakhi', past, new Date('2027-04-10'))).toBeUndefined()
   })
 
   it('does not count a cancelled evening as held', () => {
-    const past = [{ festivalId: 'boishakhi', startsAt: '2026-04-15T17:00:00', status: 'cancelled' }]
-    expect(nextFestivalBySeason(festivals, new Date('2026-04-25'), past)?.id).toBe('boishakhi')
-  })
-
-  it('names the festival whose season comes round soonest', () => {
-    expect(nextFestivalBySeason(festivals, new Date('2026-11-02'))?.id).toBe('saraswati-puja')
-    expect(nextFestivalBySeason(festivals, new Date('2026-09-15'))?.id).toBe('mahalaya')
+    expect(heldThisYear('boishakhi', [{ ...past[0], status: 'cancelled' }], new Date('2026-04-25'))).toBeUndefined()
   })
 })
 

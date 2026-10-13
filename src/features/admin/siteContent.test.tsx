@@ -9,6 +9,7 @@ import type { SiteSettings } from '@/domain/settings'
 import type { ApiClient } from '@/lib/api'
 import { previewAccounts } from '@/lib/auth/previewAccounts'
 import { createTestApi, TestDataProviders } from '@/test/render'
+import { confirmRemove } from '@/test/confirm'
 
 /**
  * The parts of the site that used to be files, edited from the portal and then looked at as a
@@ -104,6 +105,7 @@ describe('the year’s festivals', () => {
     await open(region, /The year’s festivals/)
 
     await userEvent.click(within(region).getByRole('button', { name: 'Remove Holi' }))
+    await confirmRemove()
     await userEvent.click(within(region).getByRole('button', { name: 'Save the festivals' }))
     await saved(region)
 
@@ -203,6 +205,7 @@ describe('what we stand for', () => {
     await userEvent.selectOptions(within(region).getAllByLabelText('Its drawing')[4], 'sparkle')
     // And one taken off, by name.
     await userEvent.click(within(region).getByRole('button', { name: 'Remove Open door' }))
+    await confirmRemove()
     await userEvent.click(within(region).getByRole('button', { name: 'Save the values' }))
     await saved(region)
 
@@ -266,6 +269,7 @@ describe('this year’s theme, in photographs', () => {
     await fill(within(region).getByLabelText('What the collage is called'), 'Trams, then and now')
     await fill(within(region).getByLabelText('Who took them'), '')
     await userEvent.click(within(region).getByRole('button', { name: 'Remove photograph 6' }))
+    await confirmRemove()
     await userEvent.click(within(region).getByRole('button', { name: 'Save the photographs' }))
     await saved(region)
 
@@ -393,7 +397,10 @@ describe('the privacy notice', () => {
         name: /^Remove (What we collect|Why we use it|Cookies and tracking|Your name and your photographs|Your rights)$/,
       })
     expect(removes()).toHaveLength(5)
-    while (removes().length > 0) await userEvent.click(removes()[0])
+    while (removes().length > 0) {
+      await userEvent.click(removes()[0])
+      await confirmRemove()
+    }
     expect(within(region).getByText(/A notice needs at least one section/)).toBeInTheDocument()
     expect(within(region).getByRole('button', { name: 'Save the notice' })).toBeDisabled()
   })

@@ -208,7 +208,6 @@
 
 .memberEntry:hover {
   border-color: color-mix(in srgb, var(--color-accent) 55%, transparent);
-  transform: translateY(-2px);
 }
 
 .entryName {
@@ -327,14 +326,20 @@
    * of each, eighteen of the thirty-one wrapped to a second line: a longer list beats a
    * ragged one.
    */
+  /* Name chips that wrap, unevenly on purpose: a third of the length of one name a line. */
   .members {
-    grid-template-columns: minmax(0, 1fr);
+    display: flex;
+    flex-wrap: wrap;
     gap: 8px;
   }
 
   .memberEntry {
     gap: 10px;
-    padding: 7px 14px 7px 7px;
+    padding: 8px 14px;
+  }
+
+  .members .entryBadge {
+    display: none;
   }
 
   .entryBadge {
@@ -442,6 +447,13 @@
 @media (max-width: 960px) {
   .hero {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* The home page has just opened with the logo; here it can be smaller. */
+  .logo {
+    max-width: 200px;
+    padding: 8px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
   }
 
   .logoWrap {

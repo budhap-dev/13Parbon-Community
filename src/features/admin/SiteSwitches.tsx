@@ -2,8 +2,10 @@ import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { ActionBar } from '@/components/ActionBar'
 import { Button } from '@/components/Button'
+import { ConfirmButton, UNTIL_SAVED } from '@/components/ConfirmButton'
 import { InfoNote } from '@/components/InfoNote'
 import {
+  HERO_CARD_CHOICES,
   HOME_SECTIONS,
   HOME_SECTION_LABELS,
   SETTING_LABELS,
@@ -13,6 +15,7 @@ import {
   rollToText,
   tidyCommittee,
   tidyFaq,
+  type HeroCard,
   type SectionAudience,
   type SiteSettings,
 } from '@/domain/settings'
@@ -34,6 +37,8 @@ import {
 import { defaultSettings } from '@/app/defaults'
 import { isPlaceholder } from '@/app/site'
 import { themes } from '@/app/theme/themes'
+import { formatLongDate, isUpcoming } from '@/domain/dates'
+import { useAllEvents } from '@/lib/api'
 import { useNow } from '@/lib/clock'
 import {
   CollageEditor,
@@ -213,6 +218,7 @@ export function SiteSwitches({
     faq: settings.faq.map((row) => ({ ...row })),
     members: [...settings.members],
     homeOrder: [...settings.homeOrder],
+    heroCard: { ...settings.heroCard },
     social: settings.social.map((row) => ({ ...row })),
     festivals: settings.festivals.map((row) => ({ ...row })),
     values: settings.values.map((row) => ({ ...row })),
@@ -228,6 +234,37 @@ export function SiteSwitches({
   /** "Ours is still right": said about a notice the developer has since rewritten. */
   const [keepOurs, setKeepOurs] = useState(false)
   const now = useNow()
+
+  /*
+   * The evenings the card can show: on the website and still to come. A draft is left out —
+   * the card would sit empty until somebody published it, and nothing here would say why.
+   */
+  const eventsQuery = useAllEvents()
+  const cardEvents = (eventsQuery.data ?? [])
+    .filter((event) => event.status === 'published' && isUpcoming(event.startsAt, now))
+    .sort((a, b) => a.startsAt.localeCompare(b.startsAt))
+  const setCard = (changes: Partial<HeroCard>) => {
+    const card = { ...draft.heroCard, ...changes }
+    // Choosing "an evening I choose" picks the first one, so the card is never saved as a choice
+    // of nothing.
+    if (card.show === 'chosen' && !cardEvents.some((event) => event.id === card.eventId)) card.eventId = cardEvents[0]?.id ?? ''
+    setDraft({ ...draft, heroCard: card })
+  }
+  /** What the card on the live site is showing, from what is saved — not the draft. */
+  const savedCard = settings.heroCard
+  const savedChoice = cardEvents.find((event) => event.id === savedCard.eventId)
+  const cardSummary =
+    savedCard.show === 'none'
+      ? 'No card'
+      : savedCard.show === 'next'
+        ? cardEvents[0]
+          ? `Showing ${cardEvents[0].title}`
+          : 'Nothing on the website, so no card'
+        : savedChoice
+          ? `Showing ${savedChoice.title}`
+          : eventsQuery.isSuccess
+            ? 'Not showing: choose again'
+            : ''
 
   /*
    * The developer's notice, and whether ours was written before it.
@@ -285,6 +322,7 @@ export function SiteSwitches({
       volunteerFormUrl: webAddressOr(draft.volunteerFormUrl),
     }),
     home: () => ({ ...settings, home: { ...draft.home }, homeOrder: [...draft.homeOrder] }),
+    heroCard: () => ({ ...settings, heroCard: { ...draft.heroCard, eventId: draft.heroCard.show === 'chosen' ? draft.heroCard.eventId : '' } }),
     festivals: () => ({ ...settings, festivals: tidyFestivals(draft.festivals) }),
     story: () => ({ ...settings, story: storyFromText(story) }),
     values: () => ({ ...settings, values: tidyValues(draft.values) }),
@@ -530,6 +568,73 @@ export function SiteSwitches({
         </div>
       </Section>
 
+      <Section {...sectionProps('heroCard')} label={SITE_SECTIONS.heroCard} summary={cardSummary} saveLabel="Save the card">
+        <InfoNote summary="What the card shows">
+          <p>
+            The card beside “See what’s on” at the top of the home page: the evening’s names, its date
+            and venue, the days left, and a “We are coming” button. All of it comes from the evening as
+            it is set up under Events, so to change what the card says, change the evening.
+          </p>
+        </InfoNote>
+        {savedCard.show === 'chosen' && eventsQuery.isSuccess && !savedChoice ? (
+          <p className={styles.warning} role="status">
+            The evening chosen for the card has passed or is no longer on the website, so no card is
+            showing. Choose another, or let it show the next evening.
+          </p>
+        ) : null}
+        <fieldset className={styles.fieldset}>
+          <legend className={styles.label}>Beside the buttons, show</legend>
+          {HERO_CARD_CHOICES.map((choice) => {
+            const unavailable = choice.value === 'chosen' && cardEvents.length === 0
+            return (
+              <div key={choice.value} className={styles.check}>
+                <input
+                  id={`heroCard-${choice.value}`}
+                  type="radio"
+                  name="heroCard"
+                  value={choice.value}
+                  checked={draft.heroCard.show === choice.value}
+                  disabled={unavailable && draft.heroCard.show !== 'chosen'}
+                  onChange={() => setCard({ show: choice.value })}
+                />
+                <label htmlFor={`heroCard-${choice.value}`}>
+                  {choice.label}
+                  {choice.value === 'next' && cardEvents[0] ? ` (now ${cardEvents[0].title})` : null}
+                  {unavailable ? ' (nothing on the website to choose yet)' : null}
+                </label>
+              </div>
+            )
+          })}
+        </fieldset>
+        {draft.heroCard.show === 'chosen' && cardEvents.length > 0 ? (
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="heroCard-event">
+              The evening
+            </label>
+            <select
+              id="heroCard-event"
+              className={styles.input}
+              value={draft.heroCard.eventId}
+              aria-describedby="heroCard-event-note"
+              onChange={(e) => setCard({ eventId: e.target.value })}
+            >
+              {cardEvents.map((event) => (
+                <option key={event.id} value={event.id}>
+                  {event.title} · {formatLongDate(event.startsAt)}
+                </option>
+              ))}
+            </select>
+            <p id="heroCard-event-note" className={styles.hint}>
+              Only evenings on the website and still to come. Once this one has passed, the card goes
+              until you choose again.
+            </p>
+          </div>
+        ) : null}
+        {draft.heroCard.show === 'next' && eventsQuery.isSuccess && cardEvents.length === 0 ? (
+          <p className={styles.hint}>Nothing is on the website yet, so for now there is no card.</p>
+        ) : null}
+      </Section>
+
       <Section {...sectionProps('festivals')} label={SITE_SECTIONS.festivals} summary={`${tidyFestivals(draft.festivals).length} festivals`} saveLabel="Save the festivals">
         <InfoNote summary="Where these show">
           <p>
@@ -616,14 +721,14 @@ export function SiteSwitches({
               />
             </div>
             <div className={styles.actions} style={{ alignSelf: 'end', paddingBottom: 2 }}>
-              <Button
-                variant="line"
-                size="sm"
+              <ConfirmButton
                 aria-label={`Remove ${row.name || `row ${i + 1}`}`}
-                onClick={() => setDraft({ ...draft, committee: draft.committee.filter((_, j) => j !== i) })}
+                title={`Remove ${row.role.trim() || row.name.trim() || 'this row'} from the committee?`}
+                body={UNTIL_SAVED}
+                onConfirm={() => setDraft({ ...draft, committee: draft.committee.filter((_, j) => j !== i) })}
               >
                 Remove
-              </Button>
+              </ConfirmButton>
             </div>
           </div>
         ))}
@@ -688,14 +793,14 @@ export function SiteSwitches({
               onChange={(e) => setQuestion(i, { answer: e.target.value })}
             />
             <div className={styles.actions} style={{ marginTop: 6 }}>
-              <Button
-                variant="line"
-                size="sm"
+              <ConfirmButton
                 aria-label={`Remove question ${i + 1}`}
-                onClick={() => setDraft({ ...draft, faq: draft.faq.filter((_, j) => j !== i) })}
+                title={`Remove question ${i + 1}?`}
+                body={UNTIL_SAVED}
+                onConfirm={() => setDraft({ ...draft, faq: draft.faq.filter((_, j) => j !== i) })}
               >
                 Remove
-              </Button>
+              </ConfirmButton>
             </div>
           </div>
         ))}

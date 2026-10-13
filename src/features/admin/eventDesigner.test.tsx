@@ -7,6 +7,7 @@ import { previewAccounts } from '@/lib/auth/previewAccounts'
 import { TestDataProviders, TEST_NOW } from '@/test/render'
 import { createMockApi } from '@/lib/api'
 import { testEvents } from '@/test/events'
+import { confirmRemove } from '@/test/confirm'
 
 /**
  * An evening that has happened and that nobody has filed yet.
@@ -383,6 +384,7 @@ describe('the programme', () => {
 
     expect(screen.getByLabelText('What happens at item 1')).toHaveValue('Children’s dance')
     await userEvent.click(screen.getByRole('button', { name: 'Remove item 1' }))
+    await confirmRemove()
     expect(screen.queryByLabelText('What happens at item 1')).not.toBeInTheDocument()
   })
 

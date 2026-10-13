@@ -7,9 +7,9 @@ import { themes } from '@/app/theme/themes'
 import { Button } from '@/components/Button'
 import { Container } from '@/components/Container'
 import { Icon } from '@/components/Icon'
-import { useFestivals, useNextEvent } from '@/lib/api'
+import { useFestivals } from '@/lib/api'
 import { LogoAssembly } from '../LogoAssembly'
-import { HeroTicket } from './NextEvent'
+import { HeroTicket, useHeroEvent } from './NextEvent'
 import styles from '../Home.module.css'
 
 /** `showNext` follows who the Next event part is set to show to, so the hero does not show it to everyone regardless. */
@@ -18,7 +18,7 @@ export function Hero({ showNext = true }: { showNext?: boolean }) {
   const { theme } = useTheme()
   const { key: navigationKey } = useLocation()
   const heroImage = themes.find((t) => t.id === theme)?.heroImage
-  const { data: next } = useNextEvent()
+  const { event: next } = useHeroEvent()
   const { data: festivals } = useFestivals()
   const nextName = next ? (festivals?.find((f) => f.id === next.festivalId)?.name ?? next.title) : null
 
@@ -27,7 +27,7 @@ export function Hero({ showNext = true }: { showNext?: boolean }) {
       {heroImage ? (
         <div className={styles.heroImage} style={{ backgroundImage: `url(${heroImage})` }} aria-hidden="true" />
       ) : null}
-      <Backdrop theme={theme} className={styles.backdrop} />
+      <Backdrop theme={theme} className={styles.backdrop} roll />
       <Container className={styles.heroInner}>
         <div className={styles.heroCopy}>
           <div className={styles.heroTitleRow}>
@@ -41,8 +41,8 @@ export function Hero({ showNext = true }: { showNext?: boolean }) {
               ) : null}
               <span className={styles.heroTitleName}>{text.heroName}</span>
             </h1>
-            {/* On a phone the assembled logo would push everything below the fold; the emblem
-                sits beside the name instead. */}
+            {/* Kept for a narrow screen the logo is not drawn on; at present it shows nowhere,
+                the assembled logo following the words on a phone instead. */}
             <img src={site.emblem} alt="" className={styles.heroEmblem} width={96} height={96} />
           </div>
           <p className={styles.lead}>

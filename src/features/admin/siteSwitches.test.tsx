@@ -4,6 +4,7 @@ import { createMemoryRouter, RouterProvider } from 'react-router'
 import { routes } from '@/app/router'
 import { previewAccounts } from '@/lib/auth/previewAccounts'
 import { TestDataProviders } from '@/test/render'
+import { confirmRemove } from '@/test/confirm'
 
 function renderAt(path: string, session = previewAccounts[1]) {
   render(
@@ -111,6 +112,7 @@ describe('the committee and the roll', () => {
 
     // By name: this screen has other lists now, each with a Remove of its own.
     await userEvent.click(within(panel).getByRole('button', { name: 'Remove Mr. Dalim Ghosh' }))
+    await confirmRemove()
     expect(rows()).toBe(before)
   })
 
@@ -161,6 +163,7 @@ describe('the questions people ask', () => {
     expect(rows()).toBe(before + 1)
 
     await userEvent.click(within(panel).getAllByRole('button', { name: /^Remove question / })[0])
+    await confirmRemove()
     expect(rows()).toBe(before)
   })
 

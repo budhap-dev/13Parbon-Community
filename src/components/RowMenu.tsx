@@ -1,7 +1,8 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import styles from './RowMenu.module.css'
 
-export type RowMenuItem = { label: string; href?: string; onSelect?: () => void }
+/** `danger` marks an item that removes or deletes: red, like every such button in the app. */
+export type RowMenuItem = { label: string; href?: string; onSelect?: () => void; danger?: boolean }
 
 /**
  * A row's less common actions, behind one "More" button, so a table row carries Edit and this
@@ -53,7 +54,7 @@ export function RowMenu({ about, items }: { about: string; items: RowMenuItem[] 
     ) : (
       <button
         type="button"
-        className={styles.item}
+        className={entry.danger ? `${styles.item} ${styles.itemDanger}` : styles.item}
         onClick={() => {
           /*
            * Back to the trigger first: the item is about to unmount, and a dialog opened by

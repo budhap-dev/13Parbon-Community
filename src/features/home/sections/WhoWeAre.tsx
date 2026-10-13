@@ -2,7 +2,9 @@ import { Link } from 'react-router'
 import { isPlaceholder } from '@/app/site'
 import { useSettings } from '@/app/SettingsContext'
 import { Container } from '@/components/Container'
+import { purposeParts } from '@/domain/siteContent'
 import styles from '../Home.module.css'
+import { WhoAlpona } from './WhoAlpona'
 
 export function WhoWeAre() {
   const { text } = useSettings()
@@ -34,11 +36,20 @@ export function WhoWeAre() {
                 ))}
               </dl>
             ) : null}
+            <WhoAlpona />
           </div>
           <div className={styles.whoBody}>
             <p>{text.mission}</p>
             {isPlaceholder(text.missionStatement) ? null : (
-              <p className={styles.whoMuted}>{text.missionStatement}</p>
+              // Headed "Mission" and "Vision", each heading stands out over its own words.
+              <dl className={styles.purpose}>
+                {purposeParts(text.missionStatement).map((part, i) => (
+                  <div key={i} className={styles.purposePart}>
+                    {part.label ? <dt className={styles.purposeLabel}>{part.label}</dt> : null}
+                    <dd className={styles.purposeText}>{part.text}</dd>
+                  </div>
+                ))}
+              </dl>
             )}
             <Link to="/about" className={styles.whoLink}>
               About the community and the committee

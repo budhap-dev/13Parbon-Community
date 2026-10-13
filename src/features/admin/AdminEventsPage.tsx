@@ -242,6 +242,7 @@ export function AdminEventsPage() {
                         items={[
                           {
                             label: 'Delete…',
+                            danger: true,
                             onSelect: () => {
                               remove.reset()
                               setDeleting(e)

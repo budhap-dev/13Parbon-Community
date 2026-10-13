@@ -10,6 +10,7 @@ export const SITE_SECTIONS = {
   words: 'The words on the public pages',
   social: 'Ways to reach us, and to help',
   home: 'The home page: its order, and who sees each part',
+  heroCard: 'The card at the top of the home page',
   festivals: 'The year’s festivals',
   story: 'Our story',
   values: 'What we stand for',
@@ -31,7 +32,7 @@ export const isSectionKey = (value: string): value is SectionKey => Object.hasOw
  * content those two pages are built from, which is what somebody is usually there to change.
  */
 export type SitePart = 'site' | 'pages'
-export const PAGE_SECTIONS: readonly SectionKey[] = ['home', 'festivals', 'story', 'values', 'committee', 'roll', 'faq', 'collage']
+export const PAGE_SECTIONS: readonly SectionKey[] = ['home', 'heroCard', 'festivals', 'story', 'values', 'committee', 'roll', 'faq', 'collage']
 export const partOf = (key: SectionKey): SitePart => (PAGE_SECTIONS.includes(key) ? 'pages' : 'site')
 export const PART_PATHS: Record<SitePart, string> = { site: '/admin/content', pages: '/admin/pages' }
 

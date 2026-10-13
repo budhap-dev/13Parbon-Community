@@ -390,3 +390,25 @@ export function readTools(value: unknown): Tool[] | null {
   const rows = records(value)
   return rows ? tidyTools(rows as unknown as Tool[]) : null
 }
+
+/**
+ * The mission and vision statement in its parts, by the words the committee heads them with.
+ *
+ * "Mission: … Vision: …", on one line or two, comes back as two parts, each with its heading,
+ * so the page can set the headings apart. A statement that names neither is one part with no
+ * heading, and shows as it was typed.
+ */
+export function purposeParts(statement: string): { label?: string; text: string }[] {
+  const heading = /(?:^|(?<=[.!?\n]\s*))((?:Our\s+)?(?:Mission|Vision))\s*[:\u2013\u2014-]\s*/gi
+  const marks = [...statement.matchAll(heading)]
+  if (marks.length === 0) return [{ text: statement.trim() }]
+  const parts: { label?: string; text: string }[] = []
+  const before = statement.slice(0, marks[0].index).trim()
+  if (before) parts.push({ text: before })
+  marks.forEach((mark, i) => {
+    const end = i + 1 < marks.length ? marks[i + 1].index : statement.length
+    const text = statement.slice(mark.index + mark[0].length, end).trim()
+    if (text) parts.push({ label: mark[1].replace(/\s+/g, ' '), text })
+  })
+  return parts
+}

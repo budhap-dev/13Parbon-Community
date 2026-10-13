@@ -3,6 +3,7 @@ import { Link } from 'react-router'
 import { useSettings, useSettingsFailed, useSettingsLoaded } from '@/app/SettingsContext'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { Button } from '@/components/Button'
+import { ConfirmButton } from '@/components/ConfirmButton'
 import { LoadFailed } from '@/components/LoadFailed'
 import type { SiteSettings } from '@/domain/settings'
 import { sponsorSummary, tidySponsors, type Sponsor } from '@/domain/sponsors'
@@ -99,19 +100,34 @@ function SponsorsForm({ settings }: { settings: SiteSettings }) {
             )}
           </p>
           <div className={forms.actions}>
-            <Button
-              variant={on ? 'line' : 'gold'}
-              size="sm"
-              disabled={save.isPending}
-              onClick={() => {
-                setLast('switch')
-                // The saved list, not the one being typed: switching on is not a way to publish
-                // half an edit.
-                save.mutate({ ...settings, showSponsors: !on })
-              }}
-            >
-              {saving('switch') ? 'Saving…' : on ? 'Take them off the website' : 'Show them on the website'}
-            </Button>
+            {on ? (
+              <ConfirmButton
+                disabled={save.isPending}
+                title="Take the sponsors off the website?"
+                body="The Sponsors page, their logos on the home page and “sponsored by” on the festivals all go at once. The list is kept, and one click puts them back."
+                confirmLabel="Take them off"
+                onConfirm={() => {
+                  setLast('switch')
+                  save.mutate({ ...settings, showSponsors: false })
+                }}
+              >
+                {saving('switch') ? 'Saving…' : 'Take them off the website'}
+              </ConfirmButton>
+            ) : (
+              <Button
+                variant="gold"
+                size="sm"
+                disabled={save.isPending}
+                onClick={() => {
+                  setLast('switch')
+                  // The saved list, not the one being typed: switching on is not a way to publish
+                  // half an edit.
+                  save.mutate({ ...settings, showSponsors: true })
+                }}
+              >
+                {saving('switch') ? 'Saving…' : 'Show them on the website'}
+              </Button>
+            )}
             {said('switch')}
           </div>
         </div>

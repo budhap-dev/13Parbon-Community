@@ -3,8 +3,9 @@ import { LoadFailed } from '@/components/LoadFailed'
 import { Container } from '@/components/Container'
 import { Icon } from '@/components/Icon'
 import { daysUntil, describeCountdown, formatLongDate, formatTime } from '@/domain/dates'
-import { nextFestivalBySeason } from '@/domain/festival'
-import { useFestivals, useNextEvent, usePastEvents } from '@/lib/api'
+import { heroEvent } from '@/domain/settings'
+import { useSettings } from '@/app/SettingsContext'
+import { useFestivals, useNextEvent, useUpcomingEvents } from '@/lib/api'
 import { useNow } from '@/lib/clock'
 import styles from '../Home.module.css'
 
@@ -90,64 +91,64 @@ export function NextEvent() {
 }
 
 /**
- * The next evening as a ticket, beside the hero's buttons: both names, when, where, and the one
- * thing to do about it. With nothing dated it still names what comes round next, rather than
- * leaving a gap where the ticket would be.
+ * The evening the committee has put beside the hero's buttons, from Home and About pages in the
+ * portal: the next one on the website, one they chose, or none. See `HeroCard`.
+ */
+export function useHeroEvent() {
+  const { heroCard } = useSettings()
+  const next = useNextEvent()
+  const upcoming = useUpcomingEvents(50)
+  const source = heroCard.show === 'chosen' ? upcoming : next
+  return {
+    event: heroEvent(heroCard, next.data, upcoming.data),
+    isNext: (event: { id: string }) => event.id === next.data?.id,
+    // A calendar that could not be read is not one with nothing on it, and shows no card.
+    isPending: heroCard.show !== 'none' && source.isPending,
+    isError: source.isError,
+  }
+}
+
+/**
+ * That evening as a ticket: both names, when, where, the days left, and the one thing to do
+ * about it. No evening, no ticket — the buttons stand on their own.
  */
 export function HeroTicket() {
-  const { data: event, isPending, isError } = useNextEvent()
+  const { event, isNext, isPending, isError } = useHeroEvent()
   const { data: festivals } = useFestivals()
-  const { data: past } = usePastEvents(10)
   const now = useNow()
-  // A calendar that could not be read is not one with nothing on it: no ticket, rather than a
-  // festival "date being settled" that may well have a date.
-  if (isPending || isError) return null
+  if (isPending || isError || !event) return null
 
-  const festival = event
-    ? festivals?.find((f) => f.id === event.festivalId)
-    : festivals && nextFestivalBySeason(festivals, now, past)
-  if (!event && !festival) return null
-
-  const english = event ? (festival?.name ?? event.title) : festival!.name
-  const countdown = event ? describeCountdown(daysUntil(event.startsAt, now)) : null
-  const going =
-    event?.registrationOpen && event.registrationUrl ? { href: event.registrationUrl } : event ? { to: `/events/${event.slug}` } : null
+  const festival = festivals?.find((f) => f.id === event.festivalId)
+  const english = festival?.name ?? event.title
+  const countdown = describeCountdown(daysUntil(event.startsAt, now))
+  const going = event.registrationOpen && event.registrationUrl ? { href: event.registrationUrl } : { to: `/events/${event.slug}` }
 
   return (
-    <aside className={styles.ticket} aria-label={`Next: ${english}`}>
+    <aside className={styles.ticket} aria-label={`${isNext(event) ? 'Next' : 'Coming up'}: ${english}`}>
       <div className={styles.ticketMain}>
+        <p className={styles.ticketKicker}>{isNext(event) ? 'Next up' : 'Coming up'}</p>
         {festival?.bengaliName ? (
           <p lang="bn" className={styles.ticketBengali}>
             {festival.bengaliName}
           </p>
         ) : null}
         <p className={styles.ticketName}>{english}</p>
-        {event ? (
-          <ul className={styles.ticketFacts}>
-            <li>
-              <Icon name="clock" size={17} /> {formatLongDate(event.startsAt)}, {formatTime(event.startsAt)}
-            </li>
-            <li>
-              <Icon name="pin" size={17} /> {event.venue}
-            </li>
-          </ul>
-        ) : (
-          <p className={styles.ticketFacts}>
-            {festival!.season ? `${festival!.season}, ` : ''}date being settled
-          </p>
-        )}
-        {going ? (
-          <Button {...going} variant="ink" size="sm" className={styles.ticketButton}>
-            We are coming
-          </Button>
-        ) : null}
+        <ul className={styles.ticketFacts}>
+          <li>
+            <Icon name="clock" size={17} /> {formatLongDate(event.startsAt)}, {formatTime(event.startsAt)}
+          </li>
+          <li>
+            <Icon name="pin" size={17} /> {event.venue}
+          </li>
+        </ul>
+        <Button {...going} variant="ink" size="sm" className={styles.ticketButton}>
+          We are coming
+        </Button>
       </div>
-      {countdown ? (
-        <p className={styles.ticketStub}>
-          <span className={styles.ticketDays}>{countdown.value}</span>
-          <span className={styles.ticketDaysLabel}>{countdown.label}</span>
-        </p>
-      ) : null}
+      <p className={styles.ticketStub}>
+        <span className={styles.ticketDays}>{countdown.value}</span>
+        <span className={styles.ticketDaysLabel}>{countdown.label}</span>
+      </p>
     </aside>
   )
 }

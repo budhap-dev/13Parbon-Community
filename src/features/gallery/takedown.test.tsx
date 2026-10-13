@@ -26,7 +26,7 @@ describe('asking for a photograph to come down', () => {
 
   it('repeats the promise on the form, in the same words as the gallery', async () => {
     renderAt('/contact?about=photo')
-    expect(await screen.findByText(/within three days, and you do not have to give a reason/)).toBeInTheDocument()
+    expect(await screen.findByText(/take it down ASAP, and you do not have to give a reason/)).toBeInTheDocument()
   })
 
   it('meets them even where this build cannot carry a message, and says to email', async () => {
