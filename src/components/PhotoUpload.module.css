@@ -47,25 +47,25 @@
 
 .name {
   margin: 0;
-  font-size: 14px;
+  font-size: var(--portal-text-md);
   font-weight: 600;
   overflow-wrap: anywhere;
 }
 
 .note {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--portal-text-sm);
   line-height: 1.55;
   opacity: 0.78;
 }
 
 .note code {
-  font-size: 12px;
+  font-size: var(--portal-text-xs);
 }
 
 .error {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--portal-text-sm);
   color: var(--error, #b3261e);
   line-height: 1.5;
 }
@@ -116,17 +116,17 @@
 
 .zoneTitle {
   margin: 0;
-  font-size: 16px;
+  font-size: var(--portal-text-lg);
   font-weight: 600;
 }
 
 .zoneLarge .zoneTitle {
-  font-size: 18px;
+  font-size: var(--portal-text-lg);
 }
 
 .zoneOr {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--portal-text-sm);
   opacity: 0.7;
 }
 

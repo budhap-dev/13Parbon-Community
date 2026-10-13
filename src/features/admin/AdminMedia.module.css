@@ -21,7 +21,7 @@
 }
 
 .albumCard:hover {
-  border-color: var(--gold, #c9a227);
+  border-color: var(--gold);
 }
 
 .albumThumb,
@@ -57,7 +57,7 @@
   gap: 10px;
   padding: 12px;
   border: 2px solid var(--line, rgba(0, 0, 0, 0.14));
-  border-radius: 14px;
+  border-radius: var(--portal-radius, 14px);
 }
 
 /* The picture is the way in, so it has to look like one and take a keyboard. */
@@ -71,7 +71,7 @@
 }
 
 .open:focus-visible {
-  outline: 3px solid var(--gold, #c9a227);
+  outline: 3px solid var(--gold);
   outline-offset: 2px;
 }
 
@@ -104,7 +104,7 @@
 }
 
 .open:focus-visible {
-  outline: 3px solid var(--gold, #c9a227);
+  outline: 3px solid var(--gold);
   outline-offset: 2px;
 }
 
@@ -152,7 +152,7 @@
 }
 
 .over {
-  border-color: var(--gold, #c9a227);
+  border-color: var(--gold);
   box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.25);
 }
 
@@ -169,14 +169,14 @@
 }
 
 .label {
-  font-size: 14px;
+  font-size: var(--portal-text-md);
   font-weight: 600;
 }
 
 .input {
   min-height: 46px;
   padding: 0 12px;
-  border: 2px solid var(--line, rgba(0, 0, 0, 0.2));
+  border: 2px solid var(--color-border-strong);
   border-radius: 10px;
   background: transparent;
   color: inherit;
@@ -184,7 +184,7 @@
 }
 
 .input:focus-visible {
-  outline: 3px solid var(--gold, #c9a227);
+  outline: 3px solid var(--gold);
   outline-offset: 1px;
 }
 
@@ -199,18 +199,18 @@
 
 .confirmText {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--portal-text-sm);
   line-height: 1.55;
 }
 
 .error {
-  font-size: 13px;
+  font-size: var(--portal-text-sm);
   color: var(--error, #b3261e);
 }
 
 /* What a takedown did. Green rather than the theme's own accent: this is an outcome, not a link. */
 .tookDown {
   margin: 0 0 4px;
-  font-size: 13px;
+  font-size: var(--portal-text-sm);
   color: var(--color-green, #3d6b46);
 }

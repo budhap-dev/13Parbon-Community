@@ -29,7 +29,7 @@
   flex: 1 1 auto;
   min-width: 0;
   text-align: right;
-  font-size: 14px;
+  font-size: var(--portal-text-md);
 }
 
 .actions {

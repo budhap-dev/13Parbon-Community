@@ -9,12 +9,12 @@
 }
 
 .title {
-  font-size: clamp(40px, 5vw, 72px);
+  font-size: var(--text-display-l);
 }
 
 .text {
   max-width: 560px;
-  font-size: 20px;
+  font-size: var(--text-lg);
   color: var(--color-fg-muted);
   text-wrap: pretty;
 }

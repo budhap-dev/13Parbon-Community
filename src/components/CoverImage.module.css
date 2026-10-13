@@ -226,6 +226,6 @@
   place-items: center;
   width: 100%;
   height: 100%;
-  font-size: 13px;
+  font-size: var(--text-xs);
   opacity: 0.6;
 }

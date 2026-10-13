@@ -99,7 +99,7 @@
   color: var(--color-fg);
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: 26px;
+  font-size: var(--text-2xl);
   letter-spacing: -0.02em;
 }
 
@@ -149,7 +149,7 @@
   display: flex;
   align-items: center;
   gap: 28px;
-  font-size: 18px;
+  font-size: var(--text-lg);
   font-weight: 600;
 }
 
@@ -298,7 +298,7 @@
   .drawerTitle {
     font-family: var(--font-display);
     font-weight: 800;
-    font-size: 18px;
+    font-size: var(--text-lg);
     letter-spacing: -0.01em;
   }
 
@@ -329,7 +329,7 @@
     padding: 0 4px;
     border-bottom: 1px solid var(--color-border-faint);
     border-left: 3px solid transparent;
-    font-size: 19px;
+    font-size: var(--text-lg);
   }
 
   .link:hover {
@@ -372,9 +372,9 @@
     margin-top: 8px;
     padding-top: 16px;
     border-top: 1px solid var(--color-border-faint);
-    font-size: 12px;
+    font-size: var(--text-xs);
     letter-spacing: 0.04em;
-    color: var(--color-fg-faint);
+    color: var(--color-fg-muted);
   }
 
   .login {
@@ -395,7 +395,7 @@
   gap: 24px;
   padding-top: 28px;
   padding-bottom: 36px;
-  font-size: 15px;
+  font-size: var(--text-sm);
 }
 
 .footerText {

@@ -15,6 +15,7 @@
   grid-template-rows: auto 1fr auto;
   min-height: 100vh;
   color: var(--color-fg);
+  accent-color: var(--color-accent);
   /* The theme's own ground: ruled lines, a weave, a dot grid — see the end of tokens.css. */
   background-color: var(--color-bg);
   background-image: var(--bg-texture-a, none), var(--bg-texture-b, none);
@@ -79,7 +80,7 @@
   color: var(--side-fg);
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: 18px;
+  font-size: var(--portal-text-lg);
   letter-spacing: -0.02em;
 }
 
@@ -117,12 +118,11 @@
 
 .groupLabel {
   padding: 0 10px 6px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
+  font-size: var(--portal-label-size);
+  font-weight: var(--portal-label-weight);
+  letter-spacing: var(--portal-label-tracking);
   text-transform: uppercase;
   color: var(--side-muted);
-  opacity: 0.8;
 }
 
 /*
@@ -190,7 +190,7 @@
 
 .foldMark {
   color: var(--side-faint);
-  font-size: 16px;
+  font-size: var(--portal-text-lg);
   line-height: 1;
   transform: rotate(-90deg);
   transition: transform var(--motion-fast) ease;
@@ -215,7 +215,7 @@
   border-radius: 8px;
   color: var(--side-muted);
   font-weight: 500;
-  font-size: 14.5px;
+  font-size: var(--portal-text-md);
   transition:
     background-color var(--motion-fast) ease,
     color var(--motion-fast) ease;
@@ -259,7 +259,7 @@
   border-radius: 10px;
   background: var(--side-accent);
   color: var(--side-on-accent);
-  font-size: 11.5px;
+  font-size: var(--portal-text-xs);
   font-weight: 600;
   display: inline-flex;
   align-items: center;
@@ -310,7 +310,7 @@
   border-radius: 50%;
   background: var(--side-accent);
   color: var(--side-on-accent);
-  font-size: 13px;
+  font-size: var(--portal-text-sm);
   font-weight: 700;
   letter-spacing: 0.02em;
 }
@@ -324,7 +324,7 @@
 
 .whoName {
   font-weight: 600;
-  font-size: 14px;
+  font-size: var(--portal-text-md);
   line-height: 1.3;
   overflow-wrap: anywhere;
   display: -webkit-box;
@@ -335,7 +335,7 @@
 }
 
 .whoDetail {
-  font-size: 12.5px;
+  font-size: var(--portal-text-sm);
   line-height: 1.3;
   color: var(--side-muted);
   overflow-wrap: anywhere;
@@ -349,7 +349,7 @@
 .whoEmail {
   padding-top: 8px;
   border-top: 1px solid var(--side-border);
-  font-size: 12px;
+  font-size: var(--portal-text-xs);
   color: var(--side-muted);
   overflow-wrap: anywhere;
 }
@@ -359,9 +359,9 @@
   margin-top: 5px;
   padding: 2px 7px;
   border-radius: 6px;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
+  font-size: var(--portal-label-size);
+  font-weight: var(--portal-label-weight);
+  letter-spacing: var(--portal-label-tracking);
   text-transform: uppercase;
   background: var(--side-wash);
   color: var(--side-muted);
@@ -399,7 +399,7 @@
   padding: 0 10px;
   border-width: 1px;
   border-radius: 8px;
-  font-size: 13px;
+  font-size: var(--portal-text-sm);
   gap: 6px;
 }
 
@@ -426,7 +426,7 @@
   background: var(--portal-side-danger-bg, color-mix(in srgb, var(--error) 8%, transparent));
   color: var(--portal-side-danger, var(--error));
   font-weight: 600;
-  font-size: 13px;
+  font-size: var(--portal-text-sm);
   /* Two words on two lines read as a button that had been squashed, which it had. */
   white-space: nowrap;
   cursor: pointer;
@@ -455,7 +455,7 @@
   padding: 9px 36px;
   background: color-mix(in srgb, var(--color-accent) 12%, transparent);
   border-bottom: 1px solid color-mix(in srgb, var(--color-accent) 30%, transparent);
-  font-size: 13.5px;
+  font-size: var(--portal-text-sm);
 }
 
 .previewStrong {
@@ -551,7 +551,7 @@
   gap: 8px;
   min-width: 0;
   margin: 0;
-  font-size: 14.5px;
+  font-size: var(--portal-text-md);
 }
 
 .crumbGroup {
@@ -590,7 +590,7 @@
   padding: 0 12px;
   border-radius: 8px;
   color: var(--side-muted);
-  font-size: 13.5px;
+  font-size: var(--portal-text-sm);
   font-weight: 600;
   white-space: nowrap;
 }
@@ -613,7 +613,7 @@
   background: var(--portal-side-bg, var(--color-bg-raised));
   color: var(--side-muted);
   border-top: 1px solid var(--side-border);
-  font-size: 12.5px;
+  font-size: var(--portal-text-sm);
 }
 
 .footLinks {
@@ -703,7 +703,7 @@
     color: inherit;
     font-family: var(--font-display);
     font-weight: 800;
-    font-size: 17px;
+    font-size: var(--portal-text-lg);
     letter-spacing: -0.02em;
   }
 
@@ -860,7 +860,7 @@
   background: transparent;
   color: var(--color-fg);
   font-weight: 600;
-  font-size: 13px;
+  font-size: var(--portal-text-sm);
   cursor: pointer;
 }
 

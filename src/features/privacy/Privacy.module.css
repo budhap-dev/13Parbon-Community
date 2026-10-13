@@ -8,11 +8,11 @@
 }
 
 .title {
-  font-size: clamp(40px, 5vw, 72px);
+  font-size: var(--text-display-l);
 }
 
 .meta {
-  font-size: 16px;
+  font-size: var(--text-md);
   color: var(--color-fg-muted);
 }
 
@@ -23,11 +23,11 @@
 }
 
 .sectionTitle {
-  font-size: 26px;
+  font-size: var(--text-2xl);
 }
 
 .text {
-  font-size: 18px;
+  font-size: var(--text-lg);
   line-height: 1.6;
   text-wrap: pretty;
 }

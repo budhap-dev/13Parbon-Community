@@ -28,7 +28,7 @@
 
 .name {
   font-weight: 600;
-  font-size: 16px;
+  font-size: var(--portal-text-lg);
   overflow-wrap: anywhere;
 }
 
@@ -36,7 +36,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 13.5px;
+  font-size: var(--portal-text-sm);
   color: var(--color-fg-muted);
 }
 
@@ -44,7 +44,7 @@
 .tag {
   padding: 1px 8px;
   border-radius: 999px;
-  font-size: 12px;
+  font-size: var(--portal-text-xs);
   font-weight: 600;
   background: color-mix(in srgb, var(--color-accent) 12%, transparent);
   color: var(--color-fg);
@@ -52,7 +52,7 @@
 
 .note {
   margin-top: 4px;
-  font-size: 13px;
+  font-size: var(--portal-text-sm);
   line-height: 1.4;
   color: var(--color-fg-muted);
 }

@@ -13,12 +13,12 @@
 }
 
 .title {
-  font-size: clamp(40px, 5vw, 72px);
+  font-size: var(--text-display-l);
 }
 
 .intro {
   max-width: 560px;
-  font-size: 20px;
+  font-size: var(--text-lg);
   color: var(--color-fg-muted);
   text-wrap: pretty;
 }
@@ -31,7 +31,7 @@
 }
 
 .formTitle {
-  font-size: clamp(24px, 2.6vw, 34px);
+  font-size: var(--text-display-s);
 }
 
 .form {
@@ -47,7 +47,7 @@
 }
 
 .label {
-  font-size: 16px;
+  font-size: var(--text-md);
   font-weight: 600;
 }
 
@@ -55,12 +55,12 @@
   width: 100%;
   min-height: 180px;
   padding: 12px 16px;
-  border: 1.5px solid var(--color-border);
+  border: 1.5px solid var(--color-border-strong);
   border-radius: 12px;
   background: color-mix(in srgb, var(--color-bg-raised) 60%, transparent);
   color: var(--color-fg);
   font: inherit;
-  font-size: 17px;
+  font-size: var(--text-md);
   resize: vertical;
   transition: border-color var(--motion-fast) ease;
 }
@@ -76,8 +76,8 @@
 /* Counts down rather than up: what is left is the useful number near a limit. */
 .count {
   align-self: flex-end;
-  font-size: 14px;
-  color: var(--color-fg-faint);
+  font-size: var(--text-sm);
+  color: var(--color-fg-muted);
   font-variant-numeric: tabular-nums;
 }
 
@@ -87,7 +87,7 @@
 }
 
 .error {
-  font-size: 15px;
+  font-size: var(--text-sm);
   font-weight: 600;
   color: var(--color-accent);
 }
@@ -101,7 +101,7 @@
 }
 
 .hint {
-  font-size: 15px;
+  font-size: var(--text-sm);
   color: var(--color-fg-muted);
   text-wrap: pretty;
 }
@@ -129,11 +129,11 @@
 
 .whoName {
   font-weight: 700;
-  font-size: 17px;
+  font-size: var(--text-md);
 }
 
 .whoNote {
-  font-size: 15px;
+  font-size: var(--text-sm);
   color: var(--color-fg-muted);
   text-wrap: pretty;
 }
@@ -142,7 +142,7 @@
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  font-size: 16px;
+  font-size: var(--text-md);
   line-height: 1.45;
   cursor: pointer;
 }
@@ -168,7 +168,7 @@
   color: var(--color-fg);
   font: inherit;
   font-weight: 600;
-  font-size: 16px;
+  font-size: var(--text-md);
   cursor: pointer;
   transition:
     border-color var(--motion-fast) ease,
@@ -201,11 +201,11 @@
 }
 
 .sentTitle {
-  font-size: 30px;
+  font-size: var(--text-display-s);
 }
 
 .sentText {
-  font-size: 18px;
+  font-size: var(--text-lg);
   line-height: 1.5;
   color: var(--color-fg-muted);
   text-wrap: pretty;
@@ -217,7 +217,7 @@
   border-left: 3px solid var(--color-accent);
   border-radius: 0 var(--radius-tile) var(--radius-tile) 0;
   background: color-mix(in srgb, var(--color-bg-raised) 55%, transparent);
-  font-size: 16px;
+  font-size: var(--text-md);
   line-height: 1.6;
   text-wrap: pretty;
 }
@@ -248,7 +248,7 @@
 
 .quote {
   flex: 1 1 auto;
-  font-size: 17px;
+  font-size: var(--text-md);
   line-height: 1.65;
   text-wrap: pretty;
 }
@@ -258,7 +258,7 @@
   flex-wrap: wrap;
   align-items: baseline;
   gap: 8px;
-  font-size: 15px;
+  font-size: var(--text-sm);
   color: var(--color-fg-muted);
 }
 
@@ -268,6 +268,6 @@
 }
 
 .empty {
-  font-size: 17px;
+  font-size: var(--text-md);
   color: var(--color-fg-muted);
 }

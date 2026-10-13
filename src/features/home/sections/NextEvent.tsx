@@ -69,7 +69,7 @@ export function NextEvent() {
               </Button>
             ) : null}
             {/* Volunteering is explained on the event page, alongside everything else. */}
-            <Button to={`/events/${event.slug}`} variant="inkLine" size="sm">
+            <Button to={`/events/${event.slug}`} variant="inkLine" size="sm" className={styles.eventDetails}>
               Event details
             </Button>
           </div>

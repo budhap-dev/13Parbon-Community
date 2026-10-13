@@ -13,18 +13,18 @@
 }
 
 .title {
-  font-size: clamp(40px, 5vw, 72px);
+  font-size: var(--text-display-l);
 }
 
 .intro {
   max-width: 560px;
-  font-size: 20px;
+  font-size: var(--text-lg);
   color: var(--color-fg-muted);
   text-wrap: pretty;
 }
 
 .none {
-  font-size: 18px;
+  font-size: var(--text-lg);
   color: var(--color-fg-muted);
 }
 
@@ -35,7 +35,7 @@
 }
 
 .groupTitle {
-  font-size: clamp(24px, 2.6vw, 34px);
+  font-size: var(--text-display-s);
 }
 
 .list,
@@ -97,7 +97,7 @@
 }
 
 .name {
-  font-size: 20px;
+  font-size: var(--text-lg);
   overflow-wrap: break-word;
   hyphens: auto;
 }
@@ -110,7 +110,7 @@
 }
 
 .helps {
-  font-size: 15px;
+  font-size: var(--text-sm);
 }
 
 .visit {

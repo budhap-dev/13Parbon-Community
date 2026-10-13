@@ -24,13 +24,13 @@
 
 .title {
   margin: 0 0 8px;
-  font-size: 19px;
+  font-size: var(--portal-text-xl);
   line-height: 1.25;
 }
 
 .body {
   margin: 0;
-  font-size: 14px;
+  font-size: var(--portal-text-md);
   line-height: 1.55;
   color: var(--color-fg-muted, #4a4a4a);
 }
@@ -46,7 +46,7 @@
 
 .error {
   margin: 14px 0 0;
-  font-size: 14px;
+  font-size: var(--portal-text-md);
   color: var(--error, #b3261e);
 }
 

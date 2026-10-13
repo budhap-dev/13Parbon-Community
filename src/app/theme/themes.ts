@@ -75,7 +75,7 @@ export const portalThemes: ThemeMeta[] = [
   { id: 'midnight', name: 'Midnight', description: 'Deep navy, with a teal menu', swatch: ['#0e1726', '#4ecdc4'], frame: '#115e59' },
   { id: 'marigold', name: 'Marigold', description: 'Colourful: cream, with an orange-into-pink menu', swatch: ['#fff6ea', '#ea580c'], frame: '#c2410c' },
   { id: 'lagoon', name: 'Lagoon', description: 'Colourful: pale teal, with a teal-into-blue menu', swatch: ['#ecfaf8', '#0e7490'], frame: '#0f766e' },
-  { id: 'peacock', name: 'Peacock', description: 'Colourful: dark violet, with a violet-and-magenta menu and gold', swatch: ['#1a0f2e', '#db2777'], frame: '#6d28d9' },
+  { id: 'peacock', name: 'Peacock', description: 'Colourful: dark violet, with a violet-and-magenta menu and gold', swatch: ['#1a0f2e', '#be185d'], frame: '#6d28d9' },
 ]
 
 export const defaultTheme: ThemeName = 'festival'

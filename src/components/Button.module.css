@@ -64,7 +64,8 @@
   color: var(--color-bg);
 }
 .cream:hover {
-  background: #fff;
+  /* Not white: in the light themes --color-fg is dark and the label is the pale ground. */
+  background: color-mix(in srgb, var(--color-fg) 86%, var(--color-bg));
   color: var(--color-bg);
 }
 

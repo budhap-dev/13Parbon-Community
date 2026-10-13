@@ -26,7 +26,7 @@
 
 .previewLabel {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--portal-text-sm);
   font-weight: 600;
   opacity: 0.7;
 }
@@ -45,7 +45,7 @@
   border-radius: 999px;
   padding: 5px 12px;
   font: inherit;
-  font-size: 13px;
+  font-size: var(--portal-text-sm);
   cursor: pointer;
   background: transparent;
   color: inherit;
@@ -81,7 +81,7 @@
 }
 
 .phone .title {
-  font-size: 19px;
+  font-size: var(--portal-text-xl);
 }
 
 .phone .cardBody {
@@ -91,7 +91,7 @@
 
 .standIn {
   margin: 0;
-  font-size: 12px;
+  font-size: var(--portal-text-xs);
   opacity: 0.7;
   line-height: 1.5;
 }
@@ -104,20 +104,20 @@
 
 .titleEmpty {
   margin: 0;
-  font-size: 22px;
+  font-size: var(--portal-text-xl);
   line-height: 1.2;
 }
 
 .metaEmpty,
 .summaryEmpty {
   margin: 0;
-  font-size: 14px;
+  font-size: var(--portal-text-md);
   line-height: 1.55;
 }
 
 .card {
   border: 2px solid var(--line, rgba(0, 0, 0, 0.14));
-  border-radius: 16px;
+  border-radius: var(--portal-radius, 16px);
   overflow: hidden;
 }
 
@@ -133,7 +133,7 @@
   aspect-ratio: 16 / 9;
   display: grid;
   place-items: center;
-  font-size: 13px;
+  font-size: var(--portal-text-sm);
   opacity: 0.6;
   background: var(--tint, rgba(0, 0, 0, 0.06));
 }
@@ -147,32 +147,32 @@
 
 .kicker {
   margin: 0;
-  font-size: 12px;
-  letter-spacing: 0.08em;
+  font-size: var(--portal-label-size);
+  letter-spacing: var(--portal-label-tracking);
   text-transform: uppercase;
   opacity: 0.7;
 }
 
 .title {
   margin: 0;
-  font-size: 22px;
+  font-size: var(--portal-text-xl);
   line-height: 1.2;
 }
 
 .theme {
   margin: 0;
-  font-size: 15px;
+  font-size: var(--portal-text-md);
 }
 
 .themeEnglish {
   opacity: 0.72;
-  font-size: 14px;
+  font-size: var(--portal-text-md);
 }
 
 .meta,
 .summary {
   margin: 0;
-  font-size: 14px;
+  font-size: var(--portal-text-md);
   line-height: 1.55;
 }
 
@@ -182,24 +182,24 @@
 
 .countdown {
   margin: 4px 0 0;
-  font-size: 14px;
+  font-size: var(--portal-text-md);
 }
 
 .countdown strong {
-  font-size: 22px;
+  font-size: var(--portal-text-xl);
 }
 
 .programme {
   margin: 4px 0 0;
   padding-left: 18px;
-  font-size: 13px;
+  font-size: var(--portal-text-sm);
   line-height: 1.7;
 }
 
 .cta,
 .ctaOff {
   margin: 6px 0 0;
-  font-size: 13px;
+  font-size: var(--portal-text-sm);
   font-weight: 600;
   padding: 8px 12px;
   border-radius: 999px;
@@ -222,7 +222,7 @@
   padding: 12px 14px;
   border-radius: 10px;
   border: 2px solid var(--gold, #c9a227);
-  font-size: 14px;
+  font-size: var(--portal-text-md);
   line-height: 1.55;
 }
 
@@ -250,7 +250,7 @@
   padding: 12px 14px;
   border-radius: 10px;
   border: 2px solid var(--gold, #c9a227);
-  font-size: 14px;
+  font-size: var(--portal-text-md);
   line-height: 1.55;
 }
 
