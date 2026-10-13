@@ -4,7 +4,7 @@ import { Container } from '@/components/Container'
 import { Icon } from '@/components/Icon'
 import { daysUntil, describeCountdown, formatLongDate, formatTime } from '@/domain/dates'
 import { nextFestivalBySeason } from '@/domain/festival'
-import { useFestivals, useNextEvent } from '@/lib/api'
+import { useFestivals, useNextEvent, usePastEvents } from '@/lib/api'
 import { useNow } from '@/lib/clock'
 import styles from '../Home.module.css'
 
@@ -95,14 +95,17 @@ export function NextEvent() {
  * leaving a gap where the ticket would be.
  */
 export function HeroTicket() {
-  const { data: event, isPending } = useNextEvent()
+  const { data: event, isPending, isError } = useNextEvent()
   const { data: festivals } = useFestivals()
+  const { data: past } = usePastEvents(10)
   const now = useNow()
-  if (isPending) return null
+  // A calendar that could not be read is not one with nothing on it: no ticket, rather than a
+  // festival "date being settled" that may well have a date.
+  if (isPending || isError) return null
 
   const festival = event
     ? festivals?.find((f) => f.id === event.festivalId)
-    : festivals && nextFestivalBySeason(festivals, now)
+    : festivals && nextFestivalBySeason(festivals, now, past)
   if (!event && !festival) return null
 
   const english = event ? (festival?.name ?? event.title) : festival!.name

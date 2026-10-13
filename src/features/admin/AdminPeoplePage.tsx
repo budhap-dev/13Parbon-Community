@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ActionBar } from '@/components/ActionBar'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { useOpenFromAddress } from '@/app/useOpenFromAddress'
@@ -64,6 +64,14 @@ export function AdminPeoplePage() {
   const [saved, setSaved] = useState<string | null>(null)
   // The household form replaces the list in place, from a button at the foot of a long table.
   useScrollToTopOn(open)
+  // "Remove…" from a row's menu opens the same form, but at the part that does the removing.
+  const [toRemove, setToRemove] = useState(false)
+  const removePanel = useRef<HTMLElement>(null)
+  useEffect(() => {
+    if (!open || !toRemove) return
+    removePanel.current?.scrollIntoView({ block: 'center' })
+    removePanel.current?.focus({ preventScroll: true })
+  }, [open, toRemove])
   // What we already know about somebody who has been knocking, carried into the empty form.
   const [prefill, setPrefill] = useState<Partial<HouseholdDraft> | undefined>()
   const copy = useHouseholdExport(open && open !== 'new' ? open.id : undefined)
@@ -71,6 +79,7 @@ export function AdminPeoplePage() {
   const setOpen = (next: Household | 'new' | null, from?: Partial<HouseholdDraft>) => {
     remove.reset()
     setSaved(null)
+    setToRemove(false)
     setPrefill(from)
     setOpenRaw(next)
   }
@@ -154,7 +163,7 @@ export function AdminPeoplePage() {
         </section>
 
         {!adding && open.id !== who?.householdId ? (
-          <section className={styles.panel} aria-labelledby="remove-title">
+          <section className={styles.panel} aria-labelledby="remove-title" ref={removePanel} tabIndex={-1}>
             <div className={styles.panelHead}>
               <h2 id="remove-title" className={styles.panelTitle}>
                 Removing them
@@ -341,7 +350,7 @@ export function AdminPeoplePage() {
           </div>
           {query.trim() ? (
             <span className={`${styles.muted} ${styles.tiny}`} role="status">
-              {counted.length === 1 ? '1 household matches' : `${counted.length} households match`}
+              {shown.length === 1 ? '1 household matches' : `${shown.length} households match`}
             </span>
           ) : null}
         </div>
@@ -463,7 +472,15 @@ export function AdminPeoplePage() {
                             ...(household.email ? [{ label: `Email ${household.contactName}`, href: `mailto:${household.email}` }] : []),
                             ...(household.phone ? [{ label: `Call ${household.contactName}`, href: `tel:${household.phone}` }] : []),
                             ...(household.id !== who?.householdId
-                              ? [{ label: 'Remove…', onSelect: () => setOpen(household) }]
+                              ? [
+                                  {
+                                    label: 'Remove…',
+                                    onSelect: () => {
+                                      setOpen(household)
+                                      setToRemove(true)
+                                    },
+                                  },
+                                ]
                               : []),
                           ]}
                         />

@@ -12,7 +12,8 @@ import { LogoAssembly } from '../LogoAssembly'
 import { HeroTicket } from './NextEvent'
 import styles from '../Home.module.css'
 
-export function Hero() {
+/** `showNext` follows who the Next event part is set to show to, so the hero does not show it to everyone regardless. */
+export function Hero({ showNext = true }: { showNext?: boolean }) {
   const { text } = useSettings()
   const { theme } = useTheme()
   const { key: navigationKey } = useLocation()
@@ -30,16 +31,16 @@ export function Hero() {
       <Container className={styles.heroInner}>
         <div className={styles.heroCopy}>
           <div className={styles.heroTitleRow}>
-          <h1 id="hero-title" className={styles.heroTitle}>
-            {text.heroLead ? (
-              <>
-                <span lang="bn" className={styles.heroTitleLead}>
-                  {text.heroLead}
-                </span>{' '}
-              </>
-            ) : null}
-            <span className={styles.heroTitleName}>{text.heroName}</span>
-          </h1>
+            <h1 id="hero-title" className={styles.heroTitle}>
+              {text.heroLead ? (
+                <>
+                  <span lang="bn" className={styles.heroTitleLead}>
+                    {text.heroLead}
+                  </span>{' '}
+                </>
+              ) : null}
+              <span className={styles.heroTitleName}>{text.heroName}</span>
+            </h1>
             {/* On a phone the assembled logo would push everything below the fold; the emblem
                 sits beside the name instead. */}
             <img src={site.emblem} alt="" className={styles.heroEmblem} width={96} height={96} />
@@ -50,7 +51,7 @@ export function Hero() {
           </p>
           <div className={styles.heroDeck}>
             <div className={styles.heroActions}>
-              {next ? (
+              {next && showNext ? (
                 <Button to={`/events/${next.slug}`}>Come to {nextName}</Button>
               ) : (
                 <Button to="/events">See what’s on</Button>
@@ -59,7 +60,7 @@ export function Hero() {
                 Our story
               </Button>
             </div>
-            <HeroTicket />
+            {showNext ? <HeroTicket /> : null}
           </div>
         </div>
         <div className={styles.heroLogo}>

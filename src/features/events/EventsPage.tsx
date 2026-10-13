@@ -5,7 +5,7 @@ import { LoadFailed } from '@/components/LoadFailed'
 import { EventCard } from '@/components/EventCard'
 import { formatDateWithYear, formatDayLongMonth, formatMonthYear, monthKey } from '@/domain/dates'
 import type { Event } from '@/domain/event'
-import { seasonMonth, type Festival } from '@/domain/festival'
+import { heldThisYear, monthsUntilSeason, type Festival } from '@/domain/festival'
 import { useFestivals, usePastEvents, useUpcomingEvents } from '@/lib/api'
 import { useNow } from '@/lib/clock'
 import { FestivalAlbum } from './FestivalAlbum'
@@ -28,9 +28,9 @@ type Stop = { festival: Festival; event?: Event; wait: number }
 /**
  * The year's festivals in the order they come round from now: a dated one by its date, the rest
  * by the season they usually fall in. An evening's first date counts; later ones are on the
- * calendar above.
+ * calendar above. One already held this year comes round again next year, so it goes last.
  */
-function yearAhead(festivals: Festival[], upcoming: Event[], now: Date): Stop[] {
+function yearAhead(festivals: Festival[], upcoming: Event[], past: Event[], now: Date): Stop[] {
   const month = now.getFullYear() * 12 + now.getMonth()
   return festivals
     .map((festival) => {
@@ -39,8 +39,8 @@ function yearAhead(festivals: Festival[], upcoming: Event[], now: Date): Stop[] 
         const at = new Date(event.startsAt)
         return { festival, event, wait: at.getFullYear() * 12 + at.getMonth() - month }
       }
-      const season = seasonMonth(festival.season)
-      return { festival, wait: season === null ? 12 : (season - now.getMonth() + 12) % 12 }
+      const season = monthsUntilSeason(festival.season, now) ?? 12
+      return { festival, wait: heldThisYear(festival.id, past, now) ? season + 12 : season }
     })
     .sort((a, b) => a.wait - b.wait)
 }
@@ -61,7 +61,7 @@ export function EventsPage() {
 
   // Only once the calendar has arrived: before then, every festival would look unscheduled.
   // Not under a filter, where the one occasion asked about is already the whole page.
-  const stops = isSuccess && !festivalId ? yearAhead(festivals ?? [], upcoming, now) : []
+  const stops = isSuccess && !festivalId ? yearAhead(festivals ?? [], upcoming, past ?? [], now) : []
   const arranging = stops.some((stop) => !stop.event)
 
   return (
@@ -99,7 +99,9 @@ export function EventsPage() {
         </p>
       ) : isError ? (
         <LoadFailed what="the calendar" onRetry={() => void refetch()} />
-      ) : upcomingMonths.length === 0 && festivalId ? (
+      ) : upcomingMonths.length === 0 && (festivalId || stops.length === 0) ? (
+        // Unfiltered, the year ahead below names what is coming; with no festivals to name,
+        // this line is all that says the calendar is empty rather than broken.
         <div className={styles.none}>
           <p>
             {activeFestival ? `Nothing scheduled yet for ${activeFestival.name}. ` : 'Nothing scheduled yet. '}

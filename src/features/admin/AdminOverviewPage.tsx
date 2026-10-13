@@ -96,7 +96,8 @@ export function AdminOverviewPage() {
   const daysLeft = next ? daysUntil(next.startsAt, now) : undefined
 
   const summary = [
-    decisionsPending ? null : decisions === 0 ? 'Nothing needs you.' : `${decisions} ${decisions === 1 ? 'thing needs' : 'things need'} you.`,
+    // No count from a queue that failed: a figure that could not be read must not pass for 0.
+    decisionsPending || decisionsFailed ? null : decisions === 0 ? 'Nothing needs you.' : `${decisions} ${decisions === 1 ? 'thing needs' : 'things need'} you.`,
     next ? `${next.title} is next.` : null,
   ]
     .filter(Boolean)
@@ -142,7 +143,7 @@ export function AdminOverviewPage() {
           label="Gaps showing"
           value={gaps}
           count={gaps}
-          note="still in [brackets] on the site"
+          note="lines left in [brackets] to fill in"
         />
       </div>
 
@@ -226,6 +227,15 @@ export function AdminOverviewPage() {
             <p className={styles.eyebrow}>Next event</p>
             {eventsQuery.isPending ? (
               <span className={styles.skeleton} aria-busy="true" />
+            ) : eventsQuery.isError ? (
+              <>
+                <h2 id="next-title" className={styles.panelTitle}>
+                  The calendar could not be read
+                </h2>
+                <Button onClick={() => void eventsQuery.refetch()} variant="line" size="sm">
+                  Try again
+                </Button>
+              </>
             ) : next && daysLeft !== undefined ? (
               <>
                 <h2 id="next-title" className={styles.panelTitle}>

@@ -11,39 +11,62 @@ export type Festival = {
 
 const MONTHS = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december']
 
+/** Every month a season names, 0 for January, in the order it names them; empty for "Spring". */
+export function seasonMonths(season: string | undefined): number[] {
+  if (!season) return []
+  const lower = season.toLowerCase()
+  return MONTHS.map((name, i) => ({ i, at: lower.indexOf(name) }))
+    .filter(({ at }) => at >= 0)
+    .sort((a, b) => a.at - b.at)
+    .map(({ i }) => i)
+}
+
 /** The first month a season names, 0 for January; null when it names none ("Spring"). */
 export function seasonMonth(season: string | undefined): number | null {
-  if (!season) return null
-  const lower = season.toLowerCase()
-  let month: number | null = null
-  let earliest = Infinity
-  MONTHS.forEach((name, i) => {
-    const at = lower.indexOf(name)
-    if (at >= 0 && at < earliest) {
-      earliest = at
-      month = i
-    }
-  })
-  return month
+  return seasonMonths(season)[0] ?? null
+}
+
+/**
+ * Whole months until a season comes round, 0 while any month it names is this one: "September
+ * or October" is on in October, not eleven months off. Null when the season names no month.
+ */
+export function monthsUntilSeason(season: string | undefined, now: Date): number | null {
+  const months = seasonMonths(season)
+  if (months.length === 0) return null
+  return Math.min(...months.map((m) => (m - now.getMonth() + 12) % 12))
+}
+
+type Dated = { festivalId?: string; startsAt: string; status?: string }
+
+/*
+ * Each festival comes round once a year, so an evening held in the last six months is this
+ * year's: the next one is next year's, however soon the season says it falls.
+ */
+const SEASON_MONTHS = 6
+
+/** This year's evening for a festival, if it has been held. A cancelled one was not held. */
+export function heldThisYear(id: string, past: Dated[], now: Date): Dated | undefined {
+  const since = new Date(now)
+  since.setMonth(now.getMonth() - SEASON_MONTHS)
+  return past
+    .filter((e) => e.festivalId === id && e.status !== 'cancelled' && new Date(e.startsAt) >= since && new Date(e.startsAt) <= now)
+    .sort((a, b) => b.startsAt.localeCompare(a.startsAt))[0]
 }
 
 /**
  * The festival that comes round next, judged by its season alone: for when nothing has a date
- * and the page still wants to name what is coming. This month counts as next.
+ * and the page still wants to name what is coming. This month counts as next, unless this
+ * year's evening has already been held.
  */
-export function nextFestivalBySeason(festivals: Festival[], now: Date): Festival | undefined {
-  const month = now.getMonth()
+export function nextFestivalBySeason(festivals: Festival[], now: Date, past: Dated[] = []): Festival | undefined {
   let best: { festival: Festival; wait: number } | undefined
   for (const festival of festivals) {
-    const at = seasonMonth(festival.season)
-    if (at === null) continue
-    const wait = (at - month + 12) % 12
+    const wait = monthsUntilSeason(festival.season, now)
+    if (wait === null || heldThisYear(festival.id, past, now)) continue
     if (!best || wait < best.wait) best = { festival, wait }
   }
   return best?.festival ?? festivals[0]
 }
-
-type Dated = { festivalId?: string; startsAt: string }
 
 export type FestivalStatus =
   | { kind: 'next'; startsAt: string }
@@ -52,17 +75,13 @@ export type FestivalStatus =
   | { kind: 'arranging' }
 
 /**
- * Where a festival stands this year: the next thing on, dated, held in the last twelve months,
- * or still being arranged. Upcoming comes first; past evenings only count while they are recent.
+ * Where a festival stands this year: the next thing on, dated, held, or still being arranged.
+ * Upcoming comes first; a past evening counts only while it is this year's.
  */
 export function festivalStatus(id: string, upcoming: Dated[], past: Dated[], nextId: string | undefined, now: Date): FestivalStatus {
   const coming = upcoming.filter((e) => e.festivalId === id).sort((a, b) => a.startsAt.localeCompare(b.startsAt))[0]
   if (coming) return { kind: nextId === id ? 'next' : 'set', startsAt: coming.startsAt }
-  const yearAgo = new Date(now)
-  yearAgo.setFullYear(now.getFullYear() - 1)
-  const held = past
-    .filter((e) => e.festivalId === id && new Date(e.startsAt) >= yearAgo)
-    .sort((a, b) => b.startsAt.localeCompare(a.startsAt))[0]
+  const held = heldThisYear(id, past, now)
   if (held) return { kind: 'held', startsAt: held.startsAt }
   return { kind: 'arranging' }
 }

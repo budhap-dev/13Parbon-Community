@@ -55,6 +55,11 @@ export function RowMenu({ about, items }: { about: string; items: RowMenuItem[] 
         type="button"
         className={styles.item}
         onClick={() => {
+          /*
+           * Back to the trigger first: the item is about to unmount, and a dialog opened by
+           * onSelect remembers whatever has focus now to return to when it closes.
+           */
+          button.current?.focus()
           setOpen(false)
           entry.onSelect?.()
         }}
@@ -64,7 +69,16 @@ export function RowMenu({ about, items }: { about: string; items: RowMenuItem[] 
     )
 
   return (
-    <div className={styles.menu} ref={box}>
+    <div
+      className={styles.menu}
+      ref={box}
+      onBlur={(event) => {
+        // Tabbing past the last item leaves the menu. Only when focus lands somewhere: a click
+        // that focuses nothing would otherwise shut the menu before the click arrived.
+        const to = event.relatedTarget
+        if (open && to && !box.current?.contains(to)) setOpen(false)
+      }}
+    >
       <button
         type="button"
         ref={button}

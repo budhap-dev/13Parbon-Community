@@ -1089,8 +1089,12 @@
     background: var(--color-bg-raised);
   }
 
-  .cardsOnPhone td,
-  .cardsOnPhone tbody tr:last-child td {
+  /*
+   * Not `tr:last-child td` as well: it outranked the first-cell and actions rules below, so the
+   * last card alone had its title pushed right and its buttons pushed left. The last row's
+   * border is already gone from the desktop rule.
+   */
+  .cardsOnPhone td {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -1121,6 +1125,12 @@
 
   .cardsOnPhone .rowActions {
     justify-content: flex-end;
+  }
+
+  /* The one-line cut is for a row across the screen. On a card the address has the room. */
+  .oneLine.cardsOnPhone td:nth-child(2) {
+    max-width: none;
+    overflow-wrap: anywhere;
   }
 
   .boxed:has(.cardsOnPhone) {
