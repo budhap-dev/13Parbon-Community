@@ -29,8 +29,6 @@ function namesOf(items: { name: string }[]): string {
   return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`
 }
 
-const listNames = namesOf
-
 export function EventsPage() {
   useDocumentTitle('Events')
   const [params] = useSearchParams()
@@ -117,12 +115,21 @@ export function EventsPage() {
             <Icon name="calendar" size={24} className={styles.moreIcon} />
             More of the year to come
           </h2>
-          <p className={styles.moreText}>
-            We hold {listNames(festivals ?? [])} every year. {namesOf(awaitingDates)}{' '}
-            {awaitingDates.length === 1 ? 'is' : 'are'} still being arranged, and{' '}
-            {awaitingDates.length === 1 ? 'it' : 'they'} will appear here as soon as the{' '}
-            {awaitingDates.length === 1 ? 'date is' : 'dates are'} settled.
-          </p>
+          {/* When nothing has a date yet, the two lists would be the same; name them once. */}
+          {awaitingDates.length === (festivals ?? []).length ? (
+            <p className={styles.moreText}>
+              We hold {namesOf(awaitingDates)} every year. {awaitingDates.length === 1 ? 'Its date is' : 'The dates are'}{' '}
+              still being arranged, and {awaitingDates.length === 1 ? 'it' : 'they'} will appear here as soon as{' '}
+              {awaitingDates.length === 1 ? 'it is' : 'they are'} settled.
+            </p>
+          ) : (
+            <p className={styles.moreText}>
+              We hold {namesOf(festivals ?? [])} every year. {namesOf(awaitingDates)}{' '}
+              {awaitingDates.length === 1 ? 'is' : 'are'} still being arranged, and{' '}
+              {awaitingDates.length === 1 ? 'it' : 'they'} will appear here as soon as the{' '}
+              {awaitingDates.length === 1 ? 'date is' : 'dates are'} settled.
+            </p>
+          )}
           <p className={styles.moreText}>
             Would you like to hear when they are? <Link to="/contact">Send the committee a message</Link> and we
             will let you know.

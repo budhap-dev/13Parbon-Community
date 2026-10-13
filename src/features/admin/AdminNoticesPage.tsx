@@ -124,7 +124,7 @@ export function AdminNoticesPage() {
           <h2 id="notices-title" className={styles.panelTitle}>
             The noticeboard
           </h2>
-          <Button variant="line" size="sm" onClick={() => setEditing({})}>
+          <Button variant="gold" size="sm" onClick={() => setEditing({})}>
             Put up a notice
           </Button>
         </div>

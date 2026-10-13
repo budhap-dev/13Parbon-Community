@@ -152,8 +152,8 @@ function SitePages() {
         <div className={styles.pad}>
           <p className={`${styles.muted} ${styles.tiny}`} style={{ marginBottom: 16 }}>
             Everything about the public site that is the committee’s to decide: what is switched
-            on, what it says, what order it comes in and what colours it wears. Each of these was
-            a code change once — a pull request and a deploy to turn the gallery off. They are yours.
+            on, what it says, what order it comes in and what colours it wears. Each of these once
+            needed a developer, even turning the gallery off. Now they are yours.
           </p>
           {/*
             * Not until what is saved has been read.

@@ -331,8 +331,8 @@ export function AdminEventsPage() {
                 {attendance.map((year) => (
                   <tr key={year.eventId}>
                     <td>
-                      {/* The title, where we know it: the id is a database key, not a name. */}
-                      <strong>{titles.get(year.eventId) ?? year.eventId}</strong>
+                      {/* The title, where we know it: the id is a database key, not a name, so never show it. */}
+                      <strong>{titles.get(year.eventId) ?? 'An earlier event'}</strong>
                     </td>
                     <td className={styles.muted}>{formatDateWithYear(year.heldOn)}</td>
                     <td className={`${styles.num} ${styles.muted}`}>{year.households}</td>

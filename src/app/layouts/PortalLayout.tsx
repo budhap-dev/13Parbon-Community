@@ -13,7 +13,7 @@ import { useThemeScope } from '@/app/theme/ThemeContext'
 import { useGoogleSignIn } from '@/lib/auth/GoogleSignIn'
 import { useNow } from '@/lib/clock'
 import { useSession, useSignedIn } from '@/lib/auth/session'
-import { useAllFeedback, useAllSuggestions, useHouseholds, useSignInAttempts, useViewer } from '@/lib/api'
+import { useAllFeedback, useAllSuggestions, useContactMessages, useHouseholds, useSignInAttempts, useViewer } from '@/lib/api'
 import { waitingSuggestions } from '@/domain/suggestions'
 import { can } from '@/lib/auth/permissions'
 import { unresolved } from '@/domain/document'
@@ -127,6 +127,7 @@ export function PortalLayout() {
   const year = useNow().getFullYear()
   const { data: feedback } = useAllFeedback()
   const { data: suggestions } = useAllSuggestions()
+  const { data: messages } = useContactMessages()
 
   useEffect(() => {
     if (first.current) {
@@ -225,6 +226,7 @@ export function PortalLayout() {
     '/admin/people': unresolved(attempts, households).length,
     '/admin/feedback': waiting(feedback ?? []).length,
     '/admin/play': waitingSuggestions(suggestions ?? []).length,
+    '/admin/messages': (messages ?? []).filter((m) => !m.handledBy).length,
   }
   const where = whereIs(pathname)
   const inHousehold = memberNav.some((item) => pathname === item.to || pathname.startsWith(`${item.to}/`))

@@ -151,8 +151,8 @@ export function AdminAuditPage() {
       </div>
 
       <p className={styles.note}>
-        Written by the database as each change happens, so nothing reaches the tables without a line here.
-        Nobody can edit it, including the committee.
+        The site writes this down by itself as each change happens, so nothing changes without a line
+        here. Nobody can edit it, including the committee.
       </p>
 
       {isPending ? (

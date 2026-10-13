@@ -92,10 +92,13 @@ export function AdminMediaPage() {
             one really deletes it.
           </p>
         </div>
+      </div>
+
+      <ActionBar>
         <Button variant="gold" size="sm" onClick={() => { setOpenId(null); setSaved(null); setEditing({ ...emptyDraft }) }}>
           New album
         </Button>
-      </div>
+      </ActionBar>
 
       {saved ? (
         <p className={media.tookDown} role="status">

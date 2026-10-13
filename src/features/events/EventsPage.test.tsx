@@ -61,6 +61,17 @@ describe('EventsPage', () => {
     )
   })
 
+  it('names the occasions once when none of them has a date yet', async () => {
+    const base = createMockApi({ now: () => TEST_NOW })
+    const api = { ...base, events: { ...base.events, listUpcoming: async () => [] } }
+    renderWithProviders(<EventsPage />, { route: '/events', api })
+    const note = await screen.findByRole('complementary', { name: 'More of the year to come' })
+    const festivals = await base.festivals.list()
+    const first = festivals[0].name
+    expect(note.textContent?.split(first).length).toBe(2)
+    expect(note).toHaveTextContent('The dates are still being arranged')
+  })
+
   it('drops the note once every occasion has a date', async () => {
     renderWithProviders(<EventsPage />, { route: '/events' })
     await screen.findByRole('heading', { name: 'October 2026' })

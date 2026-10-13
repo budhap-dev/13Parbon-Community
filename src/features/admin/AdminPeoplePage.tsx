@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { ActionBar } from '@/components/ActionBar'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { useOpenFromAddress } from '@/app/useOpenFromAddress'
 import { useScrollToTopOn } from '@/app/useScrollToTopOn'
@@ -172,40 +173,43 @@ export function AdminPeoplePage() {
             committee.
           </p>
         </div>
-        <div className={styles.actions}>
-          <Button variant="line" size="sm" onClick={() => setAskingToSave(true)} disabled={!households?.length}>
-            Save the list
-          </Button>
-          <ConfirmDialog
-            open={askingToSave}
-            title="Download the list for Excel?"
-            confirmLabel="Download"
-            cancelLabel="Not now"
-            tone="plain"
-            onCancel={() => setAskingToSave(false)}
-            onConfirm={saveList}
-          >
-            <p>
-              A spreadsheet file, <strong>{filename}</strong>, that opens in Excel — or Numbers or Google
-              Sheets. One row for each of the {households?.length ?? 0} households: the main contact, their
-              email and phone, how many adults and children, and their membership.
-            </p>
-            <p style={{ marginTop: 10 }}>
-              It has no children’s names, no notes about anybody and no sign-in addresses. It does have
-              everybody’s contact details, so keep it to the committee.
-            </p>
-          </ConfirmDialog>
-          <Button variant="gold" size="sm" onClick={() => setOpen('new')}>
-            Add a household
-          </Button>
-        </div>
       </div>
 
-      {saved ? (
-        <p className={styles.said} role="status">
-          {saved}
-        </p>
-      ) : null}
+      <ActionBar
+        status={
+          saved ? (
+            <span className={styles.said} role="status">
+              {saved}
+            </span>
+          ) : null
+        }
+      >
+        <Button variant="line" size="sm" onClick={() => setAskingToSave(true)} disabled={!households?.length}>
+          Save the list
+        </Button>
+        <ConfirmDialog
+          open={askingToSave}
+          title="Download the list for Excel?"
+          confirmLabel="Download"
+          cancelLabel="Not now"
+          tone="plain"
+          onCancel={() => setAskingToSave(false)}
+          onConfirm={saveList}
+        >
+          <p>
+            A spreadsheet file, <strong>{filename}</strong>, that opens in Excel — or Numbers or Google
+            Sheets. One row for each of the {households?.length ?? 0} households: the main contact, their
+            email and phone, how many adults and children, and their membership.
+          </p>
+          <p style={{ marginTop: 10 }}>
+            It has no children’s names, no notes about anybody and no sign-in addresses. It does have
+            everybody’s contact details, so keep it to the committee.
+          </p>
+        </ConfirmDialog>
+        <Button variant="gold" size="sm" onClick={() => setOpen('new')}>
+          Add a household
+        </Button>
+      </ActionBar>
 
       {/* Hidden when there is nobody to decide about, but not when the list could not be read:
           that would look exactly like nobody knocking. */}

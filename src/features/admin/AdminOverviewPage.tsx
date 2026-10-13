@@ -24,6 +24,8 @@ function Stat({ label, value, note, accent }: { label: string; value: string | n
  * answer, so a figure that has not arrived — or never will — must not look like one.
  */
 type Read = { isPending: boolean; isError: boolean }
+/** "1 household", "8 households". */
+const countOf = (n: number) => `${n} ${n === 1 ? 'household' : 'households'}`
 const LOADING = '…'
 const FAILED = '—'
 const figure = (query: Read, value: () => string | number) =>
@@ -69,7 +71,6 @@ export function AdminOverviewPage() {
   const signedIn = households?.filter((h) => h.googleEmail).length ?? 0
   const admins = households?.filter((h) => h.role === 'admin').length ?? 0
   const unhandled = messages?.filter((m) => !m.handledBy) ?? []
-  const filled = memberCount > 0 && lastCounted ? Math.round((lastCounted.households / memberCount) * 100) : 0
 
   return (
     <div className={styles.page}>
@@ -145,19 +146,12 @@ export function AdminOverviewPage() {
                   <p className={styles.statAccent}>{peopleAt(lastCounted)}</p>
                 </div>
               </div>
-              {/* Without the household count the bar would read 0%, which is a figure, not a gap. */}
+              {/* Two plain counts, not a percentage: without the household count it would read 0%. */}
               {householdsQuery.isSuccess ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-                  <div className={styles.rowBetween}>
-                    <span className={`${styles.muted} ${styles.tiny}`}>
-                      {lastCounted.households} of {memberCount} households
-                    </span>
-                    <span className={`${styles.muted} ${styles.tiny}`}>{filled}%</span>
-                  </div>
-                  <div className={styles.bar}>
-                    <div className={styles.barFill} style={{ width: `${filled}%` }} />
-                  </div>
-                </div>
+                <p className={`${styles.muted} ${styles.tiny}`}>
+                  {countOf(lastCounted.households)} came · {countOf(memberCount)}{' '}
+                  {memberCount === 1 ? 'is a member' : 'are members'}
+                </p>
               ) : null}
               <p className={`${styles.muted} ${styles.tiny}`}>
                 Counts only — we do not keep which households came. Bookings stay in the committee's
