@@ -8,13 +8,15 @@ Read `docs/design-upgrade/phase-$ARGUMENTS.md`. That file is your task for this 
 Repo: 13Parbon. Branch feat/design-upgrade (create it off main if it is missing). The phase file is the full spec; do not open the design canvas or the other phase files.
 
 Rules:
-- No commit, push or PR until I ask.
+
+- commit, but no push or PR until I ask.
 - Keep Tiro Bangla, Bricolage Grotesque and Hind Siliguri; use Caveat for short lines only. Keep the emblem, the 8 public themes and the 9 portal themes. Themes vary texture, corners and frame, not just colour.
 - Public copy and numbers come from site_settings or existing data and are editable in the portal. Add new settings to src/lib/api/supabase/wiring.test.ts.
 - Portal Add and Save buttons go in the top-right ActionBar (src/components/ActionBar.tsx), primary rightmost. Containers use overflow: clip.
 - Wherever faces are shown, include the opt-out takedown line.
 
 Working style (save tokens):
+
 - Find code with grep -n; read only the line ranges you need; do not re-read files you have edited.
 - Make independent edits in a batch. Do not narrate plans between steps.
 - Run vitest on the files you touch while working; run npm run check once at the end of the phase.

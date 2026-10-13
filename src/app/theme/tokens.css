@@ -992,3 +992,32 @@
   --portal-side-danger-hover: #991b1b;
   --portal-side-danger-hover-fg: #ffffff;
 }
+
+/*
+ * Each festival's own colours, for the band on its card and its stop on the calendar. Fixed
+ * across the themes: Mahalaya is indigo and dawn orange whichever look the site is in.
+ */
+[data-festival='boishakhi'],
+[data-festival='poila-boishakh'] {
+  --swatch: #b3132b;
+  --swatch-2: #fff1dc;
+  --swatch-fg: #fff6ea;
+}
+
+[data-festival='mahalaya'] {
+  --swatch: #24226b;
+  --swatch-2: #ff9a3c;
+  --swatch-fg: #fbf3e4;
+}
+
+[data-festival='saraswati-puja'] {
+  --swatch: #f4c430;
+  --swatch-2: #1f5fbf;
+  --swatch-fg: #14213d;
+}
+
+[data-festival='holi'] {
+  --swatch: #b0186f;
+  --swatch-2: #ffd60a;
+  --swatch-fg: #fff3fa;
+}

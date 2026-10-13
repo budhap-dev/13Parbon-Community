@@ -111,3 +111,8 @@ export function fromDateTimeInput(value: string): string {
   const at = new Date(value)
   return Number.isNaN(at.getTime()) ? '' : at.toISOString()
 }
+
+/** "15 April", for a date this year or near it. */
+export function formatDayLongMonth(iso: string, locale = 'en-GB'): string {
+  return new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'long' }).format(new Date(iso))
+}

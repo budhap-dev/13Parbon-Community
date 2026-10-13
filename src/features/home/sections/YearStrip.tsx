@@ -1,58 +1,84 @@
 import { Link } from 'react-router'
 import { Container } from '@/components/Container'
 import { SectionHeading } from '@/components/SectionHeading'
+import { formatDayLongMonth } from '@/domain/dates'
+import { festivalStatus, type FestivalStatus } from '@/domain/festival'
 import { SponsoredBy } from '@/features/sponsors/SponsoredBy'
-import { useFestivals, useNextEvent } from '@/lib/api'
+import { useFestivals, useNextEvent, usePastEvents, useUpcomingEvents } from '@/lib/api'
+import { useNow } from '@/lib/clock'
 import { FestivalGlyph } from '../FestivalGlyph'
 import styles from '../Home.module.css'
 
+function describe(status: FestivalStatus): string {
+  switch (status.kind) {
+    case 'next':
+      return 'Next up'
+    case 'set':
+      return `Date set: ${formatDayLongMonth(status.startsAt)}`
+    case 'held':
+      return `Held ${formatDayLongMonth(status.startsAt)}`
+    case 'arranging':
+      return 'Being arranged'
+  }
+}
+
 /**
  * The community's year, told in words rather than photographs: what each occasion is, for
- * somebody who has never been to one.
+ * somebody who has never been to one, and where it stands this year.
  */
 export function YearStrip() {
   const { data: festivals } = useFestivals()
   const { data: next } = useNextEvent()
+  const { data: upcoming } = useUpcomingEvents(50)
+  const { data: past } = usePastEvents(10)
+  const now = useNow()
+  const dated = (upcoming ?? []).filter((event) => event.status !== 'cancelled')
 
   if (!festivals || festivals.length === 0) return null
 
   return (
-    <Container>
-      <section className={styles.year} aria-labelledby="year-title">
-        <SectionHeading
-          id="year-title"
-          title="Our year"
-          action={{ label: 'See the calendar', to: '/events' }}
-        />
-        <ul className={styles.occasions}>
-          {festivals.map((festival) => {
-            const isNext = next?.festivalId === festival.id
-            return (
-              <li key={festival.id} className={isNext ? styles.occasionNext : styles.occasion}>
-                <FestivalGlyph id={festival.id} />
-                <div className={styles.occasionHead}>
-                  <h3 className={styles.occasionName}>
-                    <Link to={`/events?festival=${festival.id}`} className={styles.occasionLink}>
-                      {festival.name}
-                    </Link>
-                  </h3>
-                  {festival.bengaliName ? (
-                    <p lang="bn" className={styles.occasionBengali}>
-                      {festival.bengaliName}
-                    </p>
-                  ) : null}
-                </div>
-                {festival.description ? <p className={styles.occasionText}>{festival.description}</p> : null}
-                {/* Unlinked: the whole card is already the link to this festival's evenings. */}
-                <SponsoredBy festivalId={festival.id} linked={false} className={styles.occasionSponsors} />
-                <p className={styles.occasionWhen}>
-                  {isNext ? 'Next up' : festival.season}
-                </p>
-              </li>
-            )
-          })}
-        </ul>
-      </section>
-    </Container>
+    <div className={styles.band}>
+      <Container>
+        <section className={styles.year} aria-labelledby="year-title">
+          <div>
+            <p lang="bn" className={styles.kickerBn}>
+              আমাদের বছর
+            </p>
+            <SectionHeading id="year-title" title="Our year" action={{ label: 'See the calendar', to: '/events' }} />
+          </div>
+          <ul className={styles.occasions}>
+            {festivals.map((festival) => {
+              const status = festivalStatus(festival.id, dated, past ?? [], next?.festivalId, now)
+              return (
+                <li key={festival.id} className={styles.occasion} data-festival={festival.id} data-status={status.kind}>
+                  <div className={styles.occasionBand}>
+                    <FestivalGlyph id={festival.id} />
+                    {festival.bengaliName ? (
+                      <p lang="bn" className={styles.occasionBengali}>
+                        {festival.bengaliName}
+                      </p>
+                    ) : null}
+                  </div>
+                  <div className={styles.occasionBody}>
+                    <h3 className={styles.occasionName}>
+                      <Link to={`/events?festival=${festival.id}`} className={styles.occasionLink}>
+                        {festival.name}
+                      </Link>
+                    </h3>
+                    <div className={styles.occasionMeta}>
+                      {festival.season ? <span className={styles.occasionSeason}>{festival.season}</span> : null}
+                      <span className={styles.occasionChip}>{describe(status)}</span>
+                    </div>
+                    {festival.description ? <p className={styles.occasionText}>{festival.description}</p> : null}
+                    {/* Unlinked: the whole card is already the link to this festival's evenings. */}
+                    <SponsoredBy festivalId={festival.id} linked={false} className={styles.occasionSponsors} />
+                  </div>
+                </li>
+              )
+            })}
+          </ul>
+        </section>
+      </Container>
+    </div>
   )
 }

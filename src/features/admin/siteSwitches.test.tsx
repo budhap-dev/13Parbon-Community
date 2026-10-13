@@ -66,7 +66,7 @@ describe('the words on the public pages', () => {
     renderAt('/admin/content')
     const panel = await switches()
     // The bracket convention is the one thing about these files somebody has to be told.
-    expect(within(panel).getByText(/Still in brackets, so visitors are shown nothing here/)).toBeInTheDocument()
+    expect(within(panel).getAllByText(/Still in brackets, so visitors are shown nothing here/).length).toBeGreaterThan(0)
   })
 
   it('changes what the public sees when it is saved', async () => {

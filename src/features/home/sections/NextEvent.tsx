@@ -3,7 +3,8 @@ import { LoadFailed } from '@/components/LoadFailed'
 import { Container } from '@/components/Container'
 import { Icon } from '@/components/Icon'
 import { daysUntil, describeCountdown, formatLongDate, formatTime } from '@/domain/dates'
-import { useNextEvent } from '@/lib/api'
+import { nextFestivalBySeason } from '@/domain/festival'
+import { useFestivals, useNextEvent } from '@/lib/api'
 import { useNow } from '@/lib/clock'
 import styles from '../Home.module.css'
 
@@ -85,5 +86,65 @@ export function NextEvent() {
         </p>
       </section>
     </Container>
+  )
+}
+
+/**
+ * The next evening as a ticket, beside the hero's buttons: both names, when, where, and the one
+ * thing to do about it. With nothing dated it still names what comes round next, rather than
+ * leaving a gap where the ticket would be.
+ */
+export function HeroTicket() {
+  const { data: event, isPending } = useNextEvent()
+  const { data: festivals } = useFestivals()
+  const now = useNow()
+  if (isPending) return null
+
+  const festival = event
+    ? festivals?.find((f) => f.id === event.festivalId)
+    : festivals && nextFestivalBySeason(festivals, now)
+  if (!event && !festival) return null
+
+  const english = event ? (festival?.name ?? event.title) : festival!.name
+  const countdown = event ? describeCountdown(daysUntil(event.startsAt, now)) : null
+  const going =
+    event?.registrationOpen && event.registrationUrl ? { href: event.registrationUrl } : event ? { to: `/events/${event.slug}` } : null
+
+  return (
+    <aside className={styles.ticket} aria-label={`Next: ${english}`}>
+      <div className={styles.ticketMain}>
+        {festival?.bengaliName ? (
+          <p lang="bn" className={styles.ticketBengali}>
+            {festival.bengaliName}
+          </p>
+        ) : null}
+        <p className={styles.ticketName}>{english}</p>
+        {event ? (
+          <ul className={styles.ticketFacts}>
+            <li>
+              <Icon name="clock" size={17} /> {formatLongDate(event.startsAt)}, {formatTime(event.startsAt)}
+            </li>
+            <li>
+              <Icon name="pin" size={17} /> {event.venue}
+            </li>
+          </ul>
+        ) : (
+          <p className={styles.ticketFacts}>
+            {festival!.season ? `${festival!.season}, ` : ''}date being settled
+          </p>
+        )}
+        {going ? (
+          <Button {...going} variant="ink" size="sm" className={styles.ticketButton}>
+            We are coming
+          </Button>
+        ) : null}
+      </div>
+      {countdown ? (
+        <p className={styles.ticketStub}>
+          <span className={styles.ticketDays}>{countdown.value}</span>
+          <span className={styles.ticketDaysLabel}>{countdown.label}</span>
+        </p>
+      ) : null}
+    </aside>
   )
 }

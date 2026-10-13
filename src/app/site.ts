@@ -29,6 +29,8 @@ export const site = {
   /* Pending: the committee is still to write this. While it is bracketed the home page
      leaves it out rather than showing the placeholder. */
   missionStatement: '[Mission and vision statement, two or three sentences from the committee.]',
+  /** At the foot of every page: "see you again". */
+  signOff: 'আবার দেখা হবে',
   /** Where to find us. Bracketed until the committee confirms. */
   venue: 'St Andrew’s Community Hall, Morley',
   address: 'Leeds, LS27 0JU',

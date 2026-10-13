@@ -370,7 +370,8 @@ describe('committee pages', () => {
     // Two, not one. The About page has always carried "[N] weeks" inside an answer, and the
     // counter missed it because the sentence did not *start* with a bracket. This number was
     // wrong in the direction that matters: it said the page was finished while it was not.
-    expect(await screen.findByText(/2 gaps still showing publicly/)).toBeInTheDocument()
+    // Three since the home page's figures: the number of households is still in brackets.
+    expect(await screen.findByText(/3 gaps still showing publicly/)).toBeInTheDocument()
     expect(screen.getByText(/cannot go stale/)).toBeInTheDocument()
     expect(screen.getByText('Home page')).toBeInTheDocument()
   })

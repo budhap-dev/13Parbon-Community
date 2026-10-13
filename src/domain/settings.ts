@@ -98,6 +98,9 @@ export const SITE_TEXT_KEYS = [
   'tagline',
   'mission',
   'missionStatement',
+  'figureFounded',
+  'figureHouseholds',
+  'figureFestivals',
   'volunteerTitle',
   'joinTitle',
   'joinText',
@@ -106,6 +109,7 @@ export const SITE_TEXT_KEYS = [
   'address',
   'email',
   'galleryNote',
+  'signOff',
 ] as const
 
 export type SiteTextKey = (typeof SITE_TEXT_KEYS)[number]
@@ -146,6 +150,18 @@ export const SITE_TEXT_FIELDS: Record<
     note: 'Two or three sentences from the committee. Left in [brackets] it is hidden rather than shown as a placeholder.',
     lines: 4,
   },
+  figureFounded: {
+    label: 'Who we are, the year we began',
+    note: 'The first of three figures beside who we are. In [brackets] or empty, the figure is left out.',
+  },
+  figureHouseholds: {
+    label: 'Who we are, how many households',
+    note: 'A number, as you would say it: 40, or 40+. In [brackets] or empty, it is left out.',
+  },
+  figureFestivals: {
+    label: 'Who we are, festivals a year',
+    note: 'How many we hold in a year. In [brackets] or empty, it is left out.',
+  },
   volunteerTitle: {
     label: 'Heading over the call for helpers',
     note: 'On the home page, above whatever the next event asks for.',
@@ -170,6 +186,10 @@ export const SITE_TEXT_FIELDS: Record<
     label: 'Note on the gallery',
     note: 'A line at the top while albums are still going up. Empty removes it, which is right once the back catalogue is in.',
     lines: 2,
+  },
+  signOff: {
+    label: 'Sign-off at the foot of every page',
+    note: 'A short line in Bengali beside the emblem. Empty leaves the emblem on its own.',
   },
 }
 

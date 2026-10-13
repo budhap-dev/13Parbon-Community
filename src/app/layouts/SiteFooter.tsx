@@ -3,34 +3,78 @@ import { Container } from '@/components/Container'
 import { Icon } from '@/components/Icon'
 import { footerNav } from '../nav'
 import { linkedSocial } from '@/domain/siteContent'
-import { site } from '../site'
+import { isPlaceholder, site } from '../site'
 import { useSettings } from '../SettingsContext'
 import styles from './PublicLayout.module.css'
 
+/** A line the committee has filled in, or nothing: a bracketed placeholder is never shown. */
+function given(value: string): string | null {
+  return value.trim() && !isPlaceholder(value) ? value : null
+}
+
 export function SiteFooter() {
   const settings = useSettings()
+  const { text } = settings
+  const social = linkedSocial(settings.social)
+  const signOff = given(text.signOff)
+  const email = given(text.email)
+
   return (
     <footer className={styles.footer}>
       <Container className={styles.footerGrid}>
-        <p className={styles.footerText}>
-          {site.name} · {settings.text.town}
-        </p>
-        <ul className={styles.footerLinks}>
-          {footerNav(settings).map((item) => (
-            <li key={item.label}>
-              <Link to={item.to}>{item.label}</Link>
-            </li>
-          ))}
-        </ul>
-        <ul className={styles.social}>
-          {linkedSocial(settings.social).map((channel) => (
-            <li key={channel.name}>
-              <a href={channel.href} aria-label={channel.name} target="_blank" rel="noreferrer">
-                <Icon name={channel.icon} size={22} />
-              </a>
-            </li>
-          ))}
-        </ul>
+        <div className={styles.footerBrand}>
+          <img src={site.emblem} alt="" width={64} height={64} className={styles.footerEmblem} />
+          <div>
+            {signOff ? (
+              <p lang="bn" className={styles.footerSignOff}>
+                {signOff}
+              </p>
+            ) : null}
+            <p className={styles.footerText}>
+              {site.name} · {text.town}
+            </p>
+          </div>
+        </div>
+
+        <div className={styles.footerCol}>
+          <p className={styles.footerHead}>Visit</p>
+          {given(text.venue) ? <p>{text.venue}</p> : null}
+          {given(text.address) ? <p className={styles.footerText}>{text.address}</p> : null}
+          <Link to="/events" className={styles.footerLink}>
+            What’s on
+          </Link>
+        </div>
+
+        <div className={styles.footerCol}>
+          <p className={styles.footerHead}>Talk to us</p>
+          <ul className={styles.footerLinks}>
+            {email ? (
+              <li>
+                <a href={`mailto:${email}`}>{email}</a>
+              </li>
+            ) : null}
+            {footerNav(settings).map((item) => (
+              <li key={item.label}>
+                <Link to={item.to}>{item.label}</Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {social.length > 0 ? (
+          <div className={styles.footerCol}>
+            <p className={styles.footerHead}>Follow</p>
+            <ul className={styles.social}>
+              {social.map((channel) => (
+                <li key={channel.name}>
+                  <a href={channel.href} aria-label={channel.name} target="_blank" rel="noreferrer">
+                    <Icon name={channel.icon} size={22} />
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
       </Container>
     </footer>
   )

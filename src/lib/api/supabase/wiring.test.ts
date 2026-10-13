@@ -10,6 +10,8 @@ import { withSupabasePortal } from './portal'
 import { withSupabaseNews } from './news'
 import { withSupabaseSettings } from './settings'
 import { withSupabasePlay } from './play'
+import { defaultSettings } from '@/app/defaults'
+import { mergeSettings } from '@/domain/settings'
 
 /**
  * Which parts of the app talk to the database, and which are still fixtures.
@@ -83,6 +85,18 @@ describe('with a project configured', () => {
     expect(wired.settings.get).not.toBe(base.settings.get)
     expect(wired.settings.save).not.toBe(base.settings.save)
   })
+
+  /*
+   * The home page's figures and the footer's sign-off live in that row too. A key left out of
+   * the merge would save in the portal and then be thrown away on the way back out.
+   */
+  it.each(['figureFounded', 'figureHouseholds', 'figureFestivals', 'signOff'] as const)(
+    'keeps %s as the committee saved it',
+    (key) => {
+      const merged = mergeSettings({ text: { [key]: 'saved' } }, defaultSettings)
+      expect(merged.text[key]).toBe('saved')
+    },
+  )
 
   it('reads the year’s festivals from that same row', () => {
     // They are the committee's to edit now. Left on the base client the home page would show

@@ -3,10 +3,11 @@ import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { Container } from '@/components/Container'
 import { LoadFailed } from '@/components/LoadFailed'
 import { EventCard } from '@/components/EventCard'
-import { Icon } from '@/components/Icon'
-import { formatMonthYear, monthKey } from '@/domain/dates'
+import { formatDateWithYear, formatDayLongMonth, formatMonthYear, monthKey } from '@/domain/dates'
 import type { Event } from '@/domain/event'
+import { seasonMonth, type Festival } from '@/domain/festival'
 import { useFestivals, usePastEvents, useUpcomingEvents } from '@/lib/api'
+import { useNow } from '@/lib/clock'
 import { FestivalAlbum } from './FestivalAlbum'
 import styles from './Events.module.css'
 
@@ -22,11 +23,26 @@ function groupByMonth(events: Event[]): { key: string; label: string; events: Ev
 }
 
 
-/** "A, B and C", so a sentence about the year reads like a sentence. */
-function namesOf(items: { name: string }[]): string {
-  const names = items.map((item) => item.name)
-  if (names.length <= 1) return names.join('')
-  return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`
+type Stop = { festival: Festival; event?: Event; wait: number }
+
+/**
+ * The year's festivals in the order they come round from now: a dated one by its date, the rest
+ * by the season they usually fall in. An evening's first date counts; later ones are on the
+ * calendar above.
+ */
+function yearAhead(festivals: Festival[], upcoming: Event[], now: Date): Stop[] {
+  const month = now.getFullYear() * 12 + now.getMonth()
+  return festivals
+    .map((festival) => {
+      const event = upcoming.find((e) => e.festivalId === festival.id && e.status !== 'cancelled')
+      if (event) {
+        const at = new Date(event.startsAt)
+        return { festival, event, wait: at.getFullYear() * 12 + at.getMonth() - month }
+      }
+      const season = seasonMonth(festival.season)
+      return { festival, wait: season === null ? 12 : (season - now.getMonth() + 12) % 12 }
+    })
+    .sort((a, b) => a.wait - b.wait)
 }
 
 export function EventsPage() {
@@ -36,17 +52,17 @@ export function EventsPage() {
   const { data: festivals } = useFestivals()
   const { data: upcoming, isPending, isError, isSuccess, refetch } = useUpcomingEvents(50)
   const { data: past, isError: pastFailed, refetch: refetchPast } = usePastEvents(6)
+  const now = useNow()
 
   const matches = (event: Event) => !festivalId || event.festivalId === festivalId
   const upcomingMonths = groupByMonth((upcoming ?? []).filter(matches))
   const pastEvents = (past ?? []).filter(matches)
   const activeFestival = festivals?.find((f) => f.id === festivalId)
 
-  // Occasions the community keeps every year that have no date on the calendar yet. Naming
-  // them is warmer than a general promise, and the note disappears once they are all up.
   // Only once the calendar has arrived: before then, every festival would look unscheduled.
-  const scheduled = new Set((upcoming ?? []).map((event) => event.festivalId))
-  const awaitingDates = (festivals ?? []).filter((f) => !scheduled.has(f.id))
+  // Not under a filter, where the one occasion asked about is already the whole page.
+  const stops = isSuccess && !festivalId ? yearAhead(festivals ?? [], upcoming, now) : []
+  const arranging = stops.some((stop) => !stop.event)
 
   return (
     <Container className={styles.page}>
@@ -83,14 +99,13 @@ export function EventsPage() {
         </p>
       ) : isError ? (
         <LoadFailed what="the calendar" onRetry={() => void refetch()} />
-      ) : upcomingMonths.length === 0 ? (
-        <div className={styles.empty}>
+      ) : upcomingMonths.length === 0 && festivalId ? (
+        <div className={styles.none}>
           <p>
             {activeFestival ? `Nothing scheduled yet for ${activeFestival.name}. ` : 'Nothing scheduled yet. '}
             Check back soon, or <Link to="/contact">ask the committee</Link>.
           </p>
           {activeFestival ? <FestivalAlbum festival={activeFestival} /> : null}
-
         </div>
       ) : (
         upcomingMonths.map((month) => (
@@ -109,32 +124,45 @@ export function EventsPage() {
         ))
       )}
 
-      {isSuccess && !festivalId && awaitingDates.length > 0 ? (
-        <aside className={styles.more} aria-labelledby="more-title">
-          <h2 id="more-title" className={styles.moreTitle}>
-            <Icon name="calendar" size={24} className={styles.moreIcon} />
-            More of the year to come
-          </h2>
-          {/* When nothing has a date yet, the two lists would be the same; name them once. */}
-          {awaitingDates.length === (festivals ?? []).length ? (
-            <p className={styles.moreText}>
-              We hold {namesOf(awaitingDates)} every year. {awaitingDates.length === 1 ? 'Its date is' : 'The dates are'}{' '}
-              still being arranged, and {awaitingDates.length === 1 ? 'it' : 'they'} will appear here as soon as{' '}
-              {awaitingDates.length === 1 ? 'it is' : 'they are'} settled.
-            </p>
-          ) : (
-            <p className={styles.moreText}>
-              We hold {namesOf(festivals ?? [])} every year. {namesOf(awaitingDates)}{' '}
-              {awaitingDates.length === 1 ? 'is' : 'are'} still being arranged, and{' '}
-              {awaitingDates.length === 1 ? 'it' : 'they'} will appear here as soon as the{' '}
-              {awaitingDates.length === 1 ? 'date is' : 'dates are'} settled.
-            </p>
-          )}
-          <p className={styles.moreText}>
-            Would you like to hear when they are? <Link to="/contact">Send the committee a message</Link> and we
-            will let you know.
+      {stops.length > 0 ? (
+        <section className={styles.year} aria-labelledby="year-title">
+          <p lang="bn" className={styles.kickerBn}>
+            আমাদের বছর
           </p>
-        </aside>
+          <h2 id="year-title" className={styles.yearTitle}>
+            The year ahead
+          </h2>
+          <ol className={styles.timeline}>
+            {stops.map(({ festival, event }) => (
+              <li key={festival.id} className={event ? styles.stopSet : styles.stop} data-festival={festival.id}>
+                <span className={styles.stopDot} aria-hidden="true" />
+                {festival.bengaliName ? (
+                  <p lang="bn" className={styles.stopBengali}>
+                    {festival.bengaliName}
+                  </p>
+                ) : null}
+                <h3 className={styles.stopName}>{festival.name}</h3>
+                {event ? (
+                  <p className={styles.stopStatus}>
+                    <span className={styles.stopChip}>Date set</span>{' '}
+                    <Link to={`/events/${event.slug}`}>{formatDayLongMonth(event.startsAt)}</Link>
+                  </p>
+                ) : (
+                  <p className={styles.stopStatus}>
+                    <span className={styles.stopChipOpen}>Being arranged</span>
+                    {festival.season ? <span className={styles.stopSeason}> {festival.season}</span> : null}
+                  </p>
+                )}
+              </li>
+            ))}
+          </ol>
+          {arranging ? (
+            <p className={styles.yearNote}>
+              Would you like to hear when the dates are settled?{' '}
+              <Link to="/contact">Send the committee a message</Link> and we will let you know.
+            </p>
+          ) : null}
+        </section>
       ) : null}
 
       {pastFailed ? (
@@ -149,10 +177,16 @@ export function EventsPage() {
           <h2 id="past-title" className={styles.pastTitle}>
             Earlier this year
           </h2>
-          <ul className={styles.grid}>
+          <ul className={styles.pastList}>
             {pastEvents.map((event) => (
-              <li key={event.id}>
-                <EventCard event={event} />
+              <li key={event.id} className={styles.pastItem}>
+                <Link to={`/events/${event.slug}`} className={styles.pastLink}>
+                  {event.title}
+                </Link>
+                <span className={styles.pastMeta}>
+                  {formatDateWithYear(event.startsAt)}
+                  {event.status === 'cancelled' ? ' · cancelled' : ''}
+                </span>
               </li>
             ))}
           </ul>
