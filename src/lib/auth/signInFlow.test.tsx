@@ -59,6 +59,6 @@ describe('the sign-in page when somebody is already signed in', () => {
         <RouterProvider router={createMemoryRouter(routes, { initialEntries: ['/login'] })} />
       </TestDataProviders>,
     )
-    expect(await screen.findByRole('heading', { level: 1, name: 'Committee overview' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: /^Good (morning|afternoon|evening)/ })).toBeInTheDocument()
   })
 })

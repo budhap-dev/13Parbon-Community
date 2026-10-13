@@ -22,10 +22,7 @@
 }
 
 .hint {
-  font-size: var(--portal-text-md);
-  opacity: 0.75;
-  max-width: 60ch;
-  line-height: 1.55;
+  composes: hint from './Fields.module.css';
 }
 
 .row {
@@ -45,28 +42,12 @@
   font-weight: 600;
 }
 
-/* Sized for a desk, with the portal theme's corners: this form only ever opens in the portal. */
-.input,
+.input {
+  composes: input from './Fields.module.css';
+}
+
 .select {
-  min-height: 40px;
-  padding: 0 12px;
-  border: 1px solid var(--color-border-strong);
-  border-radius: var(--portal-button-radius, 8px);
-  background: var(--color-bg, transparent);
-  color: inherit;
-  font: inherit;
-  font-size: var(--portal-text-md);
-}
-
-.input:focus-visible,
-.select:focus-visible {
-  outline: 2px solid var(--color-focus, #c9a227);
-  outline-offset: 1px;
-  border-color: var(--color-focus, #c9a227);
-}
-
-.input[aria-invalid='true'] {
-  border-color: var(--error, #b3261e);
+  composes: input from './Fields.module.css';
 }
 
 .error {

@@ -1,4 +1,6 @@
 .page {
+  /* Amber, pulled towards the theme's own text so it holds its contrast on light and dark. */
+  --portal-amber: color-mix(in srgb, #d98a00 68%, var(--color-fg));
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -198,11 +200,16 @@
   font-size: var(--portal-text-sm);
 }
 
-/* Pills */
+/*
+ * Pills say one of three things, always in the same colour: green is live, paid or on; amber is
+ * waiting on the committee; grey is past, lapsed or off. A role is not a state, so it is an
+ * outlined tag rather than a filled pill, and cannot be mistaken for one.
+ */
 .pill,
 .pillLive,
 .pillWait,
-.pillPast {
+.pillPast,
+.pillTag {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -221,13 +228,20 @@
 }
 
 .pillWait {
-  background: color-mix(in srgb, var(--color-accent) 20%, transparent);
-  color: var(--color-accent);
+  background: color-mix(in srgb, var(--portal-amber) 20%, transparent);
+  color: var(--portal-amber);
 }
 
 .pillPast {
   background: var(--color-hover-wash);
   color: var(--color-fg-muted);
+}
+
+.pillTag {
+  padding: 2px 9px;
+  background: transparent;
+  border: 1px solid var(--color-border-strong);
+  color: var(--color-fg);
 }
 
 .dot {
@@ -609,27 +623,9 @@
   justify-content: flex-end;
 }
 
-/* A text box on a portal screen. It had no style at all and came out as the browser's own. */
+/* A text box on a portal screen: the shared one. */
 .input {
-  width: 100%;
-  min-height: 40px;
-  padding: 8px 12px;
-  border: 1px solid var(--color-border-strong);
-  border-radius: var(--portal-button-radius, 8px);
-  background: var(--color-bg);
-  color: var(--color-fg);
-  font: inherit;
-  font-size: var(--portal-text-md);
-}
-
-.input::placeholder {
-  color: var(--color-fg-muted);
-}
-
-.input:focus-visible {
-  outline: 2px solid var(--color-focus);
-  outline-offset: 1px;
-  border-color: var(--color-focus);
+  composes: input from '../../components/Fields.module.css';
 }
 
 /* A row of controls over a list: the search on the left, what it found on the right. */
@@ -659,6 +655,10 @@
 
 .searchInput {
   composes: input;
+}
+
+/* Through .search, so it outranks the shared field's own padding whichever sheet loads last. */
+.search .searchInput {
   padding-left: 36px;
 }
 
@@ -741,4 +741,383 @@
 /* Two notes in a row are two things to read, not one long box. */
 .note + .note {
   margin-top: 10px;
+}
+
+/*
+ * The overview's four tiles, each a link to the screen that clears it. The top edge turns amber
+ * only while something is waiting, so a quiet day looks quiet.
+ */
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.tile,
+.tileOn {
+  composes: stat;
+  position: relative;
+  color: inherit;
+  text-decoration: none;
+  overflow: clip;
+  transition: border-color 160ms ease;
+}
+
+.tile:hover,
+.tileOn:hover {
+  color: inherit;
+  border-color: var(--color-border-strong);
+}
+
+.tile:focus-visible,
+.tileOn:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.tileOn::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 4px;
+  background: var(--portal-amber);
+}
+
+.tileOn .statValue {
+  color: var(--portal-amber);
+}
+
+/* A row of the decisions list: what kind of thing, one line about it, and the way to it. */
+.decision {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--color-border-faint);
+}
+
+.decision:last-child {
+  border-bottom: none;
+}
+
+.decision > :first-child {
+  min-width: 76px;
+  justify-content: center;
+}
+
+.decisionLine {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--portal-text-md);
+}
+
+/* The next evening, filled in the accent so it is the one card on the screen that is a date. */
+.nextCard {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 20px;
+  background: color-mix(in srgb, var(--color-accent) 12%, var(--color-bg-raised));
+  border: 1px solid color-mix(in srgb, var(--color-accent) 40%, transparent);
+  border-radius: var(--portal-radius, 14px);
+  box-shadow: var(--portal-shadow, none);
+  overflow: clip;
+}
+
+.nextDays {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+/* The last count, as four figures: two by two, in the side column. */
+.figures {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 18px 20px;
+}
+
+.figures > div {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.figures dd {
+  margin: 0;
+}
+
+/* What a row or a line looks like before it has arrived: the shape of it, breathing. */
+.skeleton,
+.skeletonAvatar {
+  display: block;
+  height: 14px;
+  flex: 1;
+  max-width: 340px;
+  border-radius: 7px;
+  background: var(--color-hover-wash);
+  animation: breathe 1.4s ease-in-out infinite;
+}
+
+.skeletonAvatar {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+}
+
+@keyframes breathe {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton,
+  .skeletonAvatar {
+    animation: none;
+  }
+}
+
+/* An empty list that says so and carries the button that fills it. */
+.emptyQuiet {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 28px 20px;
+  color: var(--color-fg-muted);
+  text-align: center;
+}
+
+/* Filter chips over a list, each with the count it would leave. */
+.filterChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--color-border-faint);
+}
+
+.chip,
+.chipOn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill, 999px);
+  background: transparent;
+  color: var(--color-fg);
+  font: inherit;
+  font-size: var(--portal-text-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.chip:hover {
+  background: var(--color-hover-wash);
+}
+
+.chipOn {
+  background: var(--color-fg);
+  border-color: var(--color-fg);
+  color: var(--color-bg);
+}
+
+.chip:focus-visible,
+.chipOn:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.chipCount {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+}
+
+/* A household and its contact in one cell, beside a circle of its initials. */
+.who {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.initials {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-accent) 18%, var(--color-bg-raised));
+  color: var(--color-fg);
+  font-size: var(--portal-text-xs);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.whoText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.whoText > * {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+.rowActions {
+  width: 1%;
+  text-align: right;
+}
+
+.rowActions > span {
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+  padding-top: 0;
+}
+
+/*
+ * One line per row: a cell that wraps makes a list of forty unreadable at a glance. A long name
+ * or address is cut with an ellipsis instead, so the row's own buttons stay on the screen.
+ */
+.oneLine td {
+  white-space: nowrap;
+}
+
+.oneLine td,
+.oneLine th {
+  padding-left: 14px;
+  padding-right: 14px;
+}
+
+.oneLine .who {
+  max-width: 236px;
+}
+
+.oneLine td:nth-child(2) {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 900px) {
+  .tiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .chip,
+  .chipOn {
+    min-height: 44px;
+  }
+
+  .decision {
+    flex-wrap: wrap;
+  }
+
+  .decisionLine {
+    flex-basis: 100%;
+    order: 3;
+    white-space: normal;
+  }
+
+  .decision :global(a),
+  .decision :global(button) {
+    margin-left: auto;
+  }
+}
+
+/*
+ * Below 640px a table becomes a stack of cards: each row a card, each cell a line with its
+ * column's name beside it, from the cell's own data-label. A table scrolled sideways on a phone
+ * hides the column that says what the row is for.
+ */
+@media (max-width: 640px) {
+  .cardsOnPhone,
+  .cardsOnPhone tbody,
+  .cardsOnPhone tr,
+  .cardsOnPhone td {
+    display: block;
+    width: auto;
+  }
+
+  .cardsOnPhone thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .cardsOnPhone tr {
+    margin: 10px 12px;
+    padding: 8px 4px;
+    border: 1px solid var(--color-border-faint);
+    border-radius: var(--portal-radius, 12px);
+    background: var(--color-bg-raised);
+  }
+
+  .cardsOnPhone tbody tr:hover {
+    background: var(--color-bg-raised);
+  }
+
+  .cardsOnPhone td,
+  .cardsOnPhone tbody tr:last-child td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 6px 12px;
+    border-bottom: 0;
+    white-space: normal;
+    text-align: right;
+  }
+
+  .cardsOnPhone td[data-label]::before {
+    content: attr(data-label);
+    flex: none;
+    color: var(--color-fg-muted);
+    font-size: var(--portal-text-xs);
+    font-weight: 600;
+    text-align: left;
+  }
+
+  /* The first cell is the card's title, and needs no label to say so. */
+  .cardsOnPhone td:first-child {
+    text-align: left;
+  }
+
+  .cardsOnPhone td:first-child::before {
+    display: none;
+  }
+
+  .cardsOnPhone .rowActions {
+    justify-content: flex-end;
+  }
+
+  .boxed:has(.cardsOnPhone) {
+    max-height: none;
+  }
+
+  .scroll:has(.cardsOnPhone) {
+    background: none;
+  }
 }

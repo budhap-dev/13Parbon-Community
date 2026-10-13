@@ -39,8 +39,8 @@ function apiWith(changes: Partial<SiteSettings>): ApiClient {
 
 /** The panel, once the form in it has opened. */
 async function panel() {
-  const region = await screen.findByRole('region', { name: 'What the site shows' })
-  await within(region).findByRole('button', { name: 'Save the switches' })
+  const region = await screen.findByRole('region', { name: /^What the (site shows|pages say)$/ })
+  await within(region).findByRole('button', { name: /^Save the (switches|home page)$/ })
   return region
 }
 
@@ -81,7 +81,7 @@ vi.setConfig({ testTimeout: 45_000 })
 
 describe('the year’s festivals', () => {
   it('adds one from the portal, and the home page has it', async () => {
-    const { router } = renderAt('/admin/content')
+    const { router } = renderAt('/admin/pages')
     const region = await panel()
     await open(region, /The year’s festivals/)
 
@@ -99,7 +99,7 @@ describe('the year’s festivals', () => {
   })
 
   it('takes one off, and it is gone from the home page', async () => {
-    const { router } = renderAt('/admin/content')
+    const { router } = renderAt('/admin/pages')
     const region = await panel()
     await open(region, /The year’s festivals/)
 
@@ -114,7 +114,7 @@ describe('the year’s festivals', () => {
   })
 
   it('does not draw the fields until the section is opened', async () => {
-    renderAt('/admin/content')
+    renderAt('/admin/pages')
     const region = await panel()
     // Eight lists drawn at once made every keystroke on this screen redraw all of them.
     expect(within(region).queryByLabelText('Festival 1')).not.toBeInTheDocument()
@@ -165,7 +165,7 @@ describe('ways to reach us', () => {
 
 describe('the About page', () => {
   it('shows the story as the committee last saved it, headings and lists and all', async () => {
-    const { router } = renderAt('/admin/content')
+    const { router } = renderAt('/admin/pages')
     const region = await panel()
     await open(region, /Our story/)
 
@@ -193,7 +193,7 @@ describe('the About page', () => {
 
 describe('what we stand for', () => {
   it('adds a value from the portal, and the About page has it', async () => {
-    const { router } = renderAt('/admin/content')
+    const { router } = renderAt('/admin/pages')
     const region = await panel()
     await open(region, /What we stand for/)
 
@@ -215,7 +215,7 @@ describe('what we stand for', () => {
 
 describe('moving a row', () => {
   it('puts a festival earlier in the year, and will not move the first one up', async () => {
-    const { api } = renderAt('/admin/content')
+    const { api } = renderAt('/admin/pages')
     const region = await panel()
     await open(region, /The year’s festivals/)
 
@@ -258,7 +258,7 @@ describe('moving a row', () => {
 
 describe('this year’s theme, in photographs', () => {
   it('rewrites a caption from the portal, and the event’s page shows it', async () => {
-    const { router } = renderAt('/admin/content')
+    const { router } = renderAt('/admin/pages')
     const region = await panel()
     await open(region, /This year’s theme, in photographs/)
 
@@ -278,7 +278,7 @@ describe('this year’s theme, in photographs', () => {
   })
 
   it('keeps the name a collage had when the box is emptied, because a screen reader needs one', async () => {
-    const { api } = renderAt('/admin/content')
+    const { api } = renderAt('/admin/pages')
     const region = await panel()
     await open(region, /This year’s theme, in photographs/)
 
@@ -293,7 +293,7 @@ describe('this year’s theme, in photographs', () => {
   })
 
   it('says where a new photograph cannot go when there is no bucket, rather than failing', async () => {
-    renderAt('/admin/content')
+    renderAt('/admin/pages')
     const region = await panel()
     await open(region, /This year’s theme, in photographs/)
     // The same upload the gallery and the event cover use, so it strips a photograph's
@@ -316,7 +316,7 @@ describe('the home page', () => {
   })
 
   it('moves a part up from the portal, and saves the new order', async () => {
-    const { api } = renderAt('/admin/content')
+    const { api } = renderAt('/admin/pages')
     const region = await panel()
     await open(region, /The home page: its order/)
 
@@ -463,7 +463,7 @@ describe('waiting for what is saved', () => {
       settings: { ...api.settings, get: () => new Promise<SiteSettings>((resolve) => (arrive = resolve)) },
     }
     renderAt('/admin/content', { api: slow })
-    const region = await screen.findByRole('region', { name: 'What the site shows' })
+    const region = await screen.findByRole('region', { name: /^What the (site shows|pages say)$/ })
 
     // Opened now, every section that differs from the code would offer to save the code's
     // version over the committee's.

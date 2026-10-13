@@ -16,6 +16,7 @@ import { SectionGate } from './SectionGate'
 import {
   AdminAuditPage,
   AdminContentPage,
+  AdminPagesPage,
   AdminEventsPage,
   AdminFeedbackPage,
   AdminMediaPage,
@@ -116,6 +117,7 @@ export const routes: RouteObject[] = [
           { path: '/admin/notices', Component: AdminNoticesPage },
           { path: '/admin/writing', Component: AdminWritingPage },
           { path: '/admin/content', Component: AdminContentPage },
+          { path: '/admin/pages', Component: AdminPagesPage },
           { path: '/admin/sponsors', Component: AdminSponsorsPage },
           { path: '/admin/media', Component: AdminMediaPage },
           { path: '/admin/messages', Component: AdminMessagesPage },

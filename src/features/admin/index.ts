@@ -1,7 +1,7 @@
 export { AdminOverviewPage } from './AdminOverviewPage'
 export { AdminPeoplePage } from './AdminPeoplePage'
 export { AdminEventsPage } from './AdminEventsPage'
-export { AdminContentPage } from './AdminContentPage'
+export { AdminContentPage, AdminPagesPage } from './AdminContentPage'
 export { AdminNoticesPage } from './AdminNoticesPage'
 export { AdminWritingPage } from './AdminWritingPage'
 export { AdminSponsorsPage } from './AdminSponsorsPage'

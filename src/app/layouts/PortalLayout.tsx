@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState, useSyncExternalStore } from 'react'
 import { Link, NavLink, Outlet, ScrollRestoration, useLocation } from 'react-router'
 import { site } from '@/app/site'
 import { useSettings } from '@/app/SettingsContext'
@@ -75,10 +75,11 @@ const committeeSections: Section[] = [
   {
     label: 'The website',
     items: [
-      { label: 'Writing', to: '/admin/writing', icon: 'book' },
+      { label: 'News and newsletters', to: '/admin/writing', icon: 'book' },
       { label: 'Photographs', to: '/admin/media', icon: 'image' },
       { label: 'Sponsors', to: '/admin/sponsors', icon: 'badge' },
-      { label: 'Pages and settings', to: '/admin/content', icon: 'layout' },
+      { label: 'Home and About pages', to: '/admin/pages', icon: 'file' },
+      { label: 'Site settings', to: '/admin/content', icon: 'layout' },
     ],
   },
 ]
@@ -103,6 +104,26 @@ function whereIs(pathname: string): { group: string; label: string } {
   }
   return { group: best.group, label: best.label }
 }
+
+/**
+ * Whether this is a phone-width screen. The bottom bar is drawn only there, rather than drawn
+ * everywhere and hidden by CSS, so a desk-sized screen does not carry a second set of links with
+ * the same names for a screen reader to read twice.
+ */
+const PHONE = '(max-width: 900px)'
+const onPhone = (changed: () => void) => {
+  const query = window.matchMedia?.(PHONE)
+  query?.addEventListener('change', changed)
+  return () => query?.removeEventListener('change', changed)
+}
+const isPhone = () => window.matchMedia?.(PHONE).matches ?? false
+
+/** The phone's bottom bar: the three screens used most, then the search. */
+const quickLinks: Item[] = [
+  { label: 'Overview', to: '/admin', icon: 'grid', end: true },
+  { label: 'People', to: '/admin/people', icon: 'users' },
+  { label: 'Events', to: '/admin/events', icon: 'calendar' },
+]
 
 /** Every screen, for the search to jump to. The member ones say whose they are. */
 const searchScreens: SearchScreen[] = [
@@ -217,6 +238,7 @@ export function PortalLayout() {
     }
   }, [menuOpen])
 
+  const phone = useSyncExternalStore(onPhone, isPhone, () => false)
   if (!who) return null
 
   // The ones still wanting an answer, which is what each screen itself shows. Counting all of
@@ -434,7 +456,7 @@ export function PortalLayout() {
         {who.preview ? (
           <p className={styles.preview} role="status">
             <span className={styles.previewStrong}>Preview</span>
-            <span>
+            <span className={styles.previewText}>
               You are looking at {who.householdName}, a sample household. Everything here is made-up data and
               nothing you change is saved.
             </span>
@@ -463,6 +485,30 @@ export function PortalLayout() {
           </ErrorBoundary>
         </div>
       </main>
+      {/*
+        * On a phone, the four places the committee goes most, a thumb away at the bottom of the
+        * screen, rather than behind the menu at the top of a long table.
+        */}
+      {onTheCommittee && phone ? (
+        <nav aria-label="Quick links" className={styles.tabBar} inert={menuOpen || undefined}>
+          {quickLinks.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.end}
+              className={({ isActive }) => (isActive ? styles.tabOn : styles.tab)}
+            >
+              <Icon name={item.icon} size={20} />
+              <span>{item.label}</span>
+              {counts[item.to] ? <span className={styles.tabCount}>{counts[item.to]}</span> : null}
+            </NavLink>
+          ))}
+          <button type="button" className={styles.tab} onClick={() => setSearching(true)}>
+            <Icon name="search" size={20} />
+            <span>Search</span>
+          </button>
+        </nav>
+      ) : null}
       {/* Outside main, so it is the page's own footer to a screen reader rather than a box in the content. */}
       <footer className={styles.foot} inert={menuOpen || undefined}>
         <span>

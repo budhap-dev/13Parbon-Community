@@ -169,7 +169,7 @@ describe('portal access', () => {
 
   it('gives an admin both sections and signs them out again', async () => {
     const router = renderAt('/admin', admin)
-    await screen.findByRole('heading', { level: 1, name: 'Committee overview' })
+    await screen.findByRole('heading', { level: 1, name: /^Good (morning|afternoon|evening)/ })
     expect(screen.getByRole('navigation', { name: 'Your household' })).toBeInTheDocument()
     expect(screen.getByRole('navigation', { name: 'Committee' })).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Sign out' }))
@@ -182,7 +182,7 @@ describe('portal access', () => {
 
   it('asks before signing out, and staying keeps you where you were', async () => {
     const router = renderAt('/admin', admin)
-    await screen.findByRole('heading', { level: 1, name: 'Committee overview' })
+    await screen.findByRole('heading', { level: 1, name: /^Good (morning|afternoon|evening)/ })
     const button = screen.getByRole('button', { name: 'Sign out' })
     await userEvent.click(button)
 
@@ -268,9 +268,9 @@ describe('member pages', () => {
 describe('committee pages', () => {
   it('counts what needs attention and how the event is filling', async () => {
     renderAt('/admin', admin)
-    expect(await screen.findByRole('heading', { level: 1, name: 'Committee overview' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: /^Good (morning|afternoon|evening)/ })).toBeInTheDocument()
     expect(await screen.findByText('priya.dutta@gmail.com')).toBeInTheDocument()
-    const stats = screen.getByText('Waiting on you').closest('div')!
+    const stats = screen.getByText('Waiting on you').closest('a')!
     expect(within(stats).getByText('2')).toBeInTheDocument()
     expect(screen.getByText(/6 have signed in, 2 admins/)).toBeInTheDocument()
   })
@@ -303,9 +303,10 @@ describe('committee pages', () => {
     const attempts = (await screen.findByRole('heading', { name: 'Tried to sign in, not on the list' })).closest('section')!
     expect(within(attempts).getByText('amit.bose@gmail.com')).toBeInTheDocument()
     const members = screen.getByRole('heading', { name: 'Members' }).closest('section')!
-    expect(within(members).getAllByText('Admin')).toHaveLength(2)
-    expect(within(members).getAllByText('Never signed in')).toHaveLength(2)
-    expect(within(members).getByText('Lapsed')).toBeInTheDocument()
+    const list = within(within(members).getByRole('region', { name: 'Members list' }))
+    expect(list.getAllByText('Admin')).toHaveLength(2)
+    expect(list.getAllByText('Never signed in')).toHaveLength(2)
+    expect(list.getByText('Lapsed')).toBeInTheDocument()
   })
 
   it('keeps the headcount, and says where the bookings actually live', async () => {
@@ -372,7 +373,7 @@ describe('committee pages', () => {
     // wrong in the direction that matters: it said the page was finished while it was not.
     // Three since the home page's figures: the number of households is still in brackets.
     expect(await screen.findByText(/3 gaps still showing publicly/)).toBeInTheDocument()
-    expect(screen.getByText(/cannot go stale/)).toBeInTheDocument()
+    expect(screen.getByText(/Counted from the pages themselves/)).toBeInTheDocument()
     expect(screen.getByText('Home page')).toBeInTheDocument()
   })
 
@@ -393,10 +394,10 @@ describe('committee pages', () => {
     expect(document.getElementById('text-missionStatement')).toBeInTheDocument()
 
     // The same for a question on the About page: the file ships one with "[N] weeks" in its
-    // answer. Counted from 1 in the table, the way a person counts; the box's id from 0.
+    // answer. Counted from 1 in the table, the way a person counts. The questions are on the
+    // Home and About pages screen, so the link opens their section there.
     const answer = screen.getByRole('link', { name: 'Answer 4' })
-    expect(answer).toHaveAttribute('href', '#answer-3')
-    expect(document.getElementById('answer-3')).toBeInTheDocument()
+    expect(answer).toHaveAttribute('href', '/admin/pages?section=faq')
 
     // And says so plainly where a page is finished.
     expect(screen.getAllByText('Nothing in brackets').length).toBeGreaterThan(0)

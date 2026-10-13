@@ -60,14 +60,14 @@ describe('the committee search', () => {
   it('finds a festival under the section that edits it', () => {
     const settings = group('holi', 'On the public pages')
     expect(settings?.items).toContainEqual(
-      expect.objectContaining({ title: 'Holi', detail: 'The year’s festivals', to: '/admin/content?section=festivals' }),
+      expect.objectContaining({ title: 'Holi', detail: 'The year’s festivals', to: '/admin/pages?section=festivals' }),
     )
   })
 
   it('finds a section by its own name', () => {
     expect(group('questions people ask', 'On the public pages')?.items[0]).toMatchObject({
       title: 'Questions people ask',
-      to: '/admin/content?section=faq',
+      to: '/admin/pages?section=faq',
     })
   })
 

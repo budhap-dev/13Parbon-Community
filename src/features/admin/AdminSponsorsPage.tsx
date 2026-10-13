@@ -35,8 +35,7 @@ export function AdminSponsorsPage() {
         <div>
           <h1 className={styles.title}>Sponsors</h1>
           <p className={styles.sub}>
-            The businesses, families and friends who help pay for the year, and how the public site
-            thanks them.
+            Who helps pay for the year, and how the public site thanks them.
           </p>
         </div>
       </div>
@@ -146,8 +145,8 @@ function SponsorsForm({ settings }: { settings: SiteSettings }) {
             onChange={setDraft}
             actions={
               <>
-                {said('list')}
-                <Button variant="gold" type="submit" size="sm" disabled={save.isPending || !unsaved}>
+                {said('list') ?? (!unsaved && !save.isPending ? <span className={forms.hint}>All saved</span> : null)}
+                <Button variant={unsaved || save.isPending ? 'gold' : 'line'} type="submit" size="sm" disabled={save.isPending || !unsaved}>
                   {saving('list') ? 'Saving…' : 'Save the sponsors'}
                 </Button>
               </>

@@ -11,6 +11,7 @@ import { HouseholdForm } from '@/components/HouseholdForm'
 import { InfoNote } from '@/components/InfoNote'
 import { LoadFailed } from '@/components/LoadFailed'
 import { RemoveHousehold } from '@/components/RemoveHousehold'
+import { RowMenu } from '@/components/RowMenu'
 import { formatLongDate } from '@/domain/dates'
 import { committeeCsv, committeeCsvFilename } from '@/domain/committeeExport'
 import { describeSize, householdMatches, type Household } from '@/domain/household'
@@ -27,6 +28,23 @@ import {
 } from '@/lib/api'
 import { useSignedIn } from '@/lib/auth/session'
 import styles from '@/features/portal/Portal.module.css'
+
+type FilterKey = 'all' | 'paid' | 'lapsed' | 'never' | 'admins'
+/** The chips over the list, each with how many it would leave. */
+const FILTERS: Record<FilterKey, { label: string; keep: (h: Household) => boolean }> = {
+  all: { label: 'Everyone', keep: () => true },
+  paid: { label: 'Paid', keep: (h) => h.membership.status === 'active' },
+  lapsed: { label: 'Lapsed', keep: (h) => h.membership.status !== 'active' },
+  never: { label: 'Never signed in', keep: (h) => !h.googleEmail },
+  admins: { label: 'Admins', keep: (h) => h.role === 'admin' },
+}
+
+/** Two letters for the circle beside a household: its first and last word. */
+function initialsOf(name: string): string {
+  const words = name.replace(/^the\s+/i, '').trim().split(/\s+/).filter(Boolean)
+  if (words.length === 0) return '?'
+  return (words.length === 1 ? words[0].slice(0, 2) : words[0][0] + words[words.length - 1][0]).toUpperCase()
+}
 
 export function AdminPeoplePage() {
   useDocumentTitle('People')
@@ -73,7 +91,9 @@ export function AdminPeoplePage() {
 
   const neverSignedIn = households?.filter((h) => !h.googleEmail).length ?? 0
   const [query, setQuery] = useState('')
-  const shown = (households ?? []).filter((household) => householdMatches(household, query))
+  const [filter, setFilter] = useState<FilterKey>('all')
+  const counted = (households ?? []).filter((household) => householdMatches(household, query))
+  const shown = counted.filter(FILTERS[filter].keep)
 
   /*
    * Asked first, and said what it is. The button used to download on the spot, so a press meant
@@ -169,8 +189,7 @@ export function AdminPeoplePage() {
         <div>
           <h1 className={styles.title}>People</h1>
           <p className={styles.sub}>
-            Membership is by invitation. Add the households the committee knows, and decide who can act for the
-            committee.
+            Membership is by invitation: add the households, and decide who acts for the committee.
           </p>
         </div>
       </div>
@@ -233,7 +252,7 @@ export function AdminPeoplePage() {
             <span className={`${styles.muted} ${styles.tiny}`}>Last 30 days</span>
           </div>
           <div className={styles.scroll}>
-            <table className={styles.table}>
+            <table className={`${styles.table} ${styles.cardsOnPhone}`}>
               <thead>
                 <tr>
                   <th>Google account</th>
@@ -245,15 +264,15 @@ export function AdminPeoplePage() {
               <tbody>
                 {attempts.map((attempt) => (
                   <tr key={attempt.id}>
-                    <td>
+                    <td data-label="Google account">
                       <strong>{attempt.email}</strong>
                     </td>
-                    <td className={styles.muted}>{attempt.name}</td>
-                    <td className={`${styles.muted} ${styles.tiny}`}>
+                    <td data-label="Name Google gave" className={styles.muted}>{attempt.name}</td>
+                    <td data-label="Tried" className={`${styles.muted} ${styles.tiny}`}>
                       {formatLongDate(attempt.lastTriedAt)}
                       {attempt.attempts > 1 ? `, ${attempt.attempts} times` : ''}
                     </td>
-                    <td>
+                    <td data-label="What to do">
                       <span className={styles.actions}>
                         <Button
                           variant="gold"
@@ -285,10 +304,12 @@ export function AdminPeoplePage() {
                 That did not save, so they are still on the list. {resolve.error.message}
               </p>
             ) : null}
-            <p className={`${styles.muted} ${styles.tiny}`}>
-              Nobody can create an account for themselves. When someone signs in with a Google address you have not
-              added, they are turned away politely and land here so you can decide.
-            </p>
+            <InfoNote summary="Why they are here">
+              <p>
+                Nobody can create an account for themselves. When someone signs in with a Google address you have
+                not added, they are turned away politely and land here so you can decide.
+              </p>
+            </InfoNote>
           </div>
         </section>
       ) : null}
@@ -320,76 +341,133 @@ export function AdminPeoplePage() {
           </div>
           {query.trim() ? (
             <span className={`${styles.muted} ${styles.tiny}`} role="status">
-              {shown.length === 1 ? '1 household matches' : `${shown.length} households match`}
+              {counted.length === 1 ? '1 household matches' : `${counted.length} households match`}
             </span>
           ) : null}
         </div>
+        {households?.length ? (
+          <div className={styles.filterChips} role="group" aria-label="Show">
+            {(Object.keys(FILTERS) as FilterKey[]).map((key) => (
+              <button
+                key={key}
+                type="button"
+                className={filter === key ? styles.chipOn : styles.chip}
+                aria-pressed={filter === key}
+                onClick={() => setFilter(key)}
+              >
+                {FILTERS[key].label} <span className={styles.chipCount}>{counted.filter(FILTERS[key].keep).length}</span>
+              </button>
+            ))}
+          </div>
+        ) : null}
         {isPending ? (
-          <p className={styles.empty} aria-busy="true">
-            Loading…
-          </p>
+          <div className={styles.list} aria-busy="true">
+            <span className="sr-only">Loading the households…</span>
+            {[0, 1, 2, 3, 4].map((i) => (
+              <div key={i} className={styles.listItem}>
+                <span className={styles.skeletonAvatar} />
+                <span className={styles.skeleton} />
+              </div>
+            ))}
+          </div>
         ) : isError ? (
           <div className={styles.pad}>
             <LoadFailed what="the households" onRetry={() => void refetch()} />
           </div>
         ) : !households?.length ? (
-          <p className={styles.empty}>No households yet. Add the first with Add a household.</p>
-        ) : query.trim() && shown.length === 0 ? (
-          <p className={styles.pad}>
-            <span className={styles.muted}>Nobody matches “{query.trim()}”.</span>{' '}
-            <button type="button" className={styles.inlineButton} onClick={() => setQuery('')}>
-              Clear the search
-            </button>
-          </p>
+          <div className={styles.emptyQuiet}>
+            <p>No households yet.</p>
+            <Button variant="gold" size="sm" onClick={() => setOpen('new')}>
+              Add a household
+            </Button>
+          </div>
+        ) : shown.length === 0 ? (
+          <div className={styles.emptyQuiet}>
+            <p>{query.trim() ? `Nobody matches “${query.trim()}”.` : 'Nobody here.'}</p>
+            <Button
+              variant="line"
+              size="sm"
+              onClick={() => {
+                setQuery('')
+                setFilter('all')
+              }}
+            >
+              {query.trim() ? 'Clear the search' : 'Show everyone'}
+            </Button>
+          </div>
         ) : (
           // Its own scroll, with the column labels pinned: forty households is a page of its own,
           // and the explanation under the table should not need a hunt to find.
           <div className={styles.boxed} tabIndex={0} role="region" aria-label="Members list">
-            <table className={styles.table}>
+            <table className={`${styles.table} ${styles.oneLine} ${styles.cardsOnPhone}`}>
               <thead>
                 <tr>
                   <th>Household</th>
-                  <th>Main contact</th>
                   <th>Google account</th>
                   <th>Size</th>
                   <th>Membership</th>
                   <th>Role</th>
-                  <th><span className="sr-only">Edit</span></th>
+                  <th>
+                    <span className="sr-only">Edit</span>
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {shown.map((household) => (
                   <tr key={household.id}>
-                    <td>
-                      <strong>{household.name}</strong>
-                      {household.id === who?.householdId ? (
-                        <span className={`${styles.muted} ${styles.tiny}`}> (you)</span>
-                      ) : null}
+                    <td data-label="Household">
+                      <span className={styles.who}>
+                        <span className={styles.initials} aria-hidden="true">
+                          {initialsOf(household.name)}
+                        </span>
+                        <span className={styles.whoText}>
+                          <strong>
+                            {household.name}
+                            {household.id === who?.householdId ? (
+                              <span className={`${styles.muted} ${styles.tiny}`}> (you)</span>
+                            ) : null}
+                          </strong>
+                          <span className={`${styles.muted} ${styles.tiny}`}>
+                            {[household.contactName, household.email ?? household.phone].filter(Boolean).join(' · ')}
+                          </span>
+                        </span>
+                      </span>
                     </td>
-                    <td className={styles.muted}>{household.contactName}</td>
-                    <td className={`${styles.tiny} ${styles.muted}`}>
+                    <td data-label="Google account" className={`${styles.tiny} ${styles.muted}`}>
                       {household.googleEmail ?? <span className={styles.pillPast}>Never signed in</span>}
                     </td>
-                    <td className={`${styles.num} ${styles.muted}`}>{describeSize(household)}</td>
-                    <td>
+                    <td data-label="Size" className={`${styles.num} ${styles.muted} ${styles.nowrap}`}>
+                      {describeSize(household)}
+                    </td>
+                    <td data-label="Membership">
                       <span className={household.membership.status === 'active' ? styles.pillLive : styles.pillPast}>
                         {household.membership.status === 'active' ? 'Paid' : 'Lapsed'}
                       </span>
                     </td>
-                    <td>
-                      <span className={household.role === 'admin' ? styles.pillWait : styles.pill}>
-                        {household.role === 'admin' ? 'Admin' : 'Member'}
-                      </span>
+                    <td data-label="Role">
+                      <span className={styles.pillTag}>{household.role === 'admin' ? 'Admin' : 'Member'}</span>
                     </td>
-                    <td>
-                      <Button
-                        variant="line"
-                        size="sm"
-                        aria-label={`Edit ${household.name}`}
-                        onClick={() => setOpen(household)}
-                      >
-                        Edit
-                      </Button>
+                    <td className={styles.rowActions}>
+                      <span className={styles.actions}>
+                        <Button
+                          variant="line"
+                          size="sm"
+                          aria-label={`Edit ${household.name}`}
+                          onClick={() => setOpen(household)}
+                        >
+                          Edit
+                        </Button>
+                        <RowMenu
+                          about={household.name}
+                          items={[
+                            ...(household.email ? [{ label: `Email ${household.contactName}`, href: `mailto:${household.email}` }] : []),
+                            ...(household.phone ? [{ label: `Call ${household.contactName}`, href: `tel:${household.phone}` }] : []),
+                            ...(household.id !== who?.householdId
+                              ? [{ label: 'Remove…', onSelect: () => setOpen(household) }]
+                              : []),
+                          ]}
+                        />
+                      </span>
                     </td>
                   </tr>
                 ))}

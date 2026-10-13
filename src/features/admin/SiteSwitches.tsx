@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { ActionBar } from '@/components/ActionBar'
 import { Button } from '@/components/Button'
+import { InfoNote } from '@/components/InfoNote'
 import {
   HOME_SECTIONS,
   HOME_SECTION_LABELS,
@@ -45,7 +46,7 @@ import {
   type PrivacyRow,
 } from './SettingsEditors'
 import styles from './ContentForms.module.css'
-import { isSectionKey, SITE_SECTIONS, type SectionKey } from './siteSections'
+import { isSectionKey, SITE_SECTIONS, type SectionKey, type SitePart } from './siteSections'
 
 
 const AUDIENCES: { value: SectionAudience; label: string }[] = [
@@ -170,10 +171,13 @@ function Section({
                   <span className={styles.hint} role="status">
                     Saved. The site changes for everybody straight away.
                   </span>
+                ) : !unsaved && !saving ? (
+                  // Said rather than shown as a greyed-out button, which reads as broken.
+                  <span className={styles.hint}>All saved</span>
                 ) : null
               }
             >
-              <Button variant="gold" type="submit" size="sm" disabled={saving || !unsaved}>
+              <Button variant={unsaved || saving ? 'gold' : 'line'} type="submit" size="sm" disabled={saving || !unsaved}>
                 {saving ? 'Saving…' : saveLabel}
               </Button>
             </ActionBar>
@@ -186,12 +190,15 @@ function Section({
 }
 
 export function SiteSwitches({
+  part,
   settings,
   onSave,
   saving,
   saved,
   error,
 }: {
+  /** Which screen this is: Site settings, or Home and About pages. Each draws only its own. */
+  part: SitePart
   settings: SiteSettings
   onSave: (draft: SiteSettings) => void
   saving?: boolean
@@ -302,7 +309,7 @@ export function SiteSwitches({
   const asSaved = JSON.stringify(settings)
   const dirty = (k: SectionKey) => JSON.stringify(apply[k]()) !== asSaved
 
-  const [open, setOpen] = useState<SectionKey[]>(['switches'])
+  const [open, setOpen] = useState<SectionKey[]>(part === 'site' ? ['switches'] : ['home'])
   const [attempted, setAttempted] = useState<SectionKey | null>(null)
   const toggle = (k: SectionKey) => setOpen((now) => (now.includes(k) ? now.filter((x) => x !== k) : [...now, k]))
 
@@ -357,6 +364,8 @@ export function SiteSwitches({
 
   return (
     <div className={styles.sections}>
+      {part === 'site' ? (
+        <>
       <h3 className={styles.groupTitle}>The whole site</h3>
       <Section {...sectionProps('switches')} label={SITE_SECTIONS.switches} summary={`${SWITCH_KEYS.filter((k) => draft[k]).length} of ${SWITCH_KEYS.length} switched on`} saveLabel="Save the switches">
         {(Object.keys(SETTING_LABELS) as (keyof typeof SETTING_LABELS)[]).map((key) => (
@@ -405,10 +414,12 @@ export function SiteSwitches({
       </Section>
 
       <Section {...sectionProps('words')} label={SITE_SECTIONS.words} summary={`${SITE_TEXT_KEYS.filter((k) => isPlaceholder(draft.text[k] ?? '')).length} still in brackets`} saveLabel="Save the wording">
-        <p className={styles.hint}>
-          The single lines. Anything that is a list — the festivals, the story, the channels, the
-          theme’s photographs — has a section of its own on this page.
-        </p>
+        <InfoNote summary="What goes here">
+          <p>
+            The single lines. Anything that is a list — the festivals, the story, the channels, the
+            theme’s photographs — has a section of its own on this page.
+          </p>
+        </InfoNote>
         {SITE_TEXT_KEYS.map((key) => {
           const field = SITE_TEXT_FIELDS[key]
           const bracketed = isPlaceholder(draft.text[key] ?? '')
@@ -447,10 +458,12 @@ export function SiteSwitches({
       </Section>
 
       <Section {...sectionProps('social')} label={SITE_SECTIONS.social} summary={`${tidySocial(draft.social).length} channels`} saveLabel="Save the channels">
-        <p className={styles.hint}>
-          In the footer of every page and on the contact page, in this order. The footer draws only
-          the ones with an address.
-        </p>
+        <InfoNote summary="Where these show">
+          <p>
+            In the footer of every page and on the contact page, in this order. The footer draws only
+            the ones with an address.
+          </p>
+        </InfoNote>
         <SocialEditor rows={draft.social} onChange={(social) => setDraft({ ...draft, social })} />
         <div className={styles.field}>
           <label className={styles.label} htmlFor="volunteerFormUrl">
@@ -473,18 +486,25 @@ export function SiteSwitches({
         </div>
       </Section>
 
+        </>
+      ) : (
+        <>
       <h3 className={styles.groupTitle}>The home page</h3>
 
       <Section {...sectionProps('home')} label={SITE_SECTIONS.home} summary={`${draft.homeOrder.length} parts`} saveLabel="Save the home page">
-        <p className={styles.hint}>
-          The order they come in, between the name at the top and the invitation at the bottom.
-          A part that is switched off or has nothing to show takes up no room wherever it is.
-        </p>
+        <InfoNote summary="How the order works">
+          <p>
+            The order they come in, between the name at the top and the invitation at the bottom.
+            A part that is switched off or has nothing to show takes up no room wherever it is.
+          </p>
+        </InfoNote>
         <OrderEditor order={draft.homeOrder} onChange={(homeOrder) => setDraft({ ...draft, homeOrder })} />
-        <p className={styles.hint}>
-          A section set to the committee is a way of getting something ready where only you can see
-          it. Nothing here makes anything private — it decides what is drawn, not what is sent.
-        </p>
+        <InfoNote summary="Who sees each part">
+          <p>
+            A section set to the committee is a way of getting something ready where only you can see
+            it. Nothing here makes anything private — it decides what is drawn, not what is sent.
+          </p>
+        </InfoNote>
         <div className={styles.row}>
           {HOME_SECTIONS.map((section) => (
             <div key={section} className={styles.field}>
@@ -511,11 +531,13 @@ export function SiteSwitches({
       </Section>
 
       <Section {...sectionProps('festivals')} label={SITE_SECTIONS.festivals} summary={`${tidyFestivals(draft.festivals).length} festivals`} saveLabel="Save the festivals">
-        <p className={styles.hint}>
-          “Our year” on the home page and the filter on the Events page, in this order. To mark one
-          as next up, choose it on the evening itself, under Events. Removing a festival does not
-          remove its evenings — they simply stop being filed under anything.
-        </p>
+        <InfoNote summary="Where these show">
+          <p>
+            “Our year” on the home page and the filter on the Events page, in this order. To mark one
+            as next up, choose it on the evening itself, under Events. Removing a festival does not
+            remove its evenings — they simply stop being filed under anything.
+          </p>
+        </InfoNote>
         <FestivalEditor rows={draft.festivals} onChange={(festivals) => setDraft({ ...draft, festivals })} />
       </Section>
 
@@ -544,18 +566,22 @@ export function SiteSwitches({
       </Section>
 
       <Section {...sectionProps('values')} label={SITE_SECTIONS.values} summary={`${tidyValues(draft.values).length} values`} saveLabel="Save the values">
-        <p className={styles.hint}>
-          The cards under the story. One with no heading or no sentence is left out rather than
-          shown half-finished.
-        </p>
+        <InfoNote summary="Where these show">
+          <p>
+            The cards under the story. One with no heading or no sentence is left out rather than
+            shown half-finished.
+          </p>
+        </InfoNote>
         <ValuesEditor rows={draft.values} onChange={(values) => setDraft({ ...draft, values })} />
       </Section>
 
       <Section {...sectionProps('committee')} label={SITE_SECTIONS.committee} summary={`${tidyCommittee(draft.committee).length} people`} saveLabel="Save the committee">
-        <p className={styles.hint}>
-          As shown on the About page, in this order — which is not a ranking. It changes at the AGM
-          every year, which is exactly the sort of thing that should not need a developer.
-        </p>
+        <InfoNote summary="Where these show">
+          <p>
+            As shown on the About page, in this order — which is not a ranking. It changes at the AGM
+            every year, which is exactly the sort of thing that should not need a developer.
+          </p>
+        </InfoNote>
         <ActionBar sticky={false}>
           <Button
             variant="line"
@@ -625,10 +651,12 @@ export function SiteSwitches({
       </Section>
 
       <Section {...sectionProps('faq')} label={SITE_SECTIONS.faq} summary={`${tidyFaq(draft.faq).length} questions`} saveLabel="Save the questions">
-        <p className={styles.hint}>
-          On the About page, in this order. Anything left in [square brackets] is shown to visitors exactly
-          as it appears, so finish a sentence before you save it.
-        </p>
+        <InfoNote summary="Where these show">
+          <p>
+            On the About page, in this order. Anything left in [square brackets] is shown to visitors exactly
+            as it appears, so finish a sentence before you save it.
+          </p>
+        </InfoNote>
         <ActionBar sticky={false}>
           <Button
             variant="line"
@@ -676,14 +704,21 @@ export function SiteSwitches({
       <h3 className={styles.groupTitle}>Events</h3>
 
       <Section {...sectionProps('collage')} label={SITE_SECTIONS.collage} summary={`${draft.collage.photos.length} photographs`} saveLabel="Save the photographs">
-        <p className={styles.hint}>
-          The black-and-white-into-colour collage on the page of any evening that has a theme. The
-          theme’s own words are set on the evening, under Events; these are the pictures behind it.
-          Taking one out of this list takes it off the page, but does not delete the file.
-        </p>
+        <InfoNote summary="Where these show">
+          <p>
+            The black-and-white-into-colour collage on the page of any evening that has a theme. The
+            theme’s own words are set on the evening, under Events; these are the pictures behind it.
+            Taking one out of this list takes it off the page, but does not delete the file.
+          </p>
+        </InfoNote>
         <CollageEditor value={draft.collage} onChange={(collage) => setDraft({ ...draft, collage })} />
       </Section>
 
+        </>
+      )}
+
+      {part === 'site' ? (
+        <>
       <h3 className={styles.groupTitle}>Small print, and the portal</h3>
 
       <Section {...sectionProps('privacy')} label={SITE_SECTIONS.privacy} summary={`Last updated ${settings.privacy.updatedOn}`} saveLabel="Save the notice">
@@ -737,6 +772,8 @@ export function SiteSwitches({
         <ToolsEditor rows={draft.tools} onChange={(tools) => setDraft({ ...draft, tools })} />
       </Section>
 
+        </>
+      ) : null}
     </div>
   )
 }

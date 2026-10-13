@@ -41,7 +41,7 @@ type Tab = 'polls' | 'quizzes' | 'bank' | 'suggestions'
 const STATE_WORDS: Record<PollState, string> = { draft: 'Draft', scheduled: 'Scheduled', open: 'Open', closed: 'Closed' }
 const STATE_PILL: Record<PollState, string> = {
   draft: portal.pillPast,
-  scheduled: portal.pillWait,
+  scheduled: portal.pillPast,
   open: portal.pillLive,
   closed: portal.pillPast,
 }

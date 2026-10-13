@@ -32,9 +32,9 @@ describe('household', () => {
   it('counts adults and children separately', () => {
     expect(adults(base)).toBe(2)
     expect(children(base)).toBe(1)
-    expect(describeSize(base)).toBe('2 adults, 1 child')
+    expect(describeSize(base)).toBe('2 adults · 1 child')
     expect(describeSize({ people: [base.people[0]] })).toBe('1 adult')
-    expect(describeSize({ people: [...base.people, { id: 'p4', name: 'B', ageGroup: 'child' }] })).toBe('2 adults, 2 children')
+    expect(describeSize({ people: [...base.people, { id: 'p4', name: 'B', ageGroup: 'child' }] })).toBe('2 adults · 2 children')
   })
 
 

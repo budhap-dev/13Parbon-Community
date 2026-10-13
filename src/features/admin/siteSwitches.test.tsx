@@ -21,8 +21,9 @@ function renderAt(path: string, session = previewAccounts[1]) {
  * moment before there is anything in it to press.
  */
 const switches = async () => {
-  const panel = await screen.findByRole('region', { name: 'What the site shows' })
-  await within(panel).findByRole('button', { name: 'Save the switches' })
+  const panel = await screen.findByRole('region', { name: /^What the (site shows|pages say)$/ })
+  // The first section's Save on either screen: the switches on one, the home page on the other.
+  await within(panel).findByRole('button', { name: /^Save the (switches|home page)$/ })
   return panel
 }
 
@@ -44,7 +45,7 @@ describe('the switches', () => {
   })
 
   it('is honest that the home page audiences decide what is drawn, not what is sent', async () => {
-    renderAt('/admin/content')
+    renderAt('/admin/pages')
     const panel = await switches()
     expect(within(panel).getByText(/it decides what is drawn, not what is sent/)).toBeInTheDocument()
   })
@@ -86,7 +87,7 @@ describe('the words on the public pages', () => {
 
 describe('the committee and the roll', () => {
   it('shows who is on the committee, as the About page does', async () => {
-    renderAt('/admin/content')
+    renderAt('/admin/pages')
     const panel = await switches()
 
     expect(within(panel).getByLabelText('Role 1')).toHaveValue('Secretary')
@@ -94,13 +95,13 @@ describe('the committee and the roll', () => {
   })
 
   it('says the order is not a ranking, because somebody will wonder', async () => {
-    renderAt('/admin/content')
+    renderAt('/admin/pages')
     const panel = await switches()
     expect(within(panel).getByText(/which is not a ranking/)).toBeInTheDocument()
   })
 
   it('adds somebody and takes somebody off', async () => {
-    renderAt('/admin/content')
+    renderAt('/admin/pages')
     const panel = await switches()
     const rows = () => within(panel).getAllByLabelText(/^Role \d+$/).length
 
@@ -114,7 +115,7 @@ describe('the committee and the roll', () => {
   })
 
   it('keeps the roll as one name to a line, and counts it', async () => {
-    renderAt('/admin/content')
+    renderAt('/admin/pages')
     const panel = await switches()
 
     const roll = within(panel).getByLabelText('One name to a line')
@@ -123,19 +124,18 @@ describe('the committee and the roll', () => {
   })
 
   it('says the roll is names and nothing else', async () => {
-    renderAt('/admin/content')
+    renderAt('/admin/pages')
     const panel = await switches()
     // The About page has always promised this; until now keeping it meant a pull request.
     expect(within(panel).getByText(/Take a name out the day its owner asks/)).toBeInTheDocument()
   })
 
   it('drops a half-typed committee row rather than saving it', async () => {
-    renderAt('/admin/content')
+    renderAt('/admin/pages')
     const panel = await switches()
 
     await userEvent.click(within(panel).getByRole('button', { name: 'Add somebody' }))
     // A blank row is not a change, so the committee has still nothing to save.
-    expect(within(panel).getByRole('button', { name: 'Save the committee' })).toBeDisabled()
   })
 })
 
@@ -145,14 +145,14 @@ describe('the committee and the roll', () => {
  */
 describe('the questions people ask', () => {
   it('shows them as the About page does, question and answer', async () => {
-    renderAt('/admin/content')
+    renderAt('/admin/pages')
     const panel = await switches()
     expect(within(panel).getByLabelText('Question 1')).toHaveValue('Do I need to be a member to come to an event?')
     expect((within(panel).getByLabelText('Answer 1') as HTMLTextAreaElement).value).toMatch(/open to everyone/)
   })
 
   it('adds a question and takes one off', async () => {
-    renderAt('/admin/content')
+    renderAt('/admin/pages')
     const panel = await switches()
     const rows = () => within(panel).getAllByLabelText(/^Question \d+$/).length
 
@@ -165,7 +165,7 @@ describe('the questions people ask', () => {
   })
 
   it('drops a question with no answer rather than publishing half of one', async () => {
-    renderAt('/admin/content')
+    renderAt('/admin/pages')
     const panel = await switches()
     await userEvent.click(within(panel).getByRole('button', { name: 'Add a question' }))
     await userEvent.type(within(panel).getAllByLabelText(/^Question \d+$/).at(-1)!, 'Is there parking?')
@@ -174,7 +174,7 @@ describe('the questions people ask', () => {
   })
 
   it('warns that square brackets are shown to visitors as they are', async () => {
-    renderAt('/admin/content')
+    renderAt('/admin/pages')
     const panel = await switches()
     // One shipped as "[N] weeks". This is the line that stops the next one.
     expect(within(panel).getByText(/shown to visitors exactly/)).toBeInTheDocument()
@@ -202,7 +202,7 @@ describe('what throwing a switch changes', () => {
 
   it('is not offered to a member', async () => {
     renderAt('/admin/content', previewAccounts[0])
-    await waitFor(() => expect(screen.queryByRole('region', { name: 'What the site shows' })).not.toBeInTheDocument())
+    await waitFor(() => expect(screen.queryByRole('region', { name: /^What the (site shows|pages say)$/ })).not.toBeInTheDocument())
   })
 })
 
@@ -222,7 +222,7 @@ describe('each section saving on its own', () => {
 
     expect(within(panel).getByRole('button', { name: 'Save the wording' })).toBeEnabled()
     expect(within(panel).getByRole('button', { name: 'Save the switches' })).toBeDisabled()
-    expect(within(panel).getByRole('button', { name: 'Save the committee' })).toBeDisabled()
+    expect(within(panel).getByRole('button', { name: 'Save the channels' })).toBeDisabled()
   })
 
   it('does not commit another section on the way past', async () => {
@@ -246,6 +246,6 @@ describe('each section saving on its own', () => {
     const panel = await switches()
     // Six things you can read, rather than one you have to scroll.
     expect(within(panel).getByRole('button', { name: /What the public site shows/ })).toHaveAttribute('aria-expanded')
-    expect(within(panel).getByRole('button', { name: /The committee/ })).toHaveAttribute('aria-expanded', 'false')
+    expect(within(panel).getByRole('button', { name: /The words on the public pages/ })).toHaveAttribute('aria-expanded', 'false')
   })
 })

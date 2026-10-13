@@ -56,7 +56,7 @@ export function AdminFeedbackPage() {
         <div>
           <h1 className={styles.title}>Feedback</h1>
           <p className={styles.sub}>
-            What the public has sent in. Nothing appears on the website until you approve it here.
+            Nothing the public sends in appears on the website until you approve it.
           </p>
         </div>
       </div>

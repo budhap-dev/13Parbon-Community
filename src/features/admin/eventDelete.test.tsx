@@ -26,7 +26,8 @@ async function renderEvents() {
 describe('deleting an event', () => {
   it('asks first, and keeping it changes nothing', async () => {
     const table = await renderEvents()
-    await userEvent.click(await table.findByRole('button', { name: 'Delete Picnic (draft)' }))
+    await userEvent.click(await table.findByRole('button', { name: 'More for Picnic (draft)' }))
+    await userEvent.click(table.getByRole('button', { name: 'Delete…' }))
     const asking = screen.getByRole('dialog', { name: 'Delete this event?' })
     expect(asking).toHaveTextContent(/Picnic \(draft\).*goes for good/)
     expect(asking).toHaveTextContent(/set it to Draft in Design instead/)
@@ -38,7 +39,8 @@ describe('deleting an event', () => {
 
   it('takes it out of the list once confirmed', async () => {
     const table = await renderEvents()
-    await userEvent.click(await table.findByRole('button', { name: 'Delete Picnic (draft)' }))
+    await userEvent.click(await table.findByRole('button', { name: 'More for Picnic (draft)' }))
+    await userEvent.click(table.getByRole('button', { name: 'Delete…' }))
     await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Delete' }))
 
     await waitFor(() => expect(table.queryByRole('row', { name: /Picnic \(draft\)/ })).not.toBeInTheDocument())
@@ -47,7 +49,8 @@ describe('deleting an event', () => {
 
   it('warns when the evening is on the website now', async () => {
     const table = await renderEvents()
-    await userEvent.click(await table.findByRole('button', { name: 'Delete Cultural programme' }))
+    await userEvent.click(await table.findByRole('button', { name: 'More for Cultural programme' }))
+    await userEvent.click(table.getByRole('button', { name: 'Delete…' }))
     expect(screen.getByRole('dialog')).toHaveTextContent(/It is on the website now/)
   })
 
@@ -60,7 +63,8 @@ describe('deleting an event', () => {
     await userEvent.click(screen.getByRole('button', { name: /Record it|Correct the count/ }))
     await screen.findByRole('button', { name: 'Correct the count' })
 
-    await userEvent.click(table.getByRole('button', { name: 'Delete Cultural programme' }))
+    await userEvent.click(table.getByRole('button', { name: 'More for Cultural programme' }))
+    await userEvent.click(table.getByRole('button', { name: 'Delete…' }))
     const asking = screen.getByRole('dialog')
     await userEvent.click(within(asking).getByRole('button', { name: 'Delete' }))
 

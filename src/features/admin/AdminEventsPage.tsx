@@ -3,8 +3,8 @@ import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { useOpenFromAddress } from '@/app/useOpenFromAddress'
 import { useScrollToTopOn } from '@/app/useScrollToTopOn'
 import { Button } from '@/components/Button'
+import { RowMenu } from '@/components/RowMenu'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
-import { Icon } from '@/components/Icon'
 import { LoadFailed } from '@/components/LoadFailed'
 import { formatDateWithYear, formatLongDate, formatTime } from '@/domain/dates'
 import {
@@ -168,7 +168,7 @@ export function AdminEventsPage() {
           </Button>
         </div>
         <div className={styles.scroll}>
-          <table className={styles.table}>
+          <table className={`${styles.table} ${styles.cardsOnPhone}`}>
             <thead>
               <tr>
                 <th>Event</th>
@@ -203,27 +203,29 @@ export function AdminEventsPage() {
               ) : null}
               {(allEvents ?? []).map((e) => (
                 <tr key={e.id}>
-                  <td>
+                  <td data-label="Event">
                     <strong>{e.title}</strong>
                   </td>
-                  <td className={`${styles.muted} ${styles.tiny}`}>{formatDateWithYear(e.startsAt)}</td>
-                  <td>
+                  <td data-label="When" className={`${styles.muted} ${styles.tiny}`}>{formatDateWithYear(e.startsAt)}</td>
+                  <td data-label="Registration">
                     <span className={e.registrationOpen ? styles.pillLive : styles.pill}>
                       {e.registrationOpen ? 'Open' : 'Closed'}
                     </span>
                   </td>
-                  <td>
+                  <td data-label="Status">
                     <span className={e.status === 'published' ? styles.pillLive : styles.pillPast}>
                       {/* Cancelled said Draft, which is the one thing a cancelled evening is not:
                           it is still up, saying so. */}
                       {STATUS_WORDS[e.status]}
                     </span>
                   </td>
-                  <td>
+                  <td className={styles.rowActions}>
                     <span className={styles.actions}>
                       <Button variant="line" size="sm" aria-label={`Design ${e.title}`} onClick={() => setDesigning(e)}>
                         Design
                       </Button>
+                      {/* Out on the row rather than in More: an evening that has been and gone
+                          and is still up is waiting on the committee, and says so. */}
                       {readyToArchive(e, now) ? (
                         <Button
                           variant="line"
@@ -235,17 +237,18 @@ export function AdminEventsPage() {
                           Archive
                         </Button>
                       ) : null}
-                      <Button
-                        variant="danger"
-                        size="sm"
-                        aria-label={`Delete ${e.title}`}
-                        onClick={() => {
-                          remove.reset()
-                          setDeleting(e)
-                        }}
-                      >
-                        <Icon name="trash" size={15} />
-                      </Button>
+                      <RowMenu
+                        about={e.title}
+                        items={[
+                          {
+                            label: 'Delete…',
+                            onSelect: () => {
+                              remove.reset()
+                              setDeleting(e)
+                            },
+                          },
+                        ]}
+                      />
                     </span>
                   </td>
                 </tr>

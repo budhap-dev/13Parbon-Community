@@ -85,13 +85,13 @@ export function children(household: Pick<Household, 'people'>): number {
   return household.people.filter((p) => p.ageGroup === 'child').length
 }
 
-/** "2 adults, 1 child", or "2 adults" when there are none. */
+/** "2 adults · 1 child", or "2 adults" when there are none. */
 export function describeSize(household: Pick<Household, 'people'>): string {
   const a = adults(household)
   const c = children(household)
   const parts = [`${a} ${a === 1 ? 'adult' : 'adults'}`]
   if (c > 0) parts.push(`${c} ${c === 1 ? 'child' : 'children'}`)
-  return parts.join(', ')
+  return parts.join(' · ')
 }
 
 /**

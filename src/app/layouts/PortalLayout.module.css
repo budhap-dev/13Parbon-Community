@@ -839,7 +839,107 @@
 
   .content {
     padding-top: 22px;
+    /* Room for the bottom bar, so the last row is not under it. */
+    padding-bottom: 96px;
   }
+
+  /* A thumb's worth for every button in the portal. */
+  .shell {
+    --button-sm-height: 44px;
+  }
+
+  /*
+   * Preview as a 36px strip: the word, and the way out. The sentence explaining it is for a
+   * screen wide enough to have room for it; on a phone it was four lines over every screen.
+   */
+  .preview {
+    flex-wrap: nowrap;
+    min-height: 36px;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+
+  .previewText {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .leavePreview {
+    flex-shrink: 0;
+  }
+
+  .tabBar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    padding: 4px 6px calc(4px + env(safe-area-inset-bottom));
+    background: var(--portal-side-bg, var(--color-bg-raised));
+    color: var(--side-fg, var(--color-fg));
+    border-top: 1px solid var(--side-border, var(--color-border));
+  }
+
+  .foot {
+    padding-bottom: 84px;
+  }
+}
+
+/* Held under the sticky bar and the Save bar beneath it, so a jump to a field lands in view. */
+@media (max-width: 900px) {
+  :global(html):has(.shell) {
+    scroll-padding-top: 140px;
+  }
+}
+
+.tab,
+.tabOn {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 52px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: var(--side-muted, var(--color-fg-muted));
+  font: inherit;
+  font-size: var(--portal-text-xs);
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.tabOn {
+  color: var(--side-fg, var(--color-fg));
+  background: var(--portal-side-wash, var(--color-hover-wash));
+}
+
+.tab:focus-visible,
+.tabOn:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: -3px;
+}
+
+.tabCount {
+  position: absolute;
+  top: 4px;
+  left: calc(50% + 6px);
+  min-width: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  font-size: 11px;
+  line-height: 18px;
+  text-align: center;
 }
 
 @media (prefers-reduced-motion: reduce) {

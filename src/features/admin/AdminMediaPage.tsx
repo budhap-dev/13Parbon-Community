@@ -88,8 +88,7 @@ export function AdminMediaPage() {
         <div>
           <h1 className={styles.title}>Photographs</h1>
           <p className={styles.sub}>
-            Your albums of photographs. They are kept in the site's own photo storage, so deleting
-            one really deletes it.
+            Albums of photographs, in the site's own storage: deleting one really deletes it.
           </p>
         </div>
       </div>
@@ -137,7 +136,7 @@ export function AdminMediaPage() {
                     {album.media.length} {album.media.length === 1 ? 'photograph' : 'photographs'} ·{' '}
                     {formatLongDate(album.publishedAt)}
                   </span>
-                  <span className={album.visibility === 'public' ? styles.pillLive : styles.pillWait}>
+                  <span className={album.visibility === 'public' ? styles.pillLive : styles.pillPast}>
                     {album.visibility === 'public' ? 'On the website' : 'Not published yet'}
                   </span>
                 </span>
