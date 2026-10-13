@@ -789,6 +789,11 @@
   cursor: zoom-in;
 }
 
+.tileOpen:focus-visible {
+  /* The tile clips its corners, so the ring goes inside the photo. */
+  outline-offset: -6px;
+}
+
 .tileImage {
   display: block;
   width: 100%;
@@ -1080,6 +1085,13 @@
 
   .heroEmblem {
     display: block;
+    width: 72px;
+    height: 72px;
+  }
+
+  /* The name is one word; with the emblem beside it, it broke as "13 / Parbon". */
+  .heroTitleName {
+    white-space: nowrap;
   }
 
   .heroTitleRow {

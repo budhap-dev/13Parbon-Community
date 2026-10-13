@@ -188,6 +188,12 @@
   outline-offset: 2px;
 }
 
+/* The menu scrolls, so a ring drawn outside a full-width link was cut off at its sides. */
+.link:focus-visible,
+.linkOn:focus-visible {
+  outline-offset: -3px;
+}
+
 .foldMark {
   color: var(--side-faint);
   font-size: var(--portal-text-lg);
@@ -887,6 +893,11 @@
 
   .foot {
     padding-bottom: 84px;
+  }
+
+  /* Tabbing down the page stopped on links hidden behind the tab bar. */
+  :global(html):has(.tabBar) {
+    scroll-padding-bottom: 84px;
   }
 }
 

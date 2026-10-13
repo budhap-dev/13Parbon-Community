@@ -672,6 +672,13 @@
   max-height: min(62vh, 640px);
   overflow: auto;
   overscroll-behavior: contain;
+  /* Room for a focus ring when tabbing scrolls a row in, and clear of the pinned labels. */
+  scroll-padding: 3em 8px 8px;
+}
+
+/* The panel clips, so the list's own ring sits inside it. */
+.boxed:focus-visible {
+  outline-offset: -3px;
 }
 
 .boxed thead th {
@@ -809,9 +816,12 @@
 .decisionLine {
   flex: 1;
   min-width: 0;
+  /* Two lines rather than one: a single line cut off the part that said what to decide. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   font-size: var(--portal-text-md);
 }
 

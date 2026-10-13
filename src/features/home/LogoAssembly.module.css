@@ -65,7 +65,7 @@
   border-radius: 50%;
   border: 2px solid var(--color-accent);
   opacity: 0;
-  animation: settle 1200ms ease-out 1850ms both;
+  animation: settle 1200ms ease-out 1850ms forwards;
 }
 
 @keyframes from-top {

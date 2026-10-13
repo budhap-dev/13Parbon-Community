@@ -10,7 +10,7 @@
 /* The preview follows the form down a long page rather than scrolling off the top of it. */
 .preview {
   position: sticky;
-  top: 24px;
+  top: calc(var(--portal-bar-height, 60px) + 16px);
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -240,7 +240,6 @@
 
   .preview {
     position: static;
-    order: -1;
   }
 }
 

@@ -170,6 +170,13 @@
   font-size: var(--text-md);
 }
 
+@media (min-width: 761px) {
+  .stopStatus {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
 .stopStatus a {
   display: inline-flex;
   align-items: center;

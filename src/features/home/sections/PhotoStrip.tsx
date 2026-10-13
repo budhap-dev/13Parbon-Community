@@ -54,6 +54,12 @@ export function PhotoStrip() {
                 type="button"
                 className={styles.tileOpen}
                 onClick={() => setOpen(i)}
+                // On a phone the row snaps, and the browser's own scroll to a tabbed-to photo
+                // snapped straight back, leaving it half off the edge. Bring it to the start.
+                onFocus={(e) => {
+                  if (e.currentTarget.matches(':focus-visible'))
+                    e.currentTarget.scrollIntoView?.({ block: 'nearest', inline: 'start' })
+                }}
                 aria-label={`Open photo ${i + 1} of ${items.length} full size`}
               >
                 <img className={styles.tileImage} src={item.src} alt={item.alt} loading={i < 2 ? 'eager' : 'lazy'} />

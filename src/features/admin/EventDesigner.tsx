@@ -145,6 +145,8 @@ export function EventDesigner({
 
   const programme = tidyProgramme(draft.programme)
   const countdown = draft.startsAt ? describeCountdown(daysUntil(draft.startsAt, now)) : null
+  // "Next event" above "this evening has happened" contradicted itself; the words the events page uses instead.
+  const happened = draft.startsAt ? daysUntil(draft.startsAt, now) < 0 : false
 
   // Editing something the public can already see is a different act from writing a draft, and
   // the screen should say so before somebody changes a venue on the morning of the event.
@@ -485,7 +487,7 @@ export function EventDesigner({
               ratio={device === 'phone' ? '4 / 3' : '16 / 9'}
             />
             <div className={design.cardBody}>
-              <p className={design.kicker}>Next event</p>
+              <p className={design.kicker}>{happened ? 'Earlier this year' : 'Next event'}</p>
               <h3 className={draft.title ? design.title : design.titleEmpty}>
                 {draft.title || 'Boishakhi 2027'}
               </h3>
