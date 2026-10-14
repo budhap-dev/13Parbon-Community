@@ -6,7 +6,15 @@ type Props = {
   className?: string
   /** In the hero: the Festival alpona rolls along its floor. Elsewhere (the phone menu) it stays put. */
   roll?: boolean
+  /**
+   * On a phone, where the logo sits under the words: the element (a selector inside the floor)
+   * the wheel centres on instead of rolling, turning where it is. The hero passes the emblem.
+   */
+  centreOn?: string
 }
+
+/** Where the hero stacks and the logo follows the words: the width in Home.module.css. */
+const STACKED = '(max-width: 960px)'
 
 const lines = { fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' } as const
 
@@ -29,11 +37,12 @@ const PAISLEY = `M${AC} ${AC - 150} C${AC - 15} ${AC - 158} ${AC - 13} ${AC - 17
 const SCALLOP = `M${AC - 15.7} ${AC - 179.3} A15.7 15.7 0 0 1 ${AC + 15.7} ${AC - 179.3}`
 
 /**
- * Alpona: in the hero, a wheel rolling along the floor — 60% of the way across and back, turning
- * exactly as far as it travels, so it rolls rather than slides. Drawn from the centre out at the
+ * Alpona: in the hero, a wheel rolling along the floor until its centre meets the logo's emblem,
+ * and back (on a phone, centred on the emblem and turning in place), turning exactly as far as it
+ * travels, so it rolls rather than slides. Drawn from the centre out at the
  * start of each run and rubbed out near its end, then drawn again for the way back. Festival.
  */
-function Alpona({ className, roll }: Props) {
+function Alpona({ className, roll, centreOn }: Props) {
   const box = useRef<SVGSVGElement>(null)
   // Each line's length for the dash that draws it; see WhoAlpona for why not pathLength.
   useLayoutEffect(() => {
@@ -50,18 +59,59 @@ function Alpona({ className, roll }: Props) {
     const svg = box.current
     const floor = svg?.parentElement
     if (!roll || !svg || !floor) return
+    const stacked = typeof window.matchMedia === 'function' ? window.matchMedia(STACKED) : null
+    /** The centre of the `centreOn` element, from the floor's top left. Offsets rather than its box, which pops in scaled. */
+    const anchorCentre = () => {
+      const anchor = centreOn ? floor.querySelector<HTMLElement>(centreOn) : null
+      const holder = anchor?.offsetParent
+      if (!anchor || !holder) return null
+      const ground = floor.getBoundingClientRect()
+      const frame = holder.getBoundingClientRect()
+      return {
+        x: frame.left - ground.left + anchor.offsetLeft + anchor.offsetWidth / 2,
+        y: frame.top - ground.top + anchor.offsetTop + anchor.offsetHeight / 2,
+      }
+    }
     const measure = () => {
-      const size = svg.getBoundingClientRect().width
-      const distance = Math.max(0, Math.min(floor.clientWidth * 0.6, floor.clientWidth - size))
+      const centre = anchorCentre()
+      if (centre && stacked?.matches) {
+        // On a phone, centred on the emblem.
+        svg.style.setProperty('--wheel-x', `${centre.x.toFixed(0)}px`)
+        svg.style.setProperty('--wheel-y', `${centre.y.toFixed(0)}px`)
+        svg.style.setProperty('--wheel-shift', '-50% -50%')
+        // No floor to roll along: it turns a quarter one way and back.
+        svg.style.setProperty('--roll-distance', '0px')
+        svg.style.setProperty('--roll-rise', '0px')
+        svg.style.setProperty('--roll-turn', '90deg')
+        return
+      }
+      for (const name of ['--wheel-x', '--wheel-y', '--wheel-shift']) svg.style.removeProperty(name)
+      // The box as laid out, not as it is turned mid-roll. The wheel is fitted into it, so it is
+      // as wide as the box's shorter side, centred.
+      const width = svg.clientWidth
+      const size = Math.min(width, svg.clientHeight)
+      const rest = (parseFloat(getComputedStyle(svg).left) || 0) + width / 2
+      // Across until its centre is on the emblem's, then back; with no emblem, 60% of the floor.
+      const distance = centre
+        ? Math.max(0, centre.x - rest)
+        : Math.max(0, Math.min(floor.clientWidth * 0.6, floor.clientWidth - (width + size) / 2))
+      // And the few pixels up or down that put the two centres on one point at the end.
+      const style = getComputedStyle(svg)
+      const middle = floor.clientHeight - (parseFloat(style.bottom) || 0) - svg.clientHeight / 2
+      svg.style.setProperty('--roll-rise', `${centre ? (centre.y - middle).toFixed(0) : 0}px`)
       svg.style.setProperty('--roll-distance', `${distance.toFixed(0)}px`)
-      svg.style.setProperty('--roll-turn', `${((distance / (size / 2)) * (180 / Math.PI)).toFixed(0)}deg`)
+      svg.style.setProperty('--roll-turn', `${(size ? (distance / (size / 2)) * (180 / Math.PI) : 0).toFixed(0)}deg`)
     }
     measure()
-    if (typeof ResizeObserver === 'undefined') return
+    stacked?.addEventListener('change', measure)
+    if (typeof ResizeObserver === 'undefined') return () => stacked?.removeEventListener('change', measure)
     const watch = new ResizeObserver(measure)
     watch.observe(floor)
-    return () => watch.disconnect()
-  }, [roll])
+    return () => {
+      watch.disconnect()
+      stacked?.removeEventListener('change', measure)
+    }
+  }, [roll, centreOn])
   const step = (n: number) => ({ className: motion.build, style: { ['--step' as string]: n } })
   const dot = (n: number) => ({ className: motion.buildDot, style: { ['--step' as string]: n }, fill: 'currentColor', stroke: 'none' })
   return (
@@ -378,7 +428,10 @@ const FOOT =
   'M0 0 c-7 0 -10 -9 -9 -20 c1 -11 5 -16 9 -16 c4 0 8 5 9 16 c1 11 -2 20 -9 20 Z ' +
   'M-7 -42 a3 3 0 1 0 0.1 0 M-2 -45 a3 3 0 1 0 0.1 0 M3 -45 a3 3 0 1 0 0.1 0 M8 -42 a2.6 2.6 0 1 0 0.1 0'
 
-/** The full moon over drifting cloud, and Lakshmi's footprints walking in. Kojagori. */
+/**
+ * The full moon over drifting cloud, Lakshmi's footprints walking in, and her owl — the pecha —
+ * on a branch above the paddy, turning its head and blinking. Kojagori.
+ */
 function Moon({ className }: Props) {
   // Left, right, left, right: up from the bottom corner towards the door at the middle.
   const steps = [
@@ -409,6 +462,24 @@ function Moon({ className }: Props) {
               <path className={motion.step} d={FOOT} style={{ animationDelay: `${i * 0.6}s` }} />
             </g>
           ))}
+        </g>
+        {/* The owl on its branch: the body sways a little from its feet; the head turns and blinks. */}
+        <path d="M306 276 q44 -8 90 2" />
+        <g className={motion.owl} data-animate="owl">
+          <path d="M352 200 c-20 0 -30 16 -30 36 c0 20 12 34 30 34 c18 0 30 -14 30 -34 c0 -20 -10 -36 -30 -36 Z" />
+          <path d="M328 244 q6 16 20 24 M376 244 q-6 16 -20 24" />
+          <path d="M345 248 l3 3 l3 -3 M353 248 l3 3 l3 -3 M349 256 l3 3 l3 -3" />
+          <path d="M346 270 v6 M358 270 v6" />
+          <g className={motion.owlHead}>
+            <path d="M330 210 l-6 -14 l14 8 M374 210 l6 -14 l-14 8" />
+            <g className={motion.owlEyes}>
+              <circle cx="342" cy="222" r="9" />
+              <circle cx="362" cy="222" r="9" />
+              <circle cx="343" cy="222" r="3.2" fill="currentColor" stroke="none" />
+              <circle cx="361" cy="222" r="3.2" fill="currentColor" stroke="none" />
+            </g>
+            <path d="M349 231 l3 6 l3 -6 Z" />
+          </g>
         </g>
         <path d="M300 388 c0 -40 -6 -70 -20 -96 M312 388 c2 -36 10 -62 26 -84 M324 388 c6 -30 18 -52 40 -66" />
         <path d="M280 292 l-10 -14 M284 304 l-14 -8 M338 304 l6 -16 M344 316 l12 -10 M364 322 l4 -16 M368 330 l14 -6" />
@@ -599,7 +670,7 @@ const backdrops: Record<PublicThemeName, (props: Props) => React.JSX.Element> = 
 }
 
 /** The decorative, gently animated motif behind the hero for the active theme. */
-export function Backdrop({ theme, className, roll }: Props & { theme: ThemeName }) {
+export function Backdrop({ theme, className, roll, centreOn }: Props & { theme: ThemeName }) {
   const Motif = backdrops[theme as PublicThemeName]
-  return Motif ? <Motif className={className} roll={roll} /> : null
+  return Motif ? <Motif className={className} roll={roll} centreOn={centreOn} /> : null
 }

@@ -29,28 +29,44 @@ function groupByMonth(events: Event[]): { key: string; label: string; events: Ev
 type Stop = { festival: Festival; event?: Event; wait: number }
 
 /*
- * Bunting along the year: paper flags in the festivals' colours, with a marigold string every
- * few flags, each swaying a little out of step with its neighbours. Decoration only — hidden
+ * Bunting along the year: a thread tied at each festival's dot and hanging in a curve to the next,
+ * paper flags in the festivals' colours strung along it, and a marigold string at the low point
+ * of each loop, each swaying a little out of step with its neighbours. Decoration only — hidden
  * from screen readers, and still for anybody whose device asks for less motion. On a phone,
- * where the year runs down the page, it is strung across the top of it instead.
+ * where the year runs down the page, three loops are strung across the top of it instead.
  */
 const FLAG_COLOURS = ['#f7b733', '#c8102e', '#be185d', '#1f5fbf', '#ea580c', '#1d6b43', '#8e1a6b', '#0e9aa7']
-const FLAGS = 30
+/** Hung on each loop: flags either side, the marigold string in the middle, at the lowest point. */
+const PER_LOOP = 5
 
-function Bunting() {
+function Bunting({ stops }: { stops: number }) {
+  // A loop between each pair of dots, where the thread is tied, and one more after the last
+  // running on to the edge, so the string does not stop short at the final festival.
+  const loops = stops
   return (
-    <div className={styles.bunting} aria-hidden="true">
-      {Array.from({ length: FLAGS }, (_, i) =>
-        i % 5 === 2 ? (
-          <span key={i} className={styles.marigolds} style={{ '--i': i } as CSSProperties}>
-            <span />
-            <span />
-            <span />
-          </span>
-        ) : (
-          <span key={i} className={styles.flag} style={{ '--i': i, '--flag': FLAG_COLOURS[i % FLAG_COLOURS.length] } as CSSProperties} />
-        ),
-      )}
+    <div className={styles.bunting} aria-hidden="true" style={{ '--stops': stops } as CSSProperties}>
+      {Array.from({ length: loops }, (_, loop) => (
+        <span key={loop} className={styles.loop}>
+          {/* A quadratic sag: the control point twice as deep as the low point, so the flags,
+              placed by the same curve in CSS, sit on the thread. */}
+          <svg className={styles.thread} viewBox="0 0 100 22" preserveAspectRatio="none">
+            <path d="M0 1 Q50 41 100 1" vectorEffect="non-scaling-stroke" />
+          </svg>
+          {Array.from({ length: PER_LOOP }, (_, k) => {
+            const i = loop * PER_LOOP + k
+            const at = { '--i': i, '--t': (k + 1) / (PER_LOOP + 1) } as CSSProperties
+            return k === Math.floor(PER_LOOP / 2) ? (
+              <span key={k} className={styles.marigolds} style={at}>
+                <span />
+                <span />
+                <span />
+              </span>
+            ) : (
+              <span key={k} className={styles.flag} style={{ ...at, '--flag': FLAG_COLOURS[i % FLAG_COLOURS.length] } as CSSProperties} />
+            )
+          })}
+        </span>
+      ))}
     </div>
   )
 }
@@ -176,7 +192,7 @@ export function EventsPage() {
             The year ahead
           </h2>
           <div className={styles.timelineWrap}>
-          <Bunting />
+          <Bunting stops={stops.length} />
           <ol className={styles.timeline}>
             {stops.map(({ festival, event }) => (
               <li key={festival.id} className={event ? styles.stopSet : styles.stop} data-festival={festival.id}>

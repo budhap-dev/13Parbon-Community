@@ -1,0 +1,168 @@
+/*
+ * Ornaments: the festival's trimmings, drawn with gradients on pseudo-elements so they never
+ * take a click, never sit in the reading order and never cover a word. Each one fades with
+ * --ornament-strength (tokens.css): full in Marigold and Peacock, soft in the other portal
+ * themes, off in Paper, and full on every public theme.
+ */
+
+/*
+ * Jhalar: the scalloped alpona edge, half-rounds with a dot in each, like the fringe on a
+ * pandal's canopy. Put `jhalar` on the element and one or more directions — `jhalar-up` and
+ * `jhalar-left` draw with ::before, `jhalar-down` and `jhalar-right` with ::after — and the
+ * edge hangs off that side, outside the element. The element must be positioned.
+ *
+ *   --jhalar-size   the radius of each half-round (12px)
+ *   --jhalar-step   one scallop to the next (twice the size, so they touch)
+ *   --jhalar-fill   the half-rounds: a colour, or a gradient such as the portal's frame
+ *   --jhalar-dot    the alpona dot in each (currentColor); --jhalar-dot-size its radius
+ *   --jhalar-start, --jhalar-end   how far in from each end the edge stops (0)
+ */
+.jhalar {
+  --jhalar-r: var(--jhalar-size, 12px);
+  --jhalar-d: var(--jhalar-dot-size, 2.2px);
+}
+
+:where(.jhalar.jhalar-up)::before,
+:where(.jhalar.jhalar-down)::after,
+:where(.jhalar.jhalar-left)::before,
+:where(.jhalar.jhalar-right)::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+  opacity: var(--ornament-strength, 1);
+  background:
+    radial-gradient(
+        circle at var(--jhalar-at),
+        var(--jhalar-dot, currentColor) var(--jhalar-d),
+        transparent calc(var(--jhalar-d) + 0.6px)
+      )
+      0 0 / var(--jhalar-tile),
+    var(--jhalar-fill, var(--color-bg-raised));
+  mask: radial-gradient(circle at var(--jhalar-at), #000 var(--jhalar-r), transparent calc(var(--jhalar-r) + 0.6px)) 0 0 /
+    var(--jhalar-tile);
+}
+
+:where(.jhalar.jhalar-up)::before,
+:where(.jhalar.jhalar-down)::after {
+  --jhalar-tile: var(--jhalar-step, calc(2 * var(--jhalar-r))) 100%;
+  left: var(--jhalar-start, 0);
+  right: var(--jhalar-end, 0);
+  height: var(--jhalar-r);
+}
+
+:where(.jhalar.jhalar-left)::before,
+:where(.jhalar.jhalar-right)::after {
+  --jhalar-tile: 100% var(--jhalar-step, calc(2 * var(--jhalar-r)));
+  top: var(--jhalar-start, 0);
+  bottom: var(--jhalar-end, 0);
+  width: var(--jhalar-r);
+}
+
+:where(.jhalar.jhalar-up)::before {
+  --jhalar-at: 50% 100%;
+  bottom: 100%;
+}
+
+:where(.jhalar.jhalar-down)::after {
+  --jhalar-at: 50% 0%;
+  top: 100%;
+}
+
+:where(.jhalar.jhalar-left)::before {
+  --jhalar-at: 100% 50%;
+  right: 100%;
+}
+
+:where(.jhalar.jhalar-right)::after {
+  --jhalar-at: 0% 50%;
+  left: 100%;
+}
+
+/*
+ * Curtains: a pandal's drapes, tied back either side of a greeting under a jhalar valance.
+ * ::before is both drapes — pleats from a repeating gradient, cut to a tied-back shape by an
+ * ellipse at each tie — and ::after the valance across the top. The element keeps its words
+ * inside the drapes with its own padding, which goes when the theme turns ornaments off.
+ *
+ *   --curtain        the cloth (the theme's accent)
+ *   --curtain-tie    the cord at each tie (the theme's gold)
+ *   --curtain-width  each drape at the top (64px; 40px on a phone)
+ */
+@property --curtain-draw {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 1;
+}
+
+.curtains {
+  --curtain-on: round(up, var(--ornament-strength, 1), 1);
+  --curtain-w: var(--curtain-width, 64px);
+  --curtain-cloth: var(--curtain, var(--color-accent));
+  --curtain-valance: 14px;
+  --curtain-r: 9px;
+  position: relative;
+  padding: calc(var(--curtain-on) * (var(--curtain-valance) + var(--curtain-r) + 14px))
+    calc(var(--curtain-on) * (var(--curtain-w) + 18px)) calc(var(--curtain-on) * 30px);
+  animation: curtains-open 1.1s cubic-bezier(0.3, 0.7, 0.2, 1) 0.15s both;
+}
+
+.curtains::before,
+.curtains::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+  opacity: var(--ornament-strength, 1);
+}
+
+.curtains::before {
+  /* How far each drape is drawn back at the tie: 0 hangs straight, 1 is tied. */
+  --tie: calc(var(--curtain-draw) * (var(--curtain-w) - 18px));
+  inset: var(--curtain-valance) 0 0;
+  background:
+    linear-gradient(var(--curtain-tie, var(--gold)) 0 0) 0 68% / var(--curtain-w) 6px no-repeat,
+    linear-gradient(var(--curtain-tie, var(--gold)) 0 0) 100% 68% / var(--curtain-w) 6px no-repeat,
+    repeating-linear-gradient(
+      90deg,
+      var(--curtain-cloth) 0 6px,
+      color-mix(in srgb, var(--curtain-cloth) 72%, #000) 6px 8px,
+      color-mix(in srgb, var(--curtain-cloth) 82%, #fff) 8px 10px,
+      var(--curtain-cloth) 10px 13px
+    );
+  mask:
+    radial-gradient(ellipse var(--tie) 68% at 100% 68%, transparent 98%, #000 100%) 0 0 / var(--curtain-w) 100% no-repeat,
+    radial-gradient(ellipse var(--tie) 68% at 0% 68%, transparent 98%, #000 100%) 100% 0 / var(--curtain-w) 100% no-repeat;
+}
+
+/* A solid head of the frame's colour, with the scallops hanging from it. */
+.curtains::after {
+  top: 0;
+  left: 0;
+  right: 0;
+  height: calc(var(--curtain-valance) + var(--curtain-r));
+  background:
+    radial-gradient(circle at 50% 0%, var(--curtain-tie, var(--gold)) 2px, transparent 2.6px) 0 var(--curtain-valance) /
+      calc(2 * var(--curtain-r)) var(--curtain-r) repeat-x,
+    var(--portal-side-bg, var(--curtain-cloth));
+  mask:
+    linear-gradient(#000 0 0) 0 0 / 100% var(--curtain-valance) no-repeat,
+    radial-gradient(circle at 50% 0%, #000 var(--curtain-r), transparent calc(var(--curtain-r) + 0.6px)) 0
+      var(--curtain-valance) / calc(2 * var(--curtain-r)) var(--curtain-r) repeat-x;
+}
+
+@keyframes curtains-open {
+  from {
+    --curtain-draw: 0;
+  }
+}
+
+@media (max-width: 900px) {
+  .curtains {
+    --curtain-w: var(--curtain-width, 40px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .curtains {
+    animation: none;
+  }
+}

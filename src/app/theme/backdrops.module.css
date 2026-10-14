@@ -135,10 +135,10 @@
 
 @keyframes alpona-roll {
   from {
-    transform: translateX(0) rotate(0deg);
+    transform: translate(0, 0) rotate(0deg);
   }
   to {
-    transform: translateX(var(--roll-distance, 0px)) rotate(var(--roll-turn, 0deg));
+    transform: translate(var(--roll-distance, 0px), var(--roll-rise, 0px)) rotate(var(--roll-turn, 0deg));
   }
 }
 
@@ -384,6 +384,65 @@
   }
   to {
     transform: translateX(40px);
+  }
+}
+
+/* Lakshmi's owl: sways on its branch, looks one way and the other, and blinks now and then. */
+.owl {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: owl-sway 9s ease-in-out infinite;
+}
+
+.owlHead {
+  transform-box: fill-box;
+  transform-origin: 50% 80%;
+  animation: owl-look 12s ease-in-out infinite;
+}
+
+.owlEyes {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  animation: owl-blink 5s ease-in-out infinite;
+}
+
+@keyframes owl-sway {
+  0%,
+  100% {
+    transform: rotate(-2deg);
+  }
+  50% {
+    transform: rotate(2deg);
+  }
+}
+
+@keyframes owl-look {
+  0%,
+  20%,
+  100% {
+    transform: rotate(0deg);
+  }
+  28%,
+  44% {
+    transform: rotate(-14deg);
+  }
+  56%,
+  72% {
+    transform: rotate(12deg);
+  }
+  80% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes owl-blink {
+  0%,
+  90%,
+  100% {
+    transform: scaleY(1);
+  }
+  94% {
+    transform: scaleY(0.1);
   }
 }
 

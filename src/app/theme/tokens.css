@@ -573,6 +573,22 @@
   --radius-lg: var(--radius-card);
   /* A selected photograph's ring. Bright on the dark themes, deepened on the light ones. */
   --gold: #c9a227;
+  /* How strongly the ornaments (ornaments.css) show: full on the public site. */
+  --ornament-strength: 1;
+}
+
+/* In the portal: full in the two colourful frames, off in Paper, soft in the rest. */
+[data-theme='linen'],
+[data-theme='sage'],
+[data-theme='mist'],
+[data-theme='slate'],
+[data-theme='midnight'],
+[data-theme='lagoon'] {
+  --ornament-strength: 0.5;
+}
+
+[data-theme='paper'] {
+  --ornament-strength: 0;
 }
 
 [data-theme='poila-boishakh'],

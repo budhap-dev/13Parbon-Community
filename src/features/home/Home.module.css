@@ -25,12 +25,16 @@
 }
 
 .backdrop {
-  /* Sits under the headline in the lower left of the hero, and stays inside it. */
+  /*
+   * The theme's motif fills the left 60% of the hero, behind the headline, at the hero's full
+   * height. The drawing keeps its shape (the viewBox is fitted, not stretched), so it is as tall
+   * as the hero and centred in that 60%.
+   */
   position: absolute;
-  left: -40px;
-  bottom: 0;
-  width: 480px;
-  height: 480px;
+  top: 0;
+  left: 0;
+  width: 60%;
+  height: 100%;
   overflow: visible;
   pointer-events: none;
 }
@@ -47,11 +51,11 @@
   height: 100%;
 }
 
-/* Festival's alpona is a wheel on the hero's floor, just above its bottom edge. */
+/* Festival's alpona is a wheel on the hero's floor, just above its bottom edge, as tall as the hero. */
 [data-theme='festival'] .backdrop {
-  inset: auto auto 6px 0;
-  width: 280px;
-  height: 280px;
+  top: auto;
+  bottom: 6px;
+  height: calc(100% - 6px);
 }
 
 /* The whole hero, by its edges: the diyas sit on its floor, so it must reach the floor. */
@@ -451,8 +455,13 @@
  * keeps its contrast without knowing it is on a different ground.
  */
 .band {
+  composes: jhalar jhalar-up jhalar-down from global;
   --band: #fff3e3;
   --scallop: 14px;
+  /* The alpona edge top and bottom (ornaments.css): half-rounds of the band's own colour. */
+  --jhalar-size: var(--scallop);
+  --jhalar-fill: var(--band);
+  --jhalar-dot: var(--color-ink);
   --color-fg: var(--color-ink);
   --color-fg-muted: color-mix(in srgb, var(--color-ink) 82%, var(--band));
   --color-border: color-mix(in srgb, var(--color-ink) 30%, transparent);
@@ -491,29 +500,6 @@
 
 [data-theme='borodin'] .band {
   --band-light: #dceadb;
-}
-
-.band::before,
-.band::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: var(--scallop);
-  pointer-events: none;
-  /* Half-rounds of the band's own colour, each with an alpona dot in it. */
-  background:
-    radial-gradient(circle at 50% 100%, var(--color-ink) 2.2px, transparent 2.8px) 0 0 / 28px 100% repeat-x,
-    radial-gradient(circle at 50% 100%, var(--band) var(--scallop), transparent calc(var(--scallop) + 0.6px)) 0 0 / 28px 100% repeat-x;
-}
-
-.band::before {
-  bottom: 100%;
-}
-
-.band::after {
-  top: 100%;
-  transform: scaleY(-1);
 }
 
 .band + .band {
@@ -1223,27 +1209,25 @@
   }
 
   /*
-   * Once the hero stacks, the motif can no longer sit under the headline: that is where the
-   * logo lands. It moves to the space the short title leaves at the top right instead, and
-   * shrinks to suit. At 0.14 opacity it reads as texture, not as something behind the words.
+   * Once the hero stacks, the words are on top and the logo under them, so the motif takes the
+   * top 60% of the hero, the full width of the phone. At 0.14 opacity it reads as texture, not
+   * as something behind the words.
    */
+  .backdrop {
+    width: 100%;
+    height: 60%;
+  }
+
   [data-theme='holi'] .backdrop {
     inset: 0;
+    width: 100%;
+    height: 100%;
   }
 
   [data-theme='deepavali'] .backdrop {
     inset: 0;
     width: auto;
     height: auto;
-  }
-
-  .backdrop {
-    top: -24px;
-    right: -72px;
-    bottom: auto;
-    left: auto;
-    width: 340px;
-    height: 340px;
   }
 
   .event {
@@ -1330,13 +1314,6 @@
 }
 
 @media (max-width: 600px) {
-  .backdrop {
-    width: 260px;
-    height: 260px;
-    right: -56px;
-  }
-
-
   .eventBody {
     padding: 24px;
   }
@@ -1797,12 +1774,19 @@
   color: var(--color-on-accent);
 }
 
-/* The wheel on a phone: smaller, still on the floor rather than in the corner the others use. */
+/*
+ * The wheel on a phone: centred on the logo's emblem, turning where it is (backdrops.tsx measures
+ * the emblem and sets --wheel-x and --wheel-y). Until it has, it waits on the floor at the left.
+ */
 @media (max-width: 960px) {
   [data-theme='festival'] .backdrop {
     inset: auto auto 6px 0;
-    width: 190px;
-    height: 190px;
+    left: var(--wheel-x, 0);
+    top: var(--wheel-y, auto);
+    translate: var(--wheel-shift, none);
+    width: min(88%, 340px);
+    height: auto;
+    aspect-ratio: 1;
   }
 }
 

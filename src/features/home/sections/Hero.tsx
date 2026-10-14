@@ -27,7 +27,7 @@ export function Hero({ showNext = true }: { showNext?: boolean }) {
       {heroImage ? (
         <div className={styles.heroImage} style={{ backgroundImage: `url(${heroImage})` }} aria-hidden="true" />
       ) : null}
-      <Backdrop theme={theme} className={styles.backdrop} roll />
+      <Backdrop theme={theme} className={styles.backdrop} roll centreOn='[data-piece="emblem"]' />
       <Container className={styles.heroInner}>
         <div className={styles.heroCopy}>
           <div className={styles.heroTitleRow}>

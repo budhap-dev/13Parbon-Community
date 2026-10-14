@@ -56,6 +56,7 @@
  * a window too short to show it all.
  */
 .side {
+  composes: jhalar jhalar-right from global;
   position: sticky;
   top: 0;
   display: flex;
@@ -69,6 +70,11 @@
   background: var(--portal-side-bg, var(--color-bg-raised));
   color: var(--side-fg);
   border-right: 1px solid var(--side-border);
+  /* A jhalar down its edge (ornaments.css), in the sidebar's own colour, over the page's margin. */
+  --jhalar-size: 8px;
+  --jhalar-fill: var(--portal-side-bg, var(--color-bg-raised));
+  --jhalar-dot: var(--side-accent);
+  --jhalar-dot-size: 1.8px;
 }
 
 .brand {
@@ -512,6 +518,7 @@
  * the same line, so the two read as one band across the top of the screen.
  */
 .sideHead {
+  composes: jhalar jhalar-down from global;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -520,6 +527,14 @@
   margin: 0 -12px;
   padding: 0 12px 0 14px;
   border-bottom: 1px solid var(--side-border);
+  /* A short string of jhalar hanging under the name, in the gap above the menu. */
+  position: relative;
+  --jhalar-size: 7px;
+  --jhalar-start: 22px;
+  --jhalar-end: calc(100% - 22px - 8 * 14px);
+  --jhalar-fill: var(--side-accent);
+  --jhalar-dot: var(--portal-side-fg, var(--color-fg));
+  --jhalar-dot-size: 1.5px;
 }
 
 /* Only a phone has these: the drawer's own close, the shade behind it, the menu button and the
@@ -745,6 +760,12 @@
     transition:
       transform 280ms cubic-bezier(0.2, 0.7, 0.2, 1),
       visibility 0s linear 280ms;
+  }
+
+  /* The drawer has a rounded edge and its own shadow: no jhalar on a phone. */
+  .side::after,
+  .sideHead::after {
+    display: none;
   }
 
   .sideOpen {

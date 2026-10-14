@@ -107,6 +107,8 @@
 
 .timelineWrap {
   --dot: 18px;
+  /* The list's own inset, which the bunting above it matches. */
+  --rail-inset: 40px;
   position: relative;
   margin-top: 18px;
 }
@@ -115,26 +117,76 @@
   position: relative;
   display: grid;
   margin: 0;
+  padding-left: var(--rail-inset);
   grid-auto-columns: minmax(0, 1fr);
   grid-auto-flow: column;
   gap: 24px;
   list-style: none;
 }
 
-/* Strung along the line, under the dots: a dot's own ground hides the flag behind it. */
+/*
+ * Tied at the dots, under them: a dot's own ground hides the knot. The loops sit in a grid of
+ * the same columns as the stops, inset as far as the list is, each starting at its stop's dot
+ * and reaching the next one across the gap. The last runs from the last dot to a bullet at the edge.
+ */
 .bunting {
+  --sag: 20px;
   position: absolute;
-  top: calc(var(--dot) / 2);
-  left: 0;
+  top: calc(var(--dot) / 2 - 1px);
+  left: var(--rail-inset);
   right: 0;
-  display: flex;
-  justify-content: space-between;
-  padding: 0 6px;
+  display: grid;
+  grid-template-columns: repeat(var(--stops), minmax(0, 1fr));
+  gap: 24px;
   pointer-events: none;
 }
 
+.loop {
+  position: relative;
+  width: calc(100% + 24px);
+  height: calc(var(--sag) + 2px);
+  margin-left: calc(var(--dot) / 2);
+}
+
+/* The last runs on to a plain bullet at the edge, so the string is tied off rather than cut. */
+.loop:last-child {
+  width: calc(100% - var(--dot));
+}
+
+.loop:last-child::after {
+  content: '';
+  position: absolute;
+  top: calc(1px - var(--dot) / 2);
+  right: calc(var(--dot) / -2);
+  width: var(--dot);
+  height: var(--dot);
+  border-radius: 50%;
+  border: 3px solid var(--color-border-strong);
+  background: var(--color-bg);
+  box-shadow: 0 0 0 2px var(--color-bg);
+}
+
+.thread {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.thread path {
+  fill: none;
+  stroke: var(--color-border);
+  stroke-width: 2px;
+}
+
+/* Each flag on the curve: across by --t, down by the same parabola the thread follows. */
 .flag,
 .marigolds {
+  position: absolute;
+  left: calc(var(--t) * 100%);
+  top: calc(1px + 4 * var(--sag) * var(--t) * (1 - var(--t)));
+  translate: -50% 0;
   transform-origin: 50% 0;
   animation: sway 3.2s ease-in-out infinite alternate;
   /* Out of step, so the string ripples rather than swinging as one. */
@@ -169,7 +221,57 @@
    is no bunting, the dot sits beside the name instead and this does not apply. */
 @media (min-width: 761px) {
   .timeline .stopDot {
-    margin-bottom: 38px;
+    margin-bottom: 52px;
+  }
+
+  /* The thread is the line on a wide screen; the straight one is the phone's, down the page. */
+  .timeline::before {
+    display: none;
+  }
+
+  /* The Bengali name hangs from its dot on a string of its own, tied at the matra the letters
+     hang from, and turns gently about the knot. --drop is the dot's margin and the list's gap. */
+  .stopBengali {
+    --drop: 56px;
+    position: relative;
+    align-self: flex-start;
+    transform-origin: calc(var(--dot) / 2) calc(-1 * var(--drop));
+    animation: dangle 6s ease-in-out infinite;
+  }
+
+  .stopBengali::before {
+    content: '';
+    position: absolute;
+    left: calc(var(--dot) / 2 - 1px);
+    bottom: calc(100% - 0.32em);
+    width: 2px;
+    height: calc(var(--drop) + var(--dot) / 2 + 0.32em);
+    background: var(--color-border);
+    pointer-events: none;
+  }
+
+  .stop:nth-child(2n) .stopBengali,
+  .stopSet:nth-child(2n) .stopBengali {
+    animation-delay: -2.1s;
+  }
+
+  .stop:nth-child(3n) .stopBengali,
+  .stopSet:nth-child(3n) .stopBengali {
+    animation-delay: -4.3s;
+  }
+}
+
+/* Out and back to rest, so with motion reduced it ends hanging straight. */
+@keyframes dangle {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-2.5deg);
+  }
+  75% {
+    transform: rotate(2.5deg);
   }
 }
 
@@ -288,15 +390,28 @@
   .bunting {
     position: relative;
     top: auto;
-    height: 26px;
-    margin-bottom: 18px;
-    padding: 0 4px;
+    left: 0;
+    height: calc(var(--sag) + 30px);
+    margin-bottom: 12px;
+    grid-template-columns: none;
+    grid-auto-columns: minmax(0, 1fr);
+    grid-auto-flow: column;
+    gap: 0;
     overflow: clip;
-    border-top: 2px solid var(--color-border);
   }
 
-  /* Fifteen flags fit a phone. */
-  .bunting > :nth-child(n + 16) {
+  .loop,
+  .loop:last-child {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .loop:last-child::after {
+    display: none;
+  }
+
+  /* Three loops fit a phone. */
+  .bunting > :nth-child(n + 4) {
     display: none;
   }
 

@@ -105,7 +105,8 @@ export function AdminOverviewPage() {
 
   return (
     <div className={styles.page}>
-      <div className={styles.top}>
+      {/* Tied-back pandal curtains around the greeting: drawn in CSS (ornaments.css). */}
+      <div className={`${styles.top} curtains`}>
         <div>
           <h1 className={styles.title}>
             {greetingAt(now)}, {who?.name.split(' ')[0]}

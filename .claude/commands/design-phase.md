@@ -1,6 +1,6 @@
 ---
-description: Run one phase (0–4) of the design upgrade
-argument-hint: <phase number 0-4>
+description: Run one phase (0–5) of the design upgrade
+argument-hint: <phase number 0-5>
 ---
 
 Read `docs/design-upgrade/phase-$ARGUMENTS.md`. That file is your task for this session. If it does not exist, say so and stop.
