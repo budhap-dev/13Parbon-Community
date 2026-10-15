@@ -236,6 +236,33 @@
   list-style: none;
 }
 
+.format {
+  margin-top: 8px;
+  color: var(--color-fg-muted);
+  font-size: var(--text-sm);
+}
+
+/* What the marks in the box will look like on the page, once there are any. */
+.preview {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 14px 16px;
+  border: 1.5px dashed var(--color-border);
+  border-radius: 12px;
+  font-size: var(--text-md);
+  line-height: 1.65;
+}
+
+.previewLabel {
+  color: var(--color-fg-muted);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .piece {
   display: flex;
   flex-direction: column;
@@ -248,6 +275,8 @@
 
 .quote {
   flex: 1 1 auto;
+  /* A blockquote brings 40px a side from the browser, which a phone-width card cannot spare. */
+  margin: 0;
   font-size: var(--text-md);
   line-height: 1.65;
   text-wrap: pretty;
