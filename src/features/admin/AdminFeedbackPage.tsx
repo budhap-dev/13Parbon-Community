@@ -6,9 +6,9 @@ import { Button } from '@/components/Button'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { Icon } from '@/components/Icon'
 import { LoadFailed } from '@/components/LoadFailed'
+import { RichText } from '@/components/RichText'
 import { formatLongDate, formatTime } from '@/domain/dates'
 import { attributionOf, waiting, type Feedback } from '@/domain/feedback'
-import { paragraphs } from '@/domain/news'
 import { useAllFeedback, useRemoveFeedback, useReviewFeedback, useViewer } from '@/lib/api'
 import { can } from '@/lib/auth/permissions'
 import styles from '@/features/portal/Portal.module.css'
@@ -162,11 +162,9 @@ export function AdminFeedbackPage() {
                   )}
                 </p>
 
-                {paragraphs(open.message).map((text, i) => (
-                  <p key={i} style={{ maxWidth: '60ch', lineHeight: 1.65 }}>
-                    {text}
-                  </p>
-                ))}
+                <div style={{ maxWidth: '60ch', lineHeight: 1.65 }}>
+                  <RichText text={open.message} />
+                </div>
 
                 <div className={styles.actions}>
                   {open.status === 'approved' ? (

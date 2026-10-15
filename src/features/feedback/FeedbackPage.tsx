@@ -1,15 +1,18 @@
-import { useId, useState, type FormEvent } from 'react'
+import { useId, useState, type ClipboardEvent, type FormEvent } from 'react'
 import { useSettings } from '@/app/SettingsContext'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { Button } from '@/components/Button'
 import { Container } from '@/components/Container'
 import { LoadFailed } from '@/components/LoadFailed'
+import { RichText } from '@/components/RichText'
 import { SectionHeading } from '@/components/SectionHeading'
 import { formatLongDate } from '@/domain/dates'
+import { hasFormatting } from '@/domain/whatsappText'
 import { FEEDBACK_MAX, attributionOf, nameForSignature, validateFeedback, type FeedbackErrors } from '@/domain/feedback'
 import { useApi, useApprovedFeedback, useSendFeedback } from '@/lib/api'
 import { GoogleMark } from '@/lib/auth/GoogleMark'
 import { usePublicSignIn } from '@/lib/auth/publicSignIn'
+import { pasteAsWhatsApp } from '@/lib/pasteAsWhatsApp'
 import styles from './Feedback.module.css'
 
 /**
@@ -53,8 +56,25 @@ export function FeedbackPage() {
     send.mutate({ message, signed })
   }
 
+  /*
+   * Formatting copied from WhatsApp Web, Word or an email arrives as HTML, which a textarea
+   * would flatten. Written back as WhatsApp's marks instead, at the cursor, so it survives.
+   */
+  const onPaste = (event: ClipboardEvent<HTMLTextAreaElement>) => {
+    const marked = pasteAsWhatsApp(event.clipboardData.getData('text/html'))
+    if (marked === null) return
+    event.preventDefault()
+    const box = event.currentTarget
+    // Through the browser where it can, so Undo takes the paste back out in one go.
+    if (typeof document.execCommand === 'function' && document.execCommand('insertText', false, marked)) return
+    const next = `${message.slice(0, box.selectionStart)}${marked}${message.slice(box.selectionEnd)}`
+    setMessage(next.slice(0, FEEDBACK_MAX))
+    if (errors.message) setErrors({})
+  }
+
   const left = FEEDBACK_MAX - message.trim().length
   const errorId = `${id}-error`
+  const formatId = `${id}-format`
   const pieces = approved ?? []
 
   return (
@@ -112,9 +132,21 @@ export function FeedbackPage() {
                     setMessage(event.target.value)
                     if (errors.message) setErrors({})
                   }}
+                  onPaste={onPaste}
                   aria-invalid={errors.message ? true : undefined}
-                  aria-describedby={errors.message ? errorId : undefined}
+                  aria-describedby={errors.message ? `${errorId} ${formatId}` : formatId}
                 />
+                <p id={formatId} className={styles.format}>
+                  Formatting from WhatsApp comes through: *bold*, _italic_, ~strikethrough~, and lists
+                  starting with - or 1.
+                </p>
+                {/* Only once there is formatting to see, so a plain note gets no second copy of itself. */}
+                {hasFormatting(message) ? (
+                  <div className={styles.preview}>
+                    <p className={styles.previewLabel}>How it will look</p>
+                    <RichText text={message} />
+                  </div>
+                ) : null}
                 {/* Only near the end: a counter running from the first keystroke reads as a
                     word limit on something we have asked somebody to write freely. */}
                 {left <= 200 ? (
@@ -234,7 +266,9 @@ export function FeedbackPage() {
           <ul className={styles.pieces}>
             {pieces.map((piece) => (
               <li key={piece.id} className={styles.piece}>
-                <blockquote className={styles.quote}>{piece.message}</blockquote>
+                <blockquote className={styles.quote}>
+                  <RichText text={piece.message} />
+                </blockquote>
                 <p className={styles.by}>
                   <span className={styles.byName}>{attributionOf(piece)}</span>
                   <span>{formatLongDate(piece.createdAt)}</span>

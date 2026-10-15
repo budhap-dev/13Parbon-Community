@@ -1064,6 +1064,8 @@
  */
 .saysQuote {
   flex: 1 1 auto;
+  /* A blockquote brings 40px a side from the browser, which a phone-width card cannot spare. */
+  margin: 0;
   font-size: var(--text-md);
   line-height: 1.65;
   text-wrap: pretty;

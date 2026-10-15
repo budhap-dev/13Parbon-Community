@@ -1,4 +1,5 @@
 import { Container } from '@/components/Container'
+import { RichText } from '@/components/RichText'
 import { SectionHeading } from '@/components/SectionHeading'
 import { attributionOf } from '@/domain/feedback'
 import { useApprovedFeedback } from '@/lib/api'
@@ -32,7 +33,10 @@ export function FeedbackStrip() {
         <ul className={styles.sayings}>
           {pieces.map((piece) => (
             <li key={piece.id} className={styles.saysCard}>
-              <blockquote className={styles.saysQuote}>{piece.message}</blockquote>
+              <blockquote className={styles.saysQuote}>
+                {/* Run together: the card clamps to a few lines, which a list would be cut off by. */}
+                <RichText text={piece.message} inline />
+              </blockquote>
               <p className={styles.saysBy}>{attributionOf(piece)}</p>
             </li>
           ))}

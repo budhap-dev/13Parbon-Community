@@ -1,0 +1,52 @@
+.rich {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75em;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.rich > * {
+  margin: 0;
+}
+
+.list {
+  padding-left: 1.4em;
+  list-style: disc;
+}
+
+ol.list {
+  list-style: decimal;
+}
+
+.list li + li {
+  margin-top: 0.25em;
+}
+
+.list li::marker {
+  color: var(--color-accent);
+}
+
+.quote {
+  padding-left: 12px;
+  border-left: 3px solid var(--color-accent);
+  color: var(--color-fg-muted);
+}
+
+.code,
+.pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.9em;
+  background: var(--color-hover-wash);
+  border-radius: 4px;
+}
+
+.code {
+  padding: 0.1em 0.35em;
+}
+
+.pre {
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  white-space: pre-wrap;
+}

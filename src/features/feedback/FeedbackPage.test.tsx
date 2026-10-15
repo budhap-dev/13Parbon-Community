@@ -1,10 +1,11 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 import { routes } from '@/app/router'
 import { defaultSettings } from '@/app/defaults'
 import { createMockApi, type ApiClient } from '@/lib/api'
+import type { Feedback } from '@/domain/feedback'
 import { TestDataProviders } from '@/test/render'
 
 /** The page is behind a switch that starts off, so every test here turns it on first. */
@@ -95,6 +96,29 @@ describe('leaving feedback', () => {
     expect(again).toHaveValue('')
   })
 
+  it('shows how WhatsApp formatting will look, once there is some', async () => {
+    renderPage(withFeedbackOn())
+    const box = await screen.findByLabelText(/what would you like to tell us/i)
+    await userEvent.type(box, 'A plain start')
+    expect(screen.queryByText('How it will look')).not.toBeInTheDocument()
+
+    await userEvent.type(box, ' and a *loud* finish')
+    expect(screen.getByText('How it will look')).toBeInTheDocument()
+    expect(screen.getByText('loud').tagName).toBe('STRONG')
+  })
+
+  it('keeps the formatting of a paste from WhatsApp Web or a document', async () => {
+    renderPage(withFeedbackOn())
+    const box = await screen.findByLabelText<HTMLTextAreaElement>(/what would you like to tell us/i)
+    await userEvent.type(box, 'Said: ')
+    fireEvent.paste(box, {
+      clipboardData: {
+        getData: (type: string) => (type === 'text/html' ? '<span>The <strong>best</strong> <em>Pujo</em></span>' : 'The best Pujo'),
+      },
+    })
+    expect(box).toHaveValue('Said: The *best* _Pujo_')
+  })
+
   it('offers the email address instead when nothing is wired up', async () => {
     const base = createMockApi()
     renderPage({
@@ -123,6 +147,23 @@ describe('what the committee has approved', () => {
     // Waiting, and one that was turned down. Neither belongs on a public page.
     expect(screen.queryByText(/the hall gets very cold/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/testing testing/i)).not.toBeInTheDocument()
+  })
+
+  it('shows WhatsApp formatting as formatting, not as stars and underscores', async () => {
+    const base = createMockApi()
+    const piece: Feedback = {
+      id: 'f-rich',
+      message: 'What a *wonderful* evening.\n\n- the _food_\n- the music',
+      signedIn: false,
+      status: 'approved',
+      createdAt: '2026-10-10T19:00:00Z',
+    }
+    renderPage(withFeedbackOn({ feedback: { ...base.feedback, listApproved: async () => [piece] } }))
+    const bold = await screen.findByText('wonderful')
+    expect(bold.tagName).toBe('STRONG')
+    expect(screen.getByText('food').tagName).toBe('EM')
+    expect(screen.getAllByRole('listitem').some((item) => item.textContent === 'the music')).toBe(true)
+    expect(screen.queryByText(/\*wonderful\*/)).not.toBeInTheDocument()
   })
 
   it('says so plainly when there is nothing up yet', async () => {
