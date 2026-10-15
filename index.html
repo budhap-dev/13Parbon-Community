@@ -51,6 +51,15 @@
       />
     </noscript>
     <meta name="theme-color" content="#7a1a12" />
+
+    <!--
+      Installing the site on a phone. Android reads the manifest and offers "Install app"; an
+      iPhone has no prompt, but Share → Add to Home Screen uses the icon and title below.
+      Redraw the icons with: node scripts/make-app-icons.mjs
+    -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="13Parbon" />
     <title>13Parbon Community</title>
     <script>
       // The portal wears its own quiet set, so a reload there starts in it rather than in
