@@ -676,6 +676,29 @@
   scroll-padding: 3em 8px 8px;
 }
 
+/*
+ * Not on a phone. There the box is most of the screen, so a thumb landing anywhere on the list
+ * scrolled only the list, and `contain` stopped it handing on to the page at either end: the
+ * page would only move from the strip of it left outside. The rows are cards there with no
+ * labels to pin, so the list is simply part of the page.
+ */
+@media (max-width: 640px) {
+  .boxed,
+  .tall {
+    max-height: none;
+    overscroll-behavior: auto;
+  }
+
+  .boxed {
+    overflow: visible;
+  }
+
+  /* Still sideways, for a table that does not fold into cards; never up and down. */
+  .tall {
+    overflow-y: visible;
+  }
+}
+
 /* The panel clips, so the list's own ring sits inside it. */
 .boxed:focus-visible {
   outline-offset: -3px;
