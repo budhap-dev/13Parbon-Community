@@ -11,6 +11,7 @@ import { site } from '../site'
 import { useSettings } from '../SettingsContext'
 import { ThemeSwitcher } from './ThemeSwitcher'
 import { useScrollHeader } from './useScrollHeader'
+import { useSwipeToClose } from './useSwipeToClose'
 import styles from './PublicLayout.module.css'
 
 export function SiteHeader() {
@@ -21,6 +22,8 @@ export function SiteHeader() {
   const { scrolled, hidden } = useScrollHeader(open)
   const toggleRef = useRef<HTMLButtonElement>(null)
   const panelRef = useRef<HTMLElement>(null)
+  const scrimRef = useRef<HTMLDivElement>(null)
+  const swipe = useSwipeToClose({ panel: panelRef, shade: scrimRef, open, onClose: () => setOpen(false), side: 'right' })
   const isHome = pathname === '/'
   const { theme } = useTheme()
 
@@ -84,9 +87,15 @@ export function SiteHeader() {
           <span className={styles.srOnly}>Open menu</span>
         </button>
 
-        {open ? (
-          <div className={styles.scrim} aria-hidden="true" onClick={() => setOpen(false)} />
-        ) : null}
+        {/* Always there on a phone, so it can thin out under the finger as the drawer is
+            pushed away, and fade rather than vanish when it shuts. */}
+        <div
+          ref={scrimRef}
+          className={open ? styles.scrimOn : styles.scrim}
+          aria-hidden="true"
+          onClick={open ? () => setOpen(false) : undefined}
+          {...swipe}
+        />
 
         <nav
           id={menuId}
@@ -94,6 +103,7 @@ export function SiteHeader() {
           className={open ? styles.navOpen : styles.nav}
           aria-label="Main"
           aria-hidden={undefined}
+          {...swipe}
         >
           <div className={styles.drawerHead}>
             <span className={styles.drawerTitle}>Menu</span>

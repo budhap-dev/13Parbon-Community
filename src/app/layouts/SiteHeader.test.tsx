@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { TestDataProviders } from '@/test/render'
@@ -54,6 +54,38 @@ describe('SiteHeader', () => {
     await userEvent.click(toggle)
     await userEvent.keyboard('{Escape}')
     expect(toggle).toHaveAttribute('aria-expanded', 'false')
+  })
+
+  it('closes the mobile menu with a swipe back out to the right', async () => {
+    render(
+      <TestDataProviders>
+        <MemoryRouter>
+          <ThemeProvider>
+            <SiteHeader />
+          </ThemeProvider>
+        </MemoryRouter>
+      </TestDataProviders>,
+    )
+    const toggle = screen.getByRole('button', { name: 'Open menu' })
+    await userEvent.click(toggle)
+    const nav = screen.getByRole('navigation', { name: 'Main' })
+
+    // Pushed the wrong way it stays put: it came in from the right, so that is the way out.
+    fireEvent.touchStart(nav, { touches: [{ clientX: 100, clientY: 400 }] })
+    fireEvent.touchMove(nav, { touches: [{ clientX: 20, clientY: 402 }] })
+    expect(nav.style.transform).toBe('translateX(0px)')
+    fireEvent.touchEnd(nav, { touches: [] })
+    expect(toggle).toHaveAttribute('aria-expanded', 'true')
+
+    fireEvent.touchStart(nav, { touches: [{ clientX: 100, clientY: 400 }] })
+    fireEvent.touchMove(nav, { touches: [{ clientX: 180, clientY: 402 }] })
+    // It follows the finger while it is down.
+    expect(nav.style.transform).toBe('translateX(80px)')
+    fireEvent.touchMove(nav, { touches: [{ clientX: 320, clientY: 405 }] })
+    fireEvent.touchEnd(nav, { touches: [] })
+
+    expect(toggle).toHaveAttribute('aria-expanded', 'false')
+    expect(nav.style.transform).toBe('')
   })
 
   it('keeps the next-event strip parked, even on the home page', async () => {
