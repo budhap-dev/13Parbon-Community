@@ -120,6 +120,7 @@
 /* Drawer chrome: only ever seen once the menu becomes a panel. */
 .homeButton,
 .scrim,
+.scrimOn,
 .drawerHead,
 .drawerFoot,
 .drawerArt {
@@ -266,23 +267,25 @@
       visibility 0s;
   }
 
-  .scrim {
+  /* Faded with a transition, not an animation: an animation's fill would override the
+     opacity the finger sets while swiping the drawer away. */
+  .scrim,
+  .scrimOn {
     display: block;
     position: fixed;
     inset: 0;
     z-index: 45;
     background: rgba(0, 0, 0, 0.5);
-    cursor: pointer;
-    animation: scrim-in 220ms ease both;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 280ms ease;
   }
 
-  @keyframes scrim-in {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
+  .scrimOn {
+    opacity: 1;
+    pointer-events: auto;
+    cursor: pointer;
+    touch-action: none;
   }
 
   .drawerHead {
