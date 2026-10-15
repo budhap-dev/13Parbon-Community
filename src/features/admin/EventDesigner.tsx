@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { useSettings } from '@/app/SettingsContext'
 import { ActionBar } from '@/components/ActionBar'
 import { Button } from '@/components/Button'
+import { ConfirmButton, UNTIL_SAVED } from '@/components/ConfirmButton'
 import { CoverImage } from '@/components/CoverImage'
 import { PhotoUpload } from '@/components/PhotoUpload'
 import { Icon } from '@/components/Icon'
@@ -145,6 +146,8 @@ export function EventDesigner({
 
   const programme = tidyProgramme(draft.programme)
   const countdown = draft.startsAt ? describeCountdown(daysUntil(draft.startsAt, now)) : null
+  // "Next event" above "this evening has happened" contradicted itself; the words the events page uses instead.
+  const happened = draft.startsAt ? daysUntil(draft.startsAt, now) < 0 : false
 
   // Editing something the public can already see is a different act from writing a draft, and
   // the screen should say so before somebody changes a venue on the morning of the event.
@@ -374,14 +377,14 @@ export function EventDesigner({
                   set('programme', draft.programme.map((l, j) => (i === j ? { ...l, what: e.target.value } : l)))
                 }
               />
-              <Button
-                variant="line"
-                size="sm"
+              <ConfirmButton
                 aria-label={`Remove item ${i + 1}`}
-                onClick={() => set('programme', draft.programme.filter((_, j) => j !== i))}
+                title={`Remove ${line.what.trim() ? `“${line.what.trim()}”` : `item ${i + 1}`} from the programme?`}
+                body={UNTIL_SAVED}
+                onConfirm={() => set('programme', draft.programme.filter((_, j) => j !== i))}
               >
                 <Icon name="trash" />
-              </Button>
+              </ConfirmButton>
             </div>
           ))}
           <div className={styles.actions}>
@@ -485,7 +488,7 @@ export function EventDesigner({
               ratio={device === 'phone' ? '4 / 3' : '16 / 9'}
             />
             <div className={design.cardBody}>
-              <p className={design.kicker}>Next event</p>
+              <p className={design.kicker}>{happened ? 'Earlier this year' : 'Next event'}</p>
               <h3 className={draft.title ? design.title : design.titleEmpty}>
                 {draft.title || 'Boishakhi 2027'}
               </h3>

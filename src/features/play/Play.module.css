@@ -27,7 +27,7 @@
   background: var(--color-bg);
   color: var(--color-fg);
   font: inherit;
-  font-size: 15px;
+  font-size: var(--text-sm);
   text-align: left;
   cursor: pointer;
   transition:
@@ -81,7 +81,7 @@
   height: 28px;
   border-radius: 50%;
   background: var(--color-hover-wash);
-  font-size: 13px;
+  font-size: var(--text-xs);
   font-weight: 700;
 }
 
@@ -103,7 +103,7 @@
 
 .mark {
   flex: none;
-  font-size: 13px;
+  font-size: var(--text-xs);
   font-weight: 600;
 }
 
@@ -125,7 +125,7 @@
   display: flex;
   justify-content: space-between;
   gap: 12px;
-  font-size: 14px;
+  font-size: var(--text-sm);
 }
 
 .tallyMine {
@@ -134,7 +134,7 @@
 
 .voters {
   margin-top: 4px;
-  font-size: 13px;
+  font-size: var(--text-xs);
   color: var(--color-fg-muted);
 }
 
@@ -157,7 +157,7 @@
 }
 
 .prompt {
-  font-size: clamp(20px, 2.2vw, 26px);
+  font-size: var(--text-display-s);
   line-height: 1.25;
   text-wrap: pretty;
 }
@@ -172,7 +172,7 @@
 
 .score {
   font-family: var(--font-display);
-  font-size: clamp(44px, 6vw, 68px);
+  font-size: var(--text-display-l);
   line-height: 1;
 }
 
@@ -194,12 +194,12 @@
 }
 
 .reviewPrompt {
-  font-size: 16px;
+  font-size: var(--text-md);
   font-weight: 600;
 }
 
 .explain {
-  font-size: 14px;
+  font-size: var(--text-sm);
   color: var(--color-fg-muted);
   line-height: 1.55;
 }
@@ -218,7 +218,7 @@
   gap: 12px;
   padding: 10px 0;
   border-bottom: 1px solid var(--color-border-faint);
-  font-size: 15px;
+  font-size: var(--text-sm);
 }
 
 .board li:last-child {
@@ -253,7 +253,7 @@
 }
 
 .quizCardTitle {
-  font-size: 18px;
+  font-size: var(--text-lg);
   line-height: 1.25;
 }
 
@@ -303,7 +303,7 @@
   padding: 8px 10px;
   border: 1px solid var(--color-border-faint);
   border-radius: var(--portal-button-radius, 8px);
-  font-size: 14px;
+  font-size: var(--text-sm);
 }
 
 .pickedText {
@@ -323,7 +323,7 @@
   background: transparent;
   color: var(--color-fg);
   font: inherit;
-  font-size: 14px;
+  font-size: var(--text-sm);
   cursor: pointer;
 }
 
@@ -358,12 +358,12 @@
 }
 
 .publicTitle {
-  font-size: clamp(36px, 5vw, 64px);
+  font-size: var(--text-display-l);
 }
 
 .publicIntro {
   max-width: 600px;
-  font-size: 19px;
+  font-size: var(--text-lg);
   color: var(--color-fg-muted);
   text-wrap: pretty;
 }

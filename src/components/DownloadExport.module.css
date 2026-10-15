@@ -25,14 +25,14 @@
 }
 
 .dt {
-  font-size: 14px;
+  font-size: var(--portal-text-md);
   font-weight: 600;
   opacity: 0.7;
 }
 
 .dd {
   margin: 0;
-  font-size: 15px;
+  font-size: var(--portal-text-md);
 }
 
 .group {
@@ -42,7 +42,7 @@
 }
 
 .groupTitle {
-  font-size: 16px;
+  font-size: var(--portal-text-lg);
   font-weight: 600;
   margin: 0;
 }
@@ -53,19 +53,19 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  font-size: 15px;
+  font-size: var(--portal-text-md);
   line-height: 1.55;
 }
 
 .note {
-  font-size: 13px;
+  font-size: var(--portal-text-sm);
   opacity: 0.72;
   line-height: 1.6;
   max-width: 68ch;
 }
 
 .error {
-  font-size: 13px;
+  font-size: var(--portal-text-sm);
   color: var(--error, #b3261e);
 }
 

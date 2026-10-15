@@ -112,7 +112,7 @@ export function SponsorsPage() {
         </p>
         <p>
           Named here and would rather not be? <Link to="/contact">Tell us</Link> and we will take it
-          off — {TAKEDOWN_PROMISE}.
+          off {TAKEDOWN_PROMISE}.
         </p>
       </footer>
     </Container>

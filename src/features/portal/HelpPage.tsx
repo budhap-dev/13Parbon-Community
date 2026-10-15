@@ -171,7 +171,7 @@ export function HelpPage() {
           are taken out. Your street stays your business. <Emoji>📍</Emoji>
         </>,
         <>
-          In one and would rather not be? You, or your child? Tell us and we will take it down —{' '}
+          In one and would rather not be? You, or your child? Tell us and we will take it down{' '}
           {TAKEDOWN_PROMISE}.
         </>,
       ],

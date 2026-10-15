@@ -5,12 +5,12 @@
   gap: 8px 16px;
   padding: 22px 24px;
   border: 1.5px dashed var(--color-border);
-  border-radius: var(--radius-tile);
+  border-radius: var(--portal-radius, var(--radius-tile));
   background: var(--color-bg-raised);
 }
 
 .text {
-  font-size: 17px;
+  font-size: var(--text-md);
   color: var(--color-fg-muted);
   text-wrap: pretty;
 }

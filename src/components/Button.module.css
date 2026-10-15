@@ -64,7 +64,8 @@
   color: var(--color-bg);
 }
 .cream:hover {
-  background: #fff;
+  /* Not white: in the light themes --color-fg is dark and the label is the pale ground. */
+  background: color-mix(in srgb, var(--color-fg) 86%, var(--color-bg));
   color: var(--color-bg);
 }
 
@@ -98,11 +99,12 @@
 }
 
 /*
- * Destroying something.
+ * Removing something.
  *
- * Red where it deletes a thing that exists, and never anywhere else. A "remove" that only takes
- * a row out of a form you have not saved is not destruction, and colouring it the same teaches
- * people that red means nothing here — which costs exactly once, on the button that did.
+ * Every remove and delete in the app, by the committee's choice (13 October 2026): a row out of
+ * a form as much as a record out of the database, so that red always means "this takes
+ * something away" and every one of them asks first (see ConfirmButton). It once kept red for
+ * real deletions only; one rule with no exceptions was preferred to a finer one.
  *
  * Outlined rather than filled: this is usually the second button in a row, and a solid red block
  * beside the thing it would destroy pulls the eye to the wrong one.

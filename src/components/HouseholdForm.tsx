@@ -2,6 +2,7 @@ import { useId, useRef, useState, type FormEvent } from 'react'
 import { flushSync } from 'react-dom'
 import { ActionBar } from './ActionBar'
 import { Button } from './Button'
+import { ConfirmButton, UNTIL_SAVED } from './ConfirmButton'
 import {
   normaliseGoogleEmail,
   validateHousehold,
@@ -245,9 +246,14 @@ export function HouseholdForm({ household, prefill, viewer, onSave, saving, save
             <div className={styles.personTop}>
               <span className={styles.personWho}>Person {i + 1}</span>
               {draft.people.length > 1 ? (
-                <Button variant="line" size="sm" onClick={() => removePerson(i)}>
+                <ConfirmButton
+                  aria-label={`Remove person ${i + 1}`}
+                  title={`Remove ${person.name.trim() || `person ${i + 1}`}?`}
+                  body={UNTIL_SAVED}
+                  onConfirm={() => removePerson(i)}
+                >
                   Remove
-                </Button>
+                </ConfirmButton>
               ) : null}
             </div>
 

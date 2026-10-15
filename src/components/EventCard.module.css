@@ -63,13 +63,13 @@
 .stamp {
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: 40px;
+  font-size: var(--text-display-m);
   line-height: 1;
   color: var(--color-accent);
 }
 
 .title {
-  font-size: 28px;
+  font-size: var(--text-2xl);
   line-height: 1.1;
 }
 
@@ -89,7 +89,7 @@
 }
 
 .meta {
-  font-size: 17px;
+  font-size: var(--text-md);
   color: var(--color-fg-muted);
 }
 
@@ -99,7 +99,7 @@
   align-items: center;
   gap: 6px;
   margin-top: auto;
-  font-size: 17px;
+  font-size: var(--text-md);
   font-weight: 600;
   color: var(--color-accent);
 }
@@ -136,9 +136,9 @@
 
 .cancelled {
   margin: 0;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
+  font-size: var(--label-size);
+  font-weight: var(--label-weight);
+  letter-spacing: var(--label-tracking);
   text-transform: uppercase;
   color: var(--error, #b3261e);
 }

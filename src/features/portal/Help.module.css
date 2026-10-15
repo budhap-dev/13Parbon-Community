@@ -43,7 +43,7 @@
   border: 1px solid var(--color-border-faint);
   background: var(--color-bg);
   color: var(--color-fg);
-  font-size: 13px;
+  font-size: var(--portal-text-sm);
   text-decoration: none;
 }
 
@@ -58,7 +58,7 @@
 }
 
 .jumpEmoji {
-  font-size: 15px;
+  font-size: var(--portal-text-md);
   line-height: 1;
 }
 
@@ -86,7 +86,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 18px;
+  font-size: var(--portal-text-lg);
   margin: 0 0 2px;
 }
 
@@ -106,7 +106,7 @@
   width: 52px;
   height: 52px;
   border-radius: 16px;
-  font-size: 28px;
+  font-size: var(--portal-text-2xl);
   line-height: 1;
   background: color-mix(in srgb, var(--color-accent) 12%, transparent);
 }
@@ -117,7 +117,7 @@
   padding: 0;
   display: grid;
   gap: 10px;
-  font-size: 14.5px;
+  font-size: var(--portal-text-md);
   line-height: 1.55;
 }
 
@@ -182,7 +182,7 @@
 
 .chevron {
   flex: none;
-  color: var(--color-fg-faint);
+  color: var(--color-fg-muted);
 }
 
 .faq[open] .chevron {
@@ -209,7 +209,7 @@
   .bigEmoji {
     width: 44px;
     height: 44px;
-    font-size: 24px;
+    font-size: var(--portal-text-2xl);
   }
 }
 

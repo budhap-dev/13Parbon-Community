@@ -122,7 +122,7 @@ describe('the sponsors page', () => {
 
   it('offers to take a name down', async () => {
     renderAt('/sponsors', withSponsors(), undefined)
-    expect(await screen.findByText(/would rather not be\?/)).toHaveTextContent(/within three days/)
+    expect(await screen.findByText(/would rather not be\?/)).toHaveTextContent(/take it off ASAP/)
   })
 
   it('has no automatic violations', async () => {
@@ -368,7 +368,7 @@ describe('the committee’s screen', () => {
     await userEvent.click(within(panel).getByRole('button', { name: 'Remove Raj Sweets' }))
 
     const dialog = await screen.findByRole('dialog', { name: 'Remove Raj Sweets?' })
-    await userEvent.click(within(dialog).getByRole('button', { name: 'Remove them' }))
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Remove' }))
     expect(within(panel).queryByLabelText('Sponsor 1')).not.toBeInTheDocument()
   })
 })

@@ -9,14 +9,14 @@
 
 .title {
   margin: 0;
-  font-size: 17px;
+  font-size: var(--portal-text-lg);
   font-weight: 600;
   color: var(--error, #b3261e);
 }
 
 .text {
   margin: 0;
-  font-size: 14px;
+  font-size: var(--portal-text-md);
   line-height: 1.6;
   max-width: 66ch;
 }
@@ -24,7 +24,7 @@
 .list {
   margin: 0;
   padding-left: 20px;
-  font-size: 14px;
+  font-size: var(--portal-text-md);
   line-height: 1.7;
 }
 
@@ -44,14 +44,14 @@
 }
 
 .label {
-  font-size: 14px;
+  font-size: var(--portal-text-md);
   font-weight: 600;
 }
 
 .input {
   min-height: 46px;
   padding: 0 12px;
-  border: 2px solid var(--line, rgba(0, 0, 0, 0.2));
+  border: 2px solid var(--color-border-strong);
   border-radius: 10px;
   background: transparent;
   color: inherit;
@@ -72,7 +72,7 @@
 }
 
 .error {
-  font-size: 13px;
+  font-size: var(--portal-text-sm);
   color: var(--error, #b3261e);
   margin: 0;
 }

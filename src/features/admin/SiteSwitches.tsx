@@ -2,7 +2,10 @@ import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { ActionBar } from '@/components/ActionBar'
 import { Button } from '@/components/Button'
+import { ConfirmButton, UNTIL_SAVED } from '@/components/ConfirmButton'
+import { InfoNote } from '@/components/InfoNote'
 import {
+  HERO_CARD_CHOICES,
   HOME_SECTIONS,
   HOME_SECTION_LABELS,
   SETTING_LABELS,
@@ -12,6 +15,7 @@ import {
   rollToText,
   tidyCommittee,
   tidyFaq,
+  type HeroCard,
   type SectionAudience,
   type SiteSettings,
 } from '@/domain/settings'
@@ -33,6 +37,8 @@ import {
 import { defaultSettings } from '@/app/defaults'
 import { isPlaceholder } from '@/app/site'
 import { themes } from '@/app/theme/themes'
+import { formatLongDate, isUpcoming } from '@/domain/dates'
+import { useAllEvents } from '@/lib/api'
 import { useNow } from '@/lib/clock'
 import {
   CollageEditor,
@@ -45,7 +51,7 @@ import {
   type PrivacyRow,
 } from './SettingsEditors'
 import styles from './ContentForms.module.css'
-import { isSectionKey, SITE_SECTIONS, type SectionKey } from './siteSections'
+import { isSectionKey, SITE_SECTIONS, type SectionKey, type SitePart } from './siteSections'
 
 
 const AUDIENCES: { value: SectionAudience; label: string }[] = [
@@ -170,10 +176,13 @@ function Section({
                   <span className={styles.hint} role="status">
                     Saved. The site changes for everybody straight away.
                   </span>
+                ) : !unsaved && !saving ? (
+                  // Said rather than shown as a greyed-out button, which reads as broken.
+                  <span className={styles.hint}>All saved</span>
                 ) : null
               }
             >
-              <Button variant="gold" type="submit" size="sm" disabled={saving || !unsaved}>
+              <Button variant={unsaved || saving ? 'gold' : 'line'} type="submit" size="sm" disabled={saving || !unsaved}>
                 {saving ? 'Saving…' : saveLabel}
               </Button>
             </ActionBar>
@@ -186,12 +195,15 @@ function Section({
 }
 
 export function SiteSwitches({
+  part,
   settings,
   onSave,
   saving,
   saved,
   error,
 }: {
+  /** Which screen this is: Site settings, or Home and About pages. Each draws only its own. */
+  part: SitePart
   settings: SiteSettings
   onSave: (draft: SiteSettings) => void
   saving?: boolean
@@ -206,6 +218,7 @@ export function SiteSwitches({
     faq: settings.faq.map((row) => ({ ...row })),
     members: [...settings.members],
     homeOrder: [...settings.homeOrder],
+    heroCard: { ...settings.heroCard },
     social: settings.social.map((row) => ({ ...row })),
     festivals: settings.festivals.map((row) => ({ ...row })),
     values: settings.values.map((row) => ({ ...row })),
@@ -221,6 +234,37 @@ export function SiteSwitches({
   /** "Ours is still right": said about a notice the developer has since rewritten. */
   const [keepOurs, setKeepOurs] = useState(false)
   const now = useNow()
+
+  /*
+   * The evenings the card can show: on the website and still to come. A draft is left out —
+   * the card would sit empty until somebody published it, and nothing here would say why.
+   */
+  const eventsQuery = useAllEvents()
+  const cardEvents = (eventsQuery.data ?? [])
+    .filter((event) => event.status === 'published' && isUpcoming(event.startsAt, now))
+    .sort((a, b) => a.startsAt.localeCompare(b.startsAt))
+  const setCard = (changes: Partial<HeroCard>) => {
+    const card = { ...draft.heroCard, ...changes }
+    // Choosing "an evening I choose" picks the first one, so the card is never saved as a choice
+    // of nothing.
+    if (card.show === 'chosen' && !cardEvents.some((event) => event.id === card.eventId)) card.eventId = cardEvents[0]?.id ?? ''
+    setDraft({ ...draft, heroCard: card })
+  }
+  /** What the card on the live site is showing, from what is saved — not the draft. */
+  const savedCard = settings.heroCard
+  const savedChoice = cardEvents.find((event) => event.id === savedCard.eventId)
+  const cardSummary =
+    savedCard.show === 'none'
+      ? 'No card'
+      : savedCard.show === 'next'
+        ? cardEvents[0]
+          ? `Showing ${cardEvents[0].title}`
+          : 'Nothing on the website, so no card'
+        : savedChoice
+          ? `Showing ${savedChoice.title}`
+          : eventsQuery.isSuccess
+            ? 'Not showing: choose again'
+            : ''
 
   /*
    * The developer's notice, and whether ours was written before it.
@@ -278,6 +322,7 @@ export function SiteSwitches({
       volunteerFormUrl: webAddressOr(draft.volunteerFormUrl),
     }),
     home: () => ({ ...settings, home: { ...draft.home }, homeOrder: [...draft.homeOrder] }),
+    heroCard: () => ({ ...settings, heroCard: { ...draft.heroCard, eventId: draft.heroCard.show === 'chosen' ? draft.heroCard.eventId : '' } }),
     festivals: () => ({ ...settings, festivals: tidyFestivals(draft.festivals) }),
     story: () => ({ ...settings, story: storyFromText(story) }),
     values: () => ({ ...settings, values: tidyValues(draft.values) }),
@@ -302,7 +347,7 @@ export function SiteSwitches({
   const asSaved = JSON.stringify(settings)
   const dirty = (k: SectionKey) => JSON.stringify(apply[k]()) !== asSaved
 
-  const [open, setOpen] = useState<SectionKey[]>(['switches'])
+  const [open, setOpen] = useState<SectionKey[]>(part === 'site' ? ['switches'] : ['home'])
   const [attempted, setAttempted] = useState<SectionKey | null>(null)
   const toggle = (k: SectionKey) => setOpen((now) => (now.includes(k) ? now.filter((x) => x !== k) : [...now, k]))
 
@@ -357,6 +402,8 @@ export function SiteSwitches({
 
   return (
     <div className={styles.sections}>
+      {part === 'site' ? (
+        <>
       <h3 className={styles.groupTitle}>The whole site</h3>
       <Section {...sectionProps('switches')} label={SITE_SECTIONS.switches} summary={`${SWITCH_KEYS.filter((k) => draft[k]).length} of ${SWITCH_KEYS.length} switched on`} saveLabel="Save the switches">
         {(Object.keys(SETTING_LABELS) as (keyof typeof SETTING_LABELS)[]).map((key) => (
@@ -405,10 +452,12 @@ export function SiteSwitches({
       </Section>
 
       <Section {...sectionProps('words')} label={SITE_SECTIONS.words} summary={`${SITE_TEXT_KEYS.filter((k) => isPlaceholder(draft.text[k] ?? '')).length} still in brackets`} saveLabel="Save the wording">
-        <p className={styles.hint}>
-          The single lines. Anything that is a list — the festivals, the story, the channels, the
-          theme’s photographs — has a section of its own on this page.
-        </p>
+        <InfoNote summary="What goes here">
+          <p>
+            The single lines. Anything that is a list — the festivals, the story, the channels, the
+            theme’s photographs — has a section of its own on this page.
+          </p>
+        </InfoNote>
         {SITE_TEXT_KEYS.map((key) => {
           const field = SITE_TEXT_FIELDS[key]
           const bracketed = isPlaceholder(draft.text[key] ?? '')
@@ -447,10 +496,12 @@ export function SiteSwitches({
       </Section>
 
       <Section {...sectionProps('social')} label={SITE_SECTIONS.social} summary={`${tidySocial(draft.social).length} channels`} saveLabel="Save the channels">
-        <p className={styles.hint}>
-          In the footer of every page and on the contact page, in this order. The footer draws only
-          the ones with an address.
-        </p>
+        <InfoNote summary="Where these show">
+          <p>
+            In the footer of every page and on the contact page, in this order. The footer draws only
+            the ones with an address.
+          </p>
+        </InfoNote>
         <SocialEditor rows={draft.social} onChange={(social) => setDraft({ ...draft, social })} />
         <div className={styles.field}>
           <label className={styles.label} htmlFor="volunteerFormUrl">
@@ -473,18 +524,25 @@ export function SiteSwitches({
         </div>
       </Section>
 
+        </>
+      ) : (
+        <>
       <h3 className={styles.groupTitle}>The home page</h3>
 
       <Section {...sectionProps('home')} label={SITE_SECTIONS.home} summary={`${draft.homeOrder.length} parts`} saveLabel="Save the home page">
-        <p className={styles.hint}>
-          The order they come in, between the name at the top and the invitation at the bottom.
-          A part that is switched off or has nothing to show takes up no room wherever it is.
-        </p>
+        <InfoNote summary="How the order works">
+          <p>
+            The order they come in, between the name at the top and the invitation at the bottom.
+            A part that is switched off or has nothing to show takes up no room wherever it is.
+          </p>
+        </InfoNote>
         <OrderEditor order={draft.homeOrder} onChange={(homeOrder) => setDraft({ ...draft, homeOrder })} />
-        <p className={styles.hint}>
-          A section set to the committee is a way of getting something ready where only you can see
-          it. Nothing here makes anything private — it decides what is drawn, not what is sent.
-        </p>
+        <InfoNote summary="Who sees each part">
+          <p>
+            A section set to the committee is a way of getting something ready where only you can see
+            it. Nothing here makes anything private — it decides what is drawn, not what is sent.
+          </p>
+        </InfoNote>
         <div className={styles.row}>
           {HOME_SECTIONS.map((section) => (
             <div key={section} className={styles.field}>
@@ -510,12 +568,81 @@ export function SiteSwitches({
         </div>
       </Section>
 
+      <Section {...sectionProps('heroCard')} label={SITE_SECTIONS.heroCard} summary={cardSummary} saveLabel="Save the card">
+        <InfoNote summary="What the card shows">
+          <p>
+            The card beside “See what’s on” at the top of the home page: the evening’s names, its date
+            and venue, the days left, and a “We are coming” button. All of it comes from the evening as
+            it is set up under Events, so to change what the card says, change the evening.
+          </p>
+        </InfoNote>
+        {savedCard.show === 'chosen' && eventsQuery.isSuccess && !savedChoice ? (
+          <p className={styles.warning} role="status">
+            The evening chosen for the card has passed or is no longer on the website, so no card is
+            showing. Choose another, or let it show the next evening.
+          </p>
+        ) : null}
+        <fieldset className={styles.fieldset}>
+          <legend className={styles.label}>Beside the buttons, show</legend>
+          {HERO_CARD_CHOICES.map((choice) => {
+            const unavailable = choice.value === 'chosen' && cardEvents.length === 0
+            return (
+              <div key={choice.value} className={styles.check}>
+                <input
+                  id={`heroCard-${choice.value}`}
+                  type="radio"
+                  name="heroCard"
+                  value={choice.value}
+                  checked={draft.heroCard.show === choice.value}
+                  disabled={unavailable && draft.heroCard.show !== 'chosen'}
+                  onChange={() => setCard({ show: choice.value })}
+                />
+                <label htmlFor={`heroCard-${choice.value}`}>
+                  {choice.label}
+                  {choice.value === 'next' && cardEvents[0] ? ` (now ${cardEvents[0].title})` : null}
+                  {unavailable ? ' (nothing on the website to choose yet)' : null}
+                </label>
+              </div>
+            )
+          })}
+        </fieldset>
+        {draft.heroCard.show === 'chosen' && cardEvents.length > 0 ? (
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="heroCard-event">
+              The evening
+            </label>
+            <select
+              id="heroCard-event"
+              className={styles.input}
+              value={draft.heroCard.eventId}
+              aria-describedby="heroCard-event-note"
+              onChange={(e) => setCard({ eventId: e.target.value })}
+            >
+              {cardEvents.map((event) => (
+                <option key={event.id} value={event.id}>
+                  {event.title} · {formatLongDate(event.startsAt)}
+                </option>
+              ))}
+            </select>
+            <p id="heroCard-event-note" className={styles.hint}>
+              Only evenings on the website and still to come. Once this one has passed, the card goes
+              until you choose again.
+            </p>
+          </div>
+        ) : null}
+        {draft.heroCard.show === 'next' && eventsQuery.isSuccess && cardEvents.length === 0 ? (
+          <p className={styles.hint}>Nothing is on the website yet, so for now there is no card.</p>
+        ) : null}
+      </Section>
+
       <Section {...sectionProps('festivals')} label={SITE_SECTIONS.festivals} summary={`${tidyFestivals(draft.festivals).length} festivals`} saveLabel="Save the festivals">
-        <p className={styles.hint}>
-          “Our year” on the home page and the filter on the Events page, in this order. To mark one
-          as next up, choose it on the evening itself, under Events. Removing a festival does not
-          remove its evenings — they simply stop being filed under anything.
-        </p>
+        <InfoNote summary="Where these show">
+          <p>
+            “Our year” on the home page and the filter on the Events page, in this order. To mark one
+            as next up, choose it on the evening itself, under Events. Removing a festival does not
+            remove its evenings — they simply stop being filed under anything.
+          </p>
+        </InfoNote>
         <FestivalEditor rows={draft.festivals} onChange={(festivals) => setDraft({ ...draft, festivals })} />
       </Section>
 
@@ -544,18 +671,22 @@ export function SiteSwitches({
       </Section>
 
       <Section {...sectionProps('values')} label={SITE_SECTIONS.values} summary={`${tidyValues(draft.values).length} values`} saveLabel="Save the values">
-        <p className={styles.hint}>
-          The cards under the story. One with no heading or no sentence is left out rather than
-          shown half-finished.
-        </p>
+        <InfoNote summary="Where these show">
+          <p>
+            The cards under the story. One with no heading or no sentence is left out rather than
+            shown half-finished.
+          </p>
+        </InfoNote>
         <ValuesEditor rows={draft.values} onChange={(values) => setDraft({ ...draft, values })} />
       </Section>
 
       <Section {...sectionProps('committee')} label={SITE_SECTIONS.committee} summary={`${tidyCommittee(draft.committee).length} people`} saveLabel="Save the committee">
-        <p className={styles.hint}>
-          As shown on the About page, in this order — which is not a ranking. It changes at the AGM
-          every year, which is exactly the sort of thing that should not need a developer.
-        </p>
+        <InfoNote summary="Where these show">
+          <p>
+            As shown on the About page, in this order — which is not a ranking. It changes at the AGM
+            every year, which is exactly the sort of thing that should not need a developer.
+          </p>
+        </InfoNote>
         <ActionBar sticky={false}>
           <Button
             variant="line"
@@ -590,14 +721,14 @@ export function SiteSwitches({
               />
             </div>
             <div className={styles.actions} style={{ alignSelf: 'end', paddingBottom: 2 }}>
-              <Button
-                variant="line"
-                size="sm"
+              <ConfirmButton
                 aria-label={`Remove ${row.name || `row ${i + 1}`}`}
-                onClick={() => setDraft({ ...draft, committee: draft.committee.filter((_, j) => j !== i) })}
+                title={`Remove ${row.role.trim() || row.name.trim() || 'this row'} from the committee?`}
+                body={UNTIL_SAVED}
+                onConfirm={() => setDraft({ ...draft, committee: draft.committee.filter((_, j) => j !== i) })}
               >
                 Remove
-              </Button>
+              </ConfirmButton>
             </div>
           </div>
         ))}
@@ -625,10 +756,12 @@ export function SiteSwitches({
       </Section>
 
       <Section {...sectionProps('faq')} label={SITE_SECTIONS.faq} summary={`${tidyFaq(draft.faq).length} questions`} saveLabel="Save the questions">
-        <p className={styles.hint}>
-          On the About page, in this order. Anything left in [square brackets] is shown to visitors exactly
-          as it appears, so finish a sentence before you save it.
-        </p>
+        <InfoNote summary="Where these show">
+          <p>
+            On the About page, in this order. Anything left in [square brackets] is shown to visitors exactly
+            as it appears, so finish a sentence before you save it.
+          </p>
+        </InfoNote>
         <ActionBar sticky={false}>
           <Button
             variant="line"
@@ -660,14 +793,14 @@ export function SiteSwitches({
               onChange={(e) => setQuestion(i, { answer: e.target.value })}
             />
             <div className={styles.actions} style={{ marginTop: 6 }}>
-              <Button
-                variant="line"
-                size="sm"
+              <ConfirmButton
                 aria-label={`Remove question ${i + 1}`}
-                onClick={() => setDraft({ ...draft, faq: draft.faq.filter((_, j) => j !== i) })}
+                title={`Remove question ${i + 1}?`}
+                body={UNTIL_SAVED}
+                onConfirm={() => setDraft({ ...draft, faq: draft.faq.filter((_, j) => j !== i) })}
               >
                 Remove
-              </Button>
+              </ConfirmButton>
             </div>
           </div>
         ))}
@@ -676,14 +809,21 @@ export function SiteSwitches({
       <h3 className={styles.groupTitle}>Events</h3>
 
       <Section {...sectionProps('collage')} label={SITE_SECTIONS.collage} summary={`${draft.collage.photos.length} photographs`} saveLabel="Save the photographs">
-        <p className={styles.hint}>
-          The black-and-white-into-colour collage on the page of any evening that has a theme. The
-          theme’s own words are set on the evening, under Events; these are the pictures behind it.
-          Taking one out of this list takes it off the page, but does not delete the file.
-        </p>
+        <InfoNote summary="Where these show">
+          <p>
+            The black-and-white-into-colour collage on the page of any evening that has a theme. The
+            theme’s own words are set on the evening, under Events; these are the pictures behind it.
+            Taking one out of this list takes it off the page, but does not delete the file.
+          </p>
+        </InfoNote>
         <CollageEditor value={draft.collage} onChange={(collage) => setDraft({ ...draft, collage })} />
       </Section>
 
+        </>
+      )}
+
+      {part === 'site' ? (
+        <>
       <h3 className={styles.groupTitle}>Small print, and the portal</h3>
 
       <Section {...sectionProps('privacy')} label={SITE_SECTIONS.privacy} summary={`Last updated ${settings.privacy.updatedOn}`} saveLabel="Save the notice">
@@ -737,6 +877,8 @@ export function SiteSwitches({
         <ToolsEditor rows={draft.tools} onChange={(tools) => setDraft({ ...draft, tools })} />
       </Section>
 
+        </>
+      ) : null}
     </div>
   )
 }

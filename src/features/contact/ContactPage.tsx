@@ -124,9 +124,9 @@ export function ContactPage() {
               The surest way to reach the committee, and where to write about
               anything to do with your details on this site.
             </p>
-            <a className={styles.channelLink} href={`mailto:${text.email}`}>
-              {text.email}
-            </a>
+            {/* The surest way, so the one big button on the page; the address under it to copy. */}
+            <Button href={`mailto:${text.email}`}>Email the committee</Button>
+            <span className={styles.channelNote}>{text.email}</span>
           </li>
 
           {social.map((channel) => (
@@ -148,11 +148,7 @@ export function ContactPage() {
                   Open {channel.name}
                   <Icon name="external" size={15} />
                 </a>
-              ) : (
-                <span className={styles.channelNote}>
-                  No link to give out yet
-                </span>
-              )}
+              ) : null}
             </li>
           ))}
         </ul>

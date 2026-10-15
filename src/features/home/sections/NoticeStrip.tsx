@@ -1,6 +1,7 @@
 import { Button } from '@/components/Button'
 import { Container } from '@/components/Container'
 import { Icon } from '@/components/Icon'
+import { formatDayMonth } from '@/domain/dates'
 import { useAnnouncements } from '@/lib/api'
 import styles from '../Home.module.css'
 
@@ -25,26 +26,34 @@ export function NoticeStrip() {
   if (live.length === 0) return null
 
   return (
-    <Container>
-      <section className={styles.notices} aria-labelledby="notices-heading">
+    <section className={styles.notices} aria-labelledby="notices-heading">
+      <Container className={styles.noticesInner}>
         <h2 id="notices-heading" className={styles.noticesTitle}>
           <Icon name="megaphone" className={styles.noticesIcon} />
           Announcements
         </h2>
         <ul className={styles.noticesList}>
-          {live.map((notice) => (
-            <li key={notice.id} className={styles.notice}>
-              <p className={styles.noticeTitle}>{notice.title}</p>
-              <p className={styles.noticeBody}>{notice.body}</p>
-              {notice.link ? (
-                <Button to={notice.link.to} variant="line" size="sm">
-                  {notice.link.label}
-                </Button>
-              ) : null}
-            </li>
-          ))}
+          {live.map((notice) => {
+            const date = formatDayMonth(notice.publishAt)
+            return (
+              <li key={notice.id} className={styles.notice}>
+                <p className={styles.noticeDate}>
+                  <span className={styles.noticeDay}>{date.day}</span> {date.month}
+                </p>
+                <div className={styles.noticeText}>
+                  <p className={styles.noticeTitle}>{notice.title}</p>
+                  <p className={styles.noticeBody}>{notice.body}</p>
+                </div>
+                {notice.link ? (
+                  <Button to={notice.link.to} variant="ink" size="sm" className={styles.noticeButton}>
+                    {notice.link.label}
+                  </Button>
+                ) : null}
+              </li>
+            )
+          })}
         </ul>
-      </section>
-    </Container>
+      </Container>
+    </section>
   )
 }

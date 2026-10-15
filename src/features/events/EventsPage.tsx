@@ -1,12 +1,16 @@
+import type { CSSProperties } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { Container } from '@/components/Container'
 import { LoadFailed } from '@/components/LoadFailed'
 import { EventCard } from '@/components/EventCard'
-import { Icon } from '@/components/Icon'
-import { formatMonthYear, monthKey } from '@/domain/dates'
+import { formatDateWithYear, formatDayLongMonth, formatMonthYear, monthKey } from '@/domain/dates'
 import type { Event } from '@/domain/event'
-import { useFestivals, usePastEvents, useUpcomingEvents } from '@/lib/api'
+import { heldThisYear, monthsUntilSeason, type Festival } from '@/domain/festival'
+import { photosAwaited } from '@/domain/gallery'
+import { useSettings } from '@/app/SettingsContext'
+import { useAlbums, useFestivals, usePastEvents, useUpcomingEvents } from '@/lib/api'
+import { useNow } from '@/lib/clock'
 import { FestivalAlbum } from './FestivalAlbum'
 import styles from './Events.module.css'
 
@@ -22,14 +26,70 @@ function groupByMonth(events: Event[]): { key: string; label: string; events: Ev
 }
 
 
-/** "A, B and C", so a sentence about the year reads like a sentence. */
-function namesOf(items: { name: string }[]): string {
-  const names = items.map((item) => item.name)
-  if (names.length <= 1) return names.join('')
-  return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`
+type Stop = { festival: Festival; event?: Event; wait: number }
+
+/*
+ * Bunting along the year: a thread tied at each festival's dot and hanging in a curve to the next,
+ * paper flags in the festivals' colours strung along it, and a marigold string at the low point
+ * of each loop, each swaying a little out of step with its neighbours. Decoration only — hidden
+ * from screen readers, and still for anybody whose device asks for less motion. On a phone,
+ * where the year runs down the page, three loops are strung across the top of it instead.
+ */
+const FLAG_COLOURS = ['#f7b733', '#c8102e', '#be185d', '#1f5fbf', '#ea580c', '#1d6b43', '#8e1a6b', '#0e9aa7']
+/** Hung on each loop: flags either side, the marigold string in the middle, at the lowest point. */
+const PER_LOOP = 5
+
+function Bunting({ stops }: { stops: number }) {
+  // A loop between each pair of dots, where the thread is tied, and one more after the last
+  // running on to the edge, so the string does not stop short at the final festival.
+  const loops = stops
+  return (
+    <div className={styles.bunting} aria-hidden="true" style={{ '--stops': stops } as CSSProperties}>
+      {Array.from({ length: loops }, (_, loop) => (
+        <span key={loop} className={styles.loop}>
+          {/* A quadratic sag: the control point twice as deep as the low point, so the flags,
+              placed by the same curve in CSS, sit on the thread. */}
+          <svg className={styles.thread} viewBox="0 0 100 22" preserveAspectRatio="none">
+            <path d="M0 1 Q50 41 100 1" vectorEffect="non-scaling-stroke" />
+          </svg>
+          {Array.from({ length: PER_LOOP }, (_, k) => {
+            const i = loop * PER_LOOP + k
+            const at = { '--i': i, '--t': (k + 1) / (PER_LOOP + 1) } as CSSProperties
+            return k === Math.floor(PER_LOOP / 2) ? (
+              <span key={k} className={styles.marigolds} style={at}>
+                <span />
+                <span />
+                <span />
+              </span>
+            ) : (
+              <span key={k} className={styles.flag} style={{ ...at, '--flag': FLAG_COLOURS[i % FLAG_COLOURS.length] } as CSSProperties} />
+            )
+          })}
+        </span>
+      ))}
+    </div>
+  )
 }
 
-const listNames = namesOf
+/**
+ * The year's festivals in the order they come round from now: a dated one by its date, the rest
+ * by the season they usually fall in. An evening's first date counts; later ones are on the
+ * calendar above. One already held this year comes round again next year, so it goes last.
+ */
+function yearAhead(festivals: Festival[], upcoming: Event[], past: Event[], now: Date): Stop[] {
+  const month = now.getFullYear() * 12 + now.getMonth()
+  return festivals
+    .map((festival) => {
+      const event = upcoming.find((e) => e.festivalId === festival.id && e.status !== 'cancelled')
+      if (event) {
+        const at = new Date(event.startsAt)
+        return { festival, event, wait: at.getFullYear() * 12 + at.getMonth() - month }
+      }
+      const season = monthsUntilSeason(festival.season, now) ?? 12
+      return { festival, wait: heldThisYear(festival.id, past, now) ? season + 12 : season }
+    })
+    .sort((a, b) => a.wait - b.wait)
+}
 
 export function EventsPage() {
   useDocumentTitle('Events')
@@ -38,17 +98,28 @@ export function EventsPage() {
   const { data: festivals } = useFestivals()
   const { data: upcoming, isPending, isError, isSuccess, refetch } = useUpcomingEvents(50)
   const { data: past, isError: pastFailed, refetch: refetchPast } = usePastEvents(6)
+  const now = useNow()
+  const { showPhotos } = useSettings()
+  const { data: albums } = useAlbums()
+  /** This year's evening of its festival, with nothing in the gallery from it yet. */
+  const photosComing = (event: Event) =>
+    Boolean(
+      showPhotos &&
+        albums &&
+        event.festivalId &&
+        heldThisYear(event.festivalId, past ?? [], now)?.startsAt === event.startsAt &&
+        photosAwaited(event.festivalId, event.startsAt, albums),
+    )
 
   const matches = (event: Event) => !festivalId || event.festivalId === festivalId
   const upcomingMonths = groupByMonth((upcoming ?? []).filter(matches))
   const pastEvents = (past ?? []).filter(matches)
   const activeFestival = festivals?.find((f) => f.id === festivalId)
 
-  // Occasions the community keeps every year that have no date on the calendar yet. Naming
-  // them is warmer than a general promise, and the note disappears once they are all up.
   // Only once the calendar has arrived: before then, every festival would look unscheduled.
-  const scheduled = new Set((upcoming ?? []).map((event) => event.festivalId))
-  const awaitingDates = (festivals ?? []).filter((f) => !scheduled.has(f.id))
+  // Not under a filter, where the one occasion asked about is already the whole page.
+  const stops = isSuccess && !festivalId ? yearAhead(festivals ?? [], upcoming, past ?? [], now) : []
+  const arranging = stops.some((stop) => !stop.event)
 
   return (
     <Container className={styles.page}>
@@ -85,14 +156,15 @@ export function EventsPage() {
         </p>
       ) : isError ? (
         <LoadFailed what="the calendar" onRetry={() => void refetch()} />
-      ) : upcomingMonths.length === 0 ? (
-        <div className={styles.empty}>
+      ) : upcomingMonths.length === 0 && (festivalId || stops.length === 0) ? (
+        // Unfiltered, the year ahead below names what is coming; with no festivals to name,
+        // this line is all that says the calendar is empty rather than broken.
+        <div className={styles.none}>
           <p>
             {activeFestival ? `Nothing scheduled yet for ${activeFestival.name}. ` : 'Nothing scheduled yet. '}
             Check back soon, or <Link to="/contact">ask the committee</Link>.
           </p>
           {activeFestival ? <FestivalAlbum festival={activeFestival} /> : null}
-
         </div>
       ) : (
         upcomingMonths.map((month) => (
@@ -111,23 +183,48 @@ export function EventsPage() {
         ))
       )}
 
-      {isSuccess && !festivalId && awaitingDates.length > 0 ? (
-        <aside className={styles.more} aria-labelledby="more-title">
-          <h2 id="more-title" className={styles.moreTitle}>
-            <Icon name="calendar" size={24} className={styles.moreIcon} />
-            More of the year to come
+      {stops.length > 0 ? (
+        <section className={styles.year} aria-labelledby="year-title">
+          <p lang="bn" className={styles.kickerBn}>
+            আমাদের বছর
+          </p>
+          <h2 id="year-title" className={styles.yearTitle}>
+            The year ahead
           </h2>
-          <p className={styles.moreText}>
-            We hold {listNames(festivals ?? [])} every year. {namesOf(awaitingDates)}{' '}
-            {awaitingDates.length === 1 ? 'is' : 'are'} still being arranged, and{' '}
-            {awaitingDates.length === 1 ? 'it' : 'they'} will appear here as soon as the{' '}
-            {awaitingDates.length === 1 ? 'date is' : 'dates are'} settled.
-          </p>
-          <p className={styles.moreText}>
-            Would you like to hear when they are? <Link to="/contact">Send the committee a message</Link> and we
-            will let you know.
-          </p>
-        </aside>
+          <div className={styles.timelineWrap}>
+          <Bunting stops={stops.length} />
+          <ol className={styles.timeline}>
+            {stops.map(({ festival, event }) => (
+              <li key={festival.id} className={event ? styles.stopSet : styles.stop} data-festival={festival.id}>
+                <span className={styles.stopDot} aria-hidden="true" />
+                {festival.bengaliName ? (
+                  <p lang="bn" className={styles.stopBengali}>
+                    {festival.bengaliName}
+                  </p>
+                ) : null}
+                <h3 className={styles.stopName}>{festival.name}</h3>
+                {event ? (
+                  <p className={styles.stopStatus}>
+                    <span className={styles.stopChip}>Date set</span>{' '}
+                    <Link to={`/events/${event.slug}`}>{formatDayLongMonth(event.startsAt)}</Link>
+                  </p>
+                ) : (
+                  <p className={styles.stopStatus}>
+                    <span className={styles.stopChipOpen}>Being arranged</span>
+                    {festival.season ? <span className={styles.stopSeason}> {festival.season}</span> : null}
+                  </p>
+                )}
+              </li>
+            ))}
+          </ol>
+          </div>
+          {arranging ? (
+            <p className={styles.yearNote}>
+              Would you like to hear when the dates are settled?{' '}
+              <Link to="/contact">Send the committee a message</Link> and we will let you know.
+            </p>
+          ) : null}
+        </section>
       ) : null}
 
       {pastFailed ? (
@@ -142,10 +239,17 @@ export function EventsPage() {
           <h2 id="past-title" className={styles.pastTitle}>
             Earlier this year
           </h2>
-          <ul className={styles.grid}>
+          <ul className={styles.pastList}>
             {pastEvents.map((event) => (
-              <li key={event.id}>
-                <EventCard event={event} />
+              <li key={event.id} className={styles.pastItem}>
+                <Link to={`/events/${event.slug}`} className={styles.pastLink}>
+                  {event.title}
+                </Link>
+                <span className={styles.pastMeta}>
+                  {formatDateWithYear(event.startsAt)}
+                  {event.status === 'cancelled' ? ' · cancelled' : ''}
+                  {photosComing(event) ? ' · photographs coming soon' : ''}
+                </span>
               </li>
             ))}
           </ul>

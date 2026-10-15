@@ -1,5 +1,6 @@
 import { useId, useMemo, useState, type ChangeEvent } from 'react'
 import { Button } from '@/components/Button'
+import { ConfirmButton } from '@/components/ConfirmButton'
 import { InfoNote } from '@/components/InfoNote'
 import { readImport, templateCsv, withoutRepeats, type ImportRow } from '@/domain/quizImport'
 import { QUIZ_QUESTIONS_MAX, QUIZ_TITLE_MIN, tagsFrom, quizDraftOf } from '@/domain/quizzes'
@@ -174,9 +175,15 @@ export function QuestionImport({
         </label>
         <span className={formStyles.hint}>A CSV or a text file.</span>
         {text ? (
-          <Button variant="line" size="sm" onClick={() => setText('')} disabled={busy}>
+          <ConfirmButton
+            disabled={busy}
+            title="Clear the questions you pasted?"
+            body="The box is emptied. Nothing has been added to the bank yet, so nothing else changes."
+            confirmLabel="Clear it"
+            onConfirm={() => setText('')}
+          >
             Clear
-          </Button>
+          </ConfirmButton>
         ) : null}
       </div>
       {fileNote ? (

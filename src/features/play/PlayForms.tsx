@@ -1,6 +1,8 @@
 import { useState, type FormEvent } from 'react'
 import { ActionBar } from '@/components/ActionBar'
 import { Button } from '@/components/Button'
+import { ConfirmButton, UNTIL_SAVED } from '@/components/ConfirmButton'
+import { Icon } from '@/components/Icon'
 import { PhotoUpload } from '@/components/PhotoUpload'
 import { forDateTimeInput, fromDateTimeInput } from '@/domain/dates'
 import { isValid, type ContentErrors } from '@/domain/news'
@@ -90,12 +92,12 @@ function Choices({
             aria-invalid={error ? true : undefined}
             onChange={(e) => onChange(options.map((o, n) => (n === i ? e.target.value : o)))}
           />
-          <button
-            type="button"
-            className={styles.iconButton}
+          <ConfirmButton
             disabled={locked || options.length <= 2}
             aria-label={`Remove ${onCorrect ? 'answer' : 'choice'} ${i + 1}`}
-            onClick={() => {
+            title={`Remove ${onCorrect ? 'answer' : 'choice'} ${i + 1}?`}
+            body={UNTIL_SAVED}
+            onConfirm={() => {
               onChange(options.filter((_, n) => n !== i))
               // The tick follows its answer up the list, and falls to the first if its own went.
               if (onCorrect && correct !== undefined) {
@@ -104,8 +106,8 @@ function Choices({
               }
             }}
           >
-            ✕
-          </button>
+            <Icon name="trash" size={15} />
+          </ConfirmButton>
         </div>
       ))}
       {!locked && options.length < most ? (
@@ -454,15 +456,16 @@ export function QuizForm({
                 >
                   ↓
                 </button>
-                <button
-                  type="button"
-                  className={styles.iconButton}
+                <ConfirmButton
                   disabled={locked}
                   aria-label={`Take question ${i + 1} out`}
-                  onClick={() => setDraft({ ...draft, questionIds: draft.questionIds.filter((q) => q !== id) })}
+                  title={`Take question ${i + 1} out of this quiz?`}
+                  body="It stays in the question bank, ready for another quiz. It comes out of this one when you save."
+                  confirmLabel="Take it out"
+                  onConfirm={() => setDraft({ ...draft, questionIds: draft.questionIds.filter((q) => q !== id) })}
                 >
-                  ✕
-                </button>
+                  <Icon name="trash" size={15} />
+                </ConfirmButton>
               </li>
             ))}
           </ol>

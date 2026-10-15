@@ -1,18 +1,25 @@
-import { screen, within } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createEmptyApi, renderWithProviders } from '@/test/render'
 import { HomePage } from './HomePage'
 
 describe('HomePage', () => {
-  it('opens with the Bengali headline and the logo, and nothing to press', () => {
+  it('opens with the Bengali headline, the logo and the way to the next evening', async () => {
     renderWithProviders(<HomePage />)
     const title = screen.getByRole('heading', { level: 1 })
     expect(title).toHaveTextContent('বারো মাসে 13 Parbon')
     expect(title.querySelector('[lang="bn"]')).toHaveTextContent('বারো মাসে')
     expect(screen.getByRole('img', { name: '13Parbon Community logo' })).toBeInTheDocument()
-    // The buttons moved to the foot of the page: the first screen is for what this is.
     const hero = title.closest('section')!
-    expect(within(hero).queryByRole('link')).not.toBeInTheDocument()
+    expect(await within(hero).findByRole('link', { name: 'Come to Mahalaya programme' })).toHaveAttribute(
+      'href',
+      '/events/mahalaya-cultural-programme-2026',
+    )
+    expect(within(hero).getByRole('link', { name: 'Our story' })).toHaveAttribute('href', '/about')
+    const ticket = within(hero).getByRole('complementary', { name: 'Next: Mahalaya programme' })
+    expect(within(ticket).getByText('মহালয়া')).toHaveAttribute('lang', 'bn')
+    expect(within(ticket).getByText('37')).toBeInTheDocument()
+    expect(within(ticket).getByRole('link', { name: 'We are coming' })).toBeInTheDocument()
     expect(document.title).toBe('13Parbon Community')
   })
 
@@ -20,16 +27,18 @@ describe('HomePage', () => {
     renderWithProviders(<HomePage />)
     const closing = screen.getByRole('region', { name: 'Come for one evening.' })
     expect(within(closing).getByRole('link', { name: 'See what’s on' })).toHaveAttribute('href', '/events')
-    expect(within(closing).getByRole('link', { name: 'Our story' })).toHaveAttribute('href', '/about')
+    // Not the hero's "Our story" again: the copy ends "talk to the committee".
+    expect(within(closing).getByRole('link', { name: 'Talk to us' })).toHaveAttribute('href', '/contact')
   })
 
   it('shows the next event, the year and the photographs', async () => {
     renderWithProviders(<HomePage />)
     expect(await screen.findByText('Next event')).toBeInTheDocument()
     expect(await screen.findByRole('region', { name: 'Our year' })).toBeInTheDocument()
-    // One photo section, a carousel: the mosaic and the second strip are gone.
-    expect(await screen.findByRole('region', { name: 'Moments from our year' })).toBeInTheDocument()
-    expect(await screen.findByRole('region', { name: 'Photographs from our events' })).toBeInTheDocument()
+    const moments = await screen.findByRole('region', { name: 'Moments from our year' })
+    expect(await within(moments).findByRole('list', { name: 'Photographs from our events' })).toBeInTheDocument()
+    // Faces are on show, so the offer to take one down is right under them.
+    expect(within(moments).getByText(/would rather not be/)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'All albums' })).toHaveAttribute('href', '/gallery')
     // Still parked for the MVP: the route works, it is simply not advertised.
     expect(screen.queryByRole('heading', { name: 'Coming up' })).not.toBeInTheDocument()
@@ -41,8 +50,8 @@ describe('HomePage', () => {
    */
   it('opens a photograph full size, and says which album it came from', async () => {
     renderWithProviders(<HomePage />)
-    const strip = await screen.findByRole('region', { name: 'Photographs from our events' })
-    await userEvent.click(within(strip).getByRole('button', { name: 'Open photo 1 of 12 full size' }))
+    const strip = await screen.findByRole('list', { name: 'Photographs from our events' })
+    await userEvent.click(within(strip).getByRole('button', { name: 'Open photo 1 of 5 full size' }))
     const dialog = await screen.findByRole('dialog')
     const album = within(dialog).getByRole('link', { name: /^See all of / })
     expect(album).toHaveAttribute('href', expect.stringContaining('/gallery/'))
@@ -107,8 +116,25 @@ describe('HomePage', () => {
 
   it('ends by inviting people to an event rather than to a sign-up form', () => {
     renderWithProviders(<HomePage />)
-    expect(screen.getByRole('link', { name: 'See what’s on' })).toHaveAttribute('href', '/events')
+    const closing = screen.getByRole('region', { name: 'Come for one evening.' })
+    expect(within(closing).getByRole('link', { name: 'See what’s on' })).toHaveAttribute('href', '/events')
     expect(screen.getByText(/Everyone is welcome at our programmes/)).toBeInTheDocument()
+  })
+
+  it('shows no card beside the buttons when nothing is on the website, rather than guessing one', async () => {
+    renderWithProviders(<HomePage />, { api: createEmptyApi() })
+    const hero = screen.getByRole('heading', { level: 1 }).closest('section')!
+    expect(await within(hero).findByRole('link', { name: 'See what’s on' })).toHaveAttribute('href', '/events')
+    // The festival list still has seasons in it; none of them is named by the hero.
+    await waitFor(() => expect(within(hero).queryByText(/date being settled/)).not.toBeInTheDocument())
+    expect(within(hero).queryByRole('complementary')).not.toBeInTheDocument()
+  })
+
+  it('gives each festival where it stands this year', async () => {
+    renderWithProviders(<HomePage />)
+    const year = await screen.findByRole('region', { name: 'Our year' })
+    expect(await within(year).findByText('Next up')).toBeInTheDocument()
+    expect(within(year).getByText('আমাদের বছর')).toHaveAttribute('lang', 'bn')
   })
 
   it('hides data-driven sections when there is nothing to show', async () => {

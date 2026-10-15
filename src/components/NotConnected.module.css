@@ -19,11 +19,11 @@
 }
 
 .title {
-  font-size: 24px;
+  font-size: var(--text-xl);
 }
 
 .text {
-  font-size: 17px;
+  font-size: var(--text-md);
   line-height: 1.55;
   color: var(--color-fg-muted);
   text-wrap: pretty;

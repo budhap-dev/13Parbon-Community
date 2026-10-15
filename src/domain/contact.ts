@@ -35,7 +35,7 @@ export type ContactMessage = ContactInput & {
  * What the site promises, in one place so the gallery, the form and the inbox cannot each
  * promise something slightly different.
  */
-export const TAKEDOWN_PROMISE = 'within three days, and you do not have to give a reason'
+export const TAKEDOWN_PROMISE = 'ASAP, and you do not have to give a reason'
 
 /**
  * What the app can honestly say once a message has been sent.

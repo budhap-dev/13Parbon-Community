@@ -11,9 +11,9 @@ describe('EventsPage', () => {
     const months = screen
       .getAllByRole('heading', { level: 2 })
       .map((h) => h.textContent)
-    expect(months).toEqual(['October 2026', 'February 2027', 'March 2027', 'April 2027', 'Earlier this year'])
+    expect(months).toEqual(['October 2026', 'February 2027', 'March 2027', 'April 2027', 'The year ahead', 'Earlier this year'])
     const past = screen.getByRole('region', { name: 'Earlier this year' })
-    expect(within(past).getByText('Look back')).toBeInTheDocument()
+    expect(within(past).getByRole('link', { name: 'Boishakhi programme' })).toHaveAttribute('href', '/events/boishakhi-programme-2026')
     expect(document.title).toBe('Events · 13Parbon Community')
   })
 
@@ -50,27 +50,42 @@ describe('EventsPage', () => {
     expect(screen.queryByRole('link', { name: /^Photos from/ })).not.toBeInTheDocument()
   })
 
-  it('names the occasions still waiting for a date, and offers to tell you', async () => {
+  it('marks each festival of the year as dated or still being arranged, and offers to tell you', async () => {
     // Only the Mahalaya programme is on the calendar in the app's own fixtures.
     renderWithProviders(<EventsPage />, { route: '/events', api: createMockApi({ now: () => TEST_NOW }) })
-    const note = await screen.findByRole('complementary', { name: 'More of the year to come' })
-    expect(note).toHaveTextContent('Boishakhi, Saraswati Puja and Holi are still being arranged')
-    expect(within(note).getByRole('link', { name: 'Send the committee a message' })).toHaveAttribute(
-      'href',
-      '/contact',
-    )
+    const year = await screen.findByRole('region', { name: 'The year ahead' })
+    const stops = within(year).getAllByRole('listitem')
+    expect(stops.map((stop) => within(stop).getByRole('heading').textContent)).toEqual([
+      'Mahalaya programme',
+      'Saraswati Puja',
+      'Holi',
+      'Boishakhi',
+    ])
+    expect(stops[0]).toHaveTextContent('Date set')
+    expect(stops[1]).toHaveTextContent('Being arranged')
+    expect(within(year).getByRole('link', { name: 'Send the committee a message' })).toHaveAttribute('href', '/contact')
   })
 
-  it('drops the note once every occasion has a date', async () => {
+  it('shows the year rather than an empty box when nothing has a date', async () => {
+    const base = createMockApi({ now: () => TEST_NOW })
+    const api = { ...base, events: { ...base.events, listUpcoming: async () => [] } }
+    renderWithProviders(<EventsPage />, { route: '/events', api })
+    const year = await screen.findByRole('region', { name: 'The year ahead' })
+    expect(within(year).getAllByText('Being arranged')).toHaveLength((await base.festivals.list()).length)
+    expect(screen.queryByText(/Nothing scheduled yet/)).not.toBeInTheDocument()
+  })
+
+  it('drops the offer once every occasion has a date', async () => {
     renderWithProviders(<EventsPage />, { route: '/events' })
-    await screen.findByRole('heading', { name: 'October 2026' })
-    expect(screen.queryByRole('complementary', { name: 'More of the year to come' })).not.toBeInTheDocument()
+    const year = await screen.findByRole('region', { name: 'The year ahead' })
+    expect(within(year).queryByText('Being arranged')).not.toBeInTheDocument()
+    expect(within(year).queryByRole('link', { name: 'Send the committee a message' })).not.toBeInTheDocument()
   })
 
   it('leaves the note out while a filter is on', async () => {
     renderWithProviders(<EventsPage />, { route: '/events?festival=holi', api: createMockApi({ now: () => TEST_NOW }) })
     await screen.findByRole('link', { name: 'All' })
-    expect(screen.queryByRole('complementary', { name: 'More of the year to come' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'The year ahead' })).not.toBeInTheDocument()
   })
 
   it('does not claim every occasion is unscheduled when the calendar fails to load', async () => {
@@ -80,7 +95,7 @@ describe('EventsPage', () => {
     expect(await screen.findByText(/could not load the calendar/i)).toBeInTheDocument()
     // The festivals arrive, so the filters do; the note about them must not.
     await screen.findByRole('link', { name: 'Holi' })
-    expect(screen.queryByRole('complementary', { name: 'More of the year to come' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'The year ahead' })).not.toBeInTheDocument()
   })
 
   it('says so when the earlier evenings fail to load, rather than leaving them out', async () => {

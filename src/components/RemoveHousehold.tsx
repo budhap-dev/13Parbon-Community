@@ -51,7 +51,8 @@ export function RemoveHousehold({
           Erases {household.name} and everything we hold about them. This cannot be undone.
         </p>
         <div className={styles.actions}>
-          <Button variant="line" size="sm" onClick={() => setOpen(true)}>
+          {/* Red like every remove; what follows asks for the household's name, not a click. */}
+          <Button variant="danger" size="sm" onClick={() => setOpen(true)}>
             Remove this household
           </Button>
         </div>

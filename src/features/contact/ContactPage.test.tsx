@@ -33,7 +33,7 @@ describe('ContactPage', () => {
     const ways = screen.getByRole('region', { name: 'Ways to reach us' })
     // Email, Facebook, Instagram and the WhatsApp group.
     expect(within(ways).getAllByRole('listitem')).toHaveLength(4)
-    expect(within(ways).getByRole('link', { name: '13parbon.Leeds@gmail.com' })).toHaveAttribute(
+    expect(within(ways).getByRole('link', { name: 'Email the committee' })).toHaveAttribute(
       'href',
       'mailto:13parbon.Leeds@gmail.com',
     )
@@ -41,8 +41,12 @@ describe('ContactPage', () => {
       'href',
       'https://www.facebook.com/groups/1337437436797813/',
     )
-    // The group has no invite address, so it is named rather than offered as a dead link.
-    expect(within(ways).getByText('No link to give out yet')).toBeInTheDocument()
+    // The group has no invite address, so it is named rather than offered as a dead link, and
+    // says nothing about the link it lacks.
+    expect(within(ways).getByRole('heading', { name: 'WhatsApp group' })).toBeInTheDocument()
+    expect(within(ways).queryByText('No link to give out yet')).not.toBeInTheDocument()
+    // The address itself, to copy.
+    expect(within(ways).getByText('13parbon.Leeds@gmail.com')).toBeInTheDocument()
     expect(within(ways).getByText(/Ask any member to add you/)).toBeInTheDocument()
     // Where we meet depends on what we are putting on, so that lives on the event page.
     expect(document.querySelector('iframe')).toBeNull()
@@ -57,7 +61,7 @@ describe('ContactPage', () => {
   it('offers the committee address when the form cannot send', () => {
     renderWithProviders(<ContactPage />, { route: '/contact' })
     // The form is the first choice; while it does not deliver, the address is the way through.
-    expect(screen.getByRole('link', { name: '13parbon.Leeds@gmail.com' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Email the committee' })).toHaveAttribute(
       'href',
       'mailto:13parbon.Leeds@gmail.com',
     )

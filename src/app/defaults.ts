@@ -26,6 +26,8 @@ export const defaultSettings: SiteSettings = {
   showSponsors: site.showSponsors,
   home: { ...site.home },
   homeOrder: [...HOME_BLOCKS],
+  // What the card did before it was a choice: the next evening, and nothing when there is none.
+  heroCard: { show: 'next', eventId: '' },
   defaultTheme: 'festival',
   text: {
     heroLead: site.bengaliTitleLead,
@@ -38,10 +40,15 @@ export const defaultSettings: SiteSettings = {
     tagline: site.tagline,
     mission: site.mission,
     missionStatement: site.missionStatement,
+    // 2022 is from the committee's own story on the About page; the households are theirs to count.
+    figureFounded: '2022',
+    figureHouseholds: '[Number of households]',
+    figureFestivals: String(festivals.length),
     venue: site.venue,
     address: site.address,
     email: site.email,
     galleryNote: site.galleryNote ?? '',
+    signOff: site.signOff,
   },
   committee: about.committee.map((row) => ({ ...row })),
   faq: about.faq.map((item) => ({ question: item.q, answer: item.a })),

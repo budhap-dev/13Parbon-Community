@@ -13,12 +13,12 @@
 }
 
 .title {
-  font-size: clamp(40px, 5vw, 72px);
+  font-size: var(--text-display-l);
 }
 
 .intro {
   max-width: 640px;
-  font-size: 20px;
+  font-size: var(--text-lg);
   color: var(--color-fg-muted);
   text-wrap: pretty;
 }
@@ -35,9 +35,9 @@
   align-items: center;
   min-height: 44px;
   padding: 0 18px;
-  border: 1.5px solid var(--color-border);
+  border: 1.5px solid var(--color-border-strong);
   border-radius: var(--radius-pill);
-  font-size: 16px;
+  font-size: var(--text-md);
   font-weight: 600;
   color: var(--color-fg);
 }
@@ -65,9 +65,9 @@
 
 .monthTitle {
   font-family: var(--font-body);
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: 0.16em;
+  font-size: var(--label-size);
+  font-weight: var(--label-weight);
+  letter-spacing: var(--label-tracking);
   text-transform: uppercase;
   color: var(--color-accent);
 }
@@ -78,46 +78,428 @@
   gap: 24px;
 }
 
-.empty {
-  padding: 40px;
-  border: 1.5px dashed var(--color-border);
-  border-radius: var(--radius-card);
-  font-size: 18px;
-  color: var(--color-fg-muted);
-  text-align: center;
-}
-
-.more {
+/* Loading, and the line under a filter with nothing on it: words, not an empty box. */
+.empty,
+.none {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 28px 30px;
-  border: 1.5px dashed var(--color-border);
-  border-radius: var(--radius-card);
+  gap: 20px;
+  font-size: var(--text-lg);
+  color: var(--color-fg-muted);
 }
 
-.moreTitle {
+/* The year ahead: every festival in the order it comes round, dated or still being arranged. */
+.year {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 26px;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.moreIcon {
-  flex-shrink: 0;
+.kickerBn {
+  font-family: var(--font-script);
+  font-size: var(--text-xl);
   color: var(--color-accent);
 }
 
-.moreText {
-  max-width: 68ch;
-  font-size: 17px;
-  line-height: 1.55;
+.yearTitle {
+  font-size: var(--text-display-s);
+}
+
+.timelineWrap {
+  --dot: 18px;
+  /* The list's own inset, which the bunting above it matches. */
+  --rail-inset: 40px;
+  position: relative;
+  margin-top: 18px;
+}
+
+.timeline {
+  position: relative;
+  display: grid;
+  margin: 0;
+  padding-left: var(--rail-inset);
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  gap: 24px;
+  list-style: none;
+}
+
+/*
+ * Tied at the dots, under them: a dot's own ground hides the knot. The loops sit in a grid of
+ * the same columns as the stops, inset as far as the list is, each starting at its stop's dot
+ * and reaching the next one across the gap. The last runs from the last dot to a bullet at the edge.
+ */
+.bunting {
+  --sag: 20px;
+  position: absolute;
+  top: calc(var(--dot) / 2 - 1px);
+  left: var(--rail-inset);
+  right: 0;
+  display: grid;
+  grid-template-columns: repeat(var(--stops), minmax(0, 1fr));
+  gap: 24px;
+  pointer-events: none;
+}
+
+.loop {
+  position: relative;
+  width: calc(100% + 24px);
+  height: calc(var(--sag) + 2px);
+  margin-left: calc(var(--dot) / 2);
+}
+
+/* The last runs on to a plain bullet at the edge, so the string is tied off rather than cut. */
+.loop:last-child {
+  width: calc(100% - var(--dot));
+}
+
+.loop:last-child::after {
+  content: '';
+  position: absolute;
+  top: calc(1px - var(--dot) / 2);
+  right: calc(var(--dot) / -2);
+  width: var(--dot);
+  height: var(--dot);
+  border-radius: 50%;
+  border: 3px solid var(--color-border-strong);
+  background: var(--color-bg);
+  box-shadow: 0 0 0 2px var(--color-bg);
+}
+
+.thread {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.thread path {
+  fill: none;
+  stroke: var(--color-border);
+  stroke-width: 2px;
+}
+
+/* Each flag on the curve: across by --t, down by the same parabola the thread follows. */
+.flag,
+.marigolds {
+  position: absolute;
+  left: calc(var(--t) * 100%);
+  top: calc(1px + 4 * var(--sag) * var(--t) * (1 - var(--t)));
+  translate: -50% 0;
+  transform-origin: 50% 0;
+  animation: sway 3.2s ease-in-out infinite alternate;
+  /* Out of step, so the string ripples rather than swinging as one. */
+  animation-delay: calc(var(--i) * -0.37s);
+}
+
+.flag {
+  width: 14px;
+  height: 18px;
+  background: var(--flag);
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  opacity: 0.92;
+}
+
+/* Three flowers on a thread, the way a marigold string hangs at a pandal. */
+.marigolds {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding-top: 1px;
+}
+
+.marigolds span {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #ffd166 0 30%, #f59e0b 31% 70%, #c2410c 71%);
+}
+
+/* Room under the line for the bunting to hang in, clear of the names. On a phone, where there
+   is no bunting, the dot sits beside the name instead and this does not apply. */
+@media (min-width: 761px) {
+  .timeline .stopDot {
+    margin-bottom: 52px;
+  }
+
+  /* The thread is the line on a wide screen; the straight one is the phone's, down the page. */
+  .timeline::before {
+    display: none;
+  }
+
+  /* The Bengali name hangs from its dot on a string of its own, tied at the matra the letters
+     hang from, and turns gently about the knot. --drop is the dot's margin and the list's gap. */
+  .stopBengali {
+    --drop: 56px;
+    position: relative;
+    align-self: flex-start;
+    transform-origin: calc(var(--dot) / 2) calc(-1 * var(--drop));
+    animation: dangle 6s ease-in-out infinite;
+  }
+
+  .stopBengali::before {
+    content: '';
+    position: absolute;
+    left: calc(var(--dot) / 2 - 1px);
+    bottom: calc(100% - 0.32em);
+    width: 2px;
+    height: calc(var(--drop) + var(--dot) / 2 + 0.32em);
+    background: var(--color-border);
+    pointer-events: none;
+  }
+
+  .stop:nth-child(2n) .stopBengali,
+  .stopSet:nth-child(2n) .stopBengali {
+    animation-delay: -2.1s;
+  }
+
+  .stop:nth-child(3n) .stopBengali,
+  .stopSet:nth-child(3n) .stopBengali {
+    animation-delay: -4.3s;
+  }
+}
+
+/* Out and back to rest, so with motion reduced it ends hanging straight. */
+@keyframes dangle {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-2.5deg);
+  }
+  75% {
+    transform: rotate(2.5deg);
+  }
+}
+
+@keyframes sway {
+  from {
+    transform: rotate(-7deg);
+  }
+  to {
+    transform: rotate(7deg);
+  }
+}
+
+/* The line the stops hang from, through the middle of each dot. */
+.timeline::before {
+  content: '';
+  position: absolute;
+  top: calc(var(--dot) / 2 - 1px);
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--color-border);
+}
+
+.stop,
+.stopSet {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stopDot {
+  position: relative;
+  z-index: 1;
+  width: var(--dot);
+  height: var(--dot);
+  margin-bottom: 14px;
+  border-radius: 50%;
+  border: 3px solid var(--swatch, var(--color-accent));
+  background: var(--color-bg);
+  /* A faint ring, so a festival whose colour is the theme's own ground still shows. */
+  box-shadow: 0 0 0 2px var(--color-bg), 0 0 0 3.5px var(--color-border);
+}
+
+.stopSet .stopDot {
+  background: var(--swatch, var(--color-accent));
+  box-shadow: 0 0 0 4px var(--color-bg), 0 0 0 6px var(--swatch-2, var(--color-accent));
+}
+
+.stopBengali {
+  font-family: var(--font-script);
+  font-size: var(--text-2xl);
+  line-height: 1.2;
+}
+
+.stopName {
+  font-size: var(--text-lg);
+}
+
+.stopStatus {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  margin-top: 6px;
+  font-size: var(--text-md);
+}
+
+@media (min-width: 761px) {
+  .stopStatus {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+.stopStatus a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-weight: 700;
+}
+
+.stopChip,
+.stopChipOpen {
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.stopChip {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+.stopChipOpen {
+  border: 1.5px solid var(--color-border-strong);
+  color: var(--color-fg);
+}
+
+.stopSeason {
   color: var(--color-fg-muted);
-  text-wrap: pretty;
+}
+
+.yearNote {
+  max-width: 68ch;
+  margin-top: 12px;
+  font-size: var(--text-md);
+  color: var(--color-fg-muted);
+}
+
+@media (max-width: 760px) {
+  /* On a phone the year runs down the page, so the bunting is strung across its top instead. */
+  .bunting {
+    position: relative;
+    top: auto;
+    left: 0;
+    height: calc(var(--sag) + 30px);
+    margin-bottom: 12px;
+    grid-template-columns: none;
+    grid-auto-columns: minmax(0, 1fr);
+    grid-auto-flow: column;
+    gap: 0;
+    overflow: clip;
+  }
+
+  .loop,
+  .loop:last-child {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .loop:last-child::after {
+    display: none;
+  }
+
+  /* Three loops fit a phone. */
+  .bunting > :nth-child(n + 4) {
+    display: none;
+  }
+
+  /* A ring in the page's own ink, so a red or navy dot still shows on a red or navy page. */
+  .stopDot {
+    box-shadow: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-fg-muted);
+  }
+
+  /* The occasions in one swipeable row, like the photographs on the home page. */
+  .filters {
+    flex-wrap: nowrap;
+    margin-left: calc(-1 * var(--page-pad, 16px));
+    margin-right: calc(-1 * var(--page-pad, 16px));
+    padding: 0 var(--page-pad, 16px);
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+  }
+
+  .filter,
+  .filterActive {
+    flex-shrink: 0;
+    white-space: nowrap;
+    scroll-snap-align: start;
+  }
+
+  .timeline {
+    grid-auto-flow: row;
+    gap: 22px;
+    padding-left: 34px;
+  }
+
+  .timeline::before {
+    top: 0;
+    bottom: 0;
+    left: calc(var(--dot) / 2 - 1px);
+    right: auto;
+    width: 2px;
+    height: auto;
+  }
+
+  .stopDot {
+    position: absolute;
+    top: 6px;
+    left: -34px;
+    margin: 0;
+  }
+}
+
+/* Past evenings, smaller: a line each rather than a card. */
+.pastList {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 32px;
+  list-style: none;
+}
+
+.pastItem {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 16px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--color-border-faint);
+}
+
+.pastLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: var(--text-md);
+  font-weight: 600;
+}
+
+.pastMeta {
+  font-size: var(--text-sm);
+  color: var(--color-fg-muted);
+}
+
+@media (max-width: 760px) {
+  .pastList {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .pastTitle {
-  font-size: 30px;
+  font-size: var(--text-xl);
 }
 
 /* Event detail */
@@ -140,12 +522,12 @@
   display: inline-flex;
   align-items: center;
   min-height: 44px;
-  font-size: 16px;
+  font-size: var(--text-md);
   font-weight: 600;
 }
 
 .detailTitle {
-  font-size: clamp(40px, 5vw, 72px);
+  font-size: var(--text-display-l);
   line-height: 1;
 }
 
@@ -183,9 +565,9 @@
 
 .themeLabel {
   position: relative;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
+  font-size: var(--label-size);
+  font-weight: var(--label-weight);
+  letter-spacing: var(--label-tracking);
   text-transform: uppercase;
   color: var(--color-accent);
   animation: theme-rise 600ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
@@ -195,7 +577,7 @@
   position: relative;
   position: relative;
   font-family: var(--font-script);
-  font-size: clamp(26px, 3vw, 36px);
+  font-size: var(--text-display-s);
   line-height: 1.25;
   animation: theme-rise 700ms cubic-bezier(0.2, 0.7, 0.2, 1) 120ms both;
 }
@@ -230,7 +612,7 @@
 .themeBengaliSub {
   position: relative;
   font-family: var(--font-script);
-  font-size: clamp(19px, 2vw, 24px);
+  font-size: var(--text-xl);
   line-height: 1.3;
   color: var(--color-fg-muted);
   animation: theme-rise 700ms cubic-bezier(0.2, 0.7, 0.2, 1) 260ms both;
@@ -240,7 +622,7 @@
   position: relative;
   padding-bottom: 6px;
   padding-top: 6px;
-  font-size: 17px;
+  font-size: var(--text-md);
   line-height: 1.45;
   color: var(--color-fg-muted);
   text-wrap: pretty;
@@ -282,7 +664,7 @@
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  font-size: 18px;
+  font-size: var(--text-lg);
   line-height: 1.45;
 }
 
@@ -293,7 +675,7 @@
 }
 
 .summary {
-  font-size: 20px;
+  font-size: var(--text-lg);
   line-height: 1.5;
   max-width: 640px;
   text-wrap: pretty;
@@ -301,7 +683,7 @@
 
 .sponsoredBy {
   max-width: 640px;
-  font-size: 16px;
+  font-size: var(--text-md);
   color: var(--color-fg-muted);
   text-wrap: pretty;
 }
@@ -320,7 +702,7 @@
 }
 
 .note {
-  font-size: 15px;
+  font-size: var(--text-sm);
   color: var(--color-fg-muted);
 }
 
@@ -344,13 +726,13 @@
 .countValue {
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: clamp(64px, 7vw, 110px);
+  font-size: var(--text-display-xl);
   line-height: 0.9;
   letter-spacing: -0.04em;
 }
 
 .countLabel {
-  font-size: 16px;
+  font-size: var(--text-md);
   font-weight: 600;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -370,7 +752,7 @@
   /* Sits with the first line, so a title that wraps does not strand it in the middle. */
   align-items: flex-start;
   gap: 10px;
-  font-size: 22px;
+  font-size: var(--text-xl);
 }
 
 .rolesIcon {
@@ -385,7 +767,7 @@
 }
 
 .roleMeta {
-  font-size: 16px;
+  font-size: var(--text-md);
   line-height: 1.5;
   color: var(--color-fg-muted);
 }
@@ -449,6 +831,15 @@
   border-color: var(--color-accent);
 }
 
+.albumSoon {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 20px;
+  font-weight: 600;
+  color: var(--color-fg-muted);
+}
+
 .albumCover {
   width: 72px;
   height: 72px;
@@ -464,13 +855,13 @@
 }
 
 .albumTitle {
-  font-size: 17px;
+  font-size: var(--text-md);
   font-weight: 600;
   color: var(--color-fg);
 }
 
 .albumMeta {
-  font-size: 15px;
+  font-size: var(--text-sm);
   color: var(--color-fg-muted);
 }
 
@@ -505,7 +896,7 @@
   border-radius: var(--radius-md, 12px);
   border: 2px solid var(--error, #b3261e);
   color: var(--error, #b3261e);
-  font-size: 16px;
+  font-size: var(--text-md);
   line-height: 1.55;
   max-width: 62ch;
 }

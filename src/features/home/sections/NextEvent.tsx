@@ -3,7 +3,9 @@ import { LoadFailed } from '@/components/LoadFailed'
 import { Container } from '@/components/Container'
 import { Icon } from '@/components/Icon'
 import { daysUntil, describeCountdown, formatLongDate, formatTime } from '@/domain/dates'
-import { useNextEvent } from '@/lib/api'
+import { heroEvent } from '@/domain/settings'
+import { useSettings } from '@/app/SettingsContext'
+import { useFestivals, useNextEvent, useUpcomingEvents } from '@/lib/api'
 import { useNow } from '@/lib/clock'
 import styles from '../Home.module.css'
 
@@ -69,7 +71,7 @@ export function NextEvent() {
               </Button>
             ) : null}
             {/* Volunteering is explained on the event page, alongside everything else. */}
-            <Button to={`/events/${event.slug}`} variant="inkLine" size="sm">
+            <Button to={`/events/${event.slug}`} variant="inkLine" size="sm" className={styles.eventDetails}>
               Event details
             </Button>
           </div>
@@ -85,5 +87,68 @@ export function NextEvent() {
         </p>
       </section>
     </Container>
+  )
+}
+
+/**
+ * The evening the committee has put beside the hero's buttons, from Home and About pages in the
+ * portal: the next one on the website, one they chose, or none. See `HeroCard`.
+ */
+export function useHeroEvent() {
+  const { heroCard } = useSettings()
+  const next = useNextEvent()
+  const upcoming = useUpcomingEvents(50)
+  const source = heroCard.show === 'chosen' ? upcoming : next
+  return {
+    event: heroEvent(heroCard, next.data, upcoming.data),
+    isNext: (event: { id: string }) => event.id === next.data?.id,
+    // A calendar that could not be read is not one with nothing on it, and shows no card.
+    isPending: heroCard.show !== 'none' && source.isPending,
+    isError: source.isError,
+  }
+}
+
+/**
+ * That evening as a ticket: both names, when, where, the days left, and the one thing to do
+ * about it. No evening, no ticket — the buttons stand on their own.
+ */
+export function HeroTicket() {
+  const { event, isNext, isPending, isError } = useHeroEvent()
+  const { data: festivals } = useFestivals()
+  const now = useNow()
+  if (isPending || isError || !event) return null
+
+  const festival = festivals?.find((f) => f.id === event.festivalId)
+  const english = festival?.name ?? event.title
+  const countdown = describeCountdown(daysUntil(event.startsAt, now))
+  const going = event.registrationOpen && event.registrationUrl ? { href: event.registrationUrl } : { to: `/events/${event.slug}` }
+
+  return (
+    <aside className={styles.ticket} aria-label={`${isNext(event) ? 'Next' : 'Coming up'}: ${english}`}>
+      <div className={styles.ticketMain}>
+        <p className={styles.ticketKicker}>{isNext(event) ? 'Next up' : 'Coming up'}</p>
+        {festival?.bengaliName ? (
+          <p lang="bn" className={styles.ticketBengali}>
+            {festival.bengaliName}
+          </p>
+        ) : null}
+        <p className={styles.ticketName}>{english}</p>
+        <ul className={styles.ticketFacts}>
+          <li>
+            <Icon name="clock" size={17} /> {formatLongDate(event.startsAt)}, {formatTime(event.startsAt)}
+          </li>
+          <li>
+            <Icon name="pin" size={17} /> {event.venue}
+          </li>
+        </ul>
+        <Button {...going} variant="ink" size="sm" className={styles.ticketButton}>
+          We are coming
+        </Button>
+      </div>
+      <p className={styles.ticketStub}>
+        <span className={styles.ticketDays}>{countdown.value}</span>
+        <span className={styles.ticketDaysLabel}>{countdown.label}</span>
+      </p>
+    </aside>
   )
 }

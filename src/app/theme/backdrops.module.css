@@ -7,6 +7,12 @@
   opacity: 0.14;
 }
 
+/* The Festival alpona carries far more detail than the other motifs; at 0.14 its petals and
+   paisleys ran together into a grey disc. Thin lines, so the headline over it stays clear. */
+[data-backdrop='alpona'] .faint {
+  opacity: 0.2;
+}
+
 /*
  * Holi runs brighter than the rest. The shared 0.14 is right for a line drawing behind text;
  * it made the one motif that is entirely about colour disappear into the magenta. Screen
@@ -104,32 +110,66 @@
   }
 }
 
-/* Festival: the alpona rolls a little way and back, turning the way a wheel would. */
-.wheelTrack {
-  animation: wheel-track 18s ease-in-out infinite alternate;
+/*
+ * Festival: in the hero, the alpona is a wheel on the floor. It rolls 60% of the way across and
+ * back, turning as far as it travels (--roll-distance and --roll-turn, measured in the
+ * component), and is drawn ring by ring from the centre out as each run begins and rubbed out
+ * as it ends, so it arrives at each side bare and is drawn afresh for the way back. One 14s
+ * cycle for a run and for a drawing, so the two stay in step.
+ */
+.roll {
+  transform-origin: 50% 50%;
+  animation: alpona-roll 14s ease-in-out infinite alternate;
 }
 
-.wheel {
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: wheel-spin 18s ease-in-out infinite alternate;
+.build {
+  stroke-dasharray: var(--len, 0) var(--len, 0);
+  animation: alpona-build 14s ease-in-out infinite backwards;
+  animation-delay: calc(var(--step, 0) * 0.4s);
 }
 
-@keyframes wheel-track {
+.buildDot {
+  animation: alpona-dot 14s ease-in-out infinite backwards;
+  animation-delay: calc(var(--step, 0) * 0.4s);
+}
+
+@keyframes alpona-roll {
   from {
-    transform: translateX(-90px);
+    transform: translate(0, 0) rotate(0deg);
   }
   to {
-    transform: translateX(90px);
+    transform: translate(var(--roll-distance, 0px), var(--roll-rise, 0px)) rotate(var(--roll-turn, 0deg));
   }
 }
 
-@keyframes wheel-spin {
-  from {
-    transform: rotate(-180deg);
+@keyframes alpona-build {
+  0% {
+    stroke-dashoffset: var(--len, 0);
   }
-  to {
-    transform: rotate(180deg);
+  20% {
+    stroke-dashoffset: 0;
+  }
+  62% {
+    stroke-dashoffset: 0;
+  }
+  80%,
+  100% {
+    stroke-dashoffset: var(--len, 0);
+  }
+}
+
+@keyframes alpona-dot {
+  0%,
+  10% {
+    opacity: 0;
+  }
+  18%,
+  64% {
+    opacity: 1;
+  }
+  78%,
+  100% {
+    opacity: 0;
   }
 }
 
@@ -347,6 +387,65 @@
   }
 }
 
+/* Lakshmi's owl: sways on its branch, looks one way and the other, and blinks now and then. */
+.owl {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: owl-sway 9s ease-in-out infinite;
+}
+
+.owlHead {
+  transform-box: fill-box;
+  transform-origin: 50% 80%;
+  animation: owl-look 12s ease-in-out infinite;
+}
+
+.owlEyes {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  animation: owl-blink 5s ease-in-out infinite;
+}
+
+@keyframes owl-sway {
+  0%,
+  100% {
+    transform: rotate(-2deg);
+  }
+  50% {
+    transform: rotate(2deg);
+  }
+}
+
+@keyframes owl-look {
+  0%,
+  20%,
+  100% {
+    transform: rotate(0deg);
+  }
+  28%,
+  44% {
+    transform: rotate(-14deg);
+  }
+  56%,
+  72% {
+    transform: rotate(12deg);
+  }
+  80% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes owl-blink {
+  0%,
+  90%,
+  100% {
+    transform: scaleY(1);
+  }
+  94% {
+    transform: scaleY(0.1);
+  }
+}
+
 /* Each print appears in turn and stays a while, so the walk reads as somebody arriving. */
 .step {
   opacity: 0;
@@ -390,12 +489,97 @@
   }
 }
 
+/*
+ * Deepavali's whole hero: the sky of fireworks over everything, and the diyas along its foot.
+ * Brighter than the line motifs, in colour, and screened so each burst lights the dark rather
+ * than sitting on it — thin lines, so the headline over them stays readable.
+ */
+.night {
+  overflow: hidden;
+}
+
+.sky {
+  position: absolute;
+  inset: 0 0 90px;
+  width: 100%;
+  height: calc(100% - 90px);
+}
+
+.glowing {
+  opacity: 0.85;
+  mix-blend-mode: screen;
+}
+
+.sill {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 90px;
+}
+
+/*
+ * A Deepavali firework: bursts open, hangs in the sky, sinks a little as it fades. Lit for most
+ * of its turn and started out of step, so six or seven are open across the sky at any moment
+ * rather than one at a time.
+ */
+.firework {
+  transform-box: fill-box;
+  transform-origin: center;
+  opacity: 0;
+  animation: firework 5s cubic-bezier(0.16, 0.84, 0.44, 1) infinite;
+}
+
+@keyframes firework {
+  0% {
+    opacity: 0;
+    transform: scale(0.2) translateY(0);
+  }
+  6% {
+    opacity: 1;
+    transform: scale(1.05) translateY(0);
+  }
+  12% {
+    transform: scale(1) translateY(0);
+  }
+  55% {
+    opacity: 0.9;
+  }
+  72% {
+    opacity: 0;
+    transform: scale(1.08) translateY(6px);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.08) translateY(6px);
+  }
+}
+
+/* Each diya's pool of light breathes, out of step with its neighbours. */
+.glow {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: glow 2.4s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+  from {
+    opacity: 0.55;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+}
+
 /* A firework opens from its centre and fades, then waits for its turn again. */
 .spark {
   transform-box: fill-box;
   transform-origin: center;
   opacity: 0;
-  animation: spark 4s cubic-bezier(0.16, 0.84, 0.44, 1) infinite;
+  animation: spark 6s cubic-bezier(0.16, 0.84, 0.44, 1) infinite;
 }
 
 @keyframes spark {

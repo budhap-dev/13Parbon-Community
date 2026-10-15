@@ -17,78 +17,27 @@
 }
 
 .label {
-  font-size: 14px;
+  font-size: var(--portal-text-md);
   font-weight: 600;
 }
 
-/*
- * Fields sized for a desk rather than a thumb, with the theme's corners. A field is filled with
- * the page's ground so it reads as a hole in the card it sits on, which is what a field is.
- */
-.input,
-.textarea {
-  padding: 10px 12px;
-  border: 1px solid var(--color-border, rgba(0, 0, 0, 0.2));
-  border-radius: var(--portal-button-radius, 8px);
-  background: var(--color-bg, transparent);
-  color: inherit;
-  font: inherit;
-  font-size: 15px;
-}
-
+/* The portal's shared field and hint: see components/Fields.module.css. */
 .input {
-  min-height: 40px;
-  padding: 0 12px;
+  composes: input from '../../components/Fields.module.css';
 }
 
 .textarea {
-  line-height: 1.6;
-  resize: vertical;
-  /*
-   * The full width of the form, like every other box on it.
-   *
-   * It was capped at 68ch — a reading measure, on the argument that writing should look like
-   * writing. But the boxes above it are not capped, so on anything wider than a laptop the
-   * piece sat in the left half of the form with nothing beside it, which reads as a layout
-   * that has broken rather than as a considered column. Anybody who prefers the narrow
-   * measure can drag the corner; `resize: vertical` is now `both` so they can.
-   */
-  width: 100%;
+  composes: textarea from '../../components/Fields.module.css';
   resize: both;
 }
 
-.input:focus-visible,
-.textarea:focus-visible {
-  outline: 2px solid var(--color-focus, #c9a227);
-  outline-offset: 1px;
-  border-color: var(--color-focus, #c9a227);
-}
-
-.input[aria-invalid='true'],
-.textarea[aria-invalid='true'] {
-  border-color: var(--error, #b3261e);
-}
-
 .hint {
-  margin: 0;
-  font-size: 13px;
-  opacity: 0.72;
-  line-height: 1.5;
-  /*
-   * As wide as the thing it is describing.
-   *
-   * 62ch is a measure for reading paragraphs, and these are not paragraphs — they are a line or
-   * two under a field that spans the whole form. Capped narrower than the input beneath it, a
-   * hint broke mid-sentence with half the panel empty to its right, which reads as a fault
-   * rather than as typography.
-   */
-  max-width: 96ch;
-  text-wrap: pretty;
+  composes: hint from '../../components/Fields.module.css';
 }
 
 .error {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--portal-text-sm);
   color: var(--error, #b3261e);
 }
 
@@ -107,7 +56,7 @@
 
 .check label {
   display: block;
-  font-size: 15px;
+  font-size: var(--portal-text-md);
   font-weight: 600;
   cursor: pointer;
 }
@@ -131,7 +80,7 @@
 
 .section {
   border: 1px solid var(--color-border-faint);
-  border-radius: 12px;
+  border-radius: var(--portal-radius, 12px);
   overflow: hidden;
   /* See .panel: clip lets a section's Save bar hold in view while the section scrolls. */
   overflow: clip;
@@ -177,14 +126,14 @@
 }
 
 .sectionNote {
-  font-size: 13px;
+  font-size: var(--portal-text-sm);
   opacity: 0.72;
   margin-right: auto;
 }
 
 .chevron,
 .chevronOpen {
-  font-size: 18px;
+  font-size: var(--portal-text-lg);
   line-height: 1;
   transition: transform var(--motion-fast, 160ms) ease;
 }
@@ -252,14 +201,14 @@
 
 .ideasTitle {
   margin: 0 0 8px;
-  font-size: 13px;
+  font-size: var(--portal-text-sm);
   font-weight: 600;
 }
 
 .ideasList {
   margin: 0;
   padding-left: 18px;
-  font-size: 13px;
+  font-size: var(--portal-text-sm);
   line-height: 1.6;
   opacity: 0.85;
 }
@@ -281,14 +230,14 @@
   gap: 14px;
   padding: 14px;
   border: 1px solid var(--color-border-faint);
-  border-radius: 10px;
+  border-radius: var(--portal-radius, 10px);
 }
 
 .groupTitle {
   margin: 14px 0 0;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
+  font-size: var(--portal-label-size);
+  font-weight: var(--portal-label-weight);
+  letter-spacing: var(--portal-label-tracking);
   text-transform: uppercase;
   opacity: 0.72;
 }
@@ -359,7 +308,7 @@
   border-left: 4px solid var(--gold, #c9a227);
   border-radius: 6px;
   background: color-mix(in srgb, var(--gold, #c9a227) 12%, transparent);
-  font-size: 14px;
+  font-size: var(--portal-text-md);
   line-height: 1.5;
 }
 
@@ -380,7 +329,7 @@
   padding: 3px 10px;
   border: 1px solid var(--color-border);
   border-radius: 999px;
-  font-size: 13px;
+  font-size: var(--portal-text-sm);
   font-weight: 600;
 }
 
@@ -424,7 +373,7 @@
   flex: 1 1 auto;
   min-width: 0;
   font-weight: 700;
-  font-size: 17px;
+  font-size: var(--portal-text-lg);
   overflow-wrap: anywhere;
 }
 
@@ -434,7 +383,7 @@
   align-items: center;
   gap: 10px;
   min-height: 44px;
-  font-size: 14px;
+  font-size: var(--portal-text-md);
   font-weight: 600;
   cursor: pointer;
 }
@@ -493,7 +442,7 @@
   padding: 10px 14px;
   border: 1px solid var(--color-border-faint);
   border-radius: 10px;
-  font-size: 14px;
+  font-size: var(--portal-text-md);
   line-height: 1.5;
 }
 

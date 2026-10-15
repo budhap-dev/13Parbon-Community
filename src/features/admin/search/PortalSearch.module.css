@@ -10,7 +10,7 @@
   background: transparent;
   color: var(--side-muted);
   font: inherit;
-  font-size: 14px;
+  font-size: var(--portal-text-md);
   font-weight: 500;
   text-align: left;
   cursor: pointer;
@@ -33,7 +33,7 @@
   border-radius: 5px;
   color: var(--side-faint);
   font-family: inherit;
-  font-size: 11.5px;
+  font-size: var(--portal-text-xs);
   font-weight: 600;
   letter-spacing: 0.02em;
 }
@@ -85,12 +85,12 @@
   background: transparent;
   color: inherit;
   font: inherit;
-  font-size: 17px;
+  font-size: var(--portal-text-lg);
   outline: none;
 }
 
 .input::placeholder {
-  color: var(--color-fg-faint);
+  color: var(--color-fg-muted);
 }
 
 /* The browser's own clear button doubles the Esc beside it. */
@@ -107,7 +107,7 @@
   background: transparent;
   color: var(--color-fg-muted);
   font: inherit;
-  font-size: 12px;
+  font-size: var(--portal-text-xs);
   font-weight: 600;
   cursor: pointer;
 }
@@ -136,11 +136,11 @@
 
 .groupLabel {
   padding: 10px 10px 4px;
-  font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
+  font-size: var(--portal-label-size);
+  font-weight: var(--portal-label-weight);
+  letter-spacing: var(--portal-label-tracking);
   text-transform: uppercase;
-  color: var(--color-fg-faint);
+  color: var(--color-fg-muted);
 }
 
 .more {
@@ -181,14 +181,14 @@
 
 .optionTitle {
   font-weight: 600;
-  font-size: 14.5px;
+  font-size: var(--portal-text-md);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .optionDetail {
-  font-size: 12.5px;
+  font-size: var(--portal-text-sm);
   color: var(--color-fg-muted);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -206,8 +206,8 @@
   margin: 0;
   padding: 9px 16px;
   border-top: 1px solid var(--color-border-faint);
-  color: var(--color-fg-faint);
-  font-size: 12px;
+  color: var(--color-fg-muted);
+  font-size: var(--portal-text-xs);
 }
 
 .srOnly {

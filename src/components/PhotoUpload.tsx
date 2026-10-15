@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { Button } from './Button'
+import { ConfirmButton } from './ConfirmButton'
 import { CoverImage } from './CoverImage'
 import { Icon } from './Icon'
 import { ACCEPTED, ACCEPTED_LABEL } from '@/domain/images'
@@ -207,9 +208,14 @@ export function PhotoUpload({
               </p>
               {item.step === 'ready' ? (
                 <div className={styles.actions}>
-                  <Button variant="line" size="sm" onClick={() => forget(item)}>
+                  <ConfirmButton
+                    title="Take this picture off the list?"
+                    body="It has not been uploaded, so it simply is not sent. Choose it again to put it back."
+                    confirmLabel="Take it off"
+                    onConfirm={() => forget(item)}
+                  >
                     Take it off the list
-                  </Button>
+                  </ConfirmButton>
                   {/*
                     * Said here, beside the picture, rather than at the foot of the component.
                     * On the event designer the choose-a-file row sits under this one, so a

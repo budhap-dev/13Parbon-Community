@@ -8,7 +8,7 @@ describe('Backdrop', () => {
     ['saraswati', 'veena', ['strings', 'notes']],
     ['holi', 'splash', ['splashes']],
     ['mahalaya', 'kash', ['stems', 'train', 'smoke']],
-    ['kojagori', 'moon', ['cloud', 'steps']],
+    ['kojagori', 'moon', ['cloud', 'steps', 'owl']],
     ['deepavali', 'diyas', ['flame', 'spark']],
     ['borodin', 'lights', ['star', 'bulb', 'snow']],
   ] as const)('%s renders the %s motif with its moving parts', (theme, motif, parts) => {

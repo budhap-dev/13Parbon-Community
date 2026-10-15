@@ -3,8 +3,8 @@ import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { useOpenFromAddress } from '@/app/useOpenFromAddress'
 import { useScrollToTopOn } from '@/app/useScrollToTopOn'
 import { Button } from '@/components/Button'
+import { RowMenu } from '@/components/RowMenu'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
-import { Icon } from '@/components/Icon'
 import { LoadFailed } from '@/components/LoadFailed'
 import { formatDateWithYear } from '@/domain/dates'
 import type { NewsPost } from '@/domain/news'
@@ -20,7 +20,7 @@ import { NewsForm } from './ContentForms'
  * somebody with a piece to put up would look first.
  */
 export function AdminWritingPage() {
-  useDocumentTitle('Writing')
+  useDocumentTitle('News and newsletters')
   const postsQuery = useAllPosts()
   const newslettersQuery = useNewsletters()
   const posts = postsQuery.data
@@ -89,8 +89,8 @@ export function AdminWritingPage() {
     <div className={styles.page}>
       <div className={styles.top}>
         <div>
-          <h1 className={styles.title}>Writing</h1>
-          <p className={styles.sub}>News pieces and newsletters, for the News page. Publish when you are ready, not before.</p>
+          <h1 className={styles.title}>News and newsletters</h1>
+          <p className={styles.sub}>Pieces for the News page, published when you are ready and not before.</p>
         </div>
       </div>
 
@@ -121,7 +121,7 @@ export function AdminWritingPage() {
           <p className={styles.empty}>Nothing written yet. Write something to start the news page.</p>
         ) : (
           <div className={styles.scroll}>
-            <table className={styles.table}>
+            <table className={`${styles.table} ${styles.cardsOnPhone}`}>
               <thead>
                 <tr>
                   <th>Article</th>
@@ -136,15 +136,15 @@ export function AdminWritingPage() {
               <tbody>
                 {posts.map((post) => (
                   <tr key={post.id}>
-                    <td>
+                    <td data-label="Article">
                       <strong>{post.title}</strong>
                       <br />
                       <span className={`${styles.muted} ${styles.tiny}`}>
                         {post.publishedAt ? formatDateWithYear(post.publishedAt) : 'Not published'}
                       </span>
                     </td>
-                    <td className={styles.tiny}>{post.author}</td>
-                    <td>
+                    <td data-label="Written by" className={styles.tiny}>{post.author}</td>
+                    <td data-label="Tags">
                       <ul className={styles.chips}>
                         {post.tags.map((tag) => (
                           <li key={tag} className={styles.pill}>
@@ -153,8 +153,8 @@ export function AdminWritingPage() {
                         ))}
                       </ul>
                     </td>
-                    <td>
-                      <span className={!post.publishedAt ? styles.pillWait : post.hidden ? styles.pillPast : styles.pillLive}>
+                    <td data-label="Status">
+                      <span className={!post.publishedAt || post.hidden ? styles.pillPast : styles.pillLive}>
                         {/* Never up is a draft; up and then off is taken down. Not the same thing. */}
                         {!post.publishedAt ? 'Draft' : post.hidden ? 'Taken down' : 'Published'}
                       </span>
@@ -164,9 +164,7 @@ export function AdminWritingPage() {
                         <Button variant="line" size="sm" aria-label={`Edit ${post.title}`} onClick={() => setEditing({ post })}>
                           Edit
                         </Button>
-                        <Button variant="danger" size="sm" aria-label={`Delete ${post.title}`} onClick={() => setDeleting(post.id)}>
-                          <Icon name="trash" size={15} />
-                        </Button>
+                        <RowMenu about={post.title} items={[{ label: 'Delete…', danger: true, onSelect: () => setDeleting(post.id) }]} />
                         <ConfirmDialog
                           open={deleting === post.id}
                           title="Delete this piece?"

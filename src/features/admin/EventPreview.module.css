@@ -35,12 +35,12 @@
 
 .title {
   margin: 0;
-  font-size: 16px;
+  font-size: var(--portal-text-lg);
 }
 
 .sub {
   margin: 2px 0 0;
-  font-size: 12.5px;
+  font-size: var(--portal-text-sm);
   color: var(--color-fg-muted);
 }
 
@@ -68,7 +68,7 @@
   background: transparent;
   color: inherit;
   font: inherit;
-  font-size: 13px;
+  font-size: var(--portal-text-sm);
   cursor: pointer;
 }
 
@@ -86,7 +86,7 @@
   background: transparent;
   color: inherit;
   font: inherit;
-  font-size: 13.5px;
+  font-size: var(--portal-text-sm);
   font-weight: 600;
   cursor: pointer;
 }
@@ -123,7 +123,7 @@
   padding: 9px 18px;
   background: color-mix(in srgb, var(--color-accent) 12%, transparent);
   border-bottom: 1px solid var(--color-border-faint);
-  font-size: 13px;
+  font-size: var(--portal-text-sm);
 }
 
 /* The page sits on a neutral ground, so where the phone frame ends is plain. */

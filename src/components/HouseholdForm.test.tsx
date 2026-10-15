@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import type { Household, HouseholdDraft, Viewer } from '@/domain/household'
 import { HouseholdForm } from './HouseholdForm'
+import { confirmRemove } from '@/test/confirm'
 
 const household: Household = {
   id: 'hh-sen',
@@ -73,13 +74,14 @@ describe('the people in it', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Add someone' }))
     expect(screen.getAllByLabelText('Name')).toHaveLength(3)
 
-    await userEvent.click(screen.getAllByRole('button', { name: 'Remove' })[2])
+    await userEvent.click(screen.getAllByRole('button', { name: /^Remove person/ })[2])
+    await confirmRemove()
     expect(screen.getAllByLabelText('Name')).toHaveLength(2)
   })
 
   it('will not offer to remove the only person left', async () => {
     setup(admin, true)
-    expect(screen.queryByRole('button', { name: 'Remove' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Remove person/ })).not.toBeInTheDocument()
   })
 
   it('asks for an age once somebody becomes a child', async () => {

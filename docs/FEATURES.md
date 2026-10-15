@@ -490,7 +490,7 @@ come back in arbitrary order.
 This is the part of the codebase with the most care in it, because each item is a promise made
 on a public page.
 
-**Takedown.** Any photograph comes down on request, *within three days and with no reason
+**Takedown.** Any photograph comes down on request, *as soon as possible ("ASAP") and with no reason
 required* — one constant, `TAKEDOWN_PROMISE`, so the gallery, the form and the inbox cannot
 each promise something slightly different. Deletion really deletes the bucket object.
 

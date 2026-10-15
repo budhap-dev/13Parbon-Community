@@ -9,7 +9,7 @@
 }
 
 .note {
-  font-size: 15px;
+  font-size: var(--text-sm);
   color: var(--color-fg-muted);
   white-space: nowrap;
 }

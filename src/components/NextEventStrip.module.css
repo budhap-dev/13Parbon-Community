@@ -33,7 +33,7 @@
   border: 1.5px solid var(--color-border);
   border-radius: var(--radius-tile);
   background: color-mix(in srgb, var(--color-bg-raised) 85%, transparent);
-  font-size: 16px;
+  font-size: var(--text-md);
   transition:
     border-color var(--motion-fast) ease,
     background-color var(--motion-fast) ease,
@@ -107,7 +107,7 @@
   color: var(--color-on-accent);
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: 14px;
+  font-size: var(--text-sm);
   letter-spacing: 0.02em;
   white-space: nowrap;
 }
@@ -144,7 +144,7 @@
   padding-right: 64px;
   color: var(--color-fg-muted);
   font-family: var(--font-script);
-  font-size: 16px;
+  font-size: var(--text-md);
 }
 
 /* Stops while it is being read or pressed. */
@@ -208,7 +208,7 @@
 
   .themeText {
     padding-right: 44px;
-    font-size: 14px;
+    font-size: var(--text-sm);
   }
 
   .name {
@@ -232,7 +232,7 @@
     justify-self: end;
     align-self: center;
     margin-left: 0;
-    font-size: 15px;
+    font-size: var(--text-sm);
     white-space: nowrap;
   }
 }
@@ -244,11 +244,11 @@
 @media (max-width: 380px) {
   .date {
     padding: 3px 8px;
-    font-size: 12.5px;
+    font-size: var(--text-xs);
   }
 
   .name {
-    font-size: 15px;
+    font-size: var(--text-sm);
   }
 }
 

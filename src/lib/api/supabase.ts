@@ -91,7 +91,7 @@ export function withSupabaseWrites(base: ApiClient, config: SupabaseConfig, doFe
              * Carried through, not dropped. This is the flag that marks somebody asking for a
              * photograph of their child to be taken down, and without it that request reaches
              * the committee's inbox looking exactly like a question about parking — which is an
-             * inbox where it waits a week, against a promise of three days.
+             * inbox where it waits a week, against a promise of as soon as possible.
              */
             kind: input.kind ?? 'general',
           },

@@ -1,6 +1,6 @@
 .paste {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 13.5px;
+  font-size: var(--portal-text-sm);
   line-height: 1.5;
   /* A pasted sheet is wider than the box; it scrolls rather than wrapping each row into soup. */
   white-space: pre;
@@ -13,7 +13,7 @@
   border-radius: 8px;
   background: var(--color-bg-raised);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 12.5px;
+  font-size: var(--portal-text-sm);
   line-height: 1.5;
   white-space: pre-wrap;
 }
@@ -67,12 +67,12 @@
 
 .summary {
   margin: 0;
-  font-size: 15px;
+  font-size: var(--portal-text-md);
 }
 
 .note {
   margin: 0;
-  font-size: 14px;
+  font-size: var(--portal-text-md);
   color: var(--error, #b3261e);
 }
 
@@ -96,7 +96,7 @@
   padding: 10px 12px;
   border-radius: 8px;
   background: var(--color-hover-wash);
-  font-size: 14px;
+  font-size: var(--portal-text-md);
 }
 
 .problem {
@@ -105,9 +105,9 @@
 }
 
 .where {
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
+  font-size: var(--portal-label-size);
+  font-weight: var(--portal-label-weight);
+  letter-spacing: var(--portal-label-tracking);
   text-transform: uppercase;
   color: var(--error, #b3261e);
 }
@@ -134,6 +134,6 @@
 }
 
 .meta {
-  font-size: 12.5px;
-  color: var(--color-fg-faint);
+  font-size: var(--portal-text-sm);
+  color: var(--color-fg-muted);
 }

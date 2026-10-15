@@ -15,6 +15,7 @@
   grid-template-rows: auto 1fr auto;
   min-height: 100vh;
   color: var(--color-fg);
+  accent-color: var(--color-accent);
   /* The theme's own ground: ruled lines, a weave, a dot grid — see the end of tokens.css. */
   background-color: var(--color-bg);
   background-image: var(--bg-texture-a, none), var(--bg-texture-b, none);
@@ -55,6 +56,7 @@
  * a window too short to show it all.
  */
 .side {
+  composes: jhalar jhalar-right from global;
   position: sticky;
   top: 0;
   display: flex;
@@ -68,6 +70,11 @@
   background: var(--portal-side-bg, var(--color-bg-raised));
   color: var(--side-fg);
   border-right: 1px solid var(--side-border);
+  /* A jhalar down its edge (ornaments.css), in the sidebar's own colour, over the page's margin. */
+  --jhalar-size: 8px;
+  --jhalar-fill: var(--portal-side-bg, var(--color-bg-raised));
+  --jhalar-dot: var(--side-accent);
+  --jhalar-dot-size: 1.8px;
 }
 
 .brand {
@@ -79,7 +86,7 @@
   color: var(--side-fg);
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: 18px;
+  font-size: var(--portal-text-lg);
   letter-spacing: -0.02em;
 }
 
@@ -117,12 +124,11 @@
 
 .groupLabel {
   padding: 0 10px 6px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
+  font-size: var(--portal-label-size);
+  font-weight: var(--portal-label-weight);
+  letter-spacing: var(--portal-label-tracking);
   text-transform: uppercase;
   color: var(--side-muted);
-  opacity: 0.8;
 }
 
 /*
@@ -188,9 +194,15 @@
   outline-offset: 2px;
 }
 
+/* The menu scrolls, so a ring drawn outside a full-width link was cut off at its sides. */
+.link:focus-visible,
+.linkOn:focus-visible {
+  outline-offset: -3px;
+}
+
 .foldMark {
   color: var(--side-faint);
-  font-size: 16px;
+  font-size: var(--portal-text-lg);
   line-height: 1;
   transform: rotate(-90deg);
   transition: transform var(--motion-fast) ease;
@@ -215,7 +227,7 @@
   border-radius: 8px;
   color: var(--side-muted);
   font-weight: 500;
-  font-size: 14.5px;
+  font-size: var(--portal-text-md);
   transition:
     background-color var(--motion-fast) ease,
     color var(--motion-fast) ease;
@@ -259,7 +271,7 @@
   border-radius: 10px;
   background: var(--side-accent);
   color: var(--side-on-accent);
-  font-size: 11.5px;
+  font-size: var(--portal-text-xs);
   font-weight: 600;
   display: inline-flex;
   align-items: center;
@@ -310,7 +322,7 @@
   border-radius: 50%;
   background: var(--side-accent);
   color: var(--side-on-accent);
-  font-size: 13px;
+  font-size: var(--portal-text-sm);
   font-weight: 700;
   letter-spacing: 0.02em;
 }
@@ -324,7 +336,7 @@
 
 .whoName {
   font-weight: 600;
-  font-size: 14px;
+  font-size: var(--portal-text-md);
   line-height: 1.3;
   overflow-wrap: anywhere;
   display: -webkit-box;
@@ -335,7 +347,7 @@
 }
 
 .whoDetail {
-  font-size: 12.5px;
+  font-size: var(--portal-text-sm);
   line-height: 1.3;
   color: var(--side-muted);
   overflow-wrap: anywhere;
@@ -349,7 +361,7 @@
 .whoEmail {
   padding-top: 8px;
   border-top: 1px solid var(--side-border);
-  font-size: 12px;
+  font-size: var(--portal-text-xs);
   color: var(--side-muted);
   overflow-wrap: anywhere;
 }
@@ -359,9 +371,9 @@
   margin-top: 5px;
   padding: 2px 7px;
   border-radius: 6px;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
+  font-size: var(--portal-label-size);
+  font-weight: var(--portal-label-weight);
+  letter-spacing: var(--portal-label-tracking);
   text-transform: uppercase;
   background: var(--side-wash);
   color: var(--side-muted);
@@ -399,7 +411,7 @@
   padding: 0 10px;
   border-width: 1px;
   border-radius: 8px;
-  font-size: 13px;
+  font-size: var(--portal-text-sm);
   gap: 6px;
 }
 
@@ -426,7 +438,7 @@
   background: var(--portal-side-danger-bg, color-mix(in srgb, var(--error) 8%, transparent));
   color: var(--portal-side-danger, var(--error));
   font-weight: 600;
-  font-size: 13px;
+  font-size: var(--portal-text-sm);
   /* Two words on two lines read as a button that had been squashed, which it had. */
   white-space: nowrap;
   cursor: pointer;
@@ -455,7 +467,7 @@
   padding: 9px 36px;
   background: color-mix(in srgb, var(--color-accent) 12%, transparent);
   border-bottom: 1px solid color-mix(in srgb, var(--color-accent) 30%, transparent);
-  font-size: 13.5px;
+  font-size: var(--portal-text-sm);
 }
 
 .previewStrong {
@@ -483,7 +495,8 @@
   position: absolute;
   top: -100px;
   left: 16px;
-  z-index: 10;
+  /* Over the sticky header and the phone menu, which it would otherwise show from under. */
+  z-index: 100;
   padding: 12px 18px;
   border-radius: var(--radius-pill);
   background: var(--color-accent);
@@ -505,6 +518,7 @@
  * the same line, so the two read as one band across the top of the screen.
  */
 .sideHead {
+  composes: jhalar jhalar-down from global;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -513,6 +527,14 @@
   margin: 0 -12px;
   padding: 0 12px 0 14px;
   border-bottom: 1px solid var(--side-border);
+  /* A short string of jhalar hanging under the name, in the gap above the menu. */
+  position: relative;
+  --jhalar-size: 7px;
+  --jhalar-start: 22px;
+  --jhalar-end: calc(100% - 22px - 8 * 14px);
+  --jhalar-fill: var(--side-accent);
+  --jhalar-dot: var(--portal-side-fg, var(--color-fg));
+  --jhalar-dot-size: 1.5px;
 }
 
 /* Only a phone has these: the drawer's own close, the shade behind it, the menu button and the
@@ -551,7 +573,7 @@
   gap: 8px;
   min-width: 0;
   margin: 0;
-  font-size: 14.5px;
+  font-size: var(--portal-text-md);
 }
 
 .crumbGroup {
@@ -590,7 +612,7 @@
   padding: 0 12px;
   border-radius: 8px;
   color: var(--side-muted);
-  font-size: 13.5px;
+  font-size: var(--portal-text-sm);
   font-weight: 600;
   white-space: nowrap;
 }
@@ -613,7 +635,7 @@
   background: var(--portal-side-bg, var(--color-bg-raised));
   color: var(--side-muted);
   border-top: 1px solid var(--side-border);
-  font-size: 12.5px;
+  font-size: var(--portal-text-sm);
 }
 
 .footLinks {
@@ -703,7 +725,7 @@
     color: inherit;
     font-family: var(--font-display);
     font-weight: 800;
-    font-size: 17px;
+    font-size: var(--portal-text-lg);
     letter-spacing: -0.02em;
   }
 
@@ -738,6 +760,12 @@
     transition:
       transform 280ms cubic-bezier(0.2, 0.7, 0.2, 1),
       visibility 0s linear 280ms;
+  }
+
+  /* The drawer has a rounded edge and its own shadow: no jhalar on a phone. */
+  .side::after,
+  .sideHead::after {
+    display: none;
   }
 
   .sideOpen {
@@ -839,7 +867,112 @@
 
   .content {
     padding-top: 22px;
+    /* Room for the bottom bar, so the last row is not under it. */
+    padding-bottom: 96px;
   }
+
+  /* A thumb's worth for every button in the portal. */
+  .shell {
+    --button-sm-height: 44px;
+  }
+
+  /*
+   * Preview as a 36px strip: the word, and the way out. The sentence explaining it is for a
+   * screen wide enough to have room for it; on a phone it was four lines over every screen.
+   */
+  .preview {
+    flex-wrap: nowrap;
+    min-height: 36px;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+
+  .previewText {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .leavePreview {
+    flex-shrink: 0;
+  }
+
+  .tabBar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    padding: 4px 6px calc(4px + env(safe-area-inset-bottom));
+    background: var(--portal-side-bg, var(--color-bg-raised));
+    color: var(--side-fg, var(--color-fg));
+    border-top: 1px solid var(--side-border, var(--color-border));
+  }
+
+  .foot {
+    padding-bottom: 84px;
+  }
+
+  /* Tabbing down the page stopped on links hidden behind the tab bar. */
+  :global(html):has(.tabBar) {
+    scroll-padding-bottom: 84px;
+  }
+}
+
+/* Held under the sticky bar and the Save bar beneath it, so a jump to a field lands in view. */
+@media (max-width: 900px) {
+  :global(html):has(.shell) {
+    scroll-padding-top: 140px;
+  }
+}
+
+.tab,
+.tabOn {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 52px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: var(--side-muted, var(--color-fg-muted));
+  font: inherit;
+  font-size: var(--portal-text-xs);
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.tabOn {
+  color: var(--side-fg, var(--color-fg));
+  background: var(--portal-side-wash, var(--color-hover-wash));
+}
+
+.tab:focus-visible,
+.tabOn:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: -3px;
+}
+
+.tabCount {
+  position: absolute;
+  top: 4px;
+  left: calc(50% + 6px);
+  min-width: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  font-size: 11px;
+  line-height: 18px;
+  text-align: center;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -860,7 +993,7 @@
   background: transparent;
   color: var(--color-fg);
   font-weight: 600;
-  font-size: 13px;
+  font-size: var(--portal-text-sm);
   cursor: pointer;
 }
 

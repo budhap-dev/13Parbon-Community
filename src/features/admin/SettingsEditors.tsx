@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { ActionBar } from '@/components/ActionBar'
 import { Button } from '@/components/Button'
-import { ConfirmDialog } from '@/components/ConfirmDialog'
+import { ConfirmButton, UNTIL_SAVED } from '@/components/ConfirmButton'
 import { Icon } from '@/components/Icon'
 import { PhotoUpload } from '@/components/PhotoUpload'
 import { SponsorLogo } from '@/components/SponsorLogo'
@@ -69,6 +69,7 @@ function RowTools({
   count,
   onMove,
   onRemove,
+  removeBody = UNTIL_SAVED,
 }: {
   /** What the row is called, for the buttons' names: "Holi", "question 3". */
   what: string
@@ -76,6 +77,8 @@ function RowTools({
   count: number
   onMove?: (by: -1 | 1) => void
   onRemove?: () => void
+  /** What the question says happens. Defaults to "out of the form until you save". */
+  removeBody?: ReactNode
 }) {
   return (
     <div className={styles.actions}>
@@ -96,9 +99,9 @@ function RowTools({
         </>
       ) : null}
       {onRemove ? (
-        <Button variant="line" size="sm" aria-label={`Remove ${what}`} onClick={onRemove}>
+        <ConfirmButton aria-label={`Remove ${what}`} title={`Remove ${what}?`} body={removeBody} onConfirm={onRemove}>
           Remove
-        </Button>
+        </ConfirmButton>
       ) : null}
     </div>
   )
@@ -696,7 +699,6 @@ export function SponsorsEditor({
   const uploads = readUploadConfig(import.meta.env)
   const supabase = readSupabaseConfig(import.meta.env)
   /** The row somebody has asked to remove, waiting for them to say they meant it. */
-  const [removing, setRemoving] = useState<number | null>(null)
   /** Logos that would not load, by address, so the card can say so. */
   const [broken, setBroken] = useState<string[]>([])
   /** Logos far wider than they are tall, by address: they come out too small to read on a tile. */
@@ -917,9 +919,14 @@ export function SponsorsEditor({
               )}
               {row.logo.trim() ? (
                 <div className={styles.actions} style={{ marginTop: 6 }}>
-                  <Button variant="line" size="sm" onClick={() => set(i, { logo: '' })}>
+                  <ConfirmButton
+                    title={`Take ${row.name.trim() || 'this sponsor'}’s logo off?`}
+                    body="It comes off their card now, and off the site when you save. The picture itself is kept, so it can be put back."
+                    onConfirm={() => set(i, { logo: '' })}
+                    confirmLabel="Take it off"
+                  >
                     Take the logo off
-                  </Button>
+                  </ConfirmButton>
                 </div>
               ) : null}
             </div>
@@ -994,25 +1001,12 @@ export function SponsorsEditor({
               index={i}
               count={rows.length}
               onMove={(by) => onChange(moved(rows, i, by))}
-              // A row nobody has typed anything into goes without a question.
-              onRemove={() => (row.name.trim() || row.logo.trim() ? setRemoving(i) : onChange(rows.filter((_, j) => j !== i)))}
+              onRemove={() => onChange(rows.filter((_, j) => j !== i))}
+              removeBody="They come off the Sponsors page, the home page and their festivals when you save the sponsors. Their logo file is kept."
             />
           </div>
         )
       })}
-      <ConfirmDialog
-        open={removing !== null}
-        title={`Remove ${removing !== null ? rows[removing]?.name.trim() || 'this sponsor' : ''}?`}
-        confirmLabel="Remove them"
-        onConfirm={() => {
-          if (removing !== null) onChange(rows.filter((_, j) => j !== removing))
-          setRemoving(null)
-        }}
-        onCancel={() => setRemoving(null)}
-      >
-        They come off the Sponsors page, the home page and their festivals when you save the
-        sponsors. Their logo file is kept.
-      </ConfirmDialog>
     </>
   )
 }

@@ -44,7 +44,7 @@ export function HomePage() {
 
   return (
     <div className={styles.page}>
-      <Hero />
+      <Hero showNext={show('nextEvent')} />
       {settings.homeOrder.map((block) => (
         <Fragment key={block}>{blocks[block]()}</Fragment>
       ))}

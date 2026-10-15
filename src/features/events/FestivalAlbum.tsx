@@ -1,7 +1,10 @@
 import { Link } from 'react-router'
 import { useSettings } from '@/app/SettingsContext'
-import type { Festival } from '@/domain/festival'
-import { useAlbums } from '@/lib/api'
+import { Icon } from '@/components/Icon'
+import { heldThisYear, type Festival } from '@/domain/festival'
+import { photosAwaited } from '@/domain/gallery'
+import { useAlbums, usePastEvents } from '@/lib/api'
+import { useNow } from '@/lib/clock'
 import styles from './Events.module.css'
 
 /**
@@ -9,13 +12,29 @@ import styles from './Events.module.css'
  * later and offers nothing to look at. If we have photographs from the last one, they are
  * the answer to what somebody arriving here actually wants to know — what this evening is
  * like. Nothing is shown when there is no album, or while the gallery is switched off.
+ *
+ * Just after this year's evening, before its photographs are up, it says they are coming
+ * rather than offering last year's as though they were the latest.
  */
 export function FestivalAlbum({ festival }: { festival: Festival }) {
   const settings = useSettings()
   const { data: albums } = useAlbums()
+  const { data: past } = usePastEvents(10)
+  const now = useNow()
+  if (!settings.showPhotos || !albums) return null
+
+  const held = heldThisYear(festival.id, past ?? [], now)
+  if (held && photosAwaited(festival.id, held.startsAt, albums)) {
+    return (
+      <p className={styles.albumSoon}>
+        <Icon name="image" size={18} /> Photographs from this year’s {festival.name} coming soon.
+      </p>
+    )
+  }
+
   // Albums arrive newest first, so the first match is the most recent time we held this.
-  const album = albums?.find((a) => a.festivalId === festival.id)
-  if (!settings.showPhotos || !album) return null
+  const album = albums.find((a) => a.festivalId === festival.id)
+  if (!album) return null
 
   return (
     <Link to={`/gallery/${album.slug}`} className={styles.albumLink}>

@@ -139,7 +139,7 @@
   --color-ink-hover: #2a0620;
   --color-on-ink: #ffe95c;
   --color-fg: #fff3fa;
-  --color-fg-muted: rgba(255, 243, 250, 0.78);
+  --color-fg-muted: rgba(255, 243, 250, 0.84);
   --color-fg-faint: rgba(255, 243, 250, 0.45);
   --color-border: rgba(255, 243, 250, 0.35);
   --color-border-faint: rgba(255, 243, 250, 0.2);
@@ -524,6 +524,90 @@
   --sponsor-tile-ring: var(--color-border-faint);
 }
 
+/*
+ * Shared scales. Sizes are the same in every theme; what a theme changes is its face, texture
+ * and corners. Public text keeps to 13/15/17/19/22/28 and the display sizes for headings; the
+ * portal's denser screens keep to 12/13/15/17/20/28. A micro-label (a small capital heading over
+ * a block) is one size, weight and spacing everywhere it appears.
+ */
+:root {
+  --text-xs: 13px;
+  --text-sm: 15px;
+  --text-md: 17px;
+  --text-lg: 19px;
+  --text-xl: 22px;
+  --text-2xl: 28px;
+  --text-display-s: clamp(24px, 2.6vw, 34px);
+  --text-display-m: clamp(30px, 3vw, 44px);
+  --text-display-l: clamp(40px, 5vw, 72px);
+  --text-display-xl: clamp(56px, 7.5vw, 116px);
+  --label-size: 14px;
+  --label-weight: 600;
+  --label-tracking: 0.14em;
+
+  --portal-text-xs: 12px;
+  --portal-text-sm: 13px;
+  --portal-text-md: 15px;
+  --portal-text-lg: 17px;
+  --portal-text-xl: 20px;
+  --portal-text-2xl: 28px;
+  --portal-label-size: 11.5px;
+  --portal-label-weight: 600;
+  --portal-label-tracking: 0.08em;
+
+  /* The space above each section of the home page. */
+  --section-gap: clamp(56px, 8vw, 96px);
+}
+
+/*
+ * Derived from each theme's own values, so declared wherever a theme is: on the root, and on
+ * anything that carries a theme of its own (an evening's preview in the designer). Declared on
+ * :root alone, they would be worked out once from the root's theme and inherited unchanged.
+ */
+:root,
+[data-theme] {
+  /* Inputs, chips and filters: an edge that holds 3:1 against the ground. */
+  --color-border-strong: color-mix(in srgb, var(--color-fg) 55%, transparent);
+  /* Two named corners for the pieces between a tile and a card, following the theme's own. */
+  --radius-md: var(--radius-tile);
+  --radius-lg: var(--radius-card);
+  /* A selected photograph's ring. Bright on the dark themes, deepened on the light ones. */
+  --gold: #c9a227;
+  /* How strongly the ornaments (ornaments.css) show: full on the public site. */
+  --ornament-strength: 1;
+}
+
+/* In the portal: full in the two colourful frames, off in Paper, soft in the rest. */
+[data-theme='linen'],
+[data-theme='sage'],
+[data-theme='mist'],
+[data-theme='slate'],
+[data-theme='midnight'],
+[data-theme='lagoon'] {
+  --ornament-strength: 0.5;
+}
+
+[data-theme='paper'] {
+  --ornament-strength: 0;
+}
+
+[data-theme='poila-boishakh'],
+[data-theme='saraswati'],
+[data-theme='borodin'],
+[data-theme='paper'],
+[data-theme='linen'],
+[data-theme='sage'],
+[data-theme='mist'],
+[data-theme='marigold'],
+[data-theme='lagoon'] {
+  --gold: #8a6a00;
+}
+
+/* Holi's raised ground is bright enough that the shared 55% edge falls just short of 3:1. */
+[data-theme='holi'] {
+  --color-border-strong: color-mix(in srgb, var(--color-fg) 62%, transparent);
+}
+
 /* Festival: a scatter of marigold dots, like an alpona's border. Round pills, as before. */
 [data-theme='festival'] {
   --bg-texture-a: radial-gradient(circle, rgba(247, 183, 51, 0.09) 1.3px, transparent 1.8px);
@@ -899,7 +983,7 @@
   --color-photo-c: #3b0764;
   --color-photo-d: #0f766e;
 
-  --bg-texture-a: radial-gradient(900px 560px at 100% 0%, rgba(219, 39, 119, 0.2), transparent 62%);
+  --bg-texture-a: radial-gradient(900px 560px at 100% 0%, rgba(190, 24, 93, 0.2), transparent 62%);
   --bg-texture-a-size: 100% 100%;
   --bg-texture-b: radial-gradient(800px 600px at 0% 100%, rgba(13, 148, 136, 0.16), transparent 62%);
   --bg-texture-b-size: 100% 100%;
@@ -907,9 +991,9 @@
   --portal-button-radius: 10px;
   --portal-shadow: 0 0 0 1px rgba(252, 211, 77, 0.06), 0 14px 34px rgba(0, 0, 0, 0.4);
   --portal-panel-border: rgba(196, 181, 253, 0.16);
-  --portal-side-bg: linear-gradient(170deg, #6d28d9 0%, #9333ea 45%, #db2777 100%);
+  --portal-side-bg: linear-gradient(170deg, #6d28d9 0%, #9333ea 45%, #be185d 100%);
   --portal-side-fg: #ffffff;
-  --portal-side-muted: rgba(255, 255, 255, 0.86);
+  --portal-side-muted: rgba(255, 255, 255, 0.92);
   --portal-side-faint: rgba(255, 255, 255, 0.64);
   --portal-side-border: rgba(255, 255, 255, 0.24);
   --portal-side-wash: rgba(255, 255, 255, 0.12);
@@ -923,4 +1007,33 @@
   --portal-side-danger-border: rgba(255, 255, 255, 0.4);
   --portal-side-danger-hover: #991b1b;
   --portal-side-danger-hover-fg: #ffffff;
+}
+
+/*
+ * Each festival's own colours, for the band on its card and its stop on the calendar. Fixed
+ * across the themes: Mahalaya is indigo and dawn orange whichever look the site is in.
+ */
+[data-festival='boishakhi'],
+[data-festival='poila-boishakh'] {
+  --swatch: #b3132b;
+  --swatch-2: #fff1dc;
+  --swatch-fg: #fff6ea;
+}
+
+[data-festival='mahalaya'] {
+  --swatch: #24226b;
+  --swatch-2: #ff9a3c;
+  --swatch-fg: #fbf3e4;
+}
+
+[data-festival='saraswati-puja'] {
+  --swatch: #f4c430;
+  --swatch-2: #1f5fbf;
+  --swatch-fg: #14213d;
+}
+
+[data-festival='holi'] {
+  --swatch: #b0186f;
+  --swatch-2: #ffd60a;
+  --swatch-fg: #fff3fa;
 }

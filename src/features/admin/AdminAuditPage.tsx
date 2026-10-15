@@ -144,15 +144,14 @@ export function AdminAuditPage() {
         <div>
           <h1 className={styles.title}>What has changed</h1>
           <p className={styles.sub}>
-            Every change to a household, a message, a notice or the site itself — who made it, and what it
-            was before.
+            Every change, who made it, and what it was before.
           </p>
         </div>
       </div>
 
       <p className={styles.note}>
-        Written by the database as each change happens, so nothing reaches the tables without a line here.
-        Nobody can edit it, including the committee.
+        The site writes this down by itself as each change happens, so nothing changes without a line
+        here. Nobody can edit it, including the committee.
       </p>
 
       {isPending ? (
@@ -180,7 +179,7 @@ export function AdminAuditPage() {
             </span>
           </div>
           <div className={`${styles.scroll} ${styles.tall}`}>
-            <table className={styles.table}>
+            <table className={`${styles.table} ${styles.cardsOnPhone}`}>
               <thead>
                 <tr>
                   <th>When</th>
@@ -194,7 +193,7 @@ export function AdminAuditPage() {
                   const moved = Object.entries(entry.changes)
                   return (
                     <tr key={entry.id}>
-                      <td className={styles.tiny}>
+                      <td data-label="When" className={styles.tiny}>
                         {formatLongDate(entry.at)}
                         <br />
                         <span className={styles.muted}>{formatTime(entry.at)}</span>
@@ -202,11 +201,11 @@ export function AdminAuditPage() {
                       {/* The page has always promised this — "who made it, and what it was
                           before" — and the database has always recorded it. It was read out of
                           the database, dropped on the way to the screen, and never shown. */}
-                      <td>{entry.actor}</td>
-                      <td>
+                      <td data-label="Who">{entry.actor}</td>
+                      <td data-label="What">
                         <strong>{describeAction(entry.action)}</strong>
                       </td>
-                      <td className={`${styles.muted} ${styles.tiny} ${styles.changes}`}>
+                      <td data-label="What moved" className={`${styles.muted} ${styles.tiny} ${styles.changes}`}>
                         {moved.length === 0 ? (
                           '—'
                         ) : (

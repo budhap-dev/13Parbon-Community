@@ -3,6 +3,7 @@ import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { useOpenFromAddress } from '@/app/useOpenFromAddress'
 import { useScrollToTopOn } from '@/app/useScrollToTopOn'
 import { Button } from '@/components/Button'
+import { RowMenu } from '@/components/RowMenu'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { LoadFailed } from '@/components/LoadFailed'
 import { formatLongDate } from '@/domain/dates'
@@ -124,7 +125,7 @@ export function AdminNoticesPage() {
           <h2 id="notices-title" className={styles.panelTitle}>
             The noticeboard
           </h2>
-          <Button variant="line" size="sm" onClick={() => setEditing({})}>
+          <Button variant="gold" size="sm" onClick={() => setEditing({})}>
             Put up a notice
           </Button>
         </div>
@@ -140,7 +141,7 @@ export function AdminNoticesPage() {
           <p className={styles.empty}>Nothing on the board.</p>
         ) : (
           <div className={styles.scroll}>
-            <table className={styles.table}>
+            <table className={`${styles.table} ${styles.cardsOnPhone}`}>
               <thead>
                 <tr>
                   <th>Notice</th>
@@ -154,14 +155,14 @@ export function AdminNoticesPage() {
               <tbody>
                 {announcements.map((notice) => (
                   <tr key={notice.id}>
-                    <td>
+                    <td data-label="Notice">
                       <strong>{notice.pinned ? '📌 ' : ''}{notice.title}</strong>
                       <br />
                       <span className={`${styles.muted} ${styles.tiny}`}>{notice.body}</span>
                     </td>
-                    <td className={styles.muted}>{notice.audience === 'public' ? 'Anybody' : 'Members'}</td>
-                    <td>
-                      <span className={isLive(notice, at) ? styles.pillLive : styles.pillWait}>
+                    <td data-label="Who sees it" className={styles.muted}>{notice.audience === 'public' ? 'Anybody' : 'Members'}</td>
+                    <td data-label="Showing">
+                      <span className={isLive(notice, at) ? styles.pillLive : styles.pillPast}>
                         {isLive(notice, at) ? 'On the board' : notice.publishAt > at ? 'Waiting' : 'Finished'}
                       </span>
                     </td>
@@ -175,14 +176,10 @@ export function AdminNoticesPage() {
                         >
                           Edit
                         </Button>
-                        <Button
-                          variant="danger"
-                          size="sm"
-                          aria-label={`Take ${notice.title} off the board`}
-                          onClick={() => setRemoving(notice.id)}
-                        >
-                          Take off
-                        </Button>
+                        <RowMenu
+                          about={notice.title}
+                          items={[{ label: 'Take off the board…', danger: true, onSelect: () => setRemoving(notice.id) }]}
+                        />
                         <ConfirmDialog
                           open={removing === notice.id}
                           title="Take this notice off the board?"

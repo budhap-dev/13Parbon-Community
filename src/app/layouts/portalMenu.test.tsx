@@ -175,7 +175,8 @@ describe('the committee’s menu, in sections', () => {
     }
     // Two of the website's, to show they landed together.
     expect(within(nav).getByRole('link', { name: /Sponsors/ })).toHaveAttribute('href', '/admin/sponsors')
-    expect(within(nav).getByRole('link', { name: /Pages and settings/ })).toHaveAttribute('href', '/admin/content')
+    expect(within(nav).getByRole('link', { name: /Site settings/ })).toHaveAttribute('href', '/admin/content')
+    expect(within(nav).getByRole('link', { name: /Home and About pages/ })).toHaveAttribute('href', '/admin/pages')
   })
 
   it('folds their own household away while they are on the committee’s screens', async () => {
