@@ -1,0 +1,21 @@
+{
+  "id": "/",
+  "name": "13Parbon Community",
+  "short_name": "13Parbon",
+  "description": "A Bengali cultural association in Leeds. Twelve months, thirteen festivals — see what is coming up and come along.",
+  "lang": "en-GB",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#7a1a12",
+  "theme_color": "#7a1a12",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Events", "url": "/events", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Member portal", "url": "/portal", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}
