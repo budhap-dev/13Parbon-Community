@@ -3,10 +3,11 @@ import { ActionBar } from '@/components/ActionBar'
 import { Button } from '@/components/Button'
 import { ConfirmButton, UNTIL_SAVED } from '@/components/ConfirmButton'
 import { Icon } from '@/components/Icon'
+import { PhotoMono } from '@/components/PersonPhoto'
 import { InfoNote } from '@/components/InfoNote'
 import { LoadFailed } from '@/components/LoadFailed'
 import { useSettings, useSettingsFailed, useSettingsLoaded } from '@/app/SettingsContext'
-import { householdInitials, type Household } from '@/domain/household'
+import { householdInitials, plainName, type Household } from '@/domain/household'
 import { tidyCommittee, tidyRoles, type CommitteeMember, type SiteSettings } from '@/domain/settings'
 import { useSaveSettings } from '@/lib/api'
 import { toneStyle } from '@/features/portal/tones'
@@ -80,10 +81,16 @@ function personInitials(person: string): string {
 }
 
 /** A card as it is being edited: the name in its two halves, and a key that follows it when it moves. */
-type Row = { key: number; role: string; ownRole: boolean; title: string; person: string }
+type Row = { key: number; role: string; ownRole: boolean; title: string; person: string; savedPhoto?: string }
 
 let nextKey = 0
-const toRow = (member: CommitteeMember): Row => ({ key: nextKey++, role: member.role, ownRole: false, ...splitTitle(member.name) })
+const toRow = (member: CommitteeMember): Row => ({
+  key: nextKey++,
+  role: member.role,
+  ownRole: false,
+  ...splitTitle(member.name),
+  ...(member.photo ? { savedPhoto: member.photo } : {}),
+})
 const fullName = (row: Pick<Row, 'title' | 'person'>) => (row.person.trim() ? [row.title, row.person.trim()].filter(Boolean).join(' ') : '')
 const toMember = (row: Row): CommitteeMember => ({ role: row.role, name: fullName(row) })
 
@@ -194,12 +201,6 @@ function CommitteeEditor({
   // A role's name as it was when its box was entered, so the cards holding it can follow a rename.
   const renaming = useRef('')
 
-  const committee = tidyCommittee(rows.map(toMember))
-  const roles = tidyRoles(roleRows.map((role) => role.name))
-  const unsaved =
-    JSON.stringify(committee) !== JSON.stringify(settings.committee) ||
-    JSON.stringify(roles) !== JSON.stringify(settings.committeeRoles)
-
   const cards = useReorder(rows, setRows, 'grip', (row) => row.role.trim() || fullName(row) || 'The card')
   const roleOrder = useReorder(roleRows, setRoleRows, 'role-grip', (role) => role.name.trim() || 'The role')
 
@@ -212,7 +213,29 @@ function CommitteeEditor({
         .sort((a, b) => a.household.name.localeCompare(b.household.name)),
     [households],
   )
-  const known = useMemo(() => new Set(people.flatMap((group) => group.adults.map((p) => p.name))), [people])
+  // By name as both sides might write it: a household may put "Mr." in a name, as the About page does.
+  const known = useMemo(() => new Set(people.flatMap((group) => group.adults.map((p) => plainName(p.name)))), [people])
+  // Every grown-up's photograph by name; a name with none is there too, as having none.
+  const photos = useMemo(() => new Map(people.flatMap((group) => group.adults.map((p) => [plainName(p.name), p.photo] as const))), [people])
+
+  /*
+   * Each card's photograph is its person's, from their household, copied in when the committee
+   * is saved: the About page is public and the households are not. Until the households have
+   * been read, and for somebody not in one, it is whatever was saved last time.
+   */
+  const photoFor = (row: Row): string | undefined => {
+    const person = plainName(row.person)
+    return households && photos.has(person) ? photos.get(person) : row.savedPhoto
+  }
+  const committee = tidyCommittee(rows.map((row) => ({ ...toMember(row), photo: photoFor(row) })))
+  const roles = tidyRoles(roleRows.map((role) => role.name))
+  const withoutPhotos = (list: CommitteeMember[]) => JSON.stringify(list.map(({ role, name }) => ({ role, name })))
+  const unsaved =
+    JSON.stringify(committee) !== JSON.stringify(settings.committee) ||
+    JSON.stringify(roles) !== JSON.stringify(settings.committeeRoles)
+  // Nothing typed, but somebody on the committee has a new photograph since it was last saved.
+  const newPhotos = unsaved && withoutPhotos(committee) === withoutPhotos(settings.committee) && JSON.stringify(roles) === JSON.stringify(settings.committeeRoles)
+
 
   const set = (i: number, changes: Partial<Row>) => setRows((now) => now.map((row, j) => (i === j ? { ...row, ...changes } : row)))
   /** Once a rename is finished, the cards that held the old name take the new one. */
@@ -239,6 +262,10 @@ function CommitteeEditor({
           ) : saved && !unsaved ? (
             <span className={portal.said} role="status">
               Saved. The About page changes for everybody straight away.
+            </span>
+          ) : newPhotos && !saving ? (
+            <span className={portal.said} role="status">
+              A new photograph on the committee. Save to put it on the About page.
             </span>
           ) : !unsaved && !saving ? (
             <span className={`${portal.muted} ${portal.tiny}`}>All saved</span>
@@ -274,13 +301,15 @@ function CommitteeEditor({
           {rows.map((row, i) => {
             const name = fullName(row)
             const what = row.role.trim() || name || `card ${i + 1}`
-            const outside = row.person.trim() !== '' && !known.has(row.person.trim())
+            const outside = row.person.trim() !== '' && !known.has(plainName(row.person))
+            // The household's own way of writing the chosen name, so the list shows it as chosen.
+            const chosen = people.flatMap((group) => group.adults).find((p) => plainName(p.name) === plainName(row.person))
             return (
               <li key={row.key} className={`${styles.card} ${portal.rise}`} style={toneStyle(i)} {...cards.item(i)}>
                 <div className={styles.cardHead}>
-                  <span className={styles.mono} aria-hidden="true">
+                  <PhotoMono photo={photoFor(row)} className={styles.mono}>
                     {row.person.trim() ? personInitials(row.person) : i + 1}
-                  </span>
+                  </PhotoMono>
                   <div className={styles.cardWords}>
                     <span className={styles.cardRole} title={row.role.trim() || undefined}>
                       {row.role.trim() || 'A new role'}
@@ -352,7 +381,19 @@ function CommitteeEditor({
                       <label className={styles.label} htmlFor={`name-${row.key}`}>
                         Name<span className={styles.srOnly}> {i + 1}</span>
                       </label>
-                      <select id={`name-${row.key}`} className={styles.input} value={row.person.trim()} onChange={(e) => set(i, { person: e.target.value })}>
+                      <select
+                        id={`name-${row.key}`}
+                        className={styles.input}
+                        value={chosen?.id ?? row.person.trim()}
+                        onChange={(e) => {
+                          const picked = people.flatMap((group) => group.adults).find((p) => p.id === e.target.value)
+                          if (!picked) return set(i, { person: e.target.value })
+                          // A household that wrote "Mr." into the name: the title goes in its own box,
+                          // or the About page would read "Mr. Mr. …".
+                          const split = splitTitle(picked.name)
+                          set(i, { person: split.person, title: split.title || row.title })
+                        }}
+                      >
                         <option value="">Choose somebody…</option>
                         {/* Somebody saved before the households knew them, kept rather than lost. */}
                         {outside ? (
@@ -363,7 +404,7 @@ function CommitteeEditor({
                         {people.map(({ household, adults }) => (
                           <optgroup key={household.id} label={household.name}>
                             {adults.map((person) => (
-                              <option key={person.id} value={person.name}>
+                              <option key={person.id} value={person.id}>
                                 {person.name}
                               </option>
                             ))}

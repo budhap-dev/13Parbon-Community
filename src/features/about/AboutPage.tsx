@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link } from 'react-router'
 import { site } from '@/app/site'
 import { useSettings } from '@/app/SettingsContext'
@@ -5,10 +6,16 @@ import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { Button } from '@/components/Button'
 import { Container } from '@/components/Container'
 import { Icon } from '@/components/Icon'
+import { useHoverZoom } from '@/components/useHoverZoom'
+import { photoByName, photoThumb } from '@/domain/household'
+import { usePublicPhotos } from '@/lib/api'
 import styles from './About.module.css'
 
 export function AboutPage() {
   const { text, committee, members, faq, story, values } = useSettings()
+  // Faces for the names already printed here, where their owners have added one. The committee's
+  // own saved copy stands in until these have been read, or where they cannot be.
+  const photoOf = photoByName(usePublicPhotos().data ?? [])
   useDocumentTitle('About us')
 
   return (
@@ -106,7 +113,7 @@ export function AboutPage() {
             <li key={member.role} className={styles.member}>
               <span className={styles.memberRole}>{member.role}</span>
               <span className={styles.memberLine}>
-                <Icon name="badge" size={26} className={styles.entryBadge} />
+                <Face photo={photoOf(member.name) ?? member.photo} size={48} badge={26} className={styles.memberPhoto} />
                 <span className={styles.memberName}>{member.name}</span>
               </span>
             </li>
@@ -126,7 +133,7 @@ export function AboutPage() {
         <ul className={styles.members}>
           {members.map((name) => (
             <li key={name} className={styles.memberEntry}>
-              <Icon name="badge" size={22} className={styles.entryBadge} />
+              <Face photo={photoOf(name)} size={36} badge={22} className={styles.rollPhoto} />
               <span className={styles.entryName}>{name}</span>
             </li>
           ))}
@@ -134,5 +141,32 @@ export function AboutPage() {
       </section>
 
     </Container>
+  )
+}
+
+/**
+ * A member's own photograph where they have added one, and the rosette where they have not — or
+ * where it will not load, so a photograph taken down is never a broken-image box. Decorative:
+ * their name is beside it.
+ */
+function Face({ photo, size, badge, className }: { photo?: string; size: number; badge: number; className: string }) {
+  const [failed, setFailed] = useState(false)
+  const showing = photo && !failed ? photo : undefined
+  const zoom = useHoverZoom(showing)
+  if (!showing) return <Icon name="badge" size={badge} className={styles.entryBadge} />
+  return (
+    <>
+      <img
+        className={className}
+        src={photoThumb(showing)}
+        width={size}
+        height={size}
+        alt=""
+        loading="lazy"
+        onError={() => setFailed(true)}
+        {...zoom.handlers}
+      />
+      {zoom.overlay}
+    </>
   )
 }

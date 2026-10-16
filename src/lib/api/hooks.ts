@@ -322,6 +322,16 @@ export function useFestivals() {
   })
 }
 
+/** The faces the About page may show beside the names it already prints; see `people.publicPhotos`. */
+export function usePublicPhotos() {
+  const api = useApi()
+  return useQuery({
+    queryKey: ['public-photos'],
+    queryFn: () => api.people.publicPhotos(),
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
 export function useRecentMedia(limit = 6) {
   const api = useApi()
   return useQuery({ queryKey: ['gallery', 'recent', limit], queryFn: () => api.gallery.listRecentMedia(limit) })

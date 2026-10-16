@@ -51,6 +51,20 @@ export function withSupabaseSettings(base: ApiClient, config: SupabaseConfig): A
      * code's four rather than leaving the home page's strip of the year empty.
      */
     festivals: { list: async () => (await load().catch(() => base.settings.get())).festivals },
+    /*
+     * Read under the anon key like the rest of this table, through a function that hands out
+     * only the faces of names already printed on the About page (see `public-photos.sql`). A
+     * failure is no faces rather than no page: the names are what the page is for.
+     */
+    people: {
+      publicPhotos: async () => {
+        const { data, error } = await (await dataClient(config)).schema('portal').rpc('public_photos')
+        if (error || !Array.isArray(data)) return []
+        return (data as { name: unknown; photo_url: unknown }[])
+          .filter((row) => typeof row.name === 'string' && typeof row.photo_url === 'string' && row.photo_url.startsWith('https://'))
+          .map((row) => ({ name: row.name as string, photo: row.photo_url as string }))
+      },
+    },
     settings: {
       get: load,
       save: async (draft, viewer: Viewer) => {

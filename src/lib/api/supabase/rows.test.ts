@@ -146,3 +146,31 @@ describe('the picture and member since', () => {
     expect(fromDraft({ ...draft, memberSince: '' }, true)).not.toHaveProperty('member_since')
   })
 })
+
+describe('a profile photograph', () => {
+  const photo = 'https://photos.13parbon.org.uk/full/person-hhsen-abc123def456.jpg'
+
+  it('is read for an adult, and never for a child, whatever the row says', () => {
+    const base = row.people![0]
+    expect(toPerson({ ...base, age_group: 'adult', photo_url: photo }).photo).toBe(photo)
+    expect(toPerson({ ...base, age_group: 'adult', photo_url: null })).not.toHaveProperty('photo')
+    expect(toPerson({ ...base, age_group: 'child', photo_url: photo })).not.toHaveProperty('photo')
+  })
+
+  it('is sent only for an adult who has one, so a save works before the column exists', () => {
+    const draft = {
+      name: 'The Sens',
+      contactName: 'Rina Sen',
+      people: [
+        { name: 'Rina Sen', ageGroup: 'adult', photo },
+        { name: 'Arjun Sen', ageGroup: 'adult' },
+        { name: 'Mira Sen', ageGroup: 'child', age: 7, photo },
+      ],
+      interests: [],
+    } as HouseholdDraft
+    const [withOne, without, child] = peopleRows('hh-1', draft)
+    expect(withOne).toMatchObject({ photo_url: photo })
+    expect(without).not.toHaveProperty('photo_url')
+    expect(child).not.toHaveProperty('photo_url')
+  })
+})

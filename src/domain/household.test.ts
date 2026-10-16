@@ -3,6 +3,10 @@ import {
   children,
   describeSize,
   householdMatches,
+  householdPhoto,
+  photoByName,
+  plainName,
+  photoThumb,
   isValidHousehold,
   normaliseGoogleEmail,
   validateHousehold,
@@ -159,5 +163,47 @@ describe('householdMatches', () => {
     const sparse: Household = { ...base, email: undefined, phone: undefined, googleEmail: null }
     expect(householdMatches(sparse, 'example')).toBe(false)
     expect(householdMatches(sparse, 'arjun')).toBe(true)
+  })
+})
+
+describe('the photograph that stands for a household', () => {
+  const photo = 'https://photos.13parbon.org.uk/full/person-hhsen-abc.jpg'
+  const people = [
+    { id: '1', name: 'Arjun Sen', ageGroup: 'adult' as const, photo: `${photo}?arjun` },
+    { id: '2', name: 'Rina Sen', ageGroup: 'adult' as const, photo },
+  ]
+
+  it('is the main contact’s, and nobody else’s', () => {
+    expect(householdPhoto({ contactName: 'rina sen ', people })).toBe(photo)
+    expect(householdPhoto({ contactName: 'Somebody Else', people })).toBeUndefined()
+  })
+
+  it('has a small copy served beside it', () => {
+    expect(photoThumb(photo)).toBe('https://photos.13parbon.org.uk/thumb/person-hhsen-abc.jpg')
+  })
+})
+
+describe('telling whether two written names are one person', () => {
+  it('ignores a title, capitals and doubled spaces', () => {
+    expect(plainName(' Mr. Dalim  Ghosh ')).toBe('dalim ghosh')
+    expect(plainName('Mrs Abhinanda Pandit')).toBe('abhinanda pandit')
+    expect(plainName('Dr Mitra')).toBe('mitra')
+  })
+
+  it('finds a published name’s photograph however either side wrote it', () => {
+    const photoOf = photoByName([{ name: 'Dalim Ghosh', photo: 'a.jpg' }])
+    expect(photoOf('Mr. Dalim Ghosh')).toBe('a.jpg')
+    expect(photoOf('Mrs. Pinki Ghosh')).toBeUndefined()
+  })
+})
+
+describe('a household that writes the title into a name', () => {
+  it('is still the same person to the About page, the header and the household card', () => {
+    const photo = 'https://photos.13parbon.org.uk/full/person-x-abc.jpg'
+    expect(photoByName([{ name: 'Mr. Budhaditya Pandit', photo }])('Mr. Budhaditya Pandit')).toBe(photo)
+    expect(photoByName([{ name: 'Mr. Budhaditya Pandit', photo }])('Budhaditya Pandit')).toBe(photo)
+    expect(
+      householdPhoto({ contactName: 'Budhaditya Pandit', people: [{ id: '1', name: 'Mr. Budhaditya Pandit', ageGroup: 'adult', photo }] }),
+    ).toBe(photo)
   })
 })

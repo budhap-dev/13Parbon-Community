@@ -227,6 +227,30 @@
   color: var(--color-accent);
 }
 
+/* A committee member's own photograph, in the rosette's place and a little larger: it is a face. */
+.memberPhoto {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent) 35%, transparent);
+}
+
+.memberLine:has(.memberPhoto) {
+  align-items: center;
+}
+
+/* The same on the roll, at the roll's own size. */
+.rollPhoto {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent) 30%, transparent);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .memberEntry:hover {
     transform: none;

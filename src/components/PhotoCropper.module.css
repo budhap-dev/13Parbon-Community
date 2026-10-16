@@ -1,0 +1,70 @@
+/* Cancel and Use, together at the top right, the same place as every other screen's. */
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+/* The window: the picture moves inside it, and only the circle is left undimmed. */
+.frame {
+  position: relative;
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #111;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.frame:active {
+  cursor: grabbing;
+}
+
+.frame:focus-visible {
+  outline: 3px solid var(--color-focus, #c9a227);
+  outline-offset: 3px;
+}
+
+.picture {
+  position: absolute;
+  top: 0;
+  left: 0;
+  max-width: none;
+  transform-origin: 0 0;
+  pointer-events: none;
+}
+
+/* Everything outside the circle dimmed, and the circle drawn. */
+.ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.55);
+  outline: 2px solid rgba(255, 255, 255, 0.85);
+  outline-offset: -2px;
+  pointer-events: none;
+}
+
+.zoom {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 260px;
+  margin: 16px auto 0;
+  font-size: var(--portal-text-sm);
+  font-weight: 600;
+}
+
+.zoom input {
+  flex: 1;
+  accent-color: var(--color-accent);
+}
+
+.hint {
+  composes: hint from './Fields.module.css';
+  max-width: 320px;
+  margin: 10px auto 0;
+  text-align: center;
+}

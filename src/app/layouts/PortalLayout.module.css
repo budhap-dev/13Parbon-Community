@@ -120,9 +120,39 @@
   gap: 18px;
   overflow-y: auto;
   overscroll-behavior: contain;
-  scrollbar-width: thin;
   margin: 0 -4px;
   padding: 0 4px;
+  /*
+   * The browser's own grey bar sat on the menu's dark ground like a strip of tape. Thin, in the
+   * menu's own colour, and out of sight until the pointer or the keyboard is in the menu, which
+   * is when somebody is about to scroll it.
+   */
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.navs:hover,
+.navs:focus-within {
+  scrollbar-color: color-mix(in srgb, var(--side-fg) 28%, transparent) transparent;
+}
+
+/* Safari, which does not take scrollbar-color yet. */
+.navs::-webkit-scrollbar {
+  width: 6px;
+}
+
+.navs::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.navs::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: transparent;
+}
+
+.navs:hover::-webkit-scrollbar-thumb,
+.navs:focus-within::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--side-fg) 28%, transparent);
 }
 
 .group {

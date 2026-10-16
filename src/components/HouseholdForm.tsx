@@ -1,9 +1,11 @@
-import { useId, useRef, useState, type FormEvent } from 'react'
+import { useId, useMemo, useRef, useState, type FormEvent } from 'react'
 import { flushSync } from 'react-dom'
 import { ActionBar } from './ActionBar'
 import { Button } from './Button'
 import { ConfirmButton, UNTIL_SAVED } from './ConfirmButton'
 import { Icon } from './Icon'
+import { ProfilePhotoField } from './ProfilePhotoField'
+import { bucketSender, type SendPhoto } from './photoSender'
 import {
   normaliseGoogleEmail,
   validateHousehold,
@@ -32,6 +34,12 @@ type Props = {
   /** Set after a save so the form can say so without the page having to. */
   saved?: boolean
   error?: string
+  /**
+   * Where a profile photograph goes. The bucket by default, signed for as the household; handed
+   * in by tests. None while a household is being added: it has no id to file photographs under
+   * until it is saved, and its photographs can be added straight after.
+   */
+  sendPhoto?: SendPhoto | null
 }
 
 const emptyPerson: PersonInput = { name: '', ageGroup: 'adult' }
@@ -67,7 +75,7 @@ function draftFrom(household?: Household, prefill?: Partial<HouseholdDraft>): Ho
     contactName: household.contactName,
     email: household.email ?? '',
     phone: household.phone ?? '',
-    people: household.people.map(({ name, ageGroup, age, note, shownAs }) => ({ name, ageGroup, age, note, shownAs })),
+    people: household.people.map(({ name, ageGroup, age, note, shownAs, photo }) => ({ name, ageGroup, age, note, shownAs, photo })),
     interests: [...household.interests],
     googleEmail: household.googleEmail,
     role: household.role,
@@ -87,8 +95,12 @@ function draftFrom(household?: Household, prefill?: Partial<HouseholdDraft>): Ho
  * was rendered on — a member opening this on their own household sees their own details and
  * none of the committee's.
  */
-export function HouseholdForm({ household, prefill, viewer, onSave, saving, saved, error }: Props) {
+export function HouseholdForm({ household, prefill, viewer, onSave, saving, saved, error, sendPhoto }: Props) {
   const [draft, setDraft] = useState<HouseholdDraft>(() => draftFrom(household, prefill))
+  const photoSender = useMemo(
+    () => (sendPhoto !== undefined ? sendPhoto : household ? bucketSender(household.id) : null),
+    [sendPhoto, household],
+  )
   const [errors, setErrors] = useState<HouseholdErrors>({})
   const ids = useId()
 
@@ -283,6 +295,8 @@ export function HouseholdForm({ household, prefill, viewer, onSave, saving, save
               ) : null}
             </div>
 
+            <ProfilePhotoField person={person} send={photoSender} onChange={(photo) => setPerson(i, { photo })} />
+
             <div className={styles.row}>
               <div className={styles.field}>
                 <label className={styles.label} htmlFor={`${ids}-person-${i}-name`}>
@@ -316,6 +330,8 @@ export function HouseholdForm({ household, prefill, viewer, onSave, saving, save
                       ageGroup: e.target.value as PersonInput['ageGroup'],
                       // An adult carries no age, so switching back clears one left behind.
                       age: e.target.value === 'child' ? person.age : undefined,
+                      // And a child carries no photograph: that is a promise, not a default.
+                      photo: e.target.value === 'child' ? undefined : person.photo,
                     })
                   }
                 >

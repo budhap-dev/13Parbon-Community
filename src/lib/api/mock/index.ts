@@ -8,7 +8,7 @@ import { uniqueSlug } from '@/domain/slug'
 import { inOrder, pinnedCover, type AlbumDraft, type AlbumWithMedia, type Media } from '@/domain/gallery'
 import { validateSettings, type SiteSettings } from '@/domain/settings'
 import { defaultSettings } from '@/app/defaults'
-import { isAdmin, isMember, isValidHousehold, type Household, type HouseholdDraft, type Person, type Viewer } from '@/domain/household'
+import { isAdmin, isMember, isValidHousehold, plainName, type Household, type HouseholdDraft, type Person, type Viewer } from '@/domain/household'
 import { ATTENDANCE_NOTE, CONTACT_NOTE, PHOTOGRAPH_NOTE, VOTES_NOTE, type HouseholdExport } from '@/domain/subjectAccess'
 import type { ApiClient } from '../types'
 import { buildFixtures } from './fixtures'
@@ -63,6 +63,7 @@ function shapeOf(draft: HouseholdDraft) {
     ...(person.ageGroup === 'child' && person.age !== undefined ? { age: person.age } : {}),
     ...(person.note?.trim() ? { note: person.note.trim() } : {}),
     ...(person.shownAs ? { shownAs: person.shownAs } : {}),
+    ...(person.ageGroup === 'adult' && person.photo ? { photo: person.photo } : {}),
   }))
   return {
     name: draft.name.trim(),
@@ -305,6 +306,19 @@ export function createMockApi({
       // From the settings, where the committee keeps them, so a festival added in the portal is
       // the festival the home page shows.
       list: () => delay(saved.festivals.map((festival) => ({ ...festival })), latencyMs),
+    },
+    people: {
+      // The same rule the database keeps: a grown-up's photograph, and only where their name is
+      // already on the About page.
+      publicPhotos: () => {
+        const published = new Set([...saved.committee.map((member) => member.name), ...saved.members].map(plainName))
+        const found = portal.households.flatMap((household) =>
+          household.people
+            .filter((person) => person.ageGroup === 'adult' && person.photo && published.has(plainName(person.name)))
+            .map((person) => ({ name: person.name, photo: person.photo! })),
+        )
+        return delay(found, latencyMs)
+      },
     },
     gallery: {
       listRecentMedia: (limit = 6) => delay(someOf(publicAlbums().flatMap((a) => a.media), limit), latencyMs),

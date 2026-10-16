@@ -1,6 +1,6 @@
 import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { renderWithProviders } from '@/test/render'
+import { createTestApi, renderWithProviders } from '@/test/render'
 import { AboutPage } from './AboutPage'
 
 describe('AboutPage', () => {
@@ -33,5 +33,23 @@ describe('AboutPage', () => {
     expect(answer.closest('details')).not.toHaveAttribute('open')
     await userEvent.click(question)
     expect(answer.closest('details')).toHaveAttribute('open')
+  })
+
+  it('shows a face beside a name on the committee or the roll, where its owner added one', async () => {
+    const api = createTestApi()
+    api.people.publicPhotos = async () => [
+      { name: 'Dalim Ghosh', photo: 'https://photos.13parbon.org.uk/full/person-a-abc.jpg' },
+      { name: 'Somnath Das', photo: 'https://photos.13parbon.org.uk/full/person-b-def.jpg' },
+    ]
+    renderWithProviders(<AboutPage />, { route: '/about', api })
+    const committee = screen.getByRole('region', { name: 'Current committee' })
+    const members = screen.getByRole('region', { name: 'Our members' })
+    // Decorative, like the rosette it replaces, so found by its address rather than by a name.
+    await vi.waitFor(() =>
+      expect(committee.querySelector('img[src$="/thumb/person-a-abc.jpg"]')).not.toBeNull(),
+    )
+    expect(members.querySelector('img[src$="/thumb/person-b-def.jpg"]')).not.toBeNull()
+    // Everybody else keeps the rosette.
+    expect(members.querySelectorAll('img')).toHaveLength(1)
   })
 })

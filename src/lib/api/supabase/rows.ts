@@ -35,6 +35,8 @@ export type PersonRow = {
   note: string | null
   /** Absent until `people-shown-as.sql` has been run, and null where nobody has said. */
   shown_as?: 'female' | 'male' | null
+  /** Absent until `people-photo.sql` has been run, and null where nobody has added one. */
+  photo_url?: string | null
 }
 
 /** Everything this app reads about a household, including the people in it. */
@@ -49,6 +51,7 @@ export function toPerson(row: PersonRow): Person {
     ...(row.age === null ? {} : { age: row.age }),
     ...(row.note === null ? {} : { note: row.note }),
     ...(row.shown_as === 'female' || row.shown_as === 'male' ? { shownAs: row.shown_as } : {}),
+    ...(row.age_group === 'adult' && typeof row.photo_url === 'string' && row.photo_url ? { photo: row.photo_url } : {}),
   }
 }
 
@@ -109,6 +112,8 @@ export function peopleRows(householdId: string, draft: HouseholdDraft): Omit<Per
     // own null — and a database the new column has not reached yet still takes every save that
     // does not use it.
     ...(person.shownAs ? { shown_as: person.shownAs } : {}),
+    // The same, for the photograph: and never a child's, whatever the form sent.
+    ...(person.ageGroup === 'adult' && person.photo ? { photo_url: person.photo } : {}),
   }))
 }
 

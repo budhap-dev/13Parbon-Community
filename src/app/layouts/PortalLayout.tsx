@@ -14,8 +14,10 @@ import { useThemeScope } from '@/app/theme/ThemeContext'
 import { useGoogleSignIn } from '@/lib/auth/GoogleSignIn'
 import { useNow } from '@/lib/clock'
 import { useSession, useSignedIn } from '@/lib/auth/session'
-import { useAllFeedback, useAllSuggestions, useContactMessages, useHouseholds, useSignInAttempts, useViewer } from '@/lib/api'
+import { useAllFeedback, useAllSuggestions, useContactMessages, useHousehold, useHouseholds, useSignInAttempts, useViewer } from '@/lib/api'
+import { PhotoMono } from '@/components/PersonPhoto'
 import { waitingSuggestions } from '@/domain/suggestions'
+import { plainName } from '@/domain/household'
 import { can } from '@/lib/auth/permissions'
 import { unresolved } from '@/domain/document'
 import { waiting } from '@/domain/feedback'
@@ -145,6 +147,12 @@ export function PortalLayout() {
   const first = useRef(true)
   const { data: attempts } = useSignInAttempts()
   const { data: households } = useHouseholds()
+  // Their own photograph beside their name, if the person signed in has added one: found by
+  // name among their household's grown-ups, because a sign-in is a household's, not a person's.
+  const { data: ownHousehold } = useHousehold(who?.householdId || undefined)
+  const ownPhoto = ownHousehold?.people.find(
+    (person) => person.ageGroup === 'adult' && person.photo && who !== null && plainName(person.name) === plainName(who.name),
+  )?.photo
   const { tools, text } = useSettings()
   const year = useNow().getFullYear()
   const { data: feedback } = useAllFeedback()
@@ -390,9 +398,9 @@ export function PortalLayout() {
             * it is ever cut, and the whole of it is in the title for anything longer still.
             */}
           <div className={styles.whoCard}>
-            <span className={styles.avatar} aria-hidden="true">
+            <PhotoMono photo={ownPhoto} className={styles.avatar}>
               {initialsOf(who.name)}
-            </span>
+            </PhotoMono>
             <span className={styles.whoText}>
               <span className={styles.whoName} title={who.name}>
                 {who.name}

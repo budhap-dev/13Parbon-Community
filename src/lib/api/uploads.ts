@@ -1,5 +1,6 @@
 import type { Prepared } from '@/lib/images/prepare'
 import { slugFrom } from '@/domain/slug'
+import { personPhotoPrefix } from '@/domain/images'
 
 export type UploadConfig = {
   /** Where the browser asks for permission to put a file in the bucket. */
@@ -50,10 +51,23 @@ const SUFFIX = 12
  * Random also means unguessable. The bucket serves whatever it holds to anybody with the
  * address, and an album kept for members only was a run of numbers anybody could count through.
  */
-export function photoKey(...parts: string[]): string {
+function randomSuffix(): string {
   const random = new Uint8Array(SUFFIX)
   crypto.getRandomValues(random)
-  const suffix = Array.from(random, (byte) => (byte % 36).toString(36)).join('')
+  return Array.from(random, (byte) => (byte % 36).toString(36)).join('')
+}
+
+/**
+ * A key for one of a household's profile photographs. It begins with the household's own prefix,
+ * which is what lets a member who is not on the committee sign for it; see `personPhotoPrefix`.
+ * Nothing about the person is in it, so the address of a face does not say whose it is.
+ */
+export function personPhotoKey(householdId: string): string {
+  return `${personPhotoPrefix(householdId)}${randomSuffix()}`
+}
+
+export function photoKey(...parts: string[]): string {
+  const suffix = randomSuffix()
   const stem = slugFrom(parts.join(' ')).slice(0, 80 - SUFFIX - 1).replace(/-+$/, '') || 'photo'
   return `${stem}-${suffix}`
 }
@@ -78,7 +92,13 @@ export async function uploadPhoto(
     method: 'POST',
     headers: { authorization: `Bearer ${token}` },
   })
-  if (!signed.ok) throw new Error(`The upload was refused (${signed.status}). Try again in a moment, or sign out and back in.`)
+  if (!signed.ok) {
+    // Nothing answered, or nothing is set up to: no sign-in would fix that, so do not suggest one.
+    if ([404, 502, 503].includes(signed.status)) {
+      throw new Error(`Uploading is not switched on for this copy of the site (${signed.status}). Try it on the live site.`)
+    }
+    throw new Error(`The upload was refused (${signed.status}). Try again in a moment, or sign out and back in.`)
+  }
   const { full, thumb } = (await signed.json()) as { full: string; thumb: string }
 
   const put = async (url: string, body: Blob) => {

@@ -1,5 +1,9 @@
 import {
   ACCEPTED_LABEL,
+  AVATAR_PX,
+  AVATAR_QUALITY,
+  AVATAR_THUMB_PX,
+  centreSquare,
   FULL_PX,
   FULL_QUALITY,
   hasJpegMetadata,
@@ -25,9 +29,12 @@ export type Prepared = {
  */
 export type ImageOps = {
   decode: (file: Blob) => Promise<{ width: number; height: number; close?: () => void }>
-  encode: (source: unknown, width: number, height: number, quality: number) => Promise<Blob>
+  /** `crop` is the part of the source to draw, in its own pixels; the whole of it when absent. */
+  encode: (source: unknown, width: number, height: number, quality: number, crop?: Crop) => Promise<Blob>
   bytes: (blob: Blob) => Promise<Uint8Array>
 }
+
+export type Crop = { sx: number; sy: number; sw: number; sh: number }
 
 export class UnsupportedImage extends Error {}
 export class MetadataSurvived extends Error {}
@@ -88,12 +95,51 @@ export async function prepareImage(file: File, ops: ImageOps = browserOps): Prom
   }
 }
 
+/**
+ * Gets a profile photograph ready: the square somebody chose (the middle, if they did not), at
+ * the two avatar sizes.
+ *
+ * The same promise as `prepareImage` — redrawn from pixels, so nothing the phone wrote survives,
+ * and the bytes read back and checked before anything is sent. Square because every place it is
+ * drawn is a disc, and a disc cut from a tall picture would decide on its own which part to show.
+ */
+export async function prepareAvatar(file: File, ops: ImageOps = browserOps, chosen?: Crop): Promise<Prepared> {
+  if (!isAccepted(file.type)) {
+    throw new UnsupportedImage(`${file.name} is a ${file.type || 'file of unknown type'}. We can take ${ACCEPTED_LABEL}.`)
+  }
+  const source = await ops.decode(file)
+  try {
+    // The square somebody chose, held inside the picture; the middle where nobody chose.
+    const middle = centreSquare(source.width, source.height)
+    const side = Math.max(1, Math.min(Math.round(chosen?.sw ?? middle.side), source.width, source.height))
+    const sx = Math.min(Math.max(0, Math.round(chosen?.sx ?? middle.sx)), source.width - side)
+    const sy = Math.min(Math.max(0, Math.round(chosen?.sy ?? middle.sy)), source.height - side)
+    const crop = { sx, sy, sw: side, sh: side }
+    const full = Math.min(side, AVATAR_PX)
+    const thumb = Math.min(side, AVATAR_THUMB_PX)
+    const [fullBlob, thumbBlob] = await Promise.all([
+      ops.encode(source, full, full, AVATAR_QUALITY, crop),
+      ops.encode(source, thumb, thumb, AVATAR_QUALITY, crop),
+    ])
+    for (const [what, blob] of [
+      ['photograph', fullBlob],
+      ['small copy', thumbBlob],
+    ] as const) {
+      const found = metadataMarkers(await ops.bytes(blob))
+      if (found.length > 0) throw new MetadataSurvived(`${file.name}: the ${what} still carries ${found.join(', ')}. Nothing has been uploaded.`)
+    }
+    return { full: fullBlob, thumb: thumbBlob, width: full, height: full }
+  } finally {
+    source.close?.()
+  }
+}
+
 const browserOps: ImageOps = {
   // `imageOrientation: 'from-image'` is the whole of the orientation fix: it applies the
   // rotation the camera recorded, so that discarding EXIF afterwards costs nothing.
   decode: (file) => createImageBitmap(file, { imageOrientation: 'from-image' }),
 
-  encode: async (source, width, height, quality) => {
+  encode: async (source, width, height, quality, crop) => {
     const canvas = document.createElement('canvas')
     canvas.width = width
     canvas.height = height
@@ -104,7 +150,8 @@ const browserOps: ImageOps = {
     context.fillStyle = '#fff'
     context.fillRect(0, 0, width, height)
     // A canvas holds pixels and nothing else. This is the step that loses the metadata.
-    context.drawImage(source as ImageBitmap, 0, 0, width, height)
+    if (crop) context.drawImage(source as ImageBitmap, crop.sx, crop.sy, crop.sw, crop.sh, 0, 0, width, height)
+    else context.drawImage(source as ImageBitmap, 0, 0, width, height)
     const blob = await new Promise<Blob | null>((resolve) =>
       canvas.toBlob(resolve, 'image/jpeg', quality),
     )

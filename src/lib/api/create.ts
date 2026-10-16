@@ -33,7 +33,7 @@ export function createApi(env: Record<string, string | undefined> = import.meta.
    * to which wrapper.
    */
   let live = withSupabaseWrites(base, config)
-  live = withSupabasePortal(live, config)
+  live = withSupabasePortal(live, config, env)
   live = withSupabaseSettings(live, config)
   live = withSupabaseNews(live, config)
   live = withSupabaseGallery(live, config, env)

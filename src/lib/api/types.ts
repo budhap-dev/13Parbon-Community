@@ -4,7 +4,7 @@ import type { Album, AlbumDraft, AlbumWithMedia, Media } from '@/domain/gallery'
 import type { ContactInput, ContactMessage, ContactReceipt } from '@/domain/contact'
 import type { Feedback, FeedbackInput, FeedbackReceipt, FeedbackStatus } from '@/domain/feedback'
 import type { SignInAttempt } from '@/domain/document'
-import type { Household, HouseholdDraft, Viewer } from '@/domain/household'
+import type { Household, HouseholdDraft, PublicPhoto, Viewer } from '@/domain/household'
 import type { AttendanceDraft, EventAttendance } from '@/domain/attendance'
 import type { AuditEntry } from '@/domain/audit'
 import type { UploadedPhoto } from './uploads'
@@ -80,6 +80,15 @@ export interface ApiClient {
   }
   festivals: {
     list(): Promise<Festival[]>
+  }
+  people: {
+    /**
+     * The profile photographs the public website may show: those of grown-ups whose names are
+     * already on the About page, in the committee or on the members' roll. Nobody else's — the
+     * database decides, so a visitor cannot ask for a face by guessing a name. Empty, not an
+     * error, when it cannot be read: a page of names with no faces is still the page.
+     */
+    publicPhotos(): Promise<PublicPhoto[]>
   }
   gallery: {
     /** Approved media from public albums, newest first. */

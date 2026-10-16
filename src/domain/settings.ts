@@ -238,7 +238,15 @@ export const SITE_TEXT_FIELDS: Record<
 }
 
 /** One line of the committee: what they do, and who they are. */
-export type CommitteeMember = { role: string; name: string }
+export type CommitteeMember = {
+  role: string
+  name: string
+  /**
+   * Their profile photograph, copied from their household when the committee is saved, because
+   * the About page is public and the households are not. Absent when they have not added one.
+   */
+  photo?: string
+}
 
 /** One question on the About page, and its answer. */
 export type FaqEntry = { question: string; answer: string }
@@ -441,10 +449,13 @@ export function validateSettings(draft: SettingsDraft): boolean {
   return Boolean(draft.privacy) && Array.isArray(draft.privacy.sections) && draft.privacy.sections.length > 0
 }
 
+/** A photograph's address that may be drawn on a public page: a web address, and nothing else. */
+const isPhotoAddress = (value: unknown): value is string => typeof value === 'string' && /^https:\/\/[^\s"'<>]+$/.test(value)
+
 /** The committee as it should be saved: complete rows only, in the order they were given. */
 export function tidyCommittee(rows: CommitteeMember[]): CommitteeMember[] {
   return rows
-    .map((row) => ({ role: row.role.trim(), name: row.name.trim() }))
+    .map((row) => ({ role: row.role.trim(), name: row.name.trim(), ...(isPhotoAddress(row.photo) ? { photo: row.photo } : {}) }))
     .filter((row) => row.role && row.name)
 }
 
