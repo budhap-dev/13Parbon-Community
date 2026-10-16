@@ -241,8 +241,13 @@ function SearchDialog({ screens, onClose }: { screens: readonly SearchScreen[]; 
             value={query}
             onChange={(event) => setQuery(event.target.value)}
           />
+          {/* Esc means nothing on a phone, with no key to press: there it is a cross. */}
           <button type="button" className={styles.close} onClick={onClose}>
-            Esc<span className={styles.srOnly}> — close the search</span>
+            <span className={styles.closeKey} aria-hidden="true">
+              Esc
+            </span>
+            <Icon name="close" size={18} className={styles.closeCross} />
+            <span className={styles.srOnly}>Close the search</span>
           </button>
         </div>
 
