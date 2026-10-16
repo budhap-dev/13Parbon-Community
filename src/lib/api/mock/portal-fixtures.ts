@@ -143,6 +143,18 @@ export function buildPortalFixtures() {
     { id: 'sa-2', email: 'amit.bose@gmail.com', name: 'Amit Bose', lastTriedAt: '2026-09-02T10:30:00', attempts: 1, resolved: false },
   ]
 
+  /**
+   * People signing in, for the History screen's second tab. Fixed times, like everything else
+   * here, and not trimmed to ninety days: that limit is the database's, and a walkthrough that
+   * emptied itself in December would teach nobody anything.
+   */
+  const signIns: { id: string; householdId: string; email: string; at: string }[] = [
+    { id: 'si-4', householdId: 'hh-sen', email: 'rina.sen@gmail.com', at: '2026-09-04T20:41:00' },
+    { id: 'si-3', householdId: 'hh-ghosh', email: 'meera.ghosh@gmail.com', at: '2026-09-04T09:05:00' },
+    { id: 'si-2', householdId: 'hh-chatterjee', email: 'd.chatterjee@gmail.com', at: '2026-09-03T18:22:00' },
+    { id: 'si-1', householdId: 'hh-sen', email: 'rina.sen@gmail.com', at: '2026-09-01T07:58:00' },
+  ]
+
   const messages: (ContactMessage & { handledBy?: string })[] = [
     {
       id: 'cm-1',
@@ -235,5 +247,5 @@ export function buildPortalFixtures() {
     { eventId: 'ev-saraswati-2026', heldOn: '2026-02-01', households: 28, adults: 61, children: 40, recordedAt: '2026-02-03T10:00:00' },
   ]
 
-  return { households, signInAttempts, messages, feedback, attendance }
+  return { households, signInAttempts, signIns, messages, feedback, attendance }
 }

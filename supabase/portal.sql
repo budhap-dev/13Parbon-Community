@@ -1460,6 +1460,105 @@ create trigger guard_event_delete
   for each row execute function portal.guard_event_delete();
 
 -- ===========================================================================
+-- 9. Who signed in
+-- ===========================================================================
+-- Every sign-in by somebody the committee let in: which household, the address they used, when.
+-- Strangers are not here — they are in sign_in_attempts, which is a different question.
+--
+-- Recorded by a trigger on auth.users, like somebody knocking, so it cannot be skipped and the
+-- browser has no say in it. `last_sign_in_at` moves when somebody comes back from Google, and
+-- not when a session is quietly refreshed in the background, so this is a line per sign-in
+-- rather than a line an hour per open tab.
+--
+-- Kept for ninety days and no longer. It is enough to answer "has anybody from the Sens been
+-- in?" and "was that really me on Tuesday?"; a log of every visit kept for good is a record of
+-- people's habits nobody asked us to keep. Older rows are deleted by the next sign-in, and
+-- hidden from reading the moment they pass ninety days, so the limit holds even on a quiet week.
+--
+-- Erasing a household erases its sign-ins with it. The superadmin with no household is not
+-- recorded, for the reason audit_log does not name them: nothing here may show the account.
+
+create table if not exists portal.sign_ins (
+  -- A sequence rather than a uuid, for the same reason audit_log has `seq`: two sign-ins a
+  -- moment apart should come back in the order they happened.
+  id bigserial primary key,
+  household_id uuid not null references portal.households (id) on delete cascade,
+  email text not null,
+  at timestamptz not null default clock_timestamp()
+);
+
+create index if not exists sign_ins_at_idx on portal.sign_ins (at desc);
+create index if not exists sign_ins_household_idx on portal.sign_ins (household_id);
+
+alter table portal.sign_ins enable row level security;
+
+-- Readable by the committee, and by a household for its own — they are in its copy of what we
+-- hold about it. Written by nobody: the rows come from the trigger below, as owner. No insert,
+-- update or delete policy, so nobody can add a sign-in or take one away.
+grant select on portal.sign_ins to authenticated;
+revoke all on portal.sign_ins from anon;
+
+drop policy if exists "admins read sign-ins" on portal.sign_ins;
+drop policy if exists "read sign-ins" on portal.sign_ins;
+create policy "read sign-ins"
+  on portal.sign_ins for select to authenticated
+  using (
+    (household_id = portal.current_household_id() or portal.is_admin())
+    and at > now() - interval '90 days'
+  );
+
+create or replace function portal.record_sign_in()
+  returns trigger
+  language plpgsql
+  security definer
+  set search_path = ''
+as $$
+declare
+  address text := lower(new.email);
+  household uuid;
+begin
+  if address is null or new.last_sign_in_at is null then
+    return new;
+  end if;
+
+  -- The same answer current_household_id() gives once they are in: the household's own
+  -- address first, then a grown-up's.
+  select coalesce(
+    (select h.id from portal.households h where h.google_email = address limit 1),
+    (select p.household_id from portal.people p where p.google_email = address limit 1)
+  ) into household;
+
+  if household is not null then
+    insert into portal.sign_ins (household_id, email, at) values (household, address, new.last_sign_in_at);
+  end if;
+
+  delete from portal.sign_ins where at < now() - interval '90 days';
+
+  return new;
+exception
+  when others then
+    -- Never take the door down over a line in a log. See record_unmatched_sign_in.
+    return new;
+end;
+$$;
+
+comment on function portal.record_sign_in() is
+  'Records a sign-in by somebody with a household, and forgets those older than ninety days.';
+
+drop trigger if exists record_sign_in on auth.users;
+create trigger record_sign_in
+  after insert on auth.users
+  for each row execute function portal.record_sign_in();
+
+drop trigger if exists record_repeat_sign_in on auth.users;
+create trigger record_repeat_sign_in
+  after update of last_sign_in_at on auth.users
+  for each row
+  when (new.last_sign_in_at is distinct from old.last_sign_in_at)
+  execute function portal.record_sign_in();
+
+
+-- ===========================================================================
 -- Not here yet
 -- ===========================================================================
 -- Events, announcements, news, albums and media are still fixtures in the repository and get

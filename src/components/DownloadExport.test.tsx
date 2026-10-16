@@ -45,6 +45,7 @@ const full: HouseholdExport = {
     },
   ],
   signInAttempts: [{ email: 'rina.sen@gmail.com', lastTriedAt: '2026-01-04T09:00:00.000Z', attempts: 2 }],
+  signIns: [{ email: 'arjun.sen@gmail.com', at: '2026-09-20T18:30:00.000Z' }],
   changes: [{ action: 'household:edit', at: '2026-05-05T09:00:00.000Z', fields: ['phone', 'interests'] }],
   notes: ['Photographs are not listed here.'],
 }
@@ -63,6 +64,7 @@ const sparse: HouseholdExport = {
   },
   messages: [],
   signInAttempts: [],
+  signIns: [],
   votes: [],
   quizScores: [],
   suggestions: [],
@@ -150,6 +152,12 @@ describe('the report on screen', () => {
     expect(within(ideas).getByText(/quiz question · waiting/)).toBeInTheDocument()
   })
 
+  it('lists when they signed in, and with which address', () => {
+    render(<DownloadExport data={full} onAsk={() => {}} />)
+    const signIns = screen.getByRole('heading', { name: /When you signed in, over the last ninety days \(1\)/ }).closest('section')!
+    expect(within(signIns).getByText(/arjun\.sen@gmail\.com/)).toBeInTheDocument()
+  })
+
   it('says that a knock at the door was recorded, and how many times', () => {
     render(<DownloadExport data={full} onAsk={() => {}} />)
     expect(screen.getByText(/2 tries, last on 2026-01-04/)).toBeInTheDocument()
@@ -174,8 +182,8 @@ describe('the report on screen', () => {
   it('says plainly when a section is empty rather than leaving a gap', () => {
     render(<DownloadExport data={sparse} onAsk={() => {}} />)
     expect(screen.getByRole('heading', { name: 'Messages you sent us (0)' })).toBeInTheDocument()
-    // Messages and votes both looked for and found nothing, and both say so.
-    expect(screen.getAllByText('None found.')).toHaveLength(2)
+    // Messages, sign-ins and votes all looked for and found nothing, and all say so.
+    expect(screen.getAllByText('None found.')).toHaveLength(3)
     expect(screen.getByText('None recorded.')).toBeInTheDocument()
     // Nothing played and nothing suggested: those sections are not drawn.
     expect(screen.queryByRole('heading', { name: /Quizzes you played/ })).not.toBeInTheDocument()

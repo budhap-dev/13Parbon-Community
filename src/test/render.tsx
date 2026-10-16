@@ -78,7 +78,7 @@ export function createEmptyApi(): ApiClient {
       resolveSignInAttempt: async () => { throw new Error('not connected') },
     },
     settings: { get: async () => defaultSettings, save: async () => { throw new Error('not connected') } },
-    audit: { list: async () => [] },
+    audit: { list: async () => [], signIns: async () => [] },
     volunteering: { listOpenRoles: async () => [], listRolesForEvent: async () => [] },
     polls: {
       list: async () => [], listAll: async () => [],
@@ -145,7 +145,7 @@ export function createFailingApi(): ApiClient {
       resolveSignInAttempt: down,
     },
     settings: { get: down, save: down },
-    audit: { list: down },
+    audit: { list: down, signIns: down },
     volunteering: { listOpenRoles: down, listRolesForEvent: down },
     polls: { list: down, vote: down, listAll: down, create: down, update: down, remove: down },
     quizzes: {

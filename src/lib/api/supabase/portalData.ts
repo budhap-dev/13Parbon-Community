@@ -5,6 +5,7 @@ import {
   fromDraft,
   HOUSEHOLD_SELECT,
   peopleRows,
+  personChanges,
   toAttempt,
   toAttendance,
   toHousehold,
@@ -13,6 +14,7 @@ import {
   type AttendanceRow,
   type HouseholdRow,
   type MessageRow,
+  type PersonRow,
 } from './rows'
 import type { AttendanceDraft } from '@/domain/attendance'
 import type { ContactMessage } from '@/domain/contact'
@@ -247,6 +249,16 @@ export function householdMethods(getClient: () => Promise<SupabaseClient>) {
         .order('created_at', { ascending: false })
       if (suggestedError) throw new Error(`The household's suggestions could not be read: ${suggestedError.message}`)
 
+      // Tolerated when the table is not there, because an export that fails outright over a
+      // script not yet run would leave a household with nothing at all.
+      const { data: signIns, error: signInsError } = await table(client, 'sign_ins')
+        .select('email, at')
+        .eq('household_id', id)
+        .order('id', { ascending: false })
+      if (signInsError && !['PGRST205', '42P01'].includes(signInsError.code ?? '')) {
+        throw new Error(`The household's sign-ins could not be read: ${signInsError.message}`)
+      }
+
       const { data: trail, error: trailError } = await table(client, 'audit_log')
         .select('action,at,changes')
         .eq('subject_kind', 'households')
@@ -265,6 +277,7 @@ export function householdMethods(getClient: () => Promise<SupabaseClient>) {
           lastTriedAt: a.last_tried_at,
           attempts: a.attempts,
         })),
+        signIns: signInsError ? [] : ((signIns ?? []) as { email: string; at: string }[]),
         // Which fields moved, never who moved them: a household is entitled to know its
         // membership was marked lapsed; which admin did it is a fact about that admin.
         changes: ((trail ?? []) as { action: string; at: string; changes: Record<string, unknown> }[]).map((row) => ({
@@ -303,39 +316,62 @@ async function reread(client: SupabaseClient, id: string): Promise<Household | n
 }
 
 /**
- * Replaces the people of a household.
+ * Saves the people of a household: changes the rows that changed, adds the new, removes the gone.
  *
- * **New rows go in before the old ones come out**, which is the opposite of the obvious order
- * and the reason is worth keeping. There is no transaction across two PostgREST calls, so if
- * the second fails, whatever the first did stands. Deleting first and failing to insert loses a
- * family's details; inserting first and failing to delete leaves everybody listed twice. One of
- * those a person can fix from the screen in a minute. The other is gone.
+ * It used to replace them all — every person written again and the old rows deleted — so every
+ * save of a household was recorded as each of its people removed and added again, and a person
+ * really taken off could not be told from a note changed on somebody else. Now a person the form
+ * brought an id for is that row, updated only if something about them moved.
  *
- * An RPC would do both atomically and should, before this carries anybody's real details.
+ * **Removals go last.** There is no transaction across PostgREST calls, so if a step fails,
+ * whatever came before it stands. Failing before the removals leaves somebody listed who should
+ * not be, which a person can fix from the screen in a minute; removing first and then failing
+ * loses a family's details. An RPC would do it all atomically and should, one day.
  *
- * Until then every step is checked, because none of them used to be. A read that failed came
- * back as nobody, so nothing old was deleted and everyone was listed twice; a delete that
- * failed did the same; and in both cases the screen said it had saved. Now a failed read stops
- * before anything is written, and a failed delete takes the new rows back out again, so the
- * household is left as it was and the screen says so.
+ * A draft without ids — a form opened before this — still works: nobody in it matches a row, so
+ * it is every person added and the old rows removed, which is what a save always used to do.
  */
 async function savePeople(client: SupabaseClient, householdId: string, draft: HouseholdDraft): Promise<void> {
-  const { data: existing, error: readError } = await table(client, 'people').select('id').eq('household_id', householdId)
+  const { data: existing, error: readError } = await table(client, 'people').select('*').eq('household_id', householdId)
   if (readError) refuse('those people could not be saved', readError)
-  const oldIds = ((existing ?? []) as { id: string }[]).map((row) => row.id)
+  const rows = new Map(((existing ?? []) as PersonRow[]).map((row) => [row.id, row]))
 
-  const { data: inserted, error } = await table(client, 'people').insert(peopleRows(householdId, draft)).select('id')
-  if (error) refuse('those people could not be saved', error)
-  if (oldIds.length === 0) return
+  // An id that is not one of this household's rows is somebody new, whatever it says.
+  const kept = draft.people.filter((person) => person.id && rows.has(person.id))
+  const added = draft.people.filter((person) => !person.id || !rows.has(person.id))
+  const keptIds = new Set(kept.map((person) => person.id))
+  const gone = [...rows.keys()].filter((id) => !keptIds.has(id))
 
+  for (const person of kept) {
+    const changes = personChanges(rows.get(person.id!)!, person)
+    if (Object.keys(changes).length === 0) continue
+    // Selected back, because an update the policy did not match is no rows and no error.
+    const { data, error } = await table(client, 'people').update(changes).eq('id', person.id!).eq('household_id', householdId).select('id')
+    if (error || (data ?? []).length === 0) refuse('those people could not be saved', error ?? { code: '42501', message: 'nothing was changed' })
+  }
+
+  let addedIds: string[] = []
+  if (added.length > 0) {
+    const { data, error } = await table(client, 'people').insert(peopleRows(householdId, { ...draft, people: added })).select('id')
+    if (error) refuse('those people could not be saved', error)
+    addedIds = ((data ?? []) as { id: string }[]).map((row) => row.id)
+  }
+
+  if (gone.length === 0) return
   // Selected back, because a delete the policy did not match is no rows and no error.
-  const { data: removed, error: removeError } = await table(client, 'people').delete().in('id', oldIds).select('id')
+  const { data: removed, error: removeError } = await table(client, 'people').delete().in('id', gone).select('id')
   if (!removeError && (removed ?? []).length > 0) return
 
-  const newIds = ((inserted ?? []) as { id: string }[]).map((row) => row.id)
-  const { error: undoError } = newIds.length > 0 ? await table(client, 'people').delete().in('id', newIds) : { error: null }
-  if (undoError) {
-    throw new Error('Those people were added but the old list could not be taken out, so some may be listed twice. Reload to check.')
+  /*
+   * Everybody went in afresh — a draft without ids — and the old rows would not go, so the
+   * whole household is listed twice. The new rows come back out, leaving it as it was. When
+   * people were kept, the ones added are really new and stay: nobody is listed twice.
+   */
+  if (kept.length === 0 && addedIds.length > 0) {
+    const { error: undoError } = await table(client, 'people').delete().in('id', addedIds)
+    if (undoError) {
+      throw new Error('Those people were added but the old list could not be taken out, so some may be listed twice. Reload to check.')
+    }
   }
   refuse('those people could not be saved', removeError ?? { code: '42501', message: 'nothing was removed' })
 }

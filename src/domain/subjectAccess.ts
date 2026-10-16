@@ -25,6 +25,8 @@ export type HouseholdExport = {
   messages: ContactMessage[]
   /** Times an address of theirs tried to sign in before the committee had recorded it. */
   signInAttempts: { email: string; lastTriedAt: string; attempts: number }[]
+  /** Times somebody in the household signed in, and with which address. The last ninety days. */
+  signIns: { email: string; at: string }[]
   /**
    * Changes recorded against this household.
    *

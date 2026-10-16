@@ -1,3 +1,4 @@
+import { formatStamp } from '@/domain/dates'
 import { shownLabel } from '@/domain/household'
 import { useState } from 'react'
 import { Button } from './Button'
@@ -52,7 +53,7 @@ export function DownloadExport({
     )
   }
 
-  const { household, messages, signInAttempts, changes, votes, quizScores, suggestions, notes } = data
+  const { household, messages, signInAttempts, signIns, changes, votes, quizScores, suggestions, notes } = data
 
   return (
     <div className={styles.report}>
@@ -109,6 +110,20 @@ export function DownloadExport({
           </ul>
         </Group>
       ) : null}
+
+      <Group title={`When you signed in, over the last ninety days (${signIns.length})`}>
+        {signIns.length === 0 ? (
+          <p className={styles.note}>None found.</p>
+        ) : (
+          <ul className={styles.list}>
+            {signIns.map((s, i) => (
+              <li key={i}>
+                {s.email} <span className={styles.note}>· {formatStamp(s.at)}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Group>
 
       <Group title={`Your votes in polls (${votes.length})`}>
         {votes.length === 0 ? (

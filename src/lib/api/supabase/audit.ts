@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { AuditEntry } from '@/domain/audit'
+import type { AuditEntry, SignIn } from '@/domain/audit'
 import { isAdmin, type Viewer } from '@/domain/household'
 import type { ApiClient } from '../types'
 import type { SupabaseConfig } from '../supabase'
@@ -100,6 +100,33 @@ export function auditMethods(getClient: () => Promise<SupabaseClient>) {
       if (error) throw new Error(`The history could not be read: ${error.message}`)
       return ((data ?? []) as AuditRow[]).map(toEntry)
     },
+
+    signIns: async (viewer: Viewer, limit = 100): Promise<SignIn[]> => {
+      if (!isAdmin(viewer)) return []
+      const client = await getClient()
+      const { data, error } = await client
+        .schema('portal')
+        .from('sign_ins')
+        .select('*,households(name,contact_name,google_email,people(*))')
+        // The id is a sequence, so newest first is exactly the order they happened in.
+        .order('id', { ascending: false })
+        .limit(limit)
+      if (error) throw new Error(`The sign-ins could not be read: ${error.message}`)
+      return ((data ?? []) as SignInRow[]).map(toSignIn)
+    },
+  }
+}
+
+type SignInRow = { id: number; household_id: string; email: string; at: string; households?: AuditRow['households'] }
+
+/** A sign-in, named the way the trail names whoever made a change. */
+export function toSignIn(row: SignInRow): SignIn {
+  return {
+    id: String(row.id),
+    householdId: row.household_id,
+    who: actorName({ actor_household_id: row.household_id, actor_email: row.email, households: row.households } as AuditRow),
+    address: row.email,
+    at: row.at,
   }
 }
 
