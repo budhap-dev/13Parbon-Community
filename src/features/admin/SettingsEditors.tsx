@@ -689,12 +689,18 @@ export function SponsorsEditor({
   festivals,
   onChange,
   actions,
+  status,
 }: {
   rows: Sponsor[]
   festivals: Festival[]
   onChange: (rows: Sponsor[]) => void
   /** The screen's own buttons — its Save — beside Add, at the top right and held in view. */
   actions?: React.ReactNode
+  /**
+   * What the last save did, or "All saved". Beside the buttons rather than among them: passed
+   * in with the buttons it sat between Add and Save, top-aligned, and read as a third button.
+   */
+  status?: React.ReactNode
 }) {
   const uploads = readUploadConfig(import.meta.env)
   const supabase = readSupabaseConfig(import.meta.env)
@@ -707,7 +713,7 @@ export function SponsorsEditor({
 
   return (
     <>
-      <ActionBar sticky={Boolean(actions)} status={actions ? undefined : null}>
+      <ActionBar sticky={Boolean(actions)} status={status}>
         <Button variant="green" size="sm" onClick={() => onChange([...rows, blankSponsor()])}>
           Add a sponsor
         </Button>

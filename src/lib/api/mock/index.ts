@@ -54,6 +54,15 @@ export class NotAllowed extends Error {
 }
 
 
+/** Who an address is in a household, the way the database's trail names them. */
+function signedInAs(household: Household | undefined, address: string): string {
+  if (!household) return 'A household since erased'
+  const person = household.people.find((p) => p.googleEmail?.toLowerCase() === address.toLowerCase())
+  if (person) return `${person.name}, ${household.name}`
+  if (household.googleEmail?.toLowerCase() === address.toLowerCase()) return `${household.contactName}, ${household.name}`
+  return `${address}, ${household.name}`
+}
+
 /** The parts of a draft that belong to the household, with people given ids. */
 function shapeOf(draft: HouseholdDraft) {
   const people: Person[] = draft.people.map((person, i) => ({
@@ -753,6 +762,7 @@ export function createMockApi({
           signInAttempts: portal.signInAttempts
             .filter((a) => addresses.has(a.email.toLowerCase()))
             .map(({ email, lastTriedAt, attempts }) => ({ email, lastTriedAt, attempts })),
+          signIns: portal.signIns.filter((s) => s.householdId === id).map(({ email, at }) => ({ email, at })),
           // Filled in by withAuditTrail, which is the only thing that holds the trail. The
           // same wrapper writes it, so the same wrapper is what can read it back out.
           changes: [],
@@ -864,7 +874,19 @@ export function createMockApi({
     },
     ...play.api,
     // Empty here on purpose: recording is withAuditTrail's job, wrapped around the outside.
-    audit: { list: () => delay([], latencyMs) },
+    audit: {
+      list: () => delay([], latencyMs),
+      signIns: (viewer, limit = 100) => {
+        if (!isAdmin(viewer)) return delay([], latencyMs)
+        return delay(
+          portal.signIns.slice(0, limit).map((s) => {
+            const household = portal.households.find((h) => h.id === s.householdId)
+            return { id: s.id, householdId: s.householdId, who: signedInAs(household, s.email), address: s.email, at: s.at }
+          }),
+          latencyMs,
+        )
+      },
+    },
     volunteering: {
       listOpenRoles: () => delay(fixtures.volunteerRoles.filter((r) => r.filled < r.slots), latencyMs),
       listRolesForEvent: (eventId) => delay(fixtures.volunteerRoles.filter((r) => r.eventId === eventId), latencyMs),

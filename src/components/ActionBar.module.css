@@ -35,6 +35,8 @@
 .actions {
   display: flex;
   flex-wrap: wrap;
+  /* Centred, so anything that is not a button still lines up with the buttons beside it. */
+  align-items: center;
   gap: 8px;
   justify-content: flex-end;
 }

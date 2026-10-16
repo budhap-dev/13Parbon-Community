@@ -1,10 +1,11 @@
 import { useState } from 'react'
+import { useSearchParams } from 'react-router'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { useScrollToTopOn } from '@/app/useScrollToTopOn'
 import { Button } from '@/components/Button'
 import { LoadFailed } from '@/components/LoadFailed'
 import { formatStamp } from '@/domain/dates'
-import { useAuditTrail, useViewer } from '@/lib/api'
+import { useAuditTrail, useSignIns, useViewer } from '@/lib/api'
 import { can } from '@/lib/auth/permissions'
 import styles from '@/features/portal/Portal.module.css'
 import { changeLines } from './auditChanges'
@@ -113,21 +114,29 @@ const clamp = (text: string) => (text.length > LONGEST ? `${text.slice(0, LONGES
  */
 const PER_PAGE = 20
 
+type Tab = 'changes' | 'sign-ins'
+
+/**
+ * Two tabs: what changed, and who signed in.
+ *
+ * Sign-ins are not changes, so they are not lines in the trail. Mixed in, a committee signing in
+ * every evening would push the edits somebody came looking for off the end of the list; and the
+ * two are kept for different lengths of time — the trail for good, the sign-ins for ninety days.
+ */
 export function AdminAuditPage() {
   useDocumentTitle('What has changed')
-  const mayRead = can(useViewer(), 'admin:enter')
-  const { data: entries, isPending, isError, refetch } = useAuditTrail()
-
-  const list = entries ?? []
-  const [page, setPage] = useState(0)
-  const pages = Math.max(1, Math.ceil(list.length / PER_PAGE))
-  // Clamped rather than stored blindly: a page that empties while somebody is on page five —
-  // a refetch, a shorter trail — would otherwise leave them looking at nothing.
-  const current = Math.min(page, pages - 1)
-  const first = current * PER_PAGE
-  const shown = list.slice(first, first + PER_PAGE)
-  // Turning a page and staying at the foot of the last one is reading the new page backwards.
-  useScrollToTopOn(current)
+  const [params, setParams] = useSearchParams()
+  const tab: Tab = params.get('tab') === 'sign-ins' ? 'sign-ins' : 'changes'
+  const showTab = (next: Tab) =>
+    setParams(
+      (now) => {
+        const after = new URLSearchParams(now)
+        if (next === 'changes') after.delete('tab')
+        else after.set('tab', next)
+        return after
+      },
+      { replace: true, preventScrollReset: true },
+    )
 
   return (
     <div className={styles.page}>
@@ -135,16 +144,152 @@ export function AdminAuditPage() {
         <div>
           <h1 className={styles.title}>What has changed</h1>
           <p className={styles.sub}>
-            Every change, who made it, and what it was before.
+            {tab === 'changes'
+              ? 'Every change, who made it, and what it was before.'
+              : 'Who has signed in to the portal, and when, over the last ninety days.'}
           </p>
         </div>
       </div>
 
+      <div className={styles.tabs} role="tablist" aria-label="History">
+        {(
+          [
+            ['changes', 'Changes'],
+            ['sign-ins', 'Sign-ins'],
+          ] as const
+        ).map(([key, label]) => (
+          <button
+            key={key}
+            type="button"
+            role="tab"
+            id={`tab-${key}`}
+            aria-selected={tab === key}
+            aria-controls={`panel-${key}`}
+            className={tab === key ? styles.tabOn : styles.tab}
+            onClick={() => showTab(key)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`} className={styles.page}>
+        {tab === 'changes' ? <ChangesPanel /> : <SignInsPanel />}
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Twenty rows at a time, from a list already in hand.
+ *
+ * Clamped rather than stored blindly: a page that empties while somebody is on page five — a
+ * refetch, a shorter list — would otherwise leave them looking at nothing.
+ */
+function usePages<T>(list: T[]) {
+  const [page, setPage] = useState(0)
+  const pages = Math.max(1, Math.ceil(list.length / PER_PAGE))
+  const current = Math.min(page, pages - 1)
+  const first = current * PER_PAGE
+  // Turning a page and staying at the foot of the last one is reading the new page backwards.
+  useScrollToTopOn(current)
+  return { shown: list.slice(first, first + PER_PAGE), first, current, pages, setPage }
+}
+
+function Pager({ current, pages, setPage }: { current: number; pages: number; setPage: (page: number) => void }) {
+  if (pages <= 1) return null
+  return (
+    <div className={styles.pager}>
+      <span className={`${styles.muted} ${styles.tiny}`}>
+        Page {current + 1} of {pages}
+      </span>
+      <span className={styles.pagerButtons}>
+        <Button variant="line" size="sm" disabled={current === 0} onClick={() => setPage(current - 1)}>
+          Newer
+        </Button>
+        <Button variant="line" size="sm" disabled={current >= pages - 1} onClick={() => setPage(current + 1)}>
+          Older
+        </Button>
+      </span>
+    </div>
+  )
+}
+
+function SignInsPanel() {
+  const mayRead = can(useViewer(), 'admin:enter')
+  const { data, isPending, isError, refetch } = useSignIns()
+  const list = data ?? []
+  const { shown, first, current, pages, setPage } = usePages(list)
+
+  return (
+    <>
+      <p className={styles.note}>
+        Recorded by the site each time somebody with a household signs in with Google, and kept for
+        ninety days. Addresses that are not on the list are on the People screen instead.
+      </p>
+      {isPending ? (
+        <p className={styles.empty} aria-busy="true">
+          Loading…
+        </p>
+      ) : isError && mayRead ? (
+        <LoadFailed what="the sign-ins" onRetry={() => void refetch()} />
+      ) : list.length === 0 ? (
+        <p className={styles.empty}>
+          {mayRead ? 'Nobody has signed in in the last ninety days.' : 'Only the committee can read this.'}
+        </p>
+      ) : (
+        <section className={styles.panel} aria-labelledby="sign-ins-title">
+          <div className={styles.panelHead}>
+            <h2 id="sign-ins-title" className={styles.panelTitle}>
+              Newest first
+            </h2>
+            <span className={`${styles.muted} ${styles.tiny}`}>
+              {list.length === 1 ? '1 sign-in' : `${first + 1}–${first + shown.length} of ${list.length} sign-ins`}
+            </span>
+          </div>
+          <div className={`${styles.scroll} ${styles.tall}`}>
+            <table className={`${styles.table} ${styles.cardsOnPhone}`}>
+              <thead>
+                <tr>
+                  <th>When</th>
+                  <th>Who</th>
+                  <th>Signed in with</th>
+                </tr>
+              </thead>
+              <tbody>
+                {shown.map((signIn) => (
+                  <tr key={signIn.id}>
+                    <td data-label="When" className={`${styles.tiny} ${styles.nowrap}`}>
+                      <time dateTime={signIn.at}>{formatStamp(signIn.at)}</time>
+                    </td>
+                    <td data-label="Who">{signIn.who}</td>
+                    <td data-label="Signed in with" className={`${styles.muted} ${styles.tiny}`} style={{ overflowWrap: 'anywhere' }}>
+                      {signIn.address}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <Pager current={current} pages={pages} setPage={setPage} />
+        </section>
+      )}
+    </>
+  )
+}
+
+function ChangesPanel() {
+  const mayRead = can(useViewer(), 'admin:enter')
+  const { data: entries, isPending, isError, refetch } = useAuditTrail()
+  const list = entries ?? []
+  const { shown, first, current, pages, setPage } = usePages(list)
+
+  return (
+    <>
       <p className={styles.note}>
         The site writes this down by itself as each change happens, so nothing changes without a line
         here. Nobody can edit it, including the committee.
       </p>
-
       {isPending ? (
         <p className={styles.empty} aria-busy="true">
           Loading…
@@ -223,33 +368,9 @@ export function AdminAuditPage() {
               </tbody>
             </table>
           </div>
-          {pages > 1 ? (
-            <div className={styles.pager}>
-              <span className={`${styles.muted} ${styles.tiny}`}>
-                Page {current + 1} of {pages}
-              </span>
-              <span className={styles.pagerButtons}>
-                <Button
-                  variant="line"
-                  size="sm"
-                  disabled={current === 0}
-                  onClick={() => setPage(current - 1)}
-                >
-                  Newer
-                </Button>
-                <Button
-                  variant="line"
-                  size="sm"
-                  disabled={current >= pages - 1}
-                  onClick={() => setPage(current + 1)}
-                >
-                  Older
-                </Button>
-              </span>
-            </div>
-          ) : null}
+          <Pager current={current} pages={pages} setPage={setPage} />
         </section>
       )}
-    </div>
+    </>
   )
 }

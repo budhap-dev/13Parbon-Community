@@ -208,6 +208,82 @@ describe('saving the people of a household', () => {
     })
   })
 
+  /**
+   * Every save used to replace every person, so the trail said each of them had been removed
+   * and added again — "Removed somebody in a household" under a member who had removed nobody.
+   */
+  describe('a person the form knows', () => {
+    type Write = { verb: string; args: unknown[]; filters: string[] }
+    function recorder(rows: Record<string, unknown>[]) {
+      const writes: Write[] = []
+      const chain = (tableName: string) => {
+        let current: Write | null = null
+        const self: Record<string, unknown> = {}
+        for (const verb of ['insert', 'update', 'delete']) {
+          self[verb] = (...args: unknown[]) => {
+            if (tableName === 'people') writes.push((current = { verb, args, filters: [] }))
+            return self
+          }
+        }
+        for (const method of ['select', 'order']) self[method] = () => self
+        for (const method of ['eq', 'in']) {
+          self[method] = (column: string, value: unknown) => {
+            current?.filters.push(`${column}=${JSON.stringify(value)}`)
+            return self
+          }
+        }
+        const answer = () => {
+          if (tableName === 'households') return { data: { id: 'hh-1' }, error: null }
+          if (!current) return { data: rows, error: null }
+          if (current.verb === 'insert') return { data: [{ id: 'p-new' }], error: null }
+          return { data: [{ id: 'some' }], error: null }
+        }
+        self.maybeSingle = async () => answer()
+        self.single = self.maybeSingle
+        self.then = (resolve: (v: unknown) => unknown) => resolve(answer())
+        return self
+      }
+      return { client: { schema: () => ({ from: chain }) } as unknown as SupabaseClient, writes }
+    }
+    const rina = { id: 'p-rina', household_id: 'hh-1', name: 'Rina Sen', age_group: 'adult', age: null, note: null, shown_as: null, photo_url: null, google_email: null }
+    const mira = { id: 'p-mira', household_id: 'hh-1', name: 'Mira', age_group: 'child', age: 7, note: null, shown_as: null, photo_url: null, google_email: 'x' }
+    const save = (client: SupabaseClient, people: HouseholdDraft['people']) =>
+      householdMethods(async () => client).updateHousehold('hh-1', { ...draft, people }, { householdId: 'hh-1', role: 'member' })
+
+    it('writes nothing for somebody nobody changed', async () => {
+      const { client, writes } = recorder([rina])
+      await save(client, [{ id: 'p-rina', name: 'Rina Sen', ageGroup: 'adult' }])
+      expect(writes).toEqual([])
+    })
+
+    it('changes only what changed, on their own row', async () => {
+      const { client, writes } = recorder([rina])
+      await save(client, [{ id: 'p-rina', name: 'Rina Sen', ageGroup: 'adult', note: 'Vegetarian' }])
+      expect(writes).toEqual([{ verb: 'update', args: [{ note: 'Vegetarian' }], filters: ['id="p-rina"', 'household_id="hh-1"'] }])
+    })
+
+    it('adds the new and removes only the one taken off', async () => {
+      const { client, writes } = recorder([rina, { ...mira, google_email: null }])
+      await save(client, [
+        { id: 'p-rina', name: 'Rina Sen', ageGroup: 'adult' },
+        { name: 'Arjun Sen', ageGroup: 'adult' },
+      ])
+      expect(writes.map((w) => w.verb)).toEqual(['insert', 'delete'])
+      expect(writes[1].filters).toEqual(['id=["p-mira"]'])
+    })
+
+    it('clears what was taken away, and treats an id that is not theirs as somebody new', async () => {
+      const { client, writes } = recorder([{ ...rina, photo_url: 'https://photos/p.jpg' }])
+      await save(client, [
+        { id: 'p-rina', name: 'Rina Sen', ageGroup: 'adult' },
+        { id: 'p-somebody-elses', name: 'Arjun Sen', ageGroup: 'adult' },
+      ])
+      expect(writes[0]).toMatchObject({ verb: 'update', args: [{ photo_url: null }] })
+      expect(writes[1].verb).toBe('insert')
+      expect(writes).toHaveLength(2)
+    })
+  })
+
   it('refuses a household with nobody grown up in it before asking the database', async () => {
     const { client, calls } = fakeClient()
     const children: HouseholdDraft = { ...draft, people: [{ name: 'Mira', ageGroup: 'child', age: 7 }] }

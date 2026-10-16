@@ -175,8 +175,14 @@ export function isMember(viewer: Viewer): viewer is NonNullable<Viewer> {
 }
 
 
-/** A person as the form holds them, before they have an id. */
+/** A person as the form holds them. */
 export type PersonInput = {
+  /**
+   * The row they already are, so saving changes that row rather than replacing it. Absent for
+   * somebody added on the form. Without it every save took the whole household out and put it
+   * back, and the trail said every person in it had been removed.
+   */
+  id?: string
   name: string
   ageGroup: 'adult' | 'child'
   /** Children only. Organisers plan the programme around who is coming. */
@@ -329,7 +335,8 @@ export function draftOfHousehold(household: Household): HouseholdDraft {
     contactName: household.contactName,
     email: household.email ?? '',
     phone: household.phone ?? '',
-    people: household.people.map(({ name, ageGroup, age, note, shownAs, photo, googleEmail }) => ({
+    people: household.people.map(({ id, name, ageGroup, age, note, shownAs, photo, googleEmail }) => ({
+      id,
       name,
       ageGroup,
       age,

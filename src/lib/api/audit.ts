@@ -514,6 +514,8 @@ export function withAuditTrail(base: ApiClient, now: () => Date = () => new Date
       },
     },
     audit: {
+      // Sign-ins are not changes: nothing here writes them, so they are read straight through.
+      ...base.audit,
       /**
        * Newest first, and newest means newest — not "newest by timestamp, then whatever order
        * they happened to be in". Two changes inside the same millisecond are common (a write

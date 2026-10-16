@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { actorName, auditMethods, toEntry } from './audit'
+import { actorName, auditMethods, toEntry, toSignIn } from './audit'
 
 function fakeClient(rows: unknown[] = [], error: { message: string } | null = null) {
   const calls: string[] = []
@@ -134,5 +134,20 @@ describe('reading the trail the database keeps', () => {
 
   it('reads an entry with no changes recorded as no changes, not as a crash', () => {
     expect(toEntry(row({ changes: null })).changes).toEqual({})
+  })
+})
+
+describe('reading who signed in', () => {
+  const sens = {
+    name: 'The Sens',
+    contact_name: 'Rina Sen',
+    google_email: 'rina.sen@gmail.com',
+    people: [{ name: 'Arjun Sen', google_email: 'arjun.sen@gmail.com' }],
+  }
+
+  it('names the person whose address it was, the way the trail does', () => {
+    const signIn = toSignIn({ id: 7, household_id: 'hh-sen', email: 'arjun.sen@gmail.com', at: '2026-10-16T14:13:01Z', households: sens })
+    expect(signIn).toEqual({ id: '7', householdId: 'hh-sen', who: 'Arjun Sen, The Sens', address: 'arjun.sen@gmail.com', at: '2026-10-16T14:13:01Z' })
+    expect(toSignIn({ id: 8, household_id: 'hh-sen', email: 'rina.sen@gmail.com', at: '', households: sens }).who).toBe('Rina Sen, The Sens')
   })
 })

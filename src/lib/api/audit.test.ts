@@ -30,7 +30,7 @@ const READS = [
   'feedback.listApproved', 'feedback.listAll',
   'portal.identify', 'portal.getHousehold', 'portal.listHouseholds',
   'portal.listSignInAttempts', 'portal.exportHousehold', 'portal.listAttendance',
-  'audit.list', 'settings.get',
+  'audit.list', 'audit.signIns', 'settings.get',
   'volunteering.listOpenRoles', 'volunteering.listRolesForEvent',
   'polls.list', 'polls.listAll',
   'quizzes.list', 'quizzes.get', 'quizzes.leaderboard', 'quizzes.listAll', 'quizzes.attempts', 'quizzes.bank',

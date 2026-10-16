@@ -50,3 +50,20 @@ export function diff(
 export function isEmpty(changes: Record<string, { from: unknown; to: unknown }>): boolean {
   return Object.keys(changes).length === 0
 }
+
+/**
+ * Somebody the committee let in, signing in with Google.
+ *
+ * Not a change, so not in the trail: kept apart, and for ninety days rather than for good. A
+ * stranger's try is not one of these either — that is a `SignInAttempt`.
+ */
+export type SignIn = {
+  id: string
+  householdId: string
+  /** Who, by name where the address says which person: "Arjun Sen, The Sens". */
+  who: string
+  /** The Google address they signed in with. */
+  address: string
+  /** ISO 8601 timestamp */
+  at: string
+}

@@ -178,6 +178,17 @@ export function useAuditTrail(limit = 100) {
 }
 
 
+/** Who signed in, for History's second tab. Only fetched when that tab is open. */
+export function useSignIns(enabled = true, limit = 100) {
+  const api = useApi()
+  const viewer = useViewer()
+  return useQuery({
+    queryKey: ['signIns', limit, asks(viewer)],
+    queryFn: () => api.audit.signIns(viewer, limit),
+    enabled,
+  })
+}
+
 export function useSignInAttempts() {
   const api = useApi()
   const viewer = useViewer()

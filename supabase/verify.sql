@@ -1637,6 +1637,74 @@ begin
   end if;
 end $$;
 
+-- ---------------------------------------------------------------------------
+-- Who signed in
+-- ---------------------------------------------------------------------------
+-- Seeded as the owner, because the rows come from a trigger on auth.users that this file
+-- cannot fire (see the checklist below). What it can check is who reads them.
+
+insert into portal.sign_ins (household_id, email, at)
+values
+  ('11111111-1111-1111-1111-111111111111', 'member@example.com', now() - interval '1 day'),
+  ('11111111-1111-1111-1111-111111111111', 'member@example.com', now() - interval '91 days'),
+  ('22222222-2222-2222-2222-222222222222', 'admin@example.com', now() - interval '1 day');
+
+-- A household reads its own — it is in their copy of what we hold — and nobody else's.
+set local role authenticated;
+set local request.jwt.claims = '{"email": "member@example.com"}';
+do $$
+begin
+  if exists (select 1 from portal.sign_ins where household_id <> '11111111-1111-1111-1111-111111111111') then
+    raise exception 'FAIL: a member can read when another household signed in';
+  end if;
+  if (select count(*) from portal.sign_ins) <> 1 then
+    raise exception 'FAIL: a member should see their own recent sign-in, and not the one past ninety days';
+  end if;
+  begin
+    insert into portal.sign_ins (household_id, email) values ('11111111-1111-1111-1111-111111111111', 'member@example.com');
+    raise exception 'FAIL: a member wrote a sign-in of their own';
+  exception
+    when insufficient_privilege then null;
+  end;
+end $$;
+reset role;
+
+set local role authenticated;
+set local request.jwt.claims = '{"email": "admin@example.com"}';
+do $$
+declare
+  visible integer;
+begin
+  select count(*) into visible from portal.sign_ins where email in ('member@example.com', 'admin@example.com');
+  if visible <> 2 then
+    raise exception 'FAIL: the committee should see both recent sign-ins and not the old one, and sees %', visible;
+  end if;
+  -- No grant to delete with, so refused outright rather than matching nothing.
+  begin
+    delete from portal.sign_ins;
+  exception
+    when insufficient_privilege then null;
+  end;
+end $$;
+reset role;
+
+do $$
+begin
+  if (select count(*) from portal.sign_ins where email = 'member@example.com') <> 2 then
+    raise exception 'FAIL: an admin deleted a sign-in';
+  end if;
+end $$;
+
+set local role anon;
+do $$
+begin
+  perform 1 from portal.sign_ins;
+  raise exception 'FAIL: a visitor can reach the sign-ins';
+exception
+  when insufficient_privilege then null;
+end $$;
+reset role;
+
 do $$
 begin
   raise notice 'All portal rules hold.';
@@ -1663,3 +1731,6 @@ rollback;
 --   5. Sign in with an address that is in portal.superadmins and has no household. You
 --      should be let in, and no row should appear in sign_in_attempts: a superadmin is not
 --      somebody knocking.
+--   6. Sign in with an address that has a household, then open History › Sign-ins. The
+--      sign-in is there, once. Leave the tab open past an hour: the token refreshes, and no
+--      second line appears.

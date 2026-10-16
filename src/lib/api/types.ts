@@ -6,7 +6,7 @@ import type { Feedback, FeedbackInput, FeedbackReceipt, FeedbackStatus } from '@
 import type { SignInAttempt } from '@/domain/document'
 import type { Household, HouseholdDraft, PublicPhoto, Viewer } from '@/domain/household'
 import type { AttendanceDraft, EventAttendance } from '@/domain/attendance'
-import type { AuditEntry } from '@/domain/audit'
+import type { AuditEntry, SignIn } from '@/domain/audit'
 import type { UploadedPhoto } from './uploads'
 import type { SettingsDraft, SiteSettings } from '@/domain/settings'
 import type { HouseholdExport } from '@/domain/subjectAccess'
@@ -345,6 +345,8 @@ export interface ApiClient {
    */
   audit: {
     list(viewer: Viewer, limit?: number): Promise<AuditEntry[]>
+    /** Who signed in, newest first, over the last ninety days. The committee's to read. */
+    signIns(viewer: Viewer, limit?: number): Promise<SignIn[]>
   }
   /**
    * Questions the committee asks members, one vote per household.

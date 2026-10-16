@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import type { HouseholdDraft } from '@/domain/household'
-import { fromDraft, peopleRows, toHousehold, toPerson, type HouseholdRow } from './rows'
+import { draftOfHousehold, type HouseholdDraft } from '@/domain/household'
+import { fromDraft, peopleRows, personChanges, toHousehold, toPerson, type HouseholdRow, type PersonRow } from './rows'
 
 const row: HouseholdRow = {
   id: 'hh-1',
@@ -205,5 +205,23 @@ describe('a profile photograph', () => {
     expect(withOne).toMatchObject({ photo_url: photo })
     expect(without).not.toHaveProperty('photo_url')
     expect(child).not.toHaveProperty('photo_url')
+  })
+})
+
+describe('a person already saved', () => {
+  const saved: PersonRow = { id: 'p-1', household_id: 'hh-1', name: 'Rina Sen', age_group: 'adult', age: null, note: null }
+
+  it('keeps their id on the form, so a save changes their row rather than replacing it', () => {
+    const household = toHousehold({ ...row, people: [saved] })
+    expect(draftOfHousehold(household).people[0].id).toBe('p-1')
+  })
+
+  it('asks nothing of a column the database does not have yet', () => {
+    // No shown_as, photo_url or google_email on the row: a script has not reached them.
+    expect(personChanges(saved, { id: 'p-1', name: 'Rina Sen', ageGroup: 'adult' })).toEqual({})
+  })
+
+  it('trims before comparing, so a stray space is not a change', () => {
+    expect(personChanges(saved, { id: 'p-1', name: ' Rina Sen ', ageGroup: 'adult', note: '  ' })).toEqual({})
   })
 })

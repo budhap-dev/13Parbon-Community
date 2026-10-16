@@ -1,5 +1,5 @@
 import type { ContactKind, ContactMessage } from '@/domain/contact'
-import type { Household, HouseholdDraft, Person } from '@/domain/household'
+import type { Household, HouseholdDraft, Person, PersonInput } from '@/domain/household'
 
 /**
  * Between the database's words and the app's.
@@ -105,24 +105,47 @@ export function fromDraft(draft: HouseholdDraft, committee: boolean): Record<str
   }
 }
 
-/** The people of a household, as rows to replace what is there. */
+/** The people of a household, as rows to add. */
 export function peopleRows(householdId: string, draft: HouseholdDraft): Omit<PersonRow, 'id'>[] {
-  return draft.people.map((person) => ({
+  return draft.people.map((person) => personRow(householdId, person))
+}
+
+function personRow(householdId: string, person: PersonInput): Omit<PersonRow, 'id'> {
+  return {
     household_id: householdId,
     name: person.name.trim(),
     age_group: person.ageGroup,
     age: person.ageGroup === 'child' && person.age !== undefined ? person.age : null,
     note: person.note?.trim() ? person.note.trim() : null,
-    // Only when somebody has said. Rows are replaced whole, so leaving it out is the column's
-    // own null — and a database the new column has not reached yet still takes every save that
-    // does not use it.
+    // Only when somebody has said. On a new row leaving it out is the column's own null — and a
+    // database the new column has not reached yet still takes every save that does not use it.
     ...(person.shownAs ? { shown_as: person.shownAs } : {}),
     // The same, for the photograph: and never a child's, whatever the form sent.
     ...(person.ageGroup === 'adult' && person.photo ? { photo_url: person.photo } : {}),
     // And the address that signs them in, carried through every save so that saving the
     // household does not sign them out. The database refuses one a member added themselves.
     ...(person.ageGroup === 'adult' && person.googleEmail ? { google_email: person.googleEmail.trim().toLowerCase() } : {}),
-  }))
+  }
+}
+
+/** The columns a row has only once a later script has added them, and that are empty unless said. */
+const LATER_COLUMNS = ['shown_as', 'photo_url', 'google_email'] as const
+
+/**
+ * What has to change on a person's row already there, and nothing else.
+ *
+ * Empty when nothing did, so a save that changed somebody's note leaves everybody else's row
+ * alone — and the trail says what changed, rather than that the whole household was taken out
+ * and put back. An optional column left out means clearing what the row has, but only where the
+ * row has the column: one a script has not reached yet is not asked about.
+ */
+export function personChanges(existing: PersonRow, person: PersonInput): Partial<Omit<PersonRow, 'id'>> {
+  const wanted: Record<string, unknown> = { ...personRow(existing.household_id, person) }
+  for (const column of LATER_COLUMNS) {
+    if (!(column in wanted) && column in existing) wanted[column] = null
+  }
+  const had = existing as Record<string, unknown>
+  return Object.fromEntries(Object.entries(wanted).filter(([column, value]) => (had[column] ?? null) !== (value ?? null)))
 }
 
 export type DocumentRow = { id: string; title: string; category: 'minutes' | 'guidelines' | 'resources'; file_url: string; added_on: string }

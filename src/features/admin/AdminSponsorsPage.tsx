@@ -159,13 +159,11 @@ function SponsorsForm({ settings }: { settings: SiteSettings }) {
             rows={draft}
             festivals={settings.festivals}
             onChange={setDraft}
+            status={said('list') ?? (!unsaved && !save.isPending ? <span className={forms.hint}>All saved</span> : null)}
             actions={
-              <>
-                {said('list') ?? (!unsaved && !save.isPending ? <span className={forms.hint}>All saved</span> : null)}
-                <Button variant={unsaved || save.isPending ? 'gold' : 'line'} type="submit" size="sm" disabled={save.isPending || !unsaved}>
-                  {saving('list') ? 'Saving…' : 'Save the sponsors'}
-                </Button>
-              </>
+              <Button variant={unsaved || save.isPending ? 'gold' : 'line'} type="submit" size="sm" disabled={save.isPending || !unsaved}>
+                {saving('list') ? 'Saving…' : 'Save the sponsors'}
+              </Button>
             }
           />
         </div>

@@ -42,7 +42,7 @@ function withTrailOf(count: number): ApiClient {
     subject: { kind: 'announcements', id: `an-${i + 1}` },
     changes: { title: { from: `Notice ${i + 1}`, to: `Notice ${i + 1}, amended` } },
   }))
-  return { ...createMockApi(), audit: { list: async () => entries } }
+  return { ...createMockApi(), audit: { list: async () => entries, signIns: async () => [] } }
 }
 
 describe('what has changed', () => {
@@ -73,7 +73,7 @@ describe('what has changed', () => {
       subject: { kind: 'households', id: 'hh-sen' },
       changes: { phone: { from: '07700 900001', to: '07700 900123' } },
     }
-    renderAt('/admin/audit', admin, { ...createMockApi(), audit: { list: async () => [entry] } })
+    renderAt('/admin/audit', admin, { ...createMockApi(), audit: { list: async () => [entry], signIns: async () => [] } })
     const who = await screen.findByText('Arjun Sen, The Sens')
     expect(within(who).getByText('arjun.sen@gmail.com')).toBeInTheDocument()
   })
@@ -187,5 +187,36 @@ describe('what has changed', () => {
     )
     await screen.findByRole('heading', { level: 1, name: 'Dashboard' })
     expect(router.state.location.pathname).toBe('/portal')
+  })
+})
+
+describe('who signed in', () => {
+  it('has a tab of its own, kept out of the changes', async () => {
+    renderAt('/admin/audit', admin, withAuditTrail(createMockApi()))
+    await screen.findByRole('heading', { level: 1, name: 'What has changed' })
+    expect(screen.queryByText('Rina Sen, The Sens')).not.toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('tab', { name: 'Sign-ins' }))
+    const panel = screen.getByRole('tabpanel')
+    // The household's own address is its main contact's, so it is named as them.
+    expect(await within(panel).findAllByText('Rina Sen, The Sens')).toHaveLength(2)
+    expect(within(panel).getByText('Meera Ghosh, The Ghoshes')).toBeInTheDocument()
+    expect(within(panel).getByText(/1–4 of 4 sign-ins/)).toBeInTheDocument()
+  })
+
+  it('opens on the sign-ins from an address that asks for them', async () => {
+    renderAt('/admin/audit?tab=sign-ins', admin)
+    expect(await screen.findByRole('tab', { name: 'Sign-ins', selected: true })).toBeInTheDocument()
+    expect(await screen.findByText('Debashis Chatterjee, The Chatterjees')).toBeInTheDocument()
+  })
+
+  it('says so when nobody has signed in', async () => {
+    renderAt('/admin/audit?tab=sign-ins', admin, { ...createMockApi(), audit: { list: async () => [], signIns: async () => [] } })
+    expect(await screen.findByText('Nobody has signed in in the last ninety days.')).toBeInTheDocument()
+  })
+
+  it('is the committee\'s to read', async () => {
+    const api = createMockApi()
+    expect(await api.audit.signIns({ householdId: 'hh-sen', role: 'member' })).toEqual([])
   })
 })

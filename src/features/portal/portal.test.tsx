@@ -305,7 +305,7 @@ describe('committee pages', () => {
     const members = screen.getByRole('heading', { name: 'Members' }).closest('section')!
     const list = within(within(members).getByRole('region', { name: 'Members list' }))
     expect(list.getAllByText('Admin')).toHaveLength(2)
-    expect(list.getAllByText('Never signed in')).toHaveLength(2)
+    expect(list.getAllByText('No Google account')).toHaveLength(2)
     expect(list.getByText('Lapsed')).toBeInTheDocument()
   })
 

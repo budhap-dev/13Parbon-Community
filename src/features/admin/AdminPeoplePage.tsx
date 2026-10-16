@@ -16,7 +16,7 @@ import { RemoveHousehold } from '@/components/RemoveHousehold'
 import { RowMenu } from '@/components/RowMenu'
 import { formatDateWithYear, formatLongDate } from '@/domain/dates'
 import { committeeCsv, committeeCsvFilename } from '@/domain/committeeExport'
-import { describeSize, householdInitials, householdMatches, householdPhoto, type Household } from '@/domain/household'
+import { describeSize, householdInitials, householdMatches, householdPhoto, signInAddresses, type Household } from '@/domain/household'
 import type { HouseholdDraft } from '@/domain/household'
 import {
   useAddHousehold,
@@ -40,7 +40,13 @@ const FILTERS: Record<FilterKey, { label: string; keep: (h: Household) => boolea
   all: { label: 'Everyone', keep: () => true },
   paid: { label: 'Paid', keep: (h) => h.membership.status === 'active' },
   lapsed: { label: 'Lapsed', keep: (h) => h.membership.status !== 'active' },
-  never: { label: 'Never signed in', keep: (h) => !h.googleEmail },
+  /*
+   * Nobody in it with a Google account, which is not the same as nobody having signed in. It
+   * said "Never signed in" and looked only at the household's own address, so a household whose
+   * grown-ups each sign in with their own — linked to them, not to it — was listed as never
+   * having been here, beside the trail of what they had just saved.
+   */
+  never: { label: 'No Google account', keep: (h) => signInAddresses(h).length === 0 },
   admins: { label: 'Admins', keep: (h) => h.role === 'admin' },
 }
 
@@ -223,7 +229,7 @@ export function AdminPeoplePage() {
               </div>
               <div>
                 <dt>Signs in with</dt>
-                <dd>{open.googleEmail ?? 'Never signed in'}</dd>
+                <dd>{signInAddresses(open).join(', ') || 'Nobody has a Google account on it yet'}</dd>
               </div>
             </dl>
           </section>
@@ -603,7 +609,13 @@ export function AdminPeoplePage() {
                           </span>
                         </td>
                         <td data-label="Google account" className={`${styles.tiny} ${styles.muted} ${styles.wideOnPhone}`}>
-                          {household.googleEmail ?? <span className={styles.pillPast}>Never signed in</span>}
+                          {(() => {
+                            // Every address that signs in to it — its own and its grown-ups' — and
+                            // the first of them here, with how many more, so the row stays one line.
+                            const [first, ...more] = signInAddresses(household)
+                            if (!first) return <span className={styles.pillPast}>No Google account</span>
+                            return more.length > 0 ? `${first} +${more.length}` : first
+                          })()}
                         </td>
                         <td data-label="Size" className={`${styles.num} ${styles.muted} ${styles.nowrap}`}>
                           {describeSize(household)}
