@@ -51,6 +51,7 @@ export const defaultSettings: SiteSettings = {
     signOff: site.signOff,
   },
   committee: about.committee.map((row) => ({ ...row })),
+  committeeRoles: [...about.committeeRoles],
   faq: about.faq.map((item) => ({ question: item.q, answer: item.a })),
   members: [...about.members],
   social: site.social.map((channel) => ({

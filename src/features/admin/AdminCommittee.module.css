@@ -20,13 +20,16 @@
   overflow: clip;
 }
 
-/* The head is the card's colour edge to edge, like a business card: the role large, the name under. */
+/* The head is the card's colour edge to edge, like a business card: the role small, the name
+   large under it. One height for every card, so a long role or name does not knock its row out
+   of line: each is cut to a line here, and given whole in the lists underneath. */
 .cardHead {
   position: relative;
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 16px 18px;
+  height: 84px;
+  padding: 0 18px;
   background: var(--tone);
   color: #fff;
   overflow: clip;
@@ -63,6 +66,7 @@
 .cardWords {
   position: relative;
   z-index: 1;
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -74,15 +78,19 @@
   letter-spacing: var(--portal-label-tracking, 0.08em);
   text-transform: uppercase;
   opacity: 0.85;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .cardName {
   font-family: var(--font-display);
   font-size: var(--portal-text-xl);
   font-weight: 700;
-  line-height: 1.2;
-  overflow-wrap: anywhere;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .fields {
@@ -98,6 +106,17 @@
   gap: 6px;
 }
 
+/* The title is a word or two; the name has the rest of the line. */
+.nameRow {
+  display: grid;
+  grid-template-columns: minmax(84px, 7rem) 1fr;
+  gap: 10px;
+}
+
+.nameRow > * {
+  min-width: 0;
+}
+
 .label {
   font-size: var(--portal-text-sm);
   font-weight: 600;
@@ -107,16 +126,151 @@
   composes: input from '../../components/Fields.module.css';
 }
 
+/* A long role or name is cut to the box rather than wrapped inside it. */
+select.input {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .tools {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
+  margin-top: auto;
   padding: 12px 18px 16px;
 }
 
-/* The last button, Remove, to the far end, away from Up and Down. */
+/* The last button, Remove, to the far end, away from the handle. */
 .tools > :last-child {
   margin-left: auto;
+}
+
+/* What the card is dragged by. Quiet, because it is not a job: it is a place to take hold. */
+.grip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 10px 0 6px;
+  border: 0;
+  border-radius: var(--portal-button-radius, 8px);
+  background: transparent;
+  color: var(--color-fg-muted);
+  font: inherit;
+  font-size: var(--portal-text-sm);
+  font-weight: 600;
+  cursor: grab;
+}
+
+.grip:hover {
+  background: color-mix(in srgb, var(--tone) 10%, transparent);
+  color: var(--tone);
+}
+
+.grip:focus-visible {
+  outline: 2px solid var(--color-focus, #c9a227);
+  outline-offset: 1px;
+}
+
+.grip:active {
+  cursor: grabbing;
+}
+
+/* Set by the drag: the thing being moved fades, and the place it would land is ringed. */
+.card[data-dragging],
+.roleRow[data-dragging] {
+  opacity: 0.45;
+}
+
+.card[data-over],
+.roleRow[data-over] {
+  outline: 3px solid color-mix(in srgb, var(--tone, var(--gold)) 55%, transparent);
+  outline-offset: 2px;
+}
+
+/* The panel's own Add, at the end of its head rather than under the list. */
+.headAction {
+  flex: none;
+}
+
+/* The roles: a small tile each, several to a row, so a short name is not stretched across the
+   page. The handle, the name and Remove on a line, with how many cards hold it underneath. */
+.roles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.roleRow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 8px;
+  row-gap: 4px;
+  padding: 8px 10px 8px 4px;
+  border: 1px solid color-mix(in srgb, var(--tone) 18%, var(--color-border-faint));
+  border-radius: var(--portal-radius, 12px);
+  background: color-mix(in srgb, var(--tone) 4%, var(--color-bg-raised));
+}
+
+.holders {
+  grid-column: 2;
+  grid-row: 2;
+  justify-self: start;
+  max-width: 100%;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 22px;
+  padding: 0 9px;
+  border-radius: 999px;
+  font-size: var(--portal-text-xs);
+  font-weight: 600;
+}
+
+/* A role nobody holds: worth a glance before the AGM, so it is coloured as a warning. */
+.unused {
+  background: color-mix(in srgb, var(--error, #b3261e) 12%, var(--color-bg-raised));
+  color: var(--error, #b3261e);
+}
+
+/* Whoever holds it, in the panel's colour. */
+.held {
+  background: color-mix(in srgb, var(--tone) 14%, var(--color-bg-raised));
+  color: color-mix(in srgb, var(--tone) 75%, var(--color-fg));
+}
+
+.held > svg {
+  flex: none;
+}
+
+.heldNames {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.gripOnly {
+  composes: grip;
+  padding: 0 6px;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .access {

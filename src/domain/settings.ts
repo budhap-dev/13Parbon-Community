@@ -302,6 +302,14 @@ export type SiteSettings = {
    */
   committee: CommitteeMember[]
   /**
+   * The roles offered when somebody is put on the committee, in the order the list offers them.
+   *
+   * Kept by the committee rather than in the code: a post is renamed or added at an AGM, and that
+   * should not wait for a developer. A card may still hold a role that is not on the list — one
+   * saved before it was taken off, or a one-off — and keeps it.
+   */
+  committeeRoles: string[]
+  /**
    * The questions people ask, and the answers. In the order given.
    *
    * The last of the nested lists to leave the files. It was the one most often wrong in a way
@@ -348,6 +356,7 @@ type ContentKey =
   | 'defaultTheme'
   | 'text'
   | 'committee'
+  | 'committeeRoles'
   | 'faq'
   | 'members'
   | 'social'
@@ -420,6 +429,7 @@ export function validateSettings(draft: SettingsDraft): boolean {
   // it is dropped on save. A row with neither was never a row. The same goes for a question
   // with no answer.
   if (!Array.isArray(draft.committee) || !Array.isArray(draft.members) || !Array.isArray(draft.faq)) return false
+  if (!Array.isArray(draft.committeeRoles)) return false
   // The same for the rest: what is in each list is tidied on the way out of the database, so
   // all that is asked here is that a list is a list. A save that sent a string where the
   // festivals go would otherwise replace four festivals with none.
@@ -436,6 +446,19 @@ export function tidyCommittee(rows: CommitteeMember[]): CommitteeMember[] {
   return rows
     .map((row) => ({ role: row.role.trim(), name: row.name.trim() }))
     .filter((row) => row.role && row.name)
+}
+
+/** The roles as they should be saved: trimmed, none blank, and each once whatever its capitals. */
+export function tidyRoles(roles: string[]): string[] {
+  const seen = new Set<string>()
+  return roles
+    .map((role) => role.trim())
+    .filter((role) => {
+      const key = role.toLowerCase()
+      if (!role || seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
 }
 
 /** The questions as they should be saved: complete pairs only, in the order they were given. */
@@ -522,6 +545,10 @@ export function mergeSettings(stored: unknown, defaults: SiteSettings): SiteSett
       )
     : defaults.faq
 
+  const committeeRoles = Array.isArray(row.committeeRoles)
+    ? tidyRoles((row.committeeRoles as unknown[]).filter((role): role is string => typeof role === 'string'))
+    : defaults.committeeRoles
+
   const members = Array.isArray(row.members)
     ? (row.members as unknown[]).filter((name): name is string => typeof name === 'string')
     : defaults.members
@@ -540,6 +567,7 @@ export function mergeSettings(stored: unknown, defaults: SiteSettings): SiteSett
     defaultTheme: isSiteTheme(row.defaultTheme) ? row.defaultTheme : defaults.defaultTheme,
     text,
     committee,
+    committeeRoles,
     faq,
     members,
     // Each of these keeps only what is fit to draw. An empty list that was saved is an answer —
