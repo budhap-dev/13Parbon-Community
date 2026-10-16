@@ -50,6 +50,8 @@
   left: 27.76%;
   top: 28.8%;
   width: 47.06%;
+  /* Square before the picture arrives, so the wheel behind measures the right centre at once. */
+  aspect-ratio: 1;
   border-radius: 50%;
   border: 2px solid var(--color-accent);
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);

@@ -104,12 +104,43 @@ function Alpona({ className, roll, centreOn }: Props) {
     }
     measure()
     stacked?.addEventListener('change', measure)
-    if (typeof ResizeObserver === 'undefined') return () => stacked?.removeEventListener('change', measure)
+    /*
+     * And again once the page has settled. On a first visit nothing is cached: the emblem has no
+     * height until its picture arrives, and the web fonts swap in and rewrap the words above it,
+     * moving it down without resizing the floor. Measured only by the floor, the wheel kept the
+     * centre it saw before either, and sat off the emblem until a reload found both cached.
+     */
+    let live = true
+    const settled = () => {
+      if (live) measure()
+    }
+    document.fonts?.ready.then(settled, () => {})
+    // A font is only fetched once words that need it are laid out, which can be after `ready`.
+    document.fonts?.addEventListener?.('loadingdone', measure)
+    window.addEventListener('load', measure)
+    const stop = () => {
+      live = false
+      document.fonts?.removeEventListener?.('loadingdone', measure)
+      window.removeEventListener('load', measure)
+      stacked?.removeEventListener('change', measure)
+    }
+    if (typeof ResizeObserver === 'undefined') return stop
+    /*
+     * The anchor moves when anything before it grows: the next event's button and ticket arrive
+     * after a fetch, above the logo, and need not resize the floor. So every box from the anchor
+     * up to the floor is watched, and every box before each of them. Watching the boxes rather
+     * than the anchor itself also survives the logo being remounted to replay its assembly.
+     */
     const watch = new ResizeObserver(measure)
     watch.observe(floor)
+    const anchor = centreOn ? floor.querySelector<HTMLElement>(centreOn) : null
+    for (let node = anchor?.parentElement; node && node !== floor; node = node.parentElement) {
+      watch.observe(node)
+      for (let before = node.previousElementSibling; before; before = before.previousElementSibling) watch.observe(before)
+    }
     return () => {
+      stop()
       watch.disconnect()
-      stacked?.removeEventListener('change', measure)
     }
   }, [roll, centreOn])
   const step = (n: number) => ({ className: motion.build, style: { ['--step' as string]: n } })

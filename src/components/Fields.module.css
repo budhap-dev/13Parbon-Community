@@ -19,8 +19,10 @@
   font-size: var(--portal-text-md);
 }
 
+/* A pill is a theme's shape for a line; a box of ten lines would be an oval that cuts off its corners. */
 .textarea {
   composes: input;
+  border-radius: min(var(--portal-button-radius, 8px), 12px);
   padding: 10px 12px;
   line-height: 1.6;
 }

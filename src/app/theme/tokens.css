@@ -693,8 +693,8 @@
 /* Paper: ruled lines, a white sidebar, crisp shadows. A ledger. */
 [data-theme='paper'] {
   --bg-texture-a: repeating-linear-gradient(0deg, rgba(31, 78, 121, 0.04) 0 1px, transparent 1px 32px);
-  --portal-radius: 10px;
-  --portal-button-radius: 6px;
+  --portal-radius: 14px;
+  --portal-button-radius: 10px;
   --portal-shadow: 0 1px 2px rgba(28, 29, 31, 0.06);
   --portal-side-bg: #ffffff;
   --portal-nav-on-bg: color-mix(in srgb, var(--color-accent) 11%, transparent);
@@ -706,8 +706,8 @@
   --bg-texture-a: repeating-linear-gradient(45deg, rgba(35, 33, 29, 0.028) 0 1px, transparent 1px 6px);
   --bg-texture-b: repeating-linear-gradient(-45deg, rgba(35, 33, 29, 0.028) 0 1px, transparent 1px 6px);
   --font-display: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
-  --portal-radius: 4px;
-  --portal-button-radius: 4px;
+  --portal-radius: 10px;
+  --portal-button-radius: 8px;
   --portal-shadow: none;
   --portal-panel-border: rgba(35, 33, 29, 0.2);
   /* The frame in the theme's own wine red, deep enough that pale writing reads on it. */
@@ -764,8 +764,8 @@
   --bg-texture-b: linear-gradient(90deg, rgba(67, 56, 202, 0.045) 1px, transparent 1px);
   --bg-texture-b-size: 24px 24px;
   --font-display: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
-  --portal-radius: 12px;
-  --portal-button-radius: 8px;
+  --portal-radius: 16px;
+  --portal-button-radius: 10px;
   --portal-shadow: 0 1px 3px rgba(26, 27, 46, 0.08), 0 10px 28px rgba(26, 27, 46, 0.05);
   --portal-panel-border: transparent;
   --portal-side-bg: #1a1b2e;
@@ -786,11 +786,11 @@
   --portal-side-danger-hover-fg: #ffffff;
 }
 
-/* Slate: plain, square and flat. Nothing to look at but the work. */
+/* Slate: plain and flat, softly rounded. Nothing to look at but the work. */
 [data-theme='slate'] {
   --font-display: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
-  --portal-radius: 6px;
-  --portal-button-radius: 4px;
+  --portal-radius: 10px;
+  --portal-button-radius: 8px;
   --portal-shadow: none;
   --portal-side-bg: #101216;
   --portal-nav-on-bg: color-mix(in srgb, var(--color-accent) 14%, transparent);
