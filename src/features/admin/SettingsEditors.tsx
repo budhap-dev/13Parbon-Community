@@ -84,11 +84,11 @@ function RowTools({
     <div className={styles.actions}>
       {onMove ? (
         <>
-          <Button variant="line" size="sm" aria-label={`Move ${what} up`} disabled={index === 0} onClick={() => onMove(-1)}>
+          <Button variant="teal" size="sm" aria-label={`Move ${what} up`} disabled={index === 0} onClick={() => onMove(-1)}>
             Up
           </Button>
           <Button
-            variant="line"
+            variant="violet"
             size="sm"
             aria-label={`Move ${what} down`}
             disabled={index === count - 1}
@@ -138,7 +138,7 @@ export function SocialEditor({ rows, onChange }: { rows: SocialChannel[]; onChan
   return (
     <>
       <ActionBar sticky={false}>
-        <Button variant="line" size="sm" onClick={() => onChange([...rows, { name: '', icon: 'link', href: '', blurb: '' }])}>
+        <Button variant="green" size="sm" onClick={() => onChange([...rows, { name: '', icon: 'link', href: '', blurb: '' }])}>
           Add a channel
         </Button>
       </ActionBar>
@@ -232,7 +232,7 @@ export function FestivalEditor({ rows, onChange }: { rows: Festival[]; onChange:
     <>
       <ActionBar sticky={false}>
         {/* No id yet: it takes one from its name when it is saved, and keeps it after that. */}
-        <Button variant="line" size="sm" onClick={() => onChange([...rows, { id: '', name: '' }])}>
+        <Button variant="green" size="sm" onClick={() => onChange([...rows, { id: '', name: '' }])}>
           Add a festival
         </Button>
       </ActionBar>
@@ -309,7 +309,7 @@ export function ValuesEditor({ rows, onChange }: { rows: ValueCard[]; onChange: 
   return (
     <>
       <ActionBar sticky={false}>
-        <Button variant="line" size="sm" onClick={() => onChange([...rows, { icon: 'heart', title: '', text: '' }])}>
+        <Button variant="green" size="sm" onClick={() => onChange([...rows, { icon: 'heart', title: '', text: '' }])}>
           Add a value
         </Button>
       </ActionBar>
@@ -547,7 +547,7 @@ export function PrivacyEditor({
   return (
     <>
       <ActionBar sticky={false}>
-        <Button variant="line" size="sm" onClick={() => onRows([...rows, { title: '', text: '' }])}>
+        <Button variant="green" size="sm" onClick={() => onRows([...rows, { title: '', text: '' }])}>
           Add a section
         </Button>
       </ActionBar>
@@ -609,7 +609,7 @@ export function ToolsEditor({ rows, onChange }: { rows: Tool[]; onChange: (rows:
   return (
     <>
       <ActionBar sticky={false}>
-        <Button variant="line" size="sm" onClick={() => onChange([...rows, { name: '', description: '', href: '' }])}>
+        <Button variant="green" size="sm" onClick={() => onChange([...rows, { name: '', description: '', href: '' }])}>
           Add a tool
         </Button>
       </ActionBar>
@@ -708,7 +708,7 @@ export function SponsorsEditor({
   return (
     <>
       <ActionBar sticky={Boolean(actions)} status={actions ? undefined : null}>
-        <Button variant="line" size="sm" onClick={() => onChange([...rows, blankSponsor()])}>
+        <Button variant="green" size="sm" onClick={() => onChange([...rows, blankSponsor()])}>
           Add a sponsor
         </Button>
         {actions}

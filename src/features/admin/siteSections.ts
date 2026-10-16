@@ -32,9 +32,23 @@ export const isSectionKey = (value: string): value is SectionKey => Object.hasOw
  * content those two pages are built from, which is what somebody is usually there to change.
  */
 export type SitePart = 'site' | 'pages'
-export const PAGE_SECTIONS: readonly SectionKey[] = ['home', 'heroCard', 'festivals', 'story', 'values', 'committee', 'roll', 'faq', 'collage']
+export const PAGE_SECTIONS: readonly SectionKey[] = ['home', 'heroCard', 'festivals', 'story', 'values', 'roll', 'faq', 'collage']
 export const partOf = (key: SectionKey): SitePart => (PAGE_SECTIONS.includes(key) ? 'pages' : 'site')
 export const PART_PATHS: Record<SitePart, string> = { site: '/admin/content', pages: '/admin/pages' }
 
+/**
+ * Sections that have moved off the two settings screens, and where they are kept now. The
+ * committee is a tab of People: who is on it is a question about people.
+ */
+const ELSEWHERE: Partial<Record<SectionKey, { href: string; screen: string }>> = {
+  committee: { href: '/admin/people?tab=committee', screen: 'People' },
+}
+
+export const isElsewhere = (key: SectionKey) => ELSEWHERE[key] !== undefined
+
 /** The address that opens one section and brings it into view. */
-export const sectionHref = (key: SectionKey) => `${PART_PATHS[partOf(key)]}?section=${key}`
+export const sectionHref = (key: SectionKey) => ELSEWHERE[key]?.href ?? `${PART_PATHS[partOf(key)]}?section=${key}`
+
+/** The screen a section is on, by the name the menu gives it. */
+export const sectionScreen = (key: SectionKey) =>
+  ELSEWHERE[key]?.screen ?? (partOf(key) === 'pages' ? 'Home and About pages' : 'Site settings')

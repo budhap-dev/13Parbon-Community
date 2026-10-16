@@ -3,10 +3,11 @@ import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { useScrollToTopOn } from '@/app/useScrollToTopOn'
 import { Button } from '@/components/Button'
 import { LoadFailed } from '@/components/LoadFailed'
-import { formatLongDate, formatTime } from '@/domain/dates'
+import { formatStamp } from '@/domain/dates'
 import { useAuditTrail, useViewer } from '@/lib/api'
 import { can } from '@/lib/auth/permissions'
 import styles from '@/features/portal/Portal.module.css'
+import { changeLines } from './auditChanges'
 
 /** The table a row happened to, in the words a person would use for it. */
 const SUBJECTS: Record<string, string> = {
@@ -88,18 +89,8 @@ export function describeAction(action: string): string {
   return `${VERBS[verb] ?? verb} ${SUBJECTS[kind] ?? kind ?? ''}`.trim()
 }
 
-/**
- * What a value looks like in a sentence.
- *
- * Absent has to read as absent rather than as the word "undefined", because half the entries
- * worth reading are somebody filling in a field that was empty.
- */
-function show(value: unknown): string {
-  if (value === null || value === undefined || value === '') return 'nothing'
-  if (typeof value === 'boolean') return value ? 'yes' : 'no'
-  if (typeof value === 'object') return JSON.stringify(value)
-  return String(value)
-}
+/** The whole of a value, for the row's title: nothing is hidden from somebody who wants it. */
+const whole = (value: unknown) => (value !== null && typeof value === 'object' ? JSON.stringify(value) : String(value ?? ''))
 
 /**
  * How much of a value the table prints.
@@ -193,10 +184,8 @@ export function AdminAuditPage() {
                   const moved = Object.entries(entry.changes)
                   return (
                     <tr key={entry.id}>
-                      <td data-label="When" className={styles.tiny}>
-                        {formatLongDate(entry.at)}
-                        <br />
-                        <span className={styles.muted}>{formatTime(entry.at)}</span>
+                      <td data-label="When" className={`${styles.tiny} ${styles.nowrap}`}>
+                        <time dateTime={entry.at}>{formatStamp(entry.at)}</time>
                       </td>
                       {/* The page has always promised this — "who made it, and what it was
                           before" — and the database has always recorded it. It was read out of
@@ -210,15 +199,13 @@ export function AdminAuditPage() {
                           '—'
                         ) : (
                           <ul className={styles.plainList}>
-                            {moved.map(([field, change]) => {
-                              const was = show(change.from)
-                              const now = show(change.to)
-                              return (
-                                <li key={field} title={`${field}: ${was} → ${now}`}>
-                                  {field}: {clamp(was)} → {clamp(now)}
+                            {moved.flatMap(([field, change]) =>
+                              changeLines(field, change.from, change.to).map((line) => (
+                                <li key={`${field}:${line.label}`} title={`${field}: ${whole(change.from)} → ${whole(change.to)}`}>
+                                  {line.label}: {clamp(line.was)} → {clamp(line.now)}
                                 </li>
-                              )
-                            })}
+                              )),
+                            )}
                           </ul>
                         )}
                       </td>

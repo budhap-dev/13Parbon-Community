@@ -8,7 +8,7 @@ import { countGaps, gapsNow } from '@/app/gaps'
 import { SITE_TEXT_FIELDS, SITE_TEXT_KEYS, type SiteTextKey } from '@/domain/settings'
 import styles from '@/features/portal/Portal.module.css'
 import { SiteSwitches } from './SiteSwitches'
-import { isSectionKey, partOf, sectionHref, type SitePart } from './siteSections'
+import { isElsewhere, isSectionKey, partOf, sectionHref, type SitePart } from './siteSections'
 
 /**
  * Where on this page a gap can be filled in, if it can.
@@ -50,13 +50,17 @@ export function AdminContentPage() {
     return <Navigate to={open ? `${moved}?open=${encodeURIComponent(open)}` : moved} replace />
   }
   const section = params.get('section')
-  if (section && isSectionKey(section) && partOf(section) === 'pages') return <Navigate to={sectionHref(section)} replace />
+  if (section && isSectionKey(section) && (partOf(section) === 'pages' || isElsewhere(section))) return <Navigate to={sectionHref(section)} replace />
   return <SiteSettings />
 }
 
-/** The Home and About pages: their order, the festivals, the story, the values, the committee. */
+/** The Home and About pages: their order, the festivals, the story, the values, the roll. */
 export function AdminPagesPage() {
   useDocumentTitle('Home and About pages')
+  const [params] = useSearchParams()
+  const section = params.get('section')
+  // An address from before the committee moved to People still arrives at it.
+  if (section && isSectionKey(section) && isElsewhere(section)) return <Navigate to={sectionHref(section)} replace />
   return (
     <div className={styles.page}>
       <div className={styles.top}>

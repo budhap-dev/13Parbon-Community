@@ -1,0 +1,160 @@
+/* The committee, a card each, in a colour of its own (--tone, set on the card). */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card {
+  --tone: #2563eb;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border: 1px solid color-mix(in srgb, var(--tone) 28%, var(--color-border-faint));
+  border-radius: var(--portal-radius, 14px);
+  background: var(--color-bg-raised);
+  box-shadow: var(--portal-shadow, none);
+  overflow: clip;
+}
+
+/* The head is the card's colour edge to edge, like a business card: the role large, the name under. */
+.cardHead {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 18px;
+  background: var(--tone);
+  color: #fff;
+  overflow: clip;
+}
+
+.cardHead::after {
+  content: '';
+  position: absolute;
+  top: -70px;
+  right: -50px;
+  width: 160px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  pointer-events: none;
+}
+
+.mono {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #fff;
+  color: var(--tone);
+  font-weight: 800;
+  font-size: var(--portal-text-sm);
+  letter-spacing: 0.04em;
+}
+
+.cardWords {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.cardRole {
+  font-size: var(--portal-label-size, 11px);
+  font-weight: 700;
+  letter-spacing: var(--portal-label-tracking, 0.08em);
+  text-transform: uppercase;
+  opacity: 0.85;
+  overflow-wrap: anywhere;
+}
+
+.cardName {
+  font-family: var(--font-display);
+  font-size: var(--portal-text-xl);
+  font-weight: 700;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 18px 6px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-size: var(--portal-text-sm);
+  font-weight: 600;
+}
+
+.input {
+  composes: input from '../../components/Fields.module.css';
+}
+
+.tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 18px 16px;
+}
+
+/* The last button, Remove, to the far end, away from Up and Down. */
+.tools > :last-child {
+  margin-left: auto;
+}
+
+.access {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.access > li {
+  --tone: #2563eb;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: var(--portal-radius, 12px);
+  background: color-mix(in srgb, var(--tone) 8%, var(--color-bg-raised));
+  border: 1px solid color-mix(in srgb, var(--tone) 22%, transparent);
+}
+
+.accessMono {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--tone);
+  color: #fff;
+  font-size: var(--portal-text-xs);
+  font-weight: 800;
+}
+
+.accessName {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}

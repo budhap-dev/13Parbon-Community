@@ -161,7 +161,7 @@ export function AdminWritingPage() {
                     </td>
                     <td className={styles.right}>
                       <span className={`${styles.actions} ${styles.actionsRight}`}>
-                        <Button variant="line" size="sm" aria-label={`Edit ${post.title}`} onClick={() => setEditing({ post })}>
+                        <Button variant="blue" size="sm" aria-label={`Edit ${post.title}`} onClick={() => setEditing({ post })}>
                           Edit
                         </Button>
                         <RowMenu about={post.title} items={[{ label: 'Delete…', danger: true, onSelect: () => setDeleting(post.id) }]} />

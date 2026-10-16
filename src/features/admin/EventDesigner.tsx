@@ -388,7 +388,7 @@ export function EventDesigner({
             </div>
           ))}
           <div className={styles.actions}>
-            <Button variant="line" size="sm" onClick={() => set('programme', [...draft.programme, { time: '', what: '' }])}>
+            <Button variant="green" size="sm" onClick={() => set('programme', [...draft.programme, { time: '', what: '' }])}>
               Add to the programme
             </Button>
           </div>

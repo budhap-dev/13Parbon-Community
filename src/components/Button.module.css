@@ -70,13 +70,13 @@
 }
 
 .line {
-  background: transparent;
+  background: var(--button-line-bg, transparent);
   border-color: var(--button-line-border, var(--color-fg));
-  color: var(--color-fg);
+  color: var(--button-line-fg, var(--color-fg));
 }
 .line:hover {
-  background: var(--color-hover-wash);
-  color: var(--color-fg);
+  background: var(--button-line-hover, var(--color-hover-wash));
+  color: var(--button-line-fg, var(--color-fg));
 }
 
 .ink {
@@ -123,4 +123,41 @@
 
 .danger:focus-visible {
   outline-color: var(--error);
+}
+
+/*
+ * The coloured buttons. Each is a tint of its hue on the raised ground, with the hue drawn
+ * towards the page's text colour for the label. That one rule reads in every theme: in a light
+ * one the text is dark and the blue comes out deep, in a dark one the text is cream and it
+ * comes out pale. No theme has to name its own blue.
+ */
+.blue,
+.green,
+.teal,
+.violet {
+  background: color-mix(in srgb, var(--tone) 15%, var(--color-bg-raised));
+  border-color: color-mix(in srgb, var(--tone) 45%, var(--color-bg-raised));
+  color: color-mix(in srgb, var(--tone) 58%, var(--color-fg));
+}
+
+.blue:hover,
+.green:hover,
+.teal:hover,
+.violet:hover {
+  background: color-mix(in srgb, var(--tone) 26%, var(--color-bg-raised));
+  border-color: color-mix(in srgb, var(--tone) 65%, var(--color-bg-raised));
+  color: color-mix(in srgb, var(--tone) 58%, var(--color-fg));
+}
+
+.blue {
+  --tone: #2563eb;
+}
+.green {
+  --tone: #16a34a;
+}
+.teal {
+  --tone: #0d9488;
+}
+.violet {
+  --tone: #7c3aed;
 }

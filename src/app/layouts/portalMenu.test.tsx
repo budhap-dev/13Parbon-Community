@@ -179,19 +179,11 @@ describe('the committee’s menu, in sections', () => {
     expect(within(nav).getByRole('link', { name: /Home and About pages/ })).toHaveAttribute('href', '/admin/pages')
   })
 
-  it('folds their own household away while they are on the committee’s screens', async () => {
+  it('shows their own household as a section like the others, never folded away', async () => {
     renderAt('/admin')
     const household = await screen.findByRole('navigation', { name: 'Your household' })
-    expect(household.querySelector('details')).not.toHaveAttribute('open')
-    // Opened on a press, as any disclosure is.
-    await userEvent.click(within(household).getByText('Your household'))
-    expect(household.querySelector('details')).toHaveAttribute('open')
-  })
-
-  it('has it open whenever they are on one of its screens, so where they are is never hidden', async () => {
-    renderAt('/portal/household')
-    const household = await screen.findByRole('navigation', { name: 'Your household' })
-    expect(household.querySelector('details')).toHaveAttribute('open')
+    expect(household.querySelector('details')).toBeNull()
+    expect(within(household).getByRole('link', { name: /My household/ })).toBeVisible()
   })
 
   it('shows a member their household plainly, with nothing folded', async () => {

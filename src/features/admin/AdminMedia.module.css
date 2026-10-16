@@ -58,6 +58,7 @@
   padding: 12px;
   border: 2px solid var(--line, rgba(0, 0, 0, 0.14));
   border-radius: var(--portal-radius, 14px);
+  box-shadow: var(--portal-shadow, none);
 }
 
 /* The picture is the way in, so it has to look like one and take a keyboard. */

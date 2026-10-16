@@ -16,7 +16,16 @@ import styles from './ThemeSwitcher.module.css'
 export function ThemeSwitcher({
   align = 'end',
   direction = 'down',
-}: { align?: 'end' | 'start'; direction?: 'down' | 'up' } = {}) {
+  stacked = false,
+}: {
+  align?: 'end' | 'start'
+  direction?: 'down' | 'up'
+  /**
+   * Full width, with the list opening in the flow beneath it: for the public menu once it is a
+   * drawer, which it can be at any width when the links do not fit in a row (see SiteHeader).
+   */
+  stacked?: boolean
+} = {}) {
   // The list comes from the context, so this draws the festivals on the public site and the
   // committee's own quiet set inside the portal, without knowing which is which.
   const { theme, setTheme, options: themes } = useTheme()
@@ -53,7 +62,7 @@ export function ThemeSwitcher({
   }
 
   return (
-    <div ref={rootRef} className={styles.root} onKeyDown={onKeyDown}>
+    <div ref={rootRef} className={stacked ? styles.rootStacked : styles.root} onKeyDown={onKeyDown}>
       <button
         ref={buttonRef}
         type="button"

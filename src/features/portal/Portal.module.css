@@ -459,6 +459,7 @@
   padding: 16px 18px;
   background: var(--color-ink);
   border-radius: var(--portal-radius, 11px);
+  box-shadow: var(--portal-shadow, none);
 }
 
 .cardYou {
@@ -1574,4 +1575,103 @@
   .scroll:has(.cardsOnPhone) {
     background: none;
   }
+}
+
+/*
+ * Arriving: a card rises into place, each a beat after the one before (set --i on it to its
+ * place in the row). Nothing moves for anybody who has asked their device for less motion.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  .rise {
+    animation: rise 460ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    animation-delay: calc(var(--i, 0) * 70ms);
+  }
+
+  .lift {
+    transition:
+      transform 200ms ease,
+      box-shadow 200ms ease;
+  }
+
+  .lift:hover {
+    transform: translateY(-3px);
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+/* Facts with room for a whole email address on a line: two to a row rather than four. */
+.bizFactsWide {
+  composes: bizFacts;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr));
+}
+
+/* Two business cards side by side, one under the other on a phone. */
+.bizRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 760px) {
+  .bizRow {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/*
+ * A panel with a band of colour along its top and a coloured disc for its icon: the card version
+ * of a panel, for the screens that are about one household. --tone sets the colour.
+ */
+.toneCard {
+  composes: panel;
+  --tone: #2563eb;
+  border-top: 4px solid var(--tone);
+}
+
+.toneHead {
+  composes: panelHead;
+  justify-content: flex-start;
+  border-bottom-color: color-mix(in srgb, var(--tone) 22%, var(--color-border-faint));
+  background: color-mix(in srgb, var(--tone) 7%, var(--color-bg-raised));
+}
+
+.toneIcon {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--tone);
+  color: #fff;
+}
+
+.toneHead .panelTitle {
+  flex: 1 1 auto;
+}
+
+/* The coloured chips for what a household would help with. */
+.toneChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.toneChips > li {
+  padding: 6px 12px;
+  border-radius: var(--radius-pill, 999px);
+  border: 1px solid color-mix(in srgb, var(--tone) 45%, var(--color-bg-raised));
+  background: color-mix(in srgb, var(--tone) 15%, var(--color-bg-raised));
+  color: color-mix(in srgb, var(--tone) 58%, var(--color-fg));
+  font-size: var(--portal-text-sm);
+  font-weight: 600;
 }

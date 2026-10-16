@@ -341,6 +341,29 @@
   outline-offset: 2px;
 }
 
+/* Up and down in two colours, the same as the portal's Up and Down buttons (Button.module.css). */
+.iconUp,
+.iconDown {
+  composes: iconButton;
+  background: color-mix(in srgb, var(--tone) 15%, var(--color-bg-raised));
+  border-color: color-mix(in srgb, var(--tone) 45%, var(--color-bg-raised));
+  color: color-mix(in srgb, var(--tone) 58%, var(--color-fg));
+  font-weight: 700;
+}
+
+.iconUp:hover:not(:disabled),
+.iconDown:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--tone) 26%, var(--color-bg-raised));
+}
+
+.iconUp {
+  --tone: #0d9488;
+}
+
+.iconDown {
+  --tone: #7c3aed;
+}
+
 /* ---- The public page ----------------------------------------------------- */
 
 .public {

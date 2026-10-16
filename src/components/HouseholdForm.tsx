@@ -3,6 +3,7 @@ import { flushSync } from 'react-dom'
 import { ActionBar } from './ActionBar'
 import { Button } from './Button'
 import { ConfirmButton, UNTIL_SAVED } from './ConfirmButton'
+import { Icon } from './Icon'
 import {
   normaliseGoogleEmail,
   validateHousehold,
@@ -34,6 +35,15 @@ type Props = {
 }
 
 const emptyPerson: PersonInput = { name: '', ageGroup: 'adult' }
+
+/**
+ * A colour for each card of the form, so the household, its people and the committee's part are
+ * told apart at a glance. Deep enough for white writing in every theme; the same list as the
+ * portal's own cards (features/portal/tones.ts), kept here so a component does not reach into a
+ * feature.
+ */
+const TONES = ['#2563eb', '#15803d', '#7c3aed', '#c2410c', '#0f766e', '#be185d']
+const tone = (i: number) => ({ '--tone': TONES[i % TONES.length] }) as React.CSSProperties
 
 function draftFrom(household?: Household, prefill?: Partial<HouseholdDraft>): HouseholdDraft {
   if (!household) {
@@ -167,8 +177,13 @@ export function HouseholdForm({ household, prefill, viewer, onSave, saving, save
           {saving ? 'Saving…' : adding ? 'Add the household' : 'Save changes'}
         </Button>
       </ActionBar>
-      <fieldset className={styles.section}>
-        <legend className={styles.legend}>The household</legend>
+      <fieldset className={styles.section} style={tone(0)}>
+        <legend className={styles.legend}>
+          <span className={styles.legendIcon} aria-hidden="true">
+            <Icon name="home" size={17} />
+          </span>
+          The household
+        </legend>
 
         <div className={styles.row}>
           <div className={styles.field}>
@@ -227,10 +242,16 @@ export function HouseholdForm({ household, prefill, viewer, onSave, saving, save
         </div>
       </fieldset>
 
-      <fieldset className={styles.section}>
-        <legend className={styles.legend}>Who lives here</legend>
+      <fieldset className={styles.section} style={tone(1)}>
+        <legend className={styles.legend}>
+          <span className={styles.legendIcon} aria-hidden="true">
+            <Icon name="users" size={17} />
+          </span>
+          Who lives here
+          <span className={styles.legendCount}>{draft.people.length}</span>
+        </legend>
         <ActionBar sticky={false}>
-          <Button variant="line" size="sm" onClick={addPerson}>
+          <Button variant="green" size="sm" onClick={addPerson}>
             Add someone
           </Button>
         </ActionBar>
@@ -242,9 +263,14 @@ export function HouseholdForm({ household, prefill, viewer, onSave, saving, save
         {errorFor('people')}
 
         {draft.people.map((person, i) => (
-          <div className={styles.person} key={i}>
+          <div className={styles.person} key={i} style={tone(i + 3)}>
             <div className={styles.personTop}>
-              <span className={styles.personWho}>Person {i + 1}</span>
+              <span className={styles.personWho}>
+                <span className={styles.personNumber} aria-hidden="true">
+                  {i + 1}
+                </span>
+                {person.name.trim() || `Person ${i + 1}`}
+              </span>
               {draft.people.length > 1 ? (
                 <ConfirmButton
                   aria-label={`Remove person ${i + 1}`}
@@ -362,8 +388,13 @@ export function HouseholdForm({ household, prefill, viewer, onSave, saving, save
       </fieldset>
 
       {onTheCommittee ? (
-        <fieldset className={`${styles.section} ${styles.committee}`}>
-          <legend className={styles.legend}>Committee only</legend>
+        <fieldset className={`${styles.section} ${styles.committee}`} style={tone(2)}>
+          <legend className={styles.legend}>
+            <span className={styles.legendIcon} aria-hidden="true">
+              <Icon name="badge" size={17} />
+            </span>
+            Committee only
+          </legend>
           <p className={styles.hint}>
             A household never sees or sets any of this. Changing it is recorded against your name.
           </p>

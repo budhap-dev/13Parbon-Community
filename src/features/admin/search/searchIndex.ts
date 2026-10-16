@@ -10,7 +10,7 @@ import type { Quiz } from '@/domain/quizzes'
 import { folded, matchesEvery, searchWords } from '@/domain/search'
 import { SETTING_LABELS, SITE_TEXT_FIELDS, SITE_TEXT_KEYS, type SiteSettings } from '@/domain/settings'
 import { plainText } from '@/domain/whatsappText'
-import { partOf, SITE_SECTIONS, sectionHref, type SectionKey } from '../siteSections'
+import { SITE_SECTIONS, sectionHref, sectionScreen, type SectionKey } from '../siteSections'
 
 export type SearchKind =
   | 'screen'
@@ -230,7 +230,7 @@ function settingItems(settings: SiteSettings): SearchItem[] {
   }
 
   for (const [section, label] of Object.entries(SITE_SECTIONS) as [SectionKey, string][]) {
-    items.push({ kind: 'setting', key: `setting:${section}`, title: label, detail: partOf(section) === 'pages' ? 'Home and About pages' : 'Site settings', to: sectionHref(section), text: words(label) })
+    items.push({ kind: 'setting', key: `setting:${section}`, title: label, detail: sectionScreen(section), to: sectionHref(section), text: words(label) })
   }
   for (const [key, { label }] of Object.entries(SETTING_LABELS)) add('switches', label, key)
   for (const key of SITE_TEXT_KEYS) add('words', SITE_TEXT_FIELDS[key].label, key, settings.text[key])

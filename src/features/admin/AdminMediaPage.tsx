@@ -363,7 +363,7 @@ function AlbumPage({
           <Button variant="line" size="sm" onClick={onBack}>
             All albums
           </Button>
-          <Button variant="line" size="sm" onClick={onEdit}>
+          <Button variant="blue" size="sm" onClick={onEdit}>
             Edit album
           </Button>
         </span>
