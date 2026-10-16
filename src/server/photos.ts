@@ -11,7 +11,7 @@
  * `api/photos.ts` is a few lines that hand it a request.
  */
 
-import { metadataMarkers } from '../domain/images.js'
+import { metadataMarkers, personPhotoPrefix } from '../domain/images.js'
 
 export type PhotoDeps = {
   /** A URL the browser may PUT one object to, for a few minutes. */
@@ -20,6 +20,8 @@ export type PhotoDeps = {
   remove: (objectKeys: string[]) => Promise<void>
   /** Whether the bearer of this token acts for the committee — answered by the database. */
   isAdmin: (token: string) => Promise<boolean>
+  /** The household the bearer of this token belongs to, or null — answered by the database. */
+  householdOf: (token: string) => Promise<string | null>
   /** Reads an object back out of the bucket, to see what actually arrived in it. */
   read: (objectKey: string) => Promise<Uint8Array>
   /** How big an object is, without fetching it; null when there is nothing there. */
@@ -72,8 +74,15 @@ async function admitted(deps: PhotoDeps, token: string, key: string): Promise<Re
   if (!KEY.test(key)) return { status: 400, body: { error: 'That is not a photograph key.' } }
   // The database decides, with the caller's own token, so this cannot be talked round in the
   // browser and cannot drift from the rule every other screen uses.
-  if (!(await deps.isAdmin(token))) return { status: 403, body: { error: 'Only the committee can do that.' } }
-  return null
+  if (await deps.isAdmin(token)) return null
+  // A member may add and take down their own people's profile photographs, and nothing else:
+  // a key that begins with their own household's. Which household is theirs is the database's
+  // answer too, so a member cannot sign for another family's faces by naming them.
+  if (key.startsWith('person-')) {
+    const household = await deps.householdOf(token)
+    if (household && key.startsWith(personPhotoPrefix(household))) return null
+  }
+  return { status: 403, body: { error: 'Only the committee can do that.' } }
 }
 
 /**
@@ -234,6 +243,14 @@ export async function depsFromEnv(env: PhotoEnv): Promise<PhotoDeps | null> {
       })
       const { data, error } = await client.schema('portal').rpc('is_admin')
       return !error && data === true
+    },
+    householdOf: async (token) => {
+      const client = createClient(supabaseUrl, anonKey, {
+        auth: { persistSession: false, autoRefreshToken: false },
+        global: { headers: { Authorization: `Bearer ${token}` } },
+      })
+      const { data, error } = await client.schema('portal').rpc('current_household_id')
+      return !error && typeof data === 'string' && data ? data : null
     },
   }
 }

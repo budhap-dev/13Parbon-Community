@@ -16,6 +16,31 @@ export const FULL_QUALITY = 0.7
 export const THUMB_QUALITY = 0.68
 
 /**
+ * A profile photograph: cropped square, then one size for the About page and one for the discs.
+ * Small on purpose — nothing draws a face larger than this, and a smaller file says less.
+ */
+export const AVATAR_PX = 480
+export const AVATAR_THUMB_PX = 160
+export const AVATAR_QUALITY = 0.8
+
+/**
+ * The start of every profile photograph's key for one household.
+ *
+ * The photographs server lets a member sign for keys that begin with their own household's, and
+ * no others: so a member can add and take down their own people's faces, and nobody else's, or
+ * anything in the gallery. The id is reduced to what a key may hold.
+ */
+export function personPhotoPrefix(householdId: string): string {
+  return `person-${householdId.toLowerCase().replace(/[^a-z0-9]/g, '')}-`
+}
+
+/** The square in the middle of a picture, which is what a round disc shows of it. */
+export function centreSquare(width: number, height: number): { sx: number; sy: number; side: number } {
+  const side = Math.min(width, height)
+  return { sx: Math.round((width - side) / 2), sy: Math.round((height - side) / 2), side }
+}
+
+/**
  * What the upload accepts. Decided 2026-09-15.
  *
  * Narrower than the script, which takes HEIC because sips decodes it — and an iPhone shoots

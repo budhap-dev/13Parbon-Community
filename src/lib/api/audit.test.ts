@@ -22,6 +22,7 @@ const api = () => withAuditTrail(createMockApi())
 const READS = [
   'events.listUpcoming', 'events.listPast', 'events.getNext', 'events.getBySlug', 'events.listAll',
   'festivals.list',
+  'people.publicPhotos',
   'gallery.listRecentMedia', 'gallery.listAlbums', 'gallery.getAlbum', 'gallery.listAllAlbums',
   'news.listPosts', 'news.getPost', 'news.listAnnouncements', 'news.listNewsletters',
   'news.listAllPosts', 'news.listAllAnnouncements',

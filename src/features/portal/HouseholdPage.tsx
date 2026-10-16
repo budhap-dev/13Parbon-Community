@@ -4,16 +4,16 @@ import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { Button } from '@/components/Button'
 import { HouseholdForm } from '@/components/HouseholdForm'
 import { LoadFailed } from '@/components/LoadFailed'
-import { adults, children, householdInitials } from '@/domain/household'
+import { adults, children, householdInitials, householdPhoto } from '@/domain/household'
 import { formatDateWithYear } from '@/domain/dates'
 import { useHousehold, useUpdateHousehold, useViewer } from '@/lib/api'
 import { can } from '@/lib/auth/permissions'
 import { useSignedIn } from '@/lib/auth/session'
 import { Icon } from '@/components/Icon'
-import { PersonAvatar } from '@/components/PersonAvatar'
 import people from './HouseholdPeople.module.css'
 import styles from './Portal.module.css'
 import { TONES, toneStyle } from './tones'
+import { PersonPhoto, PhotoMono } from '@/components/PersonPhoto'
 
 export function HouseholdPage() {
   useDocumentTitle('My household')
@@ -127,9 +127,9 @@ export function HouseholdPage() {
                 {household.name}
               </h2>
             </div>
-            <span className={styles.bizMono} aria-hidden="true">
+            <PhotoMono photo={householdPhoto(household)} className={styles.bizMono}>
               {householdInitials(household.name)}
-            </span>
+            </PhotoMono>
           </div>
           <dl className={styles.bizFactsWide}>
             <div>
@@ -196,7 +196,7 @@ export function HouseholdPage() {
             {household.people.map((person, i) => (
               <li key={person.id} className={`${people.person} ${styles.rise} ${styles.lift}`} style={toneStyle(i + 3)}>
                 <span className={people.face}>
-                  <PersonAvatar person={person} size={54} />
+                  <PersonPhoto person={person} size={54} />
                 </span>
                 <div className={people.words}>
                   <span className={people.name}>{person.name}</span>

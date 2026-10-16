@@ -503,3 +503,31 @@ describe('the one household the rest of the committee cannot remove', () => {
     expect(saved.role).toBe('member')
   })
 })
+
+/*
+ * The public website's faces: the same rule as the database's `public_photos()`. A grown-up's
+ * photograph, only where their name is already printed on the About page.
+ */
+describe('the faces the public website may show', () => {
+  const photo = 'https://photos.13parbon.org.uk/full/person-hhsen-abc.jpg'
+  const withPhotos: HouseholdDraft = {
+    name: 'The Sens',
+    contactName: 'Rina Sen',
+    email: 'rina@example.com',
+    people: [
+      { name: 'Rina Sen', ageGroup: 'adult', photo },
+      { name: 'Arjun Sen', ageGroup: 'adult', photo: `${photo}?arjun` },
+    ],
+    interests: [],
+  }
+
+  it('gives only those whose names are on the About page, however the name is written there', async () => {
+    const a = api()
+    await a.portal.updateHousehold('hh-sen', withPhotos, member)
+    expect(await a.people.publicPhotos()).toEqual([])
+
+    const settings = await a.settings.get()
+    await a.settings.save({ ...settings, members: [...settings.members, 'Mrs. Rina Sen'] }, admin)
+    expect(await a.people.publicPhotos()).toEqual([{ name: 'Rina Sen', photo }])
+  })
+})

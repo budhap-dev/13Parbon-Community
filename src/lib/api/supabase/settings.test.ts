@@ -50,6 +50,21 @@ describe('laying saved content over what the code says', () => {
     expect(mergeSettings({ committeeRoles: 'Treasurer' }, defaultSettings).committeeRoles).toEqual(defaultSettings.committeeRoles)
   })
 
+  it('keeps a committee member’s photograph only when it is a web address', () => {
+    const photo = 'https://photos.13parbon.org.uk/full/person-hhsen-abc.jpg'
+    const merged = mergeSettings(
+      {
+        committee: [
+          { role: 'Secretary', name: 'Mr. Dalim Ghosh', photo },
+          { role: 'Treasurer', name: 'Mr. Dinesh Panda', photo: 'javascript:alert(1)' },
+        ],
+      },
+      defaultSettings,
+    )
+    expect(merged.committee[0]).toEqual({ role: 'Secretary', name: 'Mr. Dalim Ghosh', photo })
+    expect(merged.committee[1]).toEqual({ role: 'Treasurer', name: 'Mr. Dinesh Panda' })
+  })
+
   it('never lets a script out as a link', () => {
     const merged = mergeSettings(
       {

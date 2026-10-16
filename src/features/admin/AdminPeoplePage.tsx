@@ -16,7 +16,7 @@ import { RemoveHousehold } from '@/components/RemoveHousehold'
 import { RowMenu } from '@/components/RowMenu'
 import { formatDateWithYear, formatLongDate } from '@/domain/dates'
 import { committeeCsv, committeeCsvFilename } from '@/domain/committeeExport'
-import { describeSize, householdInitials, householdMatches, type Household } from '@/domain/household'
+import { describeSize, householdInitials, householdMatches, householdPhoto, type Household } from '@/domain/household'
 import type { HouseholdDraft } from '@/domain/household'
 import {
   useAddHousehold,
@@ -31,6 +31,7 @@ import {
 import { useSignedIn } from '@/lib/auth/session'
 import styles from '@/features/portal/Portal.module.css'
 import { CommitteePanel } from './AdminCommittee'
+import { PhotoMono } from '@/components/PersonPhoto'
 
 type FilterKey = 'all' | 'paid' | 'lapsed' | 'never' | 'admins'
 /** The chips over the list, each with how many it would leave. */
@@ -188,9 +189,9 @@ export function AdminPeoplePage() {
                   {open.name}
                 </h1>
               </div>
-              <span className={styles.bizMono} aria-hidden="true">
+              <PhotoMono photo={householdPhoto(open)} className={styles.bizMono}>
                 {householdInitials(open.name)}
-              </span>
+              </PhotoMono>
             </div>
             <dl className={styles.bizFactsWide}>
               <div>
@@ -549,9 +550,9 @@ export function AdminPeoplePage() {
                       <tr key={household.id}>
                         <td data-label="Household">
                           <span className={styles.who}>
-                            <span className={styles.initials} aria-hidden="true">
+                            <PhotoMono photo={householdPhoto(household)} className={styles.initials}>
                               {householdInitials(household.name)}
-                            </span>
+                            </PhotoMono>
                             <span className={styles.whoText}>
                               <strong>
                                 {household.name}

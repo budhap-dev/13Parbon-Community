@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
+import { personPhotoPrefix } from '../domain/images.js'
 import { deletePhoto, depsFromEnv, incomingKeys, KEY, MAX_BYTES, objectKeys, signUpload, verifyUpload, type PhotoDeps } from './photos.js'
 
 /** A JPEG with nothing in it but the picture: start, quantisation table, scan, end. */
@@ -15,6 +16,8 @@ function deps(over: Partial<PhotoDeps> = {}): Fakes {
     signPut: async (key) => `https://bucket/${key}?signed`,
     remove: vi.fn(async () => {}),
     isAdmin: async (token) => token === 'admin-token',
+    // Household ids as the database gives them: uuids, with their hyphens.
+    householdOf: async (token) => (token === 'member-token' ? '0a1b2c3d-0000-4000-8000-00000000abcd' : null),
     read: async () => CLEAN,
     size: async (key) => (key.startsWith('incoming/') ? CLEAN.length : null),
     write: vi.fn(async () => {}),
@@ -57,6 +60,36 @@ describe('signing an upload', () => {
     const isAdmin = vi.fn(async () => false)
     await signUpload(deps({ isAdmin }), 'whoever', 'ok')
     expect(isAdmin).toHaveBeenCalledWith('whoever')
+  })
+})
+
+/*
+ * A member's own people's profile photographs, and nothing more. The key carries the household,
+ * and the database says which household the caller is in; the two have to agree.
+ */
+describe('a member and their own profile photographs', () => {
+  const own = `${personPhotoPrefix('0a1b2c3d-0000-4000-8000-00000000abcd')}k3j9x0a1b2c3`
+  const theirs = `${personPhotoPrefix('ffffffff-0000-4000-8000-00000000abcd')}k3j9x0a1b2c3`
+
+  it('signs, checks and takes down a photograph under their own household', async () => {
+    expect((await signUpload(deps(), 'member-token', own)).status).toBe(200)
+    expect((await verifyUpload(deps(), 'member-token', own)).status).toBe(200)
+    const d = deps()
+    expect((await deletePhoto(d, 'member-token', own)).status).toBe(200)
+    expect(d.remove).toHaveBeenCalled()
+  })
+
+  it('refuses another household’s, the gallery’s, and anybody with no household', async () => {
+    const d = deps()
+    expect((await signUpload(d, 'member-token', theirs)).status).toBe(403)
+    expect((await deletePhoto(d, 'member-token', theirs)).status).toBe(403)
+    expect((await deletePhoto(d, 'member-token', 'boishakhi-2026-01')).status).toBe(403)
+    expect((await signUpload(d, 'stranger-token', own)).status).toBe(403)
+    expect(d.remove).not.toHaveBeenCalled()
+  })
+
+  it('leaves the committee able to take any of them down', async () => {
+    expect((await deletePhoto(deps(), 'admin-token', theirs)).status).toBe(200)
   })
 })
 

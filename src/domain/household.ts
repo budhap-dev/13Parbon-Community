@@ -30,6 +30,12 @@ export type Person = {
   note?: string
   /** How they are drawn beside their name. Absent is "not said", and a neutral picture. See `Shown`. */
   shownAs?: Shown
+  /**
+   * Their own photograph, for adults only, uploaded from the household's page: the square one,
+   * served from the photographs bucket. Drawn wherever their picture or initials would be, and on
+   * the public About page if they are on the committee. Absent until somebody adds one.
+   */
+  photo?: string
 }
 
 /**
@@ -94,6 +100,46 @@ export function describeSize(household: Pick<Household, 'people'>): string {
   return parts.join(' · ')
 }
 
+/**
+ * The small size of a profile photograph, for the discs beside a name. It is uploaded with the
+ * square one and served beside it, so there is nothing more to store.
+ */
+export function photoThumb(photo: string): string {
+  return photo.replace('/full/', '/thumb/')
+}
+
+/**
+ * The photograph that stands for a household, where its monogram would otherwise be: the main
+ * contact's, if they have one. Nobody else's — a household is not to be pictured by whichever
+ * of its people happened to add a photograph first.
+ */
+export function householdPhoto(household: Pick<Household, 'contactName' | 'people'>): string | undefined {
+  const contact = plainName(household.contactName)
+  return household.people.find((person) => person.ageGroup === 'adult' && person.photo && plainName(person.name) === contact)?.photo
+}
+
+/** A face the public website may show: the name as the household wrote it, and its photograph. */
+export type PublicPhoto = { name: string; photo: string }
+
+/**
+ * A name as the About page and a household might both write it, for telling whether they are the
+ * same person: without a Mr. or a Mrs., its capitals, or doubled spaces. "Mr. Dalim  Ghosh" and
+ * "dalim ghosh" are one name.
+ */
+export function plainName(name: string): string {
+  return name
+    .trim()
+    .replace(/^(mr|mrs|ms|miss|dr|prof)\.?\s+/i, '')
+    .replace(/\s+/g, ' ')
+    .toLowerCase()
+}
+
+/** Looks up a published name's photograph among those the public website was given. */
+export function photoByName(photos: readonly PublicPhoto[]): (name: string) => string | undefined {
+  const byName = new Map(photos.map((entry) => [plainName(entry.name), entry.photo]))
+  return (name) => byName.get(plainName(name))
+}
+
 /** Two letters for a household's monogram: its first and last word, past a leading "The". */
 export function householdInitials(name: string): string {
   const words = name.replace(/^the\s+/i, '').trim().split(/\s+/).filter(Boolean)
@@ -131,6 +177,8 @@ export type PersonInput = {
   age?: number
   note?: string
   shownAs?: Shown
+  /** Adults only; see `Person.photo`. */
+  photo?: string
 }
 
 /**

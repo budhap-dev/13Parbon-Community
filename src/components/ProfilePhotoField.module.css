@@ -1,0 +1,40 @@
+/* The photograph beside what can be done with it. */
+.field {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.words {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* The real file input, out of sight: the button opens it, and its label is what a reader hears. */
+.file {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.note {
+  composes: hint from './Fields.module.css';
+  margin: 0;
+}
+
+.error {
+  margin: 0;
+  font-size: var(--portal-text-sm);
+  color: var(--error, #b3261e);
+}

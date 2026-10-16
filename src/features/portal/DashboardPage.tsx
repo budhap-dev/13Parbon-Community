@@ -3,12 +3,13 @@ import { Button } from '@/components/Button'
 import { Icon } from '@/components/Icon'
 import { LoadFailed } from '@/components/LoadFailed'
 import { daysUntil, describeCountdown, formatDateWithYear, formatLongDate, formatTime } from '@/domain/dates'
-import { describeSize, householdInitials } from '@/domain/household'
+import { describeSize, householdInitials, householdPhoto } from '@/domain/household'
 import { useAnnouncements, useHousehold, useNextEvent, usePolls, useQuizzes } from '@/lib/api'
 import { stateOf } from '@/domain/polls'
 import { useSignedIn } from '@/lib/auth/session'
 import { useNow } from '@/lib/clock'
 import styles from './Portal.module.css'
+import { PhotoMono } from '@/components/PersonPhoto'
 
 export function DashboardPage() {
   useDocumentTitle('Dashboard')
@@ -156,9 +157,9 @@ export function DashboardPage() {
                     {household.name}
                   </h2>
                 </div>
-                <span className={styles.bizMono} aria-hidden="true">
+                <PhotoMono photo={householdPhoto(household)} className={styles.bizMono}>
                   {householdInitials(household.name)}
-                </span>
+                </PhotoMono>
               </div>
               <dl className={styles.bizFacts}>
                 <div>
