@@ -8,7 +8,7 @@ import { uniqueSlug } from '@/domain/slug'
 import { inOrder, pinnedCover, type AlbumDraft, type AlbumWithMedia, type Media } from '@/domain/gallery'
 import { validateSettings, type SiteSettings } from '@/domain/settings'
 import { defaultSettings } from '@/app/defaults'
-import { isAdmin, isMember, isValidHousehold, plainName, type Household, type HouseholdDraft, type Person, type Viewer } from '@/domain/household'
+import { isAdmin, isMember, isValidHousehold, plainName, signInAddresses, type Household, type HouseholdDraft, type Person, type Viewer } from '@/domain/household'
 import { ATTENDANCE_NOTE, CONTACT_NOTE, PHOTOGRAPH_NOTE, VOTES_NOTE, type HouseholdExport } from '@/domain/subjectAccess'
 import type { ApiClient } from '../types'
 import { buildFixtures } from './fixtures'
@@ -64,6 +64,7 @@ function shapeOf(draft: HouseholdDraft) {
     ...(person.note?.trim() ? { note: person.note.trim() } : {}),
     ...(person.shownAs ? { shownAs: person.shownAs } : {}),
     ...(person.ageGroup === 'adult' && person.photo ? { photo: person.photo } : {}),
+    ...(person.ageGroup === 'adult' && person.googleEmail ? { googleEmail: person.googleEmail.trim().toLowerCase() } : {}),
   }))
   return {
     name: draft.name.trim(),
@@ -129,6 +130,11 @@ function checkDraft(draft: HouseholdDraft, viewer: Viewer, existing?: Household)
     if (draft.googleEmail !== undefined && draft.googleEmail !== (current?.googleEmail ?? null)) {
       return new NotAllowed('only the committee can change the sign-in address')
     }
+    // A person's address may be kept or dropped, never added. Mirrors portal.people_guard_sign_in.
+    const kept = new Set(current?.people.flatMap((person) => (person.googleEmail ? [person.googleEmail.toLowerCase()] : [])))
+    if (draft.people.some((person) => person.googleEmail && !kept.has(person.googleEmail.trim().toLowerCase()))) {
+      return new NotAllowed('only the committee can change the sign-in address')
+    }
     /*
      * Normalised on both sides before comparing. The form hands back an empty string for a date
      * nobody has set and the household holds null, so a straight `!==` reads "changed nothing"
@@ -176,6 +182,20 @@ export function createMockApi({
   /** The person asking is one of them: their own household carries a listed address. */
   const isSuperadmin = (viewer: Viewer) =>
     listed(portal.households.find((h) => h.id === viewer?.householdId)?.googleEmail)
+  /** A listed address on the household, or on anybody in it. */
+  const claimsListed = (draft: Pick<HouseholdDraft, 'googleEmail' | 'people'>) =>
+    listed(draft.googleEmail) || draft.people.some((person) => listed(person.googleEmail))
+  /**
+   * An address in the draft that already signs in as a different household. One address, one
+   * household: the unique index and people_guard_sign_in, in the database's own words.
+   */
+  const addressClash = (draft: Pick<HouseholdDraft, 'googleEmail' | 'people'>, ownId?: string) => {
+    const offered = signInAddresses({ googleEmail: draft.googleEmail ?? null, people: draft.people })
+    const elsewhere = new Set(portal.households.filter((h) => h.id !== ownId).flatMap(signInAddresses))
+    return offered.some((address) => elsewhere.has(address))
+      ? new NotAllowed('that Google address already signs in as another household')
+      : null
+  }
   /** What the committee has chosen, starting from what the code says. */
   let saved: SiteSettings = { ...defaultSettings, home: { ...defaultSettings.home } }
 
@@ -647,7 +667,8 @@ export function createMockApi({
     // of rules: if these three ever disagree, the database is the one telling the truth.
     portal: {
       identify: (email) => {
-        const match = portal.households.find((h) => h.googleEmail?.toLowerCase() === email.toLowerCase())
+        // The household's own address, or a grown-up's in it.
+        const match = portal.households.find((h) => signInAddresses(h).includes(email.trim().toLowerCase()))
         return delay(match ? { id: match.id, name: match.name, role: match.role } : null, latencyMs)
       },
       // Not found and not allowed are the same answer on purpose. Telling somebody a
@@ -692,12 +713,11 @@ export function createMockApi({
         if (!isAdmin(viewer)) return Promise.reject(new NotAllowed('only the committee can add a household'))
         const refusal = checkDraft(draft, viewer)
         if (refusal) return Promise.reject(refusal)
-        if (draft.googleEmail && portal.households.some((h) => h.googleEmail === draft.googleEmail)) {
-          return Promise.reject(new NotAllowed('that Google address already belongs to a household'))
-        }
+        const clash = addressClash(draft)
+        if (clash) return Promise.reject(clash)
         // Otherwise the way round the guard is to invite a second household under the address
         // before the real one exists. Mirrors portal.guard_superadmin.
-        if (listed(draft.googleEmail) && !isSuperadmin(viewer)) {
+        if (claimsListed(draft) && !isSuperadmin(viewer)) {
           return Promise.reject(new NotAllowed('that sign-in address cannot be used'))
         }
         const household: Household = {
@@ -721,7 +741,7 @@ export function createMockApi({
         // Every address we know for them, because contact_messages is keyed by whatever was
         // typed into the form and not by a household.
         const addresses = new Set(
-          [household.email, household.googleEmail].filter(Boolean).map((a) => a!.toLowerCase()),
+          [household.email, ...signInAddresses(household)].filter(Boolean).map((a) => a!.toLowerCase()),
         )
 
         const result: HouseholdExport = {
@@ -807,7 +827,14 @@ export function createMockApi({
           } else if (listed(nextAddress)) {
             return Promise.reject(new NotAllowed('that sign-in address cannot be used'))
           }
+          // A person's address the household did not already have, as people_guard_sign_in.
+          const had = new Set(signInAddresses(existing))
+          if (claimsListed({ googleEmail: null, people: draft.people.filter((p) => !had.has(p.googleEmail?.toLowerCase() ?? '')) })) {
+            return Promise.reject(new NotAllowed('that sign-in address cannot be used'))
+          }
         }
+        const clash = addressClash(draft, id)
+        if (clash) return Promise.reject(clash)
 
         Object.assign(existing, shapeOf(draft))
         if (isAdmin(viewer)) {

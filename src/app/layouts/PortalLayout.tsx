@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState, useSyncExternalStore } from 'react'
 import { Link, NavLink, Outlet, ScrollRestoration, useLocation } from 'react-router'
 import { site } from '@/app/site'
+import { versionLabel } from '@/app/version'
 import { useSettings } from '@/app/SettingsContext'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
@@ -517,7 +518,7 @@ export function PortalLayout() {
           {text.town ? ` · ${text.town}` : ''}
         </span>
         <span className={styles.footLinks}>
-          <span>Portal v{__APP_VERSION__}</span>
+          <span>Portal {versionLabel}</span>
           <Link to="/privacy">Privacy notice</Link>
           <a href="/" target="_blank" rel="noreferrer">
             The website<span className={styles.srOnly}>, opens in a new tab</span>

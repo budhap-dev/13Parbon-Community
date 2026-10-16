@@ -115,6 +115,39 @@ describe('writing a household', () => {
   })
 })
 
+describe('a grown-up\'s own sign-in address', () => {
+  const base = { id: 'p-1', household_id: 'hh-1', name: 'Arjun Sen', age_group: 'adult' as const, age: null, note: null }
+
+  it('is read back for an adult, and not at all where there is none', () => {
+    expect(toPerson({ ...base, google_email: 'arjun@gmail.com' }).googleEmail).toBe('arjun@gmail.com')
+    expect(toPerson({ ...base, google_email: null })).not.toHaveProperty('googleEmail')
+    expect(toPerson(base)).not.toHaveProperty('googleEmail')
+  })
+
+  it('is written back on every save, lowercased, so saving the household does not sign them out', () => {
+    const [row] = peopleRows('hh-1', {
+      name: 'The Sens',
+      contactName: 'Rina Sen',
+      people: [{ name: 'Arjun Sen', ageGroup: 'adult', googleEmail: ' Arjun@Gmail.com ' }],
+      interests: [],
+    })
+    expect(row.google_email).toBe('arjun@gmail.com')
+  })
+
+  it('is never sent for a child, or when there is none', () => {
+    const rows = peopleRows('hh-1', {
+      name: 'The Sens',
+      contactName: 'Rina Sen',
+      people: [
+        { name: 'Rina Sen', ageGroup: 'adult' },
+        { name: 'Mira Sen', ageGroup: 'child', age: 7, googleEmail: 'mira@gmail.com' },
+      ],
+      interests: [],
+    })
+    expect(rows.map((row) => 'google_email' in row)).toEqual([false, false])
+  })
+})
+
 describe('the picture and member since', () => {
   it('reads the picture where one was chosen, and leaves it out where not', () => {
     const base = row.people![0]

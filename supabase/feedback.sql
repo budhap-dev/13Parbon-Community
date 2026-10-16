@@ -279,9 +279,11 @@ create or replace function portal.record_feedback_removed()
   set search_path = ''
 as $$
 begin
-  insert into portal.audit_log (actor_household_id, action, subject_kind, subject_id, changes)
+  insert into portal.audit_log (actor_household_id, actor_email, action, subject_kind, subject_id, changes)
   values (
     portal.current_household_id(),
+    -- Which person, as record_change has it. Only for somebody with a household; see portal.sql.
+    case when portal.current_household_id() is not null then portal.auth_email() end,
     'delete',
     'feedback',
     old.id::text,

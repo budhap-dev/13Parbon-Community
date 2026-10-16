@@ -1,16 +1,35 @@
 import react from '@vitejs/plugin-react'
 import { fileURLToPath, URL } from 'node:url'
 import { readFileSync } from 'node:fs'
+import { execSync } from 'node:child_process'
 import { defineConfig } from 'vitest/config'
 
 const { version } = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as {
   version: string
 }
 
+/*
+ * Which commit this build is, beside the version. The version moves once per pull request and
+ * only if somebody remembers; the commit always moves, so the footer can say exactly what is
+ * live. Vercel hands it over as an environment variable; anywhere else, git is asked. Neither
+ * is an error to be without — the footer then shows the version alone.
+ */
+function commitOfThisBuild(): string {
+  const fromVercel = process.env.VERCEL_GIT_COMMIT_SHA
+  if (fromVercel) return fromVercel.slice(0, 7)
+  try {
+    return execSync('git rev-parse --short=7 HEAD', { stdio: ['ignore', 'pipe', 'ignore'] })
+      .toString()
+      .trim()
+  } catch {
+    return ''
+  }
+}
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
-  define: { __APP_VERSION__: JSON.stringify(version) },
+  define: { __APP_VERSION__: JSON.stringify(version), __APP_BUILD__: JSON.stringify(commitOfThisBuild()) },
   /*
    * `/api/photos` is a Vercel function, and Vite does not run those. `npx vercel dev` does, so
    * the two run side by side and this hands it anything under /api.

@@ -7,6 +7,7 @@ import { Icon } from './Icon'
 import { ProfilePhotoField } from './ProfilePhotoField'
 import { bucketSender, type SendPhoto } from './photoSender'
 import {
+  draftOfHousehold,
   normaliseGoogleEmail,
   validateHousehold,
   type Household,
@@ -70,20 +71,7 @@ function draftFrom(household?: Household, prefill?: Partial<HouseholdDraft>): Ho
       ...prefill,
     }
   }
-  return {
-    name: household.name,
-    contactName: household.contactName,
-    email: household.email ?? '',
-    phone: household.phone ?? '',
-    people: household.people.map(({ name, ageGroup, age, note, shownAs, photo }) => ({ name, ageGroup, age, note, shownAs, photo })),
-    interests: [...household.interests],
-    googleEmail: household.googleEmail,
-    role: household.role,
-    membershipStatus: household.membership.status,
-    // A date input takes a string; there being no date is the empty one.
-    membershipPaidTo: household.membership.paidTo ?? '',
-    memberSince: household.memberSince,
-  }
+  return draftOfHousehold(household)
 }
 
 /**
@@ -138,6 +126,20 @@ export function HouseholdForm({ household, prefill, viewer, onSave, saving, save
       else googleEmail = checked.email
     }
 
+    // A grown-up's own address, tidied the same way. Only the committee can have typed one.
+    let people = draft.people
+    if (mayInvite) {
+      people = draft.people.map((person, i) => {
+        if (!person.googleEmail) return person
+        const checked = normaliseGoogleEmail(person.googleEmail)
+        if (checked.error) {
+          found.person = { ...found.person, [i]: { ...found.person?.[i], googleEmail: checked.error } }
+          return person
+        }
+        return { ...person, googleEmail: checked.email ?? undefined }
+      })
+    }
+
     // flushSync so the fields are marked invalid in the DOM before we go looking for the
     // first one. After a failed submit the cursor belongs on the thing that is wrong: a long
     // form that refuses and leaves somebody to scroll for the reason is one people give up on,
@@ -147,7 +149,7 @@ export function HouseholdForm({ household, prefill, viewer, onSave, saving, save
       formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus()
       return
     }
-    onSave({ ...draft, googleEmail })
+    onSave({ ...draft, people, googleEmail })
   }
 
   const fieldProps = (name: 'name' | 'contactName' | 'email' | 'googleEmail') => {
@@ -332,6 +334,8 @@ export function HouseholdForm({ household, prefill, viewer, onSave, saving, save
                       age: e.target.value === 'child' ? person.age : undefined,
                       // And a child carries no photograph: that is a promise, not a default.
                       photo: e.target.value === 'child' ? undefined : person.photo,
+                      // Nor signs in. The database refuses one; this keeps the form from asking.
+                      googleEmail: e.target.value === 'child' ? undefined : person.googleEmail,
                     })
                   }
                 >
@@ -399,6 +403,37 @@ export function HouseholdForm({ household, prefill, viewer, onSave, saving, save
                 onChange={(e) => setPerson(i, { note: e.target.value })}
               />
             </div>
+
+            {person.ageGroup === 'adult' && mayInvite ? (
+              <div className={styles.field}>
+                <label className={styles.label} htmlFor={`${ids}-person-${i}-google`}>
+                  Their own Google sign-in <span className={styles.hint}>(optional, committee only)</span>
+                </label>
+                <input
+                  id={`${ids}-person-${i}-google`}
+                  className={styles.input}
+                  type="email"
+                  value={person.googleEmail ?? ''}
+                  placeholder="Only if they sign in with an account of their own"
+                  aria-invalid={errors.person?.[i]?.googleEmail ? true : undefined}
+                  aria-describedby={`${ids}-person-${i}-google-${errors.person?.[i]?.googleEmail ? 'error' : 'note'}`}
+                  onChange={(e) => setPerson(i, { googleEmail: e.target.value || undefined })}
+                />
+                {errors.person?.[i]?.googleEmail ? (
+                  <p id={`${ids}-person-${i}-google-error`} className={styles.error}>
+                    {errors.person[i].googleEmail}
+                  </p>
+                ) : (
+                  <p id={`${ids}-person-${i}-google-note`} className={styles.hint}>
+                    Signs them in to this household, as well as the household’s own address.
+                  </p>
+                )}
+              </div>
+            ) : person.ageGroup === 'adult' && person.googleEmail ? (
+              <p className={styles.hint}>
+                Signs in with Google as <strong>{person.googleEmail}</strong>. Only the committee can change this.
+              </p>
+            ) : null}
           </div>
         ))}
       </fieldset>

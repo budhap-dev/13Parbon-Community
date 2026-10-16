@@ -8,6 +8,7 @@ import { useTheme } from '../theme/ThemeContext'
 import { NextEventStrip } from '@/components/NextEventStrip'
 import { publicNav } from '../nav'
 import { site } from '../site'
+import { versionLabel } from '../version'
 import { useSettings } from '../SettingsContext'
 import { ThemeSwitcher } from './ThemeSwitcher'
 import { useScrollHeader } from './useScrollHeader'
@@ -202,7 +203,7 @@ export function SiteHeader() {
           <Backdrop theme={theme} className={styles.drawerArt} />
 
           <p className={styles.drawerFoot}>
-            {site.name} · v{__APP_VERSION__}
+            {site.name} · {versionLabel}
           </p>
         </nav>
       </Container>

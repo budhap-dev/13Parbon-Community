@@ -23,6 +23,14 @@ jobs:
           cache: npm
 
       - run: npm ci
+
+      # Every pull request moves the version on, so the footers say which release is live.
+      - name: Version bumped
+        if: github.event_name == 'pull_request'
+        run: |
+          git fetch --depth=1 origin main
+          node scripts/check-version.mjs "$(git show origin/main:package.json | node -p 'JSON.parse(require("fs").readFileSync(0, "utf8")).version')"
+
       - run: npm run lint
       - run: npm run typecheck
       # Coverage, not plain test: vite.config.ts sets a 70% floor and nothing was checking

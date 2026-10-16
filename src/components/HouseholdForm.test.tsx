@@ -219,3 +219,42 @@ describe('member since', () => {
     expect(onSave.mock.calls[0][0].memberSince).toBe('2019-10-05')
   })
 })
+
+describe('a grown-up who signs in with their own account', () => {
+  const linked: Household = {
+    ...household,
+    people: [household.people[0], { id: 'p3', name: 'Arjun Sen', ageGroup: 'adult', googleEmail: 'arjun.sen@gmail.com' }, household.people[1]],
+  }
+
+  it('keeps their address through a member’s own save, which would otherwise sign them out', async () => {
+    const onSave = vi.fn<(draft: HouseholdDraft) => void>()
+    render(<HouseholdForm household={linked} viewer={member} onSave={onSave} />)
+    // Shown, so the household knows, but not theirs to change.
+    expect(screen.getByText('arjun.sen@gmail.com')).toBeInTheDocument()
+    expect(screen.queryByLabelText(/Their own Google sign-in/)).not.toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+    expect(onSave.mock.calls[0][0].people.map((p) => p.googleEmail)).toEqual([undefined, 'arjun.sen@gmail.com', undefined])
+  })
+
+  it('is the committee’s to set, for adults only, and saved lowercased', async () => {
+    const onSave = vi.fn<(draft: HouseholdDraft) => void>()
+    render(<HouseholdForm household={household} viewer={admin} onSave={onSave} />)
+    // Rina, and not Mira: a child never signs in.
+    const fields = screen.getAllByLabelText(/Their own Google sign-in/)
+    expect(fields).toHaveLength(1)
+
+    await userEvent.type(fields[0], ' Rina.Own@Gmail.com ')
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+    expect(onSave.mock.calls[0][0].people[0].googleEmail).toBe('rina.own@gmail.com')
+  })
+
+  it('refuses one that is not an address', async () => {
+    const onSave = vi.fn<(draft: HouseholdDraft) => void>()
+    render(<HouseholdForm household={household} viewer={admin} onSave={onSave} />)
+    await userEvent.type(screen.getByLabelText(/Their own Google sign-in/), 'rina at gmail')
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+    expect(onSave).not.toHaveBeenCalled()
+    expect(screen.getByLabelText(/Their own Google sign-in/)).toHaveAttribute('aria-invalid', 'true')
+  })
+})

@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { isAdmin, isValidHousehold, type Household, type HouseholdDraft, type Viewer } from '@/domain/household'
+import { isAdmin, isValidHousehold, signInAddresses, type Household, type HouseholdDraft, type Viewer } from '@/domain/household'
 import { NotAllowed } from '../mock'
 import {
   fromDraft,
@@ -78,14 +78,30 @@ export function householdMethods(getClient: () => Promise<SupabaseClient>) {
   return {
     identify: async (email: string) => {
       const client = await rowsOf()
+      const address = email.trim().toLowerCase()
       const { data, error } = await table(client, 'households')
         .select('id,name,role')
-        .eq('google_email', email.trim().toLowerCase())
+        .eq('google_email', address)
         .maybeSingle()
       // Answered as no household, a failed lookup would tell somebody the committee has never
       // heard of them. Thrown, sign-in says it could not check, which is the truth.
       if (error) throw new Error(`Your household could not be looked up: ${error.message}`)
-      return (data as Pick<Household, 'id' | 'name' | 'role'> | null) ?? null
+      if (data) return data as Pick<Household, 'id' | 'name' | 'role'>
+
+      // Not the household's own address, so perhaps a grown-up's in it. The policies already
+      // let this account read that household, because current_household_id() looks there too.
+      const { data: person, error: personError } = await table(client, 'people')
+        .select('household_id,households(id,name,role)')
+        .eq('google_email', address)
+        .limit(1)
+        .maybeSingle()
+      // 42703 is a database people-sign-in has not reached yet: there is no such column, so
+      // nobody can be signed in by one, which is the same answer as not finding them.
+      if (personError && personError.code !== '42703') {
+        throw new Error(`Your household could not be looked up: ${personError.message}`)
+      }
+      const found = (person as { households: Pick<Household, 'id' | 'name' | 'role'> | null } | null)?.households
+      return found ?? null
     },
 
     getHousehold: async (id: string) => {
@@ -195,7 +211,7 @@ export function householdMethods(getClient: () => Promise<SupabaseClient>) {
       // Messages carry no household, only whatever address somebody typed into the form, so
       // they are matched on the addresses we hold. Anyone who wrote in from a work address is
       // missed, which is why the export says so rather than implying there were none.
-      const addresses = [household.email, household.googleEmail].filter(Boolean).map((a) => a!.toLowerCase())
+      const addresses = [household.email, ...signInAddresses(household)].filter(Boolean).map((a) => a!.toLowerCase())
       /*
        * Every part of the export is checked, because an export is a promise of everything we
        * hold. One with a section quietly empty because its read failed would tell a household

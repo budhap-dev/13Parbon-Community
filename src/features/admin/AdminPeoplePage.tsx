@@ -4,7 +4,7 @@ import { ActionBar } from '@/components/ActionBar'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { useOpenFromAddress } from '@/app/useOpenFromAddress'
 import { useScrollToTopOn } from '@/app/useScrollToTopOn'
-import { unresolved } from '@/domain/document'
+import { unresolved, type SignInAttempt } from '@/domain/document'
 import { Button } from '@/components/Button'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { Icon } from '@/components/Icon'
@@ -31,6 +31,7 @@ import {
 import { useSignedIn } from '@/lib/auth/session'
 import styles from '@/features/portal/Portal.module.css'
 import { CommitteePanel } from './AdminCommittee'
+import { LinkToMember } from './LinkToMember'
 import { PhotoMono } from '@/components/PersonPhoto'
 
 type FilterKey = 'all' | 'paid' | 'lapsed' | 'never' | 'admins'
@@ -73,6 +74,8 @@ export function AdminPeoplePage() {
   }, [open, toRemove])
   // What we already know about somebody who has been knocking, carried into the empty form.
   const [prefill, setPrefill] = useState<Partial<HouseholdDraft> | undefined>()
+  /** Somebody knocking whom the committee knows: an adult already on the list, being picked. */
+  const [linking, setLinking] = useState<SignInAttempt | null>(null)
   const copy = useHouseholdExport(open ? open.id : undefined)
   // null is closed, a household is that one being edited.
   const setOpen = (next: Household | null) => {
@@ -162,6 +165,22 @@ export function AdminPeoplePage() {
           })
         }
       />
+    </Modal>
+  )
+
+  const linkModal = (
+    <Modal open={linking !== null} eyebrow="People" title="Link to a member" onClose={() => setLinking(null)}>
+      {linking ? (
+        <LinkToMember
+          attempt={linking}
+          households={households ?? []}
+          onCancel={() => setLinking(null)}
+          onLinked={(message) => {
+            setLinking(null)
+            setSaved(message)
+          }}
+        />
+      ) : null}
     </Modal>
   )
 
@@ -290,6 +309,7 @@ export function AdminPeoplePage() {
   return (
     <div className={styles.page}>
       {addModal}
+      {linkModal}
       <div className={styles.top}>
         <div>
           <h1 className={styles.title}>People</h1>
@@ -410,6 +430,17 @@ export function AdminPeoplePage() {
                             <Button
                               variant="gold"
                               size="sm"
+                              aria-label={`Link ${attempt.email} to a member`}
+                              onClick={() => {
+                                setSaved(null)
+                                setLinking(attempt)
+                              }}
+                            >
+                              Link to a member
+                            </Button>
+                            <Button
+                              variant="line"
+                              size="sm"
                               aria-label={`Add household for ${attempt.email}`}
                               onClick={() => inviteFromAttempt(attempt)}
                             >
@@ -441,6 +472,11 @@ export function AdminPeoplePage() {
                   <p>
                     Nobody can create an account for themselves. When someone signs in with a Google address you have
                     not added, they are turned away politely and land here so you can decide.
+                  </p>
+                  <p>
+                    <strong>Link to a member</strong> is for someone already on the list, such as a second adult in a
+                    household who uses their own Google account: pick them, and that address signs them in to their
+                    household. <strong>Add household</strong> is for somebody new.
                   </p>
                 </InfoNote>
               </div>

@@ -1431,6 +1431,212 @@ end $$;
 
 reset role;
 
+
+-- ---------------------------------------------------------------------------
+-- A grown-up's own sign-in address
+-- ---------------------------------------------------------------------------
+-- A second adult in a household signs in with their own Google account and lands in that
+-- household, with its role. Only the committee puts the address there, a member's ordinary
+-- save keeps it, and no address reaches two households.
+
+insert into portal.people (id, household_id, name, age_group, google_email)
+values
+  ('bbbbbbbb-0000-0000-0000-000000000001', '11111111-1111-1111-1111-111111111111', 'A Second Member', 'adult', 'second@example.com'),
+  ('bbbbbbbb-0000-0000-0000-000000000002', '33333333-3333-3333-3333-333333333333', 'A Quiet Partner', 'adult', null),
+  ('bbbbbbbb-0000-0000-0000-000000000003', '22222222-2222-2222-2222-222222222222', 'An Admin Partner', 'adult', 'admin.partner@example.com');
+
+insert into portal.superadmins (email) values ('person.owner@example.com') on conflict do nothing;
+
+-- A child never signs in.
+do $$
+begin
+  begin
+    update portal.people set google_email = 'child@example.com' where name = 'A Test Child';
+    raise exception 'FAIL: a child was given a sign-in address';
+  exception when check_violation then
+    null;
+  end;
+end $$;
+
+set local role authenticated;
+set local request.jwt.claims = '{"email": "second@example.com"}';
+
+-- Signed in with a person's address: that household, as a member, and nothing else.
+do $$
+begin
+  if portal.current_household_id() is distinct from '11111111-1111-1111-1111-111111111111' then
+    raise exception 'FAIL: a person''s address did not reach their household';
+  end if;
+  if portal.is_admin() then
+    raise exception 'FAIL: a person in a member household signed in as an admin';
+  end if;
+  if (select count(*) from portal.households) <> 1 then
+    raise exception 'FAIL: a person''s address reached households other than their own';
+  end if;
+  if exists (select 1 from portal.people where name = 'An Admin Adult') then
+    raise exception 'FAIL: a person''s address read another household''s people';
+  end if;
+end $$;
+
+set local request.jwt.claims = '{"email": "admin.partner@example.com"}';
+
+-- A person in a committee household is the committee: the role is the household's.
+do $$
+begin
+  if not portal.is_admin() then
+    raise exception 'FAIL: a person in an admin household was not an admin';
+  end if;
+end $$;
+
+set local request.jwt.claims = '{"email": "member@example.com"}';
+
+-- A member may not give out or change a sign-in address, in their own household or anywhere.
+do $$
+begin
+  begin
+    update portal.people set google_email = 'grabbed@example.com'
+      where id = 'bbbbbbbb-0000-0000-0000-000000000001';
+    raise exception 'FAIL: a member changed a person''s sign-in address';
+  exception when insufficient_privilege then
+    null;
+  end;
+
+  begin
+    insert into portal.people (household_id, name, age_group, google_email)
+      values ('11111111-1111-1111-1111-111111111111', 'A Newcomer', 'adult', 'newcomer@example.com');
+    raise exception 'FAIL: a member added a person with a sign-in address';
+  exception when insufficient_privilege then
+    null;
+  end;
+end $$;
+
+-- But their ordinary save keeps it: the new rows go in, carrying it, and the old come out.
+do $$
+begin
+  insert into portal.people (id, household_id, name, age_group, google_email)
+    values ('bbbbbbbb-0000-0000-0000-000000000004', '11111111-1111-1111-1111-111111111111', 'A Second Member', 'adult', 'second@example.com');
+  delete from portal.people where id = 'bbbbbbbb-0000-0000-0000-000000000001';
+  if not exists (select 1 from portal.people where id = 'bbbbbbbb-0000-0000-0000-000000000004' and google_email = 'second@example.com') then
+    raise exception 'FAIL: a member''s save lost the sign-in address the committee set';
+  end if;
+end $$;
+
+set local request.jwt.claims = '{"email": "admin@example.com"}';
+
+-- The committee links a person, and the address then reaches that household.
+do $$
+begin
+  update portal.people set google_email = 'quiet.partner@example.com'
+    where id = 'bbbbbbbb-0000-0000-0000-000000000002';
+  if not found then
+    raise exception 'FAIL: an admin could not link a person to a sign-in address';
+  end if;
+end $$;
+
+-- But not to an address that already signs in as another household, from either side.
+do $$
+begin
+  begin
+    update portal.people set google_email = 'second@example.com'
+      where id = 'bbbbbbbb-0000-0000-0000-000000000002';
+    raise exception 'FAIL: one address was given to people in two households';
+  exception when unique_violation then
+    null;
+  end;
+
+  begin
+    update portal.people set google_email = 'member@example.com'
+      where id = 'bbbbbbbb-0000-0000-0000-000000000002';
+    raise exception 'FAIL: a person took another household''s own address';
+  exception when unique_violation then
+    null;
+  end;
+
+  begin
+    update portal.households set google_email = 'second@example.com'
+      where id = '33333333-3333-3333-3333-333333333333';
+    raise exception 'FAIL: a household took an address a person elsewhere signs in with';
+  exception when unique_violation then
+    null;
+  end;
+
+  -- Nor a superadmin's, which only they may put anywhere.
+  begin
+    update portal.people set google_email = 'person.owner@example.com'
+      where id = 'bbbbbbbb-0000-0000-0000-000000000002';
+    raise exception 'FAIL: an admin put a superadmin''s address on a person';
+  exception when sqlstate '45002' then
+    null;
+  end;
+end $$;
+
+set local request.jwt.claims = '{"email": "quiet.partner@example.com"}';
+
+do $$
+begin
+  if portal.current_household_id() is distinct from '33333333-3333-3333-3333-333333333333' then
+    raise exception 'FAIL: a linked person did not reach the household they were linked to';
+  end if;
+  -- And what they change is put down to them, not only to their household.
+  update portal.households set phone = '07700 900333' where id = '33333333-3333-3333-3333-333333333333';
+end $$;
+
+reset role;
+
+-- The trail names the person: the address they signed in with, beside their household.
+do $$
+declare
+  line record;
+begin
+  select actor_household_id, actor_email into line
+    from portal.audit_log
+   where seq > current_setting('verify.audit_from')::bigint
+     and subject_kind = 'households' and subject_id = '33333333-3333-3333-3333-333333333333'
+     and changes ? 'phone'
+   order by seq desc limit 1;
+  if line.actor_email is distinct from 'quiet.partner@example.com'
+     or line.actor_household_id is distinct from '33333333-3333-3333-3333-333333333333' then
+    raise exception 'FAIL: the trail put a change down to % / %, not to the person who made it',
+      coalesce(line.actor_email, 'nobody'), coalesce(line.actor_household_id::text, 'no household');
+  end if;
+end $$;
+
+-- An account with no household — the superadmin — is never named by address in the trail.
+set local role authenticated;
+set local request.jwt.claims = '{"email": "person.owner@example.com"}';
+do $$
+begin
+  update portal.documents set title = 'Test Minutes, renamed' where id = '44444444-4444-4444-4444-444444444444';
+end $$;
+reset role;
+
+do $$
+begin
+  if exists (
+    select 1 from portal.audit_log
+     where seq > current_setting('verify.audit_from')::bigint
+       and actor_email = 'person.owner@example.com'
+  ) then
+    raise exception 'FAIL: the trail named an account with no household by its address';
+  end if;
+end $$;
+
+-- A household erased takes its people's addresses out of the trail; what was done stays.
+do $$
+begin
+  delete from portal.households where id = '33333333-3333-3333-3333-333333333333';
+  if exists (select 1 from portal.audit_log where actor_email = 'quiet.partner@example.com') then
+    raise exception 'FAIL: an erased household''s address stayed in the trail';
+  end if;
+  if not exists (
+    select 1 from portal.audit_log
+     where seq > current_setting('verify.audit_from')::bigint
+       and subject_id = '33333333-3333-3333-3333-333333333333' and changes ? 'phone'
+  ) then
+    raise exception 'FAIL: erasing a household took the record of what it did with it';
+  end if;
+end $$;
+
 do $$
 begin
   raise notice 'All portal rules hold.';

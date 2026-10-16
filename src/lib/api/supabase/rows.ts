@@ -37,6 +37,8 @@ export type PersonRow = {
   shown_as?: 'female' | 'male' | null
   /** Absent until `people-photo.sql` has been run, and null where nobody has added one. */
   photo_url?: string | null
+  /** Absent until portal.sql has been re-run with it, and null for anybody who does not sign in. */
+  google_email?: string | null
 }
 
 /** Everything this app reads about a household, including the people in it. */
@@ -52,6 +54,9 @@ export function toPerson(row: PersonRow): Person {
     ...(row.note === null ? {} : { note: row.note }),
     ...(row.shown_as === 'female' || row.shown_as === 'male' ? { shownAs: row.shown_as } : {}),
     ...(row.age_group === 'adult' && typeof row.photo_url === 'string' && row.photo_url ? { photo: row.photo_url } : {}),
+    ...(row.age_group === 'adult' && typeof row.google_email === 'string' && row.google_email
+      ? { googleEmail: row.google_email }
+      : {}),
   }
 }
 
@@ -114,6 +119,9 @@ export function peopleRows(householdId: string, draft: HouseholdDraft): Omit<Per
     ...(person.shownAs ? { shown_as: person.shownAs } : {}),
     // The same, for the photograph: and never a child's, whatever the form sent.
     ...(person.ageGroup === 'adult' && person.photo ? { photo_url: person.photo } : {}),
+    // And the address that signs them in, carried through every save so that saving the
+    // household does not sign them out. The database refuses one a member added themselves.
+    ...(person.ageGroup === 'adult' && person.googleEmail ? { google_email: person.googleEmail.trim().toLowerCase() } : {}),
   }))
 }
 

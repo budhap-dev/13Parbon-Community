@@ -14,7 +14,7 @@ function fakeClient(answers: Record<string, unknown> = {}, errors: Record<string
   const calls: string[] = []
   const chain = (table: string): Record<string, unknown> => {
     const self: Record<string, unknown> = {}
-    for (const method of ['select', 'eq', 'order', 'in', 'insert', 'update', 'delete']) {
+    for (const method of ['select', 'eq', 'order', 'in', 'insert', 'update', 'delete', 'limit']) {
       self[method] = (...args: unknown[]) => {
         calls.push(`${table}.${method}(${args.map((a) => (typeof a === 'string' ? a : '…')).join(',')})`)
         return self
@@ -64,6 +64,32 @@ describe('identifying somebody at sign-in', () => {
   it('returns nothing for an address with no household', async () => {
     const { client } = fakeClient()
     expect(await householdMethods(async () => client).identify('stranger@example.com')).toBeNull()
+  })
+
+  it('looks for a grown-up with the address when it is not the household\'s own', async () => {
+    const { client, calls } = fakeClient({
+      people: { household_id: 'hh-1', households: { id: 'hh-1', name: 'The Sens', role: 'member' } },
+    })
+    expect(await householdMethods(async () => client).identify('Partner@Example.com')).toEqual({
+      id: 'hh-1',
+      name: 'The Sens',
+      role: 'member',
+    })
+    expect(calls).toContain('people.eq(google_email,partner@example.com)')
+  })
+
+  it('answers no household from a database the per-person address has not reached yet', async () => {
+    // Until portal.sql is re-run the column is not there. That is nobody signed in by it, which
+    // is not the same as a lookup that could not be made.
+    const { client } = fakeClient({}, { people: { code: '42703', message: 'column people.google_email does not exist' } })
+    expect(await householdMethods(async () => client).identify('stranger@example.com')).toBeNull()
+  })
+
+  it('throws when the grown-ups cannot be looked through either', async () => {
+    const { client } = fakeClient({}, { people: { code: '', message: 'fetch failed' } })
+    await expect(householdMethods(async () => client).identify('stranger@example.com')).rejects.toThrow(
+      'Your household could not be looked up: fetch failed',
+    )
   })
 
   it('throws when the lookup fails, rather than answering that there is no household', async () => {

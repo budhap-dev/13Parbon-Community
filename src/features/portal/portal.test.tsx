@@ -693,6 +693,40 @@ describe('somebody knocking', () => {
     expect(screen.queryByText(/priya.dutta@gmail.com/)).not.toBeInTheDocument()
   })
 
+  /*
+   * Somebody the committee already knows: the second grown-up in a household, signing in with an
+   * account of their own. Picked from the list, the address goes on that person and lets them in.
+   */
+  it('links a knock to a grown-up already on the list, and takes it off the panel', async () => {
+    renderAt('/admin/people', admin)
+    await userEvent.click(await screen.findByRole('button', { name: 'Link amit.bose@gmail.com to a member' }))
+
+    const dialog = await screen.findByRole('dialog', { name: 'Link to a member' })
+    // Nothing is chosen yet, so there is nothing to press.
+    expect(within(dialog).getByRole('button', { name: 'Link' })).toBeDisabled()
+    // Children are never offered: they do not sign in.
+    expect(within(dialog).queryByRole('radio', { name: /Mira Sen/ })).not.toBeInTheDocument()
+
+    await userEvent.type(within(dialog).getByLabelText('Find a member'), 'arjun')
+    await userEvent.click(within(dialog).getByRole('radio', { name: /Arjun Sen/ }))
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Link to Arjun Sen' }))
+
+    expect(await screen.findByText('amit.bose@gmail.com now signs in as Arjun Sen, in The Sens.')).toBeInTheDocument()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Link amit.bose@gmail.com/ })).not.toBeInTheDocument()
+    // The other one is untouched.
+    expect(screen.getByRole('button', { name: 'Link priya.dutta@gmail.com to a member' })).toBeInTheDocument()
+  })
+
+  it('says so before linking somebody into a committee household', async () => {
+    renderAt('/admin/people', admin)
+    await userEvent.click(await screen.findByRole('button', { name: 'Link amit.bose@gmail.com to a member' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Link to a member' })
+
+    await userEvent.click(within(dialog).getByRole('radio', { name: /Debashis Chatterjee/ }))
+    expect(within(dialog).getByText(/will be able to see and change everything/)).toBeInTheDocument()
+  })
+
   it('takes a knock off the list once it has been dealt with', async () => {
     renderAt('/admin/people', admin)
     expect(await screen.findByText('amit.bose@gmail.com')).toBeInTheDocument()

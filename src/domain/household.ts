@@ -36,6 +36,12 @@ export type Person = {
    * the public About page if they are on the committee. Absent until somebody adds one.
    */
   photo?: string
+  /**
+   * Their own Google address, for a grown-up who signs in with an account of their own — the
+   * household's `googleEmail` is the first, this is for a second or a third. Whoever signs in
+   * with it reaches this household, with the household's role. Set by the committee only.
+   */
+  googleEmail?: string
 }
 
 /**
@@ -179,6 +185,11 @@ export type PersonInput = {
   shownAs?: Shown
   /** Adults only; see `Person.photo`. */
   photo?: string
+  /**
+   * Adults only; see `Person.googleEmail`. A member's form carries it back untouched, because
+   * their people are saved whole and a person saved without it has been signed out for good.
+   */
+  googleEmail?: string
 }
 
 /**
@@ -241,7 +252,7 @@ export type HouseholdErrors = {
   /** About the list of people as a whole, rather than any one of them. */
   people?: string
   /** Keyed by position in the list. */
-  person?: Record<number, { name?: string; age?: string }>
+  person?: Record<number, { name?: string; age?: string; googleEmail?: string }>
 }
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -306,6 +317,48 @@ export function normaliseGoogleEmail(value: string): { email: string | null; err
 }
 
 /**
+ * A household as a form or a save would hand it back, with nothing changed.
+ *
+ * One place, because a save replaces the people whole: a field missing here is a field the
+ * next save throws away. The household form starts from this, and so does linking somebody's
+ * sign-in to a person from the People screen.
+ */
+export function draftOfHousehold(household: Household): HouseholdDraft {
+  return {
+    name: household.name,
+    contactName: household.contactName,
+    email: household.email ?? '',
+    phone: household.phone ?? '',
+    people: household.people.map(({ name, ageGroup, age, note, shownAs, photo, googleEmail }) => ({
+      name,
+      ageGroup,
+      age,
+      note,
+      shownAs,
+      photo,
+      googleEmail,
+    })),
+    interests: [...household.interests],
+    googleEmail: household.googleEmail,
+    role: household.role,
+    membershipStatus: household.membership.status,
+    // A date input takes a string; there being no date is the empty one.
+    membershipPaidTo: household.membership.paidTo ?? '',
+    memberSince: household.memberSince,
+  }
+}
+
+/**
+ * Every address that signs in as this household: its own, and any grown-up's. Lowercased, as
+ * the database holds them. The household's own comes first.
+ */
+export function signInAddresses(household: { googleEmail: string | null; people: readonly { googleEmail?: string }[] }): string[] {
+  return [household.googleEmail, ...household.people.map((person) => person.googleEmail)].flatMap((address) =>
+    address ? [address.trim().toLowerCase()] : [],
+  )
+}
+
+/**
  * Whether a household answers to what the committee typed into the search on People.
  *
  * Every word must match something — the household's name, the main contact, either address,
@@ -325,7 +378,7 @@ export function householdText(household: Household): string {
       household.name,
       household.contactName,
       household.email ?? '',
-      household.googleEmail ?? '',
+      ...signInAddresses(household),
       household.phone ?? '',
       ...household.people.map((person) => person.name),
     ].join('\n'),
