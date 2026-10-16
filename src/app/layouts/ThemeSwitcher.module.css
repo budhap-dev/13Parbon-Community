@@ -167,3 +167,26 @@
     overflow-y: visible;
   }
 }
+
+/* The same, wherever the menu is a drawer rather than only on a phone: see `stacked`. */
+.rootStacked {
+  composes: root;
+  width: 100%;
+}
+
+.rootStacked .trigger {
+  width: 100%;
+  justify-content: center;
+}
+
+.rootStacked .panel {
+  position: static;
+  width: 100%;
+  margin-top: 8px;
+  box-shadow: none;
+}
+
+.rootStacked .panelUp {
+  max-height: none;
+  overflow-y: visible;
+}

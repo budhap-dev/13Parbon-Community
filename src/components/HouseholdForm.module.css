@@ -1,24 +1,68 @@
 .form {
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 22px;
 }
 
+/*
+ * Each part of the form is a card of its own colour (--tone, set on it): a band along the top,
+ * a tinted head with an icon in a disc, and a shadow to stand it off the page.
+ */
 .section {
+  --tone: #2563eb;
   display: flex;
   flex-direction: column;
   gap: 16px;
-  border: 0;
+  min-width: 0;
   margin: 0;
-  padding: 0;
+  padding: 0 18px 20px;
+  border: 1px solid color-mix(in srgb, var(--tone) 24%, var(--color-border-faint, transparent));
+  border-top: 4px solid var(--tone);
+  border-radius: var(--portal-radius, 14px);
+  background: var(--color-bg-raised);
+  box-shadow: var(--portal-shadow, none);
 }
 
+/*
+ * Floated, which is what takes a legend off the fieldset's border and lays it out as the first
+ * thing inside. Full width, so it is the card's head.
+ */
 .legend {
+  float: left;
+  width: calc(100% + 36px);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 -18px 4px;
+  padding: 12px 18px;
+  border-bottom: 1px solid color-mix(in srgb, var(--tone) 20%, transparent);
+  background: color-mix(in srgb, var(--tone) 9%, var(--color-bg-raised));
   font-family: var(--font-display, inherit);
   font-size: var(--portal-text-xl);
-  font-weight: 600;
-  padding: 0;
-  margin-bottom: 4px;
+  font-weight: 700;
+}
+
+.legendIcon {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--tone);
+  color: #fff;
+}
+
+.legendCount {
+  margin-left: auto;
+  min-width: 28px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--tone);
+  color: #fff;
+  font-family: var(--font-body);
+  font-size: var(--portal-text-sm);
+  text-align: center;
 }
 
 .hint {
@@ -56,14 +100,27 @@
 }
 
 /* A person is a card rather than a row: on a phone the fields stack, and a boxed group makes
-   it obvious which name the age underneath belongs to. */
+   it obvious which name the age underneath belongs to. Each in a colour of its own. */
 .person {
+  --tone: #2563eb;
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 16px;
-  border: 1px solid var(--color-border-faint, rgba(0, 0, 0, 0.14));
+  padding: 16px 16px 16px 20px;
+  border: 1px solid color-mix(in srgb, var(--tone) 30%, var(--color-border-faint, transparent));
   border-radius: var(--portal-radius, 14px);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--tone) 10%, var(--color-bg-raised)), var(--color-bg-raised) 60%);
+  box-shadow: var(--portal-shadow, none);
+  overflow: clip;
+}
+
+.person::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 5px;
+  background: var(--tone);
 }
 
 .personTop {
@@ -74,9 +131,24 @@
 }
 
 .personWho {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: var(--portal-text-md);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.personNumber {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--tone);
+  color: #fff;
   font-size: var(--portal-text-sm);
-  font-weight: 600;
-  opacity: 0.7;
 }
 
 .checks {
@@ -121,20 +193,42 @@
   align-items: center;
 }
 
-/* Kept out of the flow of the household's own details, because these are the committee's to
-   set and a member never sees them at all. */
+/* Kept apart from the household's own details, because these are the committee's to set and a
+   member never sees them at all: a dashed edge on the card says so. */
 .committee {
-  padding: 16px;
-  border: 2px dashed var(--line, rgba(0, 0, 0, 0.2));
-  border-radius: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+  border-style: dashed;
+  border-top-style: solid;
 }
 
 .saved {
   font-size: var(--portal-text-md);
   color: var(--success, #1b5e20);
+}
+
+/* A new card rises into place; nothing moves for anybody who has asked for less motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .section {
+    animation: rise 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+
+  .section:nth-of-type(2) {
+    animation-delay: 70ms;
+  }
+
+  .section:nth-of-type(3) {
+    animation-delay: 140ms;
+  }
+
+  .person {
+    animation: rise 360ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
 }
 
 @media (max-width: 520px) {

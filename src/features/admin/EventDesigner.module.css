@@ -118,6 +118,7 @@
 .card {
   border: 2px solid var(--line, rgba(0, 0, 0, 0.14));
   border-radius: var(--portal-radius, 16px);
+  box-shadow: var(--portal-shadow, none);
   overflow: hidden;
 }
 

@@ -81,6 +81,7 @@
 .section {
   border: 1px solid var(--color-border-faint);
   border-radius: var(--portal-radius, 12px);
+  box-shadow: var(--portal-shadow, none);
   overflow: hidden;
   /* See .panel: clip lets a section's Save bar hold in view while the section scrolls. */
   overflow: clip;
@@ -231,6 +232,7 @@
   padding: 14px;
   border: 1px solid var(--color-border-faint);
   border-radius: var(--portal-radius, 10px);
+  box-shadow: var(--portal-shadow, none);
 }
 
 .groupTitle {
@@ -262,7 +264,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 8px 12px;
-  border: 1px solid var(--color-border-faint);
+  border: 2px solid var(--color-border-faint);
+  border-left: 10px solid var(--color-border);
   border-radius: 10px;
 }
 

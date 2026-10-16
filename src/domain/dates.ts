@@ -51,6 +51,21 @@ export function formatTime(iso: string, locale = 'en-GB'): string {
   return new Intl.DateTimeFormat(locale, { hour: 'numeric', minute: '2-digit', hour12: true }).format(new Date(iso))
 }
 
+/** "16/10/2026 14:03:22": a moment to the second, for a record of what was done when. */
+export function formatStamp(iso: string, locale = 'en-GB'): string {
+  const parts = new Intl.DateTimeFormat(locale, {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(new Date(iso))
+  const part = (type: Intl.DateTimeFormatPartTypes) => parts.find((p) => p.type === type)?.value ?? ''
+  return `${part('day')}/${part('month')}/${part('year')} ${part('hour')}:${part('minute')}:${part('second')}`
+}
+
 /** "October 2026", for grouping a calendar by month. */
 export function formatMonthYear(iso: string, locale = 'en-GB'): string {
   return new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' }).format(new Date(iso))

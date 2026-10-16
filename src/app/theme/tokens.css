@@ -575,6 +575,11 @@
   --gold: #c9a227;
   /* How strongly the ornaments (ornaments.css) show: full on the public site. */
   --ornament-strength: 1;
+  /*
+   * Every card in the portal stands off the page with a shadow, whatever the theme. A theme
+   * below may tint it or deepen it; none turns it off.
+   */
+  --portal-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 8px 24px rgba(0, 0, 0, 0.08);
 }
 
 /* In the portal: full in the two colourful frames, off in Paper, soft in the rest. */
@@ -695,7 +700,7 @@
   --bg-texture-a: repeating-linear-gradient(0deg, rgba(31, 78, 121, 0.04) 0 1px, transparent 1px 32px);
   --portal-radius: 14px;
   --portal-button-radius: 10px;
-  --portal-shadow: 0 1px 2px rgba(28, 29, 31, 0.06);
+  --portal-shadow: 0 1px 3px rgba(28, 29, 31, 0.08), 0 8px 22px rgba(28, 29, 31, 0.07);
   --portal-side-bg: #ffffff;
   --portal-nav-on-bg: color-mix(in srgb, var(--color-accent) 11%, transparent);
   --portal-nav-on-fg: var(--color-accent);
@@ -708,7 +713,7 @@
   --font-display: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
   --portal-radius: 10px;
   --portal-button-radius: 8px;
-  --portal-shadow: none;
+  --portal-shadow: 0 1px 2px rgba(35, 33, 29, 0.08), 0 6px 18px rgba(35, 33, 29, 0.08);
   --portal-panel-border: rgba(35, 33, 29, 0.2);
   /* The frame in the theme's own wine red, deep enough that pale writing reads on it. */
   --portal-side-bg: #6b2230;
@@ -791,7 +796,7 @@
   --font-display: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
   --portal-radius: 10px;
   --portal-button-radius: 8px;
-  --portal-shadow: none;
+  --portal-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 10px 28px rgba(0, 0, 0, 0.32);
   --portal-side-bg: #101216;
   --portal-nav-on-bg: color-mix(in srgb, var(--color-accent) 14%, transparent);
   --portal-nav-on-fg: var(--color-accent);

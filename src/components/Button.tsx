@@ -2,7 +2,11 @@ import type { ButtonHTMLAttributes, ReactNode } from 'react'
 import { Link } from 'react-router'
 import styles from './Button.module.css'
 
-export type ButtonVariant = 'gold' | 'cream' | 'line' | 'ink' | 'inkLine' | 'danger'
+/**
+ * `blue`, `green`, `teal` and `violet` are the portal's coloured buttons: one colour for each
+ * kind of action, so Edit, Add, Up and Down are told apart by colour before they are read.
+ */
+export type ButtonVariant = 'gold' | 'cream' | 'line' | 'ink' | 'inkLine' | 'danger' | 'blue' | 'green' | 'teal' | 'violet'
 export type ButtonSize = 'md' | 'sm'
 
 type Common = {

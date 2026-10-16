@@ -13,7 +13,6 @@ import {
   SITE_TEXT_KEYS,
   rollFromText,
   rollToText,
-  tidyCommittee,
   tidyFaq,
   type HeroCard,
   type SectionAudience,
@@ -299,8 +298,6 @@ export function SiteSwitches({
     }
   }
 
-  const setRow = (i: number, changes: Partial<(typeof draft.committee)[number]>) =>
-    setDraft({ ...draft, committee: draft.committee.map((row, j) => (i === j ? { ...row, ...changes } : row)) })
   const setQuestion = (i: number, changes: Partial<(typeof draft.faq)[number]>) =>
     setDraft({ ...draft, faq: draft.faq.map((row, j) => (i === j ? { ...row, ...changes } : row)) })
 
@@ -326,7 +323,8 @@ export function SiteSwitches({
     festivals: () => ({ ...settings, festivals: tidyFestivals(draft.festivals) }),
     story: () => ({ ...settings, story: storyFromText(story) }),
     values: () => ({ ...settings, values: tidyValues(draft.values) }),
-    committee: () => ({ ...settings, committee: tidyCommittee(draft.committee) }),
+    // Edited on People now (AdminCommittee), so nothing here changes it.
+    committee: () => settings,
     roll: () => ({ ...settings, members: rollFromText(roll) }),
     faq: () => ({ ...settings, faq: tidyFaq(draft.faq) }),
     collage: () => ({
@@ -678,60 +676,6 @@ export function SiteSwitches({
           </p>
         </InfoNote>
         <ValuesEditor rows={draft.values} onChange={(values) => setDraft({ ...draft, values })} />
-      </Section>
-
-      <Section {...sectionProps('committee')} label={SITE_SECTIONS.committee} summary={`${tidyCommittee(draft.committee).length} people`} saveLabel="Save the committee">
-        <InfoNote summary="Where these show">
-          <p>
-            As shown on the About page, in this order — which is not a ranking. It changes at the AGM
-            every year, which is exactly the sort of thing that should not need a developer.
-          </p>
-        </InfoNote>
-        <ActionBar sticky={false}>
-          <Button
-            variant="line"
-            size="sm"
-            onClick={() => setDraft({ ...draft, committee: [...draft.committee, { role: '', name: '' }] })}
-          >
-            Add somebody
-          </Button>
-        </ActionBar>
-        {draft.committee.map((row, i) => (
-          <div key={i} className={styles.row}>
-            <div className={styles.field}>
-              <label className={styles.label} htmlFor={`role-${i}`}>
-                Role {i + 1}
-              </label>
-              <input
-                id={`role-${i}`}
-                className={styles.input}
-                value={row.role}
-                onChange={(e) => setRow(i, { role: e.target.value })}
-              />
-            </div>
-            <div className={styles.field}>
-              <label className={styles.label} htmlFor={`name-${i}`}>
-                Name {i + 1}
-              </label>
-              <input
-                id={`name-${i}`}
-                className={styles.input}
-                value={row.name}
-                onChange={(e) => setRow(i, { name: e.target.value })}
-              />
-            </div>
-            <div className={styles.actions} style={{ alignSelf: 'end', paddingBottom: 2 }}>
-              <ConfirmButton
-                aria-label={`Remove ${row.name || `row ${i + 1}`}`}
-                title={`Remove ${row.role.trim() || row.name.trim() || 'this row'} from the committee?`}
-                body={UNTIL_SAVED}
-                onConfirm={() => setDraft({ ...draft, committee: draft.committee.filter((_, j) => j !== i) })}
-              >
-                Remove
-              </ConfirmButton>
-            </div>
-          </div>
-        ))}
       </Section>
 
       <Section {...sectionProps('roll')} label={SITE_SECTIONS.roll} summary={`${rollFromText(roll).length} names`} saveLabel="Save the roll">

@@ -1,54 +1,81 @@
-/* Who is in the household: a card each, a picture, a name and what the organisers should know. */
+/*
+ * Who is in the household: a card each, in a colour of its own, a picture, a name and what the
+ * organisers should know. The colour comes through --tone, set on the card from a short list.
+ */
 .people {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr));
-  gap: 12px;
+  gap: 14px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .person {
+  --tone: var(--color-accent);
+  position: relative;
   display: grid;
-  grid-template-columns: 56px minmax(0, 1fr);
+  grid-template-columns: 60px minmax(0, 1fr);
   gap: 14px;
   align-items: center;
-  padding: 14px 16px;
-  border: 1px solid var(--portal-panel-border, var(--color-border-faint));
+  padding: 16px 16px 16px 18px;
+  border: 1px solid color-mix(in srgb, var(--tone) 30%, var(--color-bg-raised));
   border-radius: var(--portal-radius, 14px);
-  background: var(--color-bg-raised);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--tone) 16%, var(--color-bg-raised)), var(--color-bg-raised) 70%);
   box-shadow: var(--portal-shadow, none);
+  overflow: clip;
+}
+
+/* A stripe of the card's colour down its left edge. */
+.person::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 5px;
+  background: var(--tone);
+}
+
+/* The picture sits in a ring of the card's colour. */
+.face {
+  display: inline-grid;
+  place-items: center;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--tone);
+  padding: 3px;
 }
 
 .words {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
   min-width: 0;
 }
 
 .name {
-  font-weight: 600;
+  font-weight: 700;
   font-size: var(--portal-text-lg);
   overflow-wrap: anywhere;
 }
 
 .who {
   display: inline-flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 6px;
   font-size: var(--portal-text-sm);
   color: var(--color-fg-muted);
 }
 
-/* Adult or child, as a small tag rather than a column heading nobody reads. */
+/* Adult or child, as a chip in the card's colour rather than a column heading nobody reads. */
 .tag {
-  padding: 1px 8px;
+  padding: 2px 9px;
   border-radius: 999px;
   font-size: var(--portal-text-xs);
-  font-weight: 600;
-  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
-  color: var(--color-fg);
+  font-weight: 700;
+  background: var(--tone);
+  color: #fff;
 }
 
 .note {

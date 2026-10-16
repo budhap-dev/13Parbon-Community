@@ -112,7 +112,7 @@ function Choices({
       ))}
       {!locked && options.length < most ? (
         <div>
-          <Button variant="line" size="sm" onClick={() => onChange([...options, ''])}>
+          <Button variant="green" size="sm" onClick={() => onChange([...options, ''])}>
             Add {onCorrect ? 'an answer' : 'a choice'}
           </Button>
         </div>
@@ -444,12 +444,12 @@ export function QuizForm({
                 <span className={styles.pickedText}>
                   {i + 1}. {byId.get(id)?.prompt ?? 'A question no longer in the bank'}
                 </span>
-                <button type="button" className={styles.iconButton} disabled={locked || i === 0} aria-label={`Move question ${i + 1} up`} onClick={() => move(i, i - 1)}>
+                <button type="button" className={styles.iconUp} disabled={locked || i === 0} aria-label={`Move question ${i + 1} up`} onClick={() => move(i, i - 1)}>
                   ↑
                 </button>
                 <button
                   type="button"
-                  className={styles.iconButton}
+                  className={styles.iconDown}
                   disabled={locked || i === draft.questionIds.length - 1}
                   aria-label={`Move question ${i + 1} down`}
                   onClick={() => move(i, i + 1)}

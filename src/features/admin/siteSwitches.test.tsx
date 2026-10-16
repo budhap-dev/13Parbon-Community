@@ -86,34 +86,11 @@ describe('the words on the public pages', () => {
   })
 })
 
-describe('the committee and the roll', () => {
-  it('shows who is on the committee, as the About page does', async () => {
+describe('the members’ roll', () => {
+  it('no longer carries the committee, which is kept on People now', async () => {
     renderAt('/admin/pages')
     const panel = await switches()
-
-    expect(within(panel).getByLabelText('Role 1')).toHaveValue('Secretary')
-    expect(within(panel).getByLabelText('Name 1')).toHaveValue('Mr. Dalim Ghosh')
-  })
-
-  it('says the order is not a ranking, because somebody will wonder', async () => {
-    renderAt('/admin/pages')
-    const panel = await switches()
-    expect(within(panel).getByText(/which is not a ranking/)).toBeInTheDocument()
-  })
-
-  it('adds somebody and takes somebody off', async () => {
-    renderAt('/admin/pages')
-    const panel = await switches()
-    const rows = () => within(panel).getAllByLabelText(/^Role \d+$/).length
-
-    const before = rows()
-    await userEvent.click(within(panel).getByRole('button', { name: 'Add somebody' }))
-    expect(rows()).toBe(before + 1)
-
-    // By name: this screen has other lists now, each with a Remove of its own.
-    await userEvent.click(within(panel).getByRole('button', { name: 'Remove Mr. Dalim Ghosh' }))
-    await confirmRemove()
-    expect(rows()).toBe(before)
+    expect(within(panel).queryByRole('button', { name: /The committee/ })).not.toBeInTheDocument()
   })
 
   it('keeps the roll as one name to a line, and counts it', async () => {
@@ -130,14 +107,6 @@ describe('the committee and the roll', () => {
     const panel = await switches()
     // The About page has always promised this; until now keeping it meant a pull request.
     expect(within(panel).getByText(/Take a name out the day its owner asks/)).toBeInTheDocument()
-  })
-
-  it('drops a half-typed committee row rather than saving it', async () => {
-    renderAt('/admin/pages')
-    const panel = await switches()
-
-    await userEvent.click(within(panel).getByRole('button', { name: 'Add somebody' }))
-    // A blank row is not a change, so the committee has still nothing to save.
   })
 })
 

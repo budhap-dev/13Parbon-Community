@@ -157,4 +157,57 @@ describe('SiteHeader', () => {
     // Comes from package.json at build time, so it can never drift from the release.
     expect(screen.getByText(new RegExp(`v${__APP_VERSION__.replace(/\./g, '\\.')}$`))).toBeInTheDocument()
   })
+
+  /*
+   * With every part of the site switched on, the row of links ran into the name at a laptop's
+   * width: the switch to the drawer was a fixed width, chosen when there were five links. Now
+   * the header measures its row and folds it into the drawer when it does not fit.
+   */
+  describe('when the links do not fit in a row', () => {
+    const widths = { scroll: 0, client: 0 }
+    beforeEach(() => {
+      vi.stubGlobal(
+        'ResizeObserver',
+        class {
+          callback: () => void
+          constructor(callback: () => void) {
+            this.callback = callback
+          }
+          observe() {
+            this.callback()
+          }
+          disconnect() {}
+        },
+      )
+      vi.spyOn(HTMLElement.prototype, 'scrollWidth', 'get').mockImplementation(() => widths.scroll)
+      vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockImplementation(() => widths.client)
+    })
+    afterEach(() => {
+      vi.unstubAllGlobals()
+      vi.restoreAllMocks()
+    })
+
+    const draw = () =>
+      render(
+        <TestDataProviders>
+          <MemoryRouter initialEntries={['/events']}>
+            <ThemeProvider>
+              <SiteHeader />
+            </ThemeProvider>
+          </MemoryRouter>
+        </TestDataProviders>,
+      )
+
+    it('folds them into the drawer', () => {
+      Object.assign(widths, { scroll: 1300, client: 1000 })
+      draw()
+      expect(screen.getByRole('banner')).toHaveClass('compact')
+    })
+
+    it('leaves them in a row when they fit', () => {
+      Object.assign(widths, { scroll: 1000, client: 1000 })
+      draw()
+      expect(screen.getByRole('banner')).not.toHaveClass('compact')
+    })
+  })
 })

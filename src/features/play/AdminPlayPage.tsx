@@ -279,7 +279,7 @@ export function AdminPlayPage() {
                           </p>
                         ) : null}
                         <div className={portal.actions}>
-                          <Button variant="line" size="sm" onClick={() => setEditing({ kind: 'poll', poll, locked: count > 0 })}>
+                          <Button variant="blue" size="sm" onClick={() => setEditing({ kind: 'poll', poll, locked: count > 0 })}>
                             Edit
                           </Button>
                           {state === 'draft' ? (
@@ -426,7 +426,7 @@ export function AdminPlayPage() {
                               </td>
                               <td>
                                 <div className={portal.actions} style={{ flexWrap: 'nowrap' }}>
-                                  <Button variant="line" size="sm" onClick={() => setEditing({ kind: 'quiz', quiz, locked })}>
+                                  <Button variant="blue" size="sm" onClick={() => setEditing({ kind: 'quiz', quiz, locked })}>
                                     Edit
                                   </Button>
                                   <Link to={`/portal/play/${quiz.id}`} className={portal.inlineLink}>
@@ -545,7 +545,7 @@ export function AdminPlayPage() {
                 <Button variant="gold" size="sm" onClick={() => setEditing({ kind: 'question' })}>
                   New question
                 </Button>
-                <Button variant="line" size="sm" onClick={() => setEditing({ kind: 'import' })}>
+                <Button variant="blue" size="sm" onClick={() => setEditing({ kind: 'import' })}>
                   Import questions
                 </Button>
                 {tags.length > 0 ? (
@@ -608,7 +608,7 @@ export function AdminPlayPage() {
                               <td className={portal.tiny}>{q.tags.join(', ') || '—'}</td>
                               <td>
                                 <div className={portal.actions} style={{ flexWrap: 'nowrap' }}>
-                                  <Button variant="line" size="sm" onClick={() => setEditing({ kind: 'question', question: q })}>
+                                  <Button variant="blue" size="sm" onClick={() => setEditing({ kind: 'question', question: q })}>
                                     Edit
                                   </Button>
                                   <Button variant="danger" size="sm" aria-label={`Delete “${q.prompt}”`} onClick={() => setRemoving({ kind: 'question', id: q.id, title: q.prompt })}>

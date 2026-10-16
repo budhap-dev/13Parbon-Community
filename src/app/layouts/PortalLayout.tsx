@@ -8,6 +8,7 @@ import { OfflineNotice } from '@/components/OfflineNotice'
 import { Icon, type IconName } from '@/components/Icon'
 import { PortalSearch, SearchButton, type SearchScreen } from '@/features/admin/search/PortalSearch'
 import { ThemeSwitcher } from './ThemeSwitcher'
+import { useSlidingPill } from './useSlidingPill'
 import { useSwipeToClose } from './useSwipeToClose'
 import { useThemeScope } from '@/app/theme/ThemeContext'
 import { useGoogleSignIn } from '@/lib/auth/GoogleSignIn'
@@ -239,6 +240,8 @@ export function PortalLayout() {
   }, [menuOpen])
 
   const phone = useSyncExternalStore(onPhone, isPhone, () => false)
+  const navsRef = useRef<HTMLDivElement>(null)
+  const pillReady = useSlidingPill(navsRef, `${pathname}|${onTheCommittee}|${tools.length}|${Boolean(who)}`)
   if (!who) return null
 
   // The ones still wanting an answer, which is what each screen itself shows. Counting all of
@@ -251,7 +254,6 @@ export function PortalLayout() {
     '/admin/messages': (messages ?? []).filter((m) => !m.handledBy).length,
   }
   const where = whereIs(pathname)
-  const inHousehold = memberNav.some((item) => pathname === item.to || pathname.startsWith(`${item.to}/`))
 
   const renderLinks = (items: Item[]) =>
     items.map((item) => (
@@ -274,7 +276,7 @@ export function PortalLayout() {
   )
 
   return (
-    <div className={styles.shell}>
+    <div className={styles.shell} data-modal-root>
       <a href="#portal-main" className={styles.skip}>
         Skip to content
       </a>
@@ -338,7 +340,9 @@ export function PortalLayout() {
             <span className={styles.srOnly}>Close menu</span>
           </button>
         </div>
-        <div className={styles.navs}>
+        <div ref={navsRef} className={styles.navs} data-pill={pillReady || undefined}>
+        {/* The highlight behind the current screen, sliding to the next (useSlidingPill). */}
+        <span aria-hidden="true" className={styles.pill} />
         {onTheCommittee ? (
           <>
             <nav aria-label="Committee" className={styles.sections}>
@@ -346,21 +350,10 @@ export function PortalLayout() {
                 <div key={section.label ?? 'top'}>{renderGroup(section.label, section.items)}</div>
               ))}
             </nav>
-            {/*
-              * Their own household, folded away: on the committee it is the screen they visit
-              * least, and open it was four more links between the committee's and the bottom.
-              * Open whenever they are on one of its screens, so where they are is never hidden.
-              */}
-            <nav aria-label="Your household">
-              <details key={inHousehold ? 'here' : 'away'} className={styles.fold} open={inHousehold || undefined}>
-                <summary className={styles.foldHead}>
-                  <span className={styles.groupLabel}>Your household</span>
-                  <span className={styles.foldMark} aria-hidden="true">
-                    ⌄
-                  </span>
-                </summary>
-                <div className={styles.group}>{renderLinks(memberNav)}</div>
-              </details>
+            {/* Their own household, as a section like the others: folded away, it was the one
+                part of the menu that had to be opened before it could be read. */}
+            <nav aria-label="Your household" className={styles.householdNav}>
+              {renderGroup('Your household', memberNav)}
             </nav>
             {/* A heading over an empty list is noise: with no tools saved there is no group. */}
             {tools.length > 0 ? (

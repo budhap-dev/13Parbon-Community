@@ -30,7 +30,15 @@
   --button-radius: var(--portal-button-radius, 10px);
   --button-border: 1px;
   --button-lift: 0;
-  --button-line-border: var(--color-border);
+  /*
+   * An outlined button is a tint of the theme's accent rather than a bare outline: a screen of
+   * grey outlines read as switched off. The label is the accent drawn towards the text colour,
+   * so it is dark enough on a light theme and pale enough on a dark one.
+   */
+  --button-line-bg: color-mix(in srgb, var(--color-accent) 12%, var(--color-bg-raised));
+  --button-line-hover: color-mix(in srgb, var(--color-accent) 22%, var(--color-bg-raised));
+  --button-line-border: color-mix(in srgb, var(--color-accent) 42%, var(--color-bg-raised));
+  --button-line-fg: color-mix(in srgb, var(--color-accent) 55%, var(--color-fg));
   --button-sm-height: 36px;
   --button-sm-pad: 14px;
   --button-sm-font: 14px;
@@ -104,6 +112,7 @@
 }
 
 .navs {
+  position: relative;
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
@@ -154,66 +163,17 @@
   white-space: nowrap;
 }
 
-/* Your household, folded away for the committee. A native disclosure: keyboard and screen
-   readers work without anything here having to. */
-.fold {
-  padding-top: 12px;
-  border-top: 1px solid var(--side-border);
-}
-
+/* Their own household and the other tools, each a section under a hairline like the rest. */
+.householdNav,
 .toolsNav {
   padding-top: 12px;
   border-top: 1px solid var(--side-border);
-}
-
-.foldHead {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 36px;
-  padding-right: 10px;
-  border-radius: 8px;
-  cursor: pointer;
-  list-style: none;
-}
-
-.foldHead::-webkit-details-marker {
-  display: none;
-}
-
-.foldHead .groupLabel {
-  padding-bottom: 0;
-}
-
-.foldHead:hover {
-  background: var(--side-wash);
-}
-
-.foldHead:focus-visible {
-  outline: 2px solid var(--color-focus);
-  outline-offset: 2px;
 }
 
 /* The menu scrolls, so a ring drawn outside a full-width link was cut off at its sides. */
 .link:focus-visible,
 .linkOn:focus-visible {
   outline-offset: -3px;
-}
-
-.foldMark {
-  color: var(--side-faint);
-  font-size: var(--portal-text-lg);
-  line-height: 1;
-  transform: rotate(-90deg);
-  transition: transform var(--motion-fast) ease;
-}
-
-.fold[open] .foldMark {
-  transform: none;
-}
-
-.fold[open] .foldHead {
-  margin-bottom: 4px;
 }
 
 .link,
@@ -263,6 +223,90 @@
   color: var(--portal-nav-on-fg, var(--color-accent));
 }
 
+/*
+ * The highlight behind the current screen, as a piece of its own that slides to the next one
+ * and settles with a little overshoot, rather than one link's background going out as
+ * another's comes on. Placed by useSlidingPill. Until it has been placed once, the link's own
+ * background and mark are what show, so nothing is missing on the first paint or without
+ * script; after that they step aside for it.
+ */
+.pill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 0;
+  width: var(--pill-w, 0);
+  height: var(--pill-h, 0);
+  opacity: 0;
+  transform: translate(var(--pill-x, 0), var(--pill-y, 0));
+  border-radius: 8px;
+  background: var(--portal-nav-on-bg, color-mix(in srgb, var(--color-accent) 13%, transparent));
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--portal-nav-on-fg, var(--color-accent)) 18%, transparent);
+  pointer-events: none;
+}
+
+.pill::before {
+  content: '';
+  position: absolute;
+  left: -12px;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--portal-nav-on-mark, var(--color-accent));
+}
+
+.navs[data-pill] .pill {
+  opacity: var(--pill-o, 0);
+  transition:
+    transform 0.55s cubic-bezier(0.34, 1.56, 0.64, 1),
+    width 0.55s cubic-bezier(0.34, 1.56, 0.64, 1),
+    height 0.4s ease,
+    opacity 0.2s ease;
+}
+
+.navs[data-pill] .linkOn {
+  background: transparent;
+}
+
+.navs[data-pill] .linkOn::before {
+  display: none;
+}
+
+/* Above the pill, so it slides behind the words. */
+.navs .link,
+.navs .linkOn {
+  z-index: 1;
+}
+
+/* The current screen's icon gives a little spring as you arrive on it. */
+@media (prefers-reduced-motion: no-preference) {
+  .linkOn svg {
+    animation: nav-pop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .navs[data-pill] .pill {
+    transition: opacity 0.2s ease;
+  }
+}
+
+@keyframes nav-pop {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.28) rotate(-10deg);
+  }
+  70% {
+    transform: scale(0.94) rotate(3deg);
+  }
+  100% {
+    transform: none;
+  }
+}
+
 .count {
   margin-left: auto;
   min-width: 20px;
@@ -294,16 +338,23 @@
   white-space: nowrap;
 }
 
-/* The person signed in, as a card of its own: an edge, a ground, and room for a whole name. */
+/*
+ * The person signed in, as a card of its own: an edge, a ground, a shadow to lift it off the
+ * sidebar, and room for a whole name. The shadow is black at any strength the sidebar can take,
+ * so it reads on a pale sidebar and a dark one alike.
+ */
 .who {
   display: flex;
   flex-direction: column;
   gap: 10px;
   margin-top: 12px;
   padding: 12px;
-  border: 1px solid var(--side-border);
+  border: 1.5px solid color-mix(in srgb, var(--side-fg) 22%, transparent);
   border-radius: 14px;
-  background: color-mix(in srgb, var(--side-fg) 5%, transparent);
+  background: color-mix(in srgb, var(--side-fg) 6%, var(--portal-side-bg, var(--color-bg-raised)));
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.12),
+    0 8px 22px rgba(0, 0, 0, 0.16);
 }
 
 .whoCard {

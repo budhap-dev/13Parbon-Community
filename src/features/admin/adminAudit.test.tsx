@@ -52,7 +52,7 @@ describe('what has changed', () => {
 
     // "A row changed" answers neither of the questions this is for — who unpublished that, and
     // when did she become an admin. What it was before is half the answer.
-    expect(await screen.findByText(/handledBy: nothing → The Chatterjees/)).toBeInTheDocument()
+    expect(await screen.findByText(/Handled by: nothing → The Chatterjees/)).toBeInTheDocument()
   })
 
   /*
@@ -72,7 +72,7 @@ describe('what has changed', () => {
     renderAt('/admin/audit', admin, api)
     await screen.findByRole('heading', { level: 1, name: 'What has changed' })
 
-    const line = await screen.findByText(/handledNote: nothing →/)
+    const line = await screen.findByText(/Handled note: nothing →/)
     expect(line.textContent!.length).toBeLessThan(essay.length)
     expect(line.textContent).toContain('…')
     // Cut for the table, not lost: the full value is still there for anybody who wants it.
@@ -126,7 +126,7 @@ describe('what has changed', () => {
     renderAt('/admin/audit', admin, await withSomethingDone())
     await screen.findByRole('heading', { level: 1, name: 'What has changed' })
 
-    const row = (await screen.findByText(/handledBy: nothing → The Chatterjees/)).closest('tr')!
+    const row = (await screen.findByText(/Handled by: nothing → The Chatterjees/)).closest('tr')!
     expect(within(row).getByText('The Chatterjees')).toBeInTheDocument()
     expect(within(screen.getByRole('table')).getByText('Who')).toBeInTheDocument()
   })

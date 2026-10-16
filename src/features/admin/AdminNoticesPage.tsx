@@ -169,7 +169,7 @@ export function AdminNoticesPage() {
                     <td className={styles.right}>
                       <span className={`${styles.actions} ${styles.actionsRight}`}>
                         <Button
-                          variant="line"
+                          variant="blue"
                           size="sm"
                           aria-label={`Edit ${notice.title}`}
                           onClick={() => setEditing({ notice })}

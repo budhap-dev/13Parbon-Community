@@ -129,6 +129,7 @@ export function ConfirmDialog({
         </div>
       </div>
     </div>,
-    document.body,
+    // Inside the portal's shell when there is one, so its buttons are the portal's.
+    document.querySelector<HTMLElement>('[data-modal-root]') ?? document.body,
   )
 }
