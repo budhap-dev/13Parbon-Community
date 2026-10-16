@@ -94,6 +94,13 @@ export function describeSize(household: Pick<Household, 'people'>): string {
   return parts.join(' · ')
 }
 
+/** Two letters for a household's monogram: its first and last word, past a leading "The". */
+export function householdInitials(name: string): string {
+  const words = name.replace(/^the\s+/i, '').trim().split(/\s+/).filter(Boolean)
+  if (words.length === 0) return '?'
+  return (words.length === 1 ? words[0].slice(0, 2) : words[0][0] + words[words.length - 1][0]).toUpperCase()
+}
+
 /**
  * Who is making a request. The real client carries a signed token and Postgres reads the
  * household and role out of it; this carries the same two facts, so that the mock can refuse

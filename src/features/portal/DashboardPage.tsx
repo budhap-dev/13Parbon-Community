@@ -3,7 +3,7 @@ import { Button } from '@/components/Button'
 import { Icon } from '@/components/Icon'
 import { LoadFailed } from '@/components/LoadFailed'
 import { daysUntil, describeCountdown, formatDateWithYear, formatLongDate, formatTime } from '@/domain/dates'
-import { describeSize } from '@/domain/household'
+import { describeSize, householdInitials } from '@/domain/household'
 import { useAnnouncements, useHousehold, useNextEvent, usePolls, useQuizzes } from '@/lib/api'
 import { stateOf } from '@/domain/polls'
 import { useSignedIn } from '@/lib/auth/session'
@@ -118,45 +118,49 @@ export function DashboardPage() {
           ) : null}
 
           {household ? (
-            <section className={styles.panel} aria-labelledby="membership-title">
-              <div className={styles.pad}>
-                <p className={styles.statLabel}>Membership</p>
-                <div className={styles.rowBetween} style={{ alignItems: 'baseline', marginTop: 8 }}>
-                  <h2 id="membership-title" className={styles.panelTitle}>
+            <section
+              className={`${styles.bizCard} ${household.membership.status === 'active' ? styles.bizGood : styles.bizWarn}`}
+              aria-labelledby="membership-title"
+            >
+              <div className={styles.bizTop}>
+                <div>
+                  <p className={styles.bizEyebrow}>Membership</p>
+                  <h2 id="membership-title" className={styles.bizName}>
                     {household.membership.status === 'active' ? 'Active' : 'Lapsed'}
                   </h2>
-                  <span className={household.membership.status === 'active' ? styles.pillLive : styles.pillPast}>
-                    {household.membership.status === 'active' ? 'Paid' : 'Renew'}
-                  </span>
                 </div>
-                <p className={`${styles.muted} ${styles.tiny}`} style={{ marginTop: 8 }}>
-                  {household.membership.paidTo ? (
-                    <>
-                      {household.membership.status === 'active' ? 'Runs to ' : 'Ran out '}
-                      {formatDateWithYear(household.membership.paidTo)}.
-                    </>
-                  ) : (
-                    // The status column defaults to active and the date column has no default,
-                    // so every household the committee writes down arrives in exactly this
-                    // state. Saying so beats a date nobody set, and beats taking the page down.
-                    'No renewal date recorded yet.'
-                  )}
-                </p>
+                <span className={styles.bizChip}>{household.membership.status === 'active' ? 'Paid' : 'Renew'}</span>
               </div>
+              <p className={styles.bizNote}>
+                {household.membership.paidTo ? (
+                  <>
+                    {household.membership.status === 'active' ? 'Runs to ' : 'Ran out '}
+                    {formatDateWithYear(household.membership.paidTo)}.
+                  </>
+                ) : (
+                  // The status column defaults to active and the date column has no default,
+                  // so every household the committee writes down arrives in exactly this
+                  // state. Saying so beats a date nobody set, and beats taking the page down.
+                  'No renewal date recorded yet.'
+                )}
+              </p>
             </section>
           ) : null}
 
           {household ? (
-            <section className={styles.panel} aria-labelledby="household-title">
-              <div className={styles.panelHead}>
-                <h2 id="household-title" className={styles.panelTitle}>
-                  {household.name}
-                </h2>
-                <Button to="/portal/household" variant="line" size="sm">
-                  View
-                </Button>
+            <section className={styles.bizCard} aria-labelledby="household-title">
+              <div className={styles.bizTop}>
+                <div>
+                  <p className={styles.bizEyebrow}>Your household</p>
+                  <h2 id="household-title" className={styles.bizName}>
+                    {household.name}
+                  </h2>
+                </div>
+                <span className={styles.bizMono} aria-hidden="true">
+                  {householdInitials(household.name)}
+                </span>
               </div>
-              <dl className={styles.facts}>
+              <dl className={styles.bizFacts}>
                 <div>
                   <dt>Who is in it</dt>
                   <dd>{describeSize(household)}</dd>
@@ -170,6 +174,11 @@ export function DashboardPage() {
                   <dd>{formatDateWithYear(household.memberSince)}</dd>
                 </div>
               </dl>
+              <div className={styles.bizFoot}>
+                <Button to="/portal/household" variant="line" size="sm">
+                  View
+                </Button>
+              </div>
             </section>
           ) : null}
 

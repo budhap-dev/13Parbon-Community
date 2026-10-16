@@ -205,7 +205,7 @@ export function AdminAuditPage() {
                       <td data-label="What">
                         <strong>{describeAction(entry.action)}</strong>
                       </td>
-                      <td data-label="What moved" className={`${styles.muted} ${styles.tiny} ${styles.changes}`}>
+                      <td data-label="What moved" className={`${styles.muted} ${styles.tiny} ${styles.changes} ${styles.wideOnPhone}`}>
                         {moved.length === 0 ? (
                           '—'
                         ) : (

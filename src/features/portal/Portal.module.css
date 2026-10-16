@@ -711,6 +711,84 @@
   background: linear-gradient(var(--color-hover-wash), var(--color-hover-wash)), var(--color-bg-raised);
 }
 
+/*
+ * A list of people rather than a ledger: each household its own rounded strip, with a little
+ * ground showing between them, so forty households read as forty things and not one grid. On a
+ * phone the same rows are the cards below, standing on the same ground.
+ */
+.boxed:has(.rows) {
+  --rows-ground: color-mix(in srgb, var(--color-fg) 3%, var(--color-bg-raised));
+  background: var(--rows-ground);
+}
+
+@media (min-width: 641px) {
+  .boxed:has(.rows) {
+    padding: 0 12px 4px;
+  }
+
+  .rows {
+    border-collapse: separate;
+    border-spacing: 0 8px;
+  }
+
+  /* The pinned labels sit on the ground, and cover the inset either side as rows pass under. */
+  .boxed .rows thead th {
+    background: var(--rows-ground);
+    border-bottom: 0;
+  }
+
+  .rows thead th:first-child {
+    box-shadow: -12px 0 0 var(--rows-ground);
+  }
+
+  .rows thead th:last-child {
+    box-shadow: 12px 0 0 var(--rows-ground);
+  }
+
+  .rows tbody td,
+  .rows tbody tr:last-child td {
+    background: var(--color-bg-raised);
+    border-top: 1px solid var(--color-border-faint);
+    border-bottom: 1px solid var(--color-border-faint);
+    transition:
+      background-color var(--motion-fast) ease,
+      border-color var(--motion-fast) ease;
+  }
+
+  .rows tbody td:first-child {
+    border-left: 1px solid var(--color-border-faint);
+    border-radius: var(--rows-radius) 0 0 var(--rows-radius);
+  }
+
+  .rows tbody td:last-child {
+    border-right: 1px solid var(--color-border-faint);
+    border-radius: 0 var(--rows-radius) var(--rows-radius) 0;
+  }
+
+  .rows tbody tr:hover {
+    background: none;
+  }
+
+  .rows tbody tr:hover td {
+    background: color-mix(in srgb, var(--color-accent) 5%, var(--color-bg-raised));
+    border-color: color-mix(in srgb, var(--color-accent) 30%, var(--color-border-faint));
+  }
+
+  /* The inset either side costs the list 24px; a little less room in each cell pays it back. */
+  .oneLine.rows :is(td, th) {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .oneLine.rows .who {
+    max-width: 220px;
+  }
+}
+
+.rows {
+  --rows-radius: max(6px, calc(var(--portal-radius, 14px) - 4px));
+}
+
 /* A button that is a sentence's next step rather than a control of its own. */
 .inlineButton {
   padding: 0;
@@ -739,33 +817,143 @@
 }
 
 /* A few facts as label and value, one to a row. */
-.facts {
-  margin: 0;
+/*
+ * A business card: the theme's colour edge to edge, the name large, the details small along the
+ * foot, and a faint disc in the corner for the printed mark. Its two colours come through
+ * --biz-bg and --biz-fg, so membership can be the same card in green or amber. Green and amber
+ * are each theme's colours for text on its page, so the page's own colour reads on them.
+ */
+.bizCard {
+  --biz-bg: var(--color-accent);
+  --biz-fg: var(--color-on-accent);
+  position: relative;
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
+  gap: 18px;
+  min-width: 0;
+  min-height: 150px;
+  padding: 22px 24px 20px;
+  border-radius: var(--portal-radius, 14px);
+  background: var(--biz-bg);
+  color: var(--biz-fg);
+  box-shadow: 0 12px 28px color-mix(in srgb, var(--biz-bg) 30%, transparent);
+  overflow: clip;
 }
 
-.facts > div {
+.bizCard::after {
+  content: '';
+  position: absolute;
+  top: -110px;
+  right: -80px;
+  width: 240px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--biz-fg) 8%, transparent);
+  pointer-events: none;
+}
+
+.bizCard > * {
+  position: relative;
+  z-index: 1;
+}
+
+.bizGood {
+  --biz-bg: var(--color-green, #2f6b46);
+  --biz-fg: var(--color-bg);
+}
+
+.bizWarn {
+  --biz-bg: var(--portal-amber);
+  --biz-fg: var(--color-bg);
+}
+
+.bizTop {
   display: flex;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
-  padding: 11px 20px;
-  border-bottom: 1px solid var(--color-border-faint);
-  font-size: var(--portal-text-md);
 }
 
-.facts > div:last-child {
-  border-bottom: 0;
+.bizEyebrow,
+.bizFacts dt {
+  font-size: var(--portal-label-size, 11px);
+  font-weight: var(--portal-label-weight, 700);
+  letter-spacing: var(--portal-label-tracking, 0.08em);
+  text-transform: uppercase;
+  opacity: 0.78;
 }
 
-.facts dt {
-  color: var(--color-fg-muted);
+.bizName {
+  margin-top: 6px;
+  color: inherit;
+  font-family: var(--font-display);
+  font-size: 26px;
+  line-height: 1.1;
+  overflow-wrap: break-word;
 }
 
-.facts dd {
+/* The monogram, and a chip that says yes: the card's colours turned round. */
+.bizMono,
+.bizChip {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--biz-fg);
+  color: var(--biz-bg);
+  font-weight: 800;
+}
+
+.bizMono {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  font-size: 15px;
+  letter-spacing: 0.04em;
+}
+
+.bizChip {
+  padding: 4px 12px;
+  border-radius: var(--radius-pill, 999px);
+  font-size: var(--portal-text-xs);
+}
+
+.bizNote {
+  font-size: var(--portal-text-sm);
+  opacity: 0.85;
+}
+
+.bizFacts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 12px 18px;
   margin: 0;
-  font-weight: 600;
-  text-align: right;
+}
+
+.bizFacts dd {
+  margin: 2px 0 0;
+  font-size: var(--portal-text-md);
+  font-weight: 700;
+  overflow-wrap: break-word;
+}
+
+.bizFoot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* A button on a card takes the card's colours: an outline of its ink. */
+.bizFoot > :is(a, button) {
+  border-color: color-mix(in srgb, var(--biz-fg) 55%, transparent);
+  background: transparent;
+  color: var(--biz-fg);
+}
+
+.bizFoot > :is(a, button):hover {
+  background: color-mix(in srgb, var(--biz-fg) 14%, transparent);
+  color: var(--biz-fg);
 }
 
 /* Two notes in a row are two things to read, not one long box. */
@@ -993,8 +1181,8 @@
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  background: color-mix(in srgb, var(--color-accent) 18%, var(--color-bg-raised));
-  color: var(--color-fg);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
   font-size: var(--portal-text-xs);
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -1100,12 +1288,22 @@
     clip-path: inset(50%);
   }
 
+  /*
+   * Each row a card in bands: a header washed in the theme's colour with the title in one flat colour, a strip of
+   * the short facts side by side — label over value, split by thin rules — and the row's buttons
+   * along the foot. A fact too long for a third of a card (an address, a change) is marked
+   * `wideOnPhone` and gets a line of its own under the header.
+   */
   .cardsOnPhone tr {
-    margin: 10px 12px;
-    padding: 8px 4px;
-    border: 1px solid var(--color-border-faint);
-    border-radius: var(--portal-radius, 12px);
+    --card-tint: color-mix(in srgb, var(--color-accent) 9%, var(--color-bg-raised));
+    display: flex;
+    flex-wrap: wrap;
+    margin: 12px;
+    border: 1px solid var(--portal-panel-border, var(--color-border-faint));
+    border-radius: var(--portal-radius, 14px);
     background: var(--color-bg-raised);
+    box-shadow: var(--portal-shadow, none);
+    overflow: clip;
   }
 
   .cardsOnPhone tbody tr:hover {
@@ -1113,50 +1311,263 @@
   }
 
   /*
-   * Not `tr:last-child td` as well: it outranked the first-cell and actions rules below, so the
-   * last card alone had its title pushed right and its buttons pushed left. The last row's
-   * border is already gone from the desktop rule.
+   * A fact in the strip. The rule between two is a shadow to the left of each, so the first in a
+   * line has its rule clipped off by the card's own edge and no selector has to find it.
+   * Not `tr:last-child td` as well: it outranked the title and footer rules below.
    */
   .cardsOnPhone td {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 6px 12px;
+    flex: 1 1 30%;
+    flex-direction: column;
+    order: 3;
+    align-items: flex-start;
+    gap: 4px;
+    min-width: 0;
+    padding: 12px 16px 14px 20px;
+    border-top: 1px solid var(--color-border-faint);
     border-bottom: 0;
+    box-shadow: -1px 0 0 var(--color-border-faint);
+    background: var(--card-tint);
+    color: var(--color-fg);
+    font-size: var(--portal-text-md);
+    font-weight: 600;
     white-space: normal;
-    text-align: right;
+    text-align: left;
   }
 
   .cardsOnPhone td[data-label]::before {
     content: attr(data-label);
-    flex: none;
-    color: var(--color-fg-muted);
-    font-size: var(--portal-text-xs);
-    font-weight: 600;
-    text-align: left;
+    color: var(--color-accent);
+    font-size: var(--portal-label-size, 11px);
+    font-weight: var(--portal-label-weight, 700);
+    letter-spacing: var(--portal-label-tracking, 0.06em);
+    text-transform: uppercase;
   }
 
-  /* The first cell is the card's title, and needs no label to say so. */
+  /* A long fact: a line across the card under the header, label over value as in the strip. */
+  .cardsOnPhone td.wideOnPhone {
+    flex: 1 1 100%;
+    order: 2;
+    padding-right: 20px;
+    box-shadow: none;
+    background: var(--color-bg-raised);
+    overflow-wrap: break-word;
+  }
+
+  /* The first cell is the card's title, on the theme's colour, and needs no label to say so. */
   .cardsOnPhone td:first-child {
-    text-align: left;
+    flex: 1 1 100%;
+    flex-direction: row;
+    order: 0;
+    align-items: center;
+    padding: 14px 20px;
+    border-top: 0;
+    box-shadow: none;
+    background: color-mix(in srgb, var(--color-accent) 16%, var(--color-bg-raised));
+    font-size: var(--portal-text-lg);
+    font-weight: 700;
   }
 
   .cardsOnPhone td:first-child::before {
     display: none;
   }
 
-  .cardsOnPhone .rowActions {
+  /* A last cell with no label is the row's buttons, along the foot of the card. */
+  .cardsOnPhone td:last-child:not([data-label]):not(:first-child) {
+    flex: 1 1 100%;
+    flex-direction: row;
+    order: 4;
+    align-items: center;
     justify-content: flex-end;
+    padding: 10px 16px;
+    box-shadow: none;
+    background: var(--color-bg-raised);
+  }
+
+  /* A long name wraps on a card rather than being cut; the contact line under it keeps its cut. */
+  .cardsOnPhone .whoText strong {
+    font-size: var(--portal-text-lg);
+    white-space: normal;
+    overflow-wrap: break-word;
+  }
+
+  .cardsOnPhone .whoText > :not(strong) {
+    font-weight: 400;
+  }
+
+  .oneLine.cardsOnPhone .who {
+    max-width: none;
   }
 
   /* The one-line cut is for a row across the screen. On a card the address has the room. */
   .oneLine.cardsOnPhone td:nth-child(2) {
     max-width: none;
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
   }
 
   .boxed:has(.cardsOnPhone) {
+    max-height: none;
+  }
+
+  /*
+   * A list of people on a phone: each household a business card like the dashboard's, in the
+   * theme's colour, with its monogram and name across the top, its sign-in address under them,
+   * the short facts in a row of three, and its buttons along the foot.
+   */
+  .businessCards,
+  .businessCards tbody {
+    display: block;
+    width: auto;
+  }
+
+  .businessCards thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .businessCards tbody tr,
+  .businessCards tbody tr:hover {
+    --biz-bg: var(--color-accent);
+    --biz-fg: var(--color-on-accent);
+    position: relative;
+    display: grid;
+    /* Size is the longest of the three facts: "2 adults · 2 children". */
+    grid-template-columns: minmax(0, 1.5fr) repeat(2, minmax(0, 1fr));
+    gap: 14px 16px;
+    margin: 12px;
+    padding: 18px 20px 12px;
+    border-radius: var(--portal-radius, 14px);
+    background: var(--biz-bg);
+    color: var(--biz-fg);
+    box-shadow: 0 10px 24px color-mix(in srgb, var(--biz-bg) 26%, transparent);
+    overflow: clip;
+  }
+
+  .businessCards tr::after {
+    content: '';
+    position: absolute;
+    top: -110px;
+    right: -80px;
+    width: 220px;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--biz-fg) 8%, transparent);
+    pointer-events: none;
+  }
+
+  .businessCards td {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    width: auto;
+    min-width: 0;
+    max-width: none;
+    padding: 0;
+    border: 0;
+    color: inherit;
+    font-size: var(--portal-text-md);
+    font-weight: 700;
+    white-space: normal;
+    text-align: left;
+    overflow-wrap: break-word;
+  }
+
+  .businessCards td[data-label]::before {
+    content: attr(data-label);
+    font-size: var(--portal-label-size, 11px);
+    font-weight: var(--portal-label-weight, 700);
+    letter-spacing: var(--portal-label-tracking, 0.08em);
+    text-transform: uppercase;
+    opacity: 0.78;
+  }
+
+  /* The name and the sign-in address each take the card's width; the facts share a row. */
+  .businessCards td:first-child,
+  .businessCards td.wideOnPhone,
+  .businessCards td.rowActions {
+    grid-column: 1 / -1;
+  }
+
+  .businessCards td:first-child::before {
+    display: none;
+  }
+
+  .businessCards td.wideOnPhone {
+    font-weight: 600;
+  }
+
+  .oneLine.businessCards td:nth-child(2) {
+    max-width: none;
+    overflow: visible;
+  }
+
+  .oneLine.businessCards .who {
+    max-width: none;
+  }
+
+  .businessCards .initials {
+    width: 46px;
+    height: 46px;
+    background: var(--biz-fg);
+    color: var(--biz-bg);
+    font-size: 15px;
+    font-weight: 800;
+  }
+
+  .businessCards .whoText strong {
+    font-family: var(--font-display);
+    font-size: 21px;
+    line-height: 1.15;
+    white-space: normal;
+    overflow-wrap: break-word;
+  }
+
+  .businessCards span.muted {
+    color: inherit;
+    font-weight: 400;
+    opacity: 0.82;
+  }
+
+  /* Pills in the card's two colours: paid is the card turned round, the rest an outline of ink. */
+  .businessCards :is(.pillLive, .pillPast, .pillTag) {
+    padding: 2px 10px;
+    border: 1px solid color-mix(in srgb, var(--biz-fg) 55%, transparent);
+    background: transparent;
+    color: inherit;
+  }
+
+  .businessCards .pillLive {
+    border-color: var(--biz-fg);
+    background: var(--biz-fg);
+    color: var(--biz-bg);
+  }
+
+  .businessCards td.rowActions {
+    flex-direction: row;
+    justify-content: flex-end;
+    padding-top: 10px;
+    border-top: 1px solid color-mix(in srgb, var(--biz-fg) 22%, transparent);
+  }
+
+  /* The row's own buttons in the card's ink, not the items of a menu opened from it. */
+  .businessCards .rowActions :is(a, button):not(ul *) {
+    border-color: color-mix(in srgb, var(--biz-fg) 55%, transparent);
+    background: transparent;
+    color: var(--biz-fg);
+  }
+
+  .businessCards .rowActions :is(a, button):not(ul *):hover {
+    background: color-mix(in srgb, var(--biz-fg) 14%, transparent);
+    color: var(--biz-fg);
+  }
+
+  .boxed:has(.businessCards) {
     max-height: none;
   }
 

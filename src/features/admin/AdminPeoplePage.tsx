@@ -14,7 +14,7 @@ import { RemoveHousehold } from '@/components/RemoveHousehold'
 import { RowMenu } from '@/components/RowMenu'
 import { formatLongDate } from '@/domain/dates'
 import { committeeCsv, committeeCsvFilename } from '@/domain/committeeExport'
-import { describeSize, householdMatches, type Household } from '@/domain/household'
+import { describeSize, householdInitials, householdMatches, type Household } from '@/domain/household'
 import type { HouseholdDraft } from '@/domain/household'
 import {
   useAddHousehold,
@@ -37,13 +37,6 @@ const FILTERS: Record<FilterKey, { label: string; keep: (h: Household) => boolea
   lapsed: { label: 'Lapsed', keep: (h) => h.membership.status !== 'active' },
   never: { label: 'Never signed in', keep: (h) => !h.googleEmail },
   admins: { label: 'Admins', keep: (h) => h.role === 'admin' },
-}
-
-/** Two letters for the circle beside a household: its first and last word. */
-function initialsOf(name: string): string {
-  const words = name.replace(/^the\s+/i, '').trim().split(/\s+/).filter(Boolean)
-  if (words.length === 0) return '?'
-  return (words.length === 1 ? words[0].slice(0, 2) : words[0][0] + words[words.length - 1][0]).toUpperCase()
 }
 
 export function AdminPeoplePage() {
@@ -281,7 +274,7 @@ export function AdminPeoplePage() {
                       {formatLongDate(attempt.lastTriedAt)}
                       {attempt.attempts > 1 ? `, ${attempt.attempts} times` : ''}
                     </td>
-                    <td data-label="What to do">
+                    <td data-label="What to do" className={styles.wideOnPhone}>
                       <span className={styles.actions}>
                         <Button
                           variant="gold"
@@ -408,7 +401,7 @@ export function AdminPeoplePage() {
           // Its own scroll, with the column labels pinned: forty households is a page of its own,
           // and the explanation under the table should not need a hunt to find.
           <div className={styles.boxed} tabIndex={0} role="region" aria-label="Members list">
-            <table className={`${styles.table} ${styles.oneLine} ${styles.cardsOnPhone}`}>
+            <table className={`${styles.table} ${styles.oneLine} ${styles.businessCards} ${styles.rows}`}>
               <thead>
                 <tr>
                   <th>Household</th>
@@ -427,7 +420,7 @@ export function AdminPeoplePage() {
                     <td data-label="Household">
                       <span className={styles.who}>
                         <span className={styles.initials} aria-hidden="true">
-                          {initialsOf(household.name)}
+                          {householdInitials(household.name)}
                         </span>
                         <span className={styles.whoText}>
                           <strong>
@@ -442,7 +435,7 @@ export function AdminPeoplePage() {
                         </span>
                       </span>
                     </td>
-                    <td data-label="Google account" className={`${styles.tiny} ${styles.muted}`}>
+                    <td data-label="Google account" className={`${styles.tiny} ${styles.muted} ${styles.wideOnPhone}`}>
                       {household.googleEmail ?? <span className={styles.pillPast}>Never signed in</span>}
                     </td>
                     <td data-label="Size" className={`${styles.num} ${styles.muted} ${styles.nowrap}`}>
