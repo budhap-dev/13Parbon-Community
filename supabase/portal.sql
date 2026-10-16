@@ -90,6 +90,22 @@ create table if not exists portal.people (
 
 create index if not exists people_household_idx on portal.people (household_id);
 
+-- A grown-up's own Google address, so that more than one person in a household can sign in.
+-- The household's `google_email` is still the first one; this is for the second and third — a
+-- couple who each use their own account. Whoever signs in with either reaches the same
+-- household, with the household's role.
+--
+-- An `alter` rather than a column in the table above, because that `create table` has already
+-- run against the live project and would not add it. Not unique on its own: a member's save
+-- writes the new people rows before it deletes the old ones, so for a moment one address is on
+-- two rows of the same household. people_guard_sign_in keeps it to one household instead.
+alter table portal.people
+  add column if not exists google_email text
+  check (google_email is null or (google_email = lower(google_email) and age_group = 'adult'));
+
+create index if not exists people_google_email_idx
+  on portal.people (google_email) where google_email is not null;
+
 
 -- ---------------------------------------------------------------------------
 -- Documents
@@ -175,10 +191,19 @@ create or replace function portal.current_household_id()
   security definer
   set search_path = ''
 as $$
-  select h.id from portal.households h
-    where h.google_email is not null
-      and h.google_email = portal.auth_email()
-    limit 1;
+  -- The household's own address first, then a grown-up's in it. One address is never on two
+  -- households (people_guard_sign_in), so the order only matters for the moment it is on both
+  -- a household and one of its own people — and then both answers are the same household.
+  select coalesce(
+    (select h.id from portal.households h
+       where h.google_email is not null
+         and h.google_email = portal.auth_email()
+       limit 1),
+    (select p.household_id from portal.people p
+       where p.google_email is not null
+         and p.google_email = portal.auth_email()
+       limit 1)
+  );
 $$;
 
 comment on function portal.current_household_id() is
@@ -208,11 +233,10 @@ create or replace function portal.is_admin()
 as $$
   -- A superadmin first, and without looking at a household: the point of one is that it does
   -- not depend on a row somebody else can edit, or on there being a row at all.
+  -- The household's role, for whoever signs in to it: through its own address or a person's.
   select portal.is_superadmin() or coalesce(
     (select h.role = 'admin' from portal.households h
-       where h.google_email is not null
-         and h.google_email = portal.auth_email()
-       limit 1),
+       where h.id = portal.current_household_id()),
     false
   );
 $$;
@@ -977,6 +1001,102 @@ create trigger guard_superadmin
   for each row execute function portal.guard_superadmin();
 
 
+-- ---------------------------------------------------------------------------
+-- A grown-up's own sign-in address
+-- ---------------------------------------------------------------------------
+-- The same three promises the household's address keeps, for the address on a person:
+--   1. It belongs to one household. Two would make "which household is this" a coin toss.
+--   2. Only the committee puts it there or changes it. A member could otherwise hand their
+--      household to any address they liked — or claim one before its owner was invited.
+--   3. Nobody else may take a superadmin's address.
+--
+-- (2) has to allow for how a member saves. Their people are written as new rows and the old
+-- ones then deleted, so a member's save inserts a row carrying the address the committee set.
+-- That is allowed when a row in the same household already carries it: keeping, not adding.
+-- Taking an address off — leaving a person out, or saving them without it — is allowed. It
+-- can only ever lock their own household's person out, which is theirs to decide.
+
+create or replace function portal.people_guard_sign_in()
+  returns trigger
+  language plpgsql
+  security definer
+  set search_path = ''
+as $$
+declare
+  address text := new.google_email;
+begin
+  if address is null then
+    return new;
+  end if;
+
+  -- (1), from everyone including the SQL editor: a unique index would do it if the address
+  -- lived in one table. 23505 and the column's name, so the app says what it already says for
+  -- a household address in use.
+  if exists (select 1 from portal.households h where h.google_email = address and h.id <> new.household_id)
+     or exists (select 1 from portal.people p
+                 where p.google_email = address and p.household_id <> new.household_id and p.id <> new.id) then
+    raise exception 'That google_email already signs in as another household.' using errcode = '23505';
+  end if;
+
+  if portal.auth_email() is null then
+    return new;
+  end if;
+
+  -- Kept as it was. Not `return` on equality alone for an insert: there is no `old` there.
+  if tg_op = 'UPDATE' and address is not distinct from old.google_email then
+    return new;
+  end if;
+  if tg_op = 'INSERT' and exists (
+    select 1 from portal.people p where p.household_id = new.household_id and p.google_email = address
+  ) then
+    return new;
+  end if;
+
+  -- (3), worded as guard_superadmin words it: what, not why.
+  if exists (select 1 from portal.superadmins s where s.email = address) and not portal.is_superadmin() then
+    raise exception 'That sign-in address cannot be used.' using errcode = '45002';
+  end if;
+
+  if portal.is_admin() then
+    return new;
+  end if;
+
+  raise exception 'Only the committee can change the sign-in address.' using errcode = '42501';
+end;
+$$;
+
+comment on function portal.people_guard_sign_in() is
+  'Keeps a person''s sign-in address to one household, set only by the committee, and off a superadmin''s address.';
+
+drop trigger if exists people_guard_sign_in on portal.people;
+create trigger people_guard_sign_in
+  before insert or update on portal.people
+  for each row execute function portal.people_guard_sign_in();
+
+-- And the other way round: a household may not take an address one of another household's
+-- people already signs in with. The unique index covers households against each other.
+create or replace function portal.households_sign_in_not_on_a_person()
+  returns trigger
+  language plpgsql
+  security definer
+  set search_path = ''
+as $$
+begin
+  if new.google_email is not null and exists (
+    select 1 from portal.people p where p.google_email = new.google_email and p.household_id <> new.id
+  ) then
+    raise exception 'That google_email already signs in as another household.' using errcode = '23505';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists households_sign_in_not_on_a_person on portal.households;
+create trigger households_sign_in_not_on_a_person
+  before insert or update of google_email on portal.households
+  for each row execute function portal.households_sign_in_not_on_a_person();
+
+
 -- ===========================================================================
 -- 5. The directory — removed
 -- ===========================================================================
@@ -1021,7 +1141,8 @@ begin
     return new;
   end if;
 
-  if exists (select 1 from portal.households h where h.google_email = address) then
+  if exists (select 1 from portal.households h where h.google_email = address)
+     or exists (select 1 from portal.people p where p.google_email = address) then
     return new;
   end if;
 
@@ -1112,6 +1233,20 @@ create table if not exists portal.audit_log (
 alter table portal.audit_log alter column at set default clock_timestamp();
 alter table portal.audit_log add column if not exists seq bigserial;
 
+/*
+ * Which person, not only which household.
+ *
+ * Since a second grown-up can sign in to a household with an account of their own, "The Sens"
+ * no longer answers "who did this". The address they signed in with does, and the History
+ * page turns it back into a name. Only recorded for somebody matched to a household: an
+ * account acting with none is the superadmin, and naming that address in a table the whole
+ * committee can read would show them exactly who it is (see superadmin.sql).
+ *
+ * Cleared when the household is erased — see forget_actor_email — so the trail keeps what was
+ * done and loses who, as actor_household_id already does.
+ */
+alter table portal.audit_log add column if not exists actor_email text;
+
 create index if not exists audit_log_at_idx on portal.audit_log (at desc);
 create index if not exists audit_log_seq_idx on portal.audit_log (seq desc);
 create index if not exists audit_log_subject_idx on portal.audit_log (subject_kind, subject_id);
@@ -1151,9 +1286,10 @@ begin
     return null;
   end if;
 
-  insert into portal.audit_log (actor_household_id, action, subject_kind, subject_id, changes)
+  insert into portal.audit_log (actor_household_id, actor_email, action, subject_kind, subject_id, changes)
   values (
     portal.current_household_id(),
+    case when portal.current_household_id() is not null then portal.auth_email() end,
     lower(tg_op),
     tg_table_name,
     coalesce(after ->> 'id', before ->> 'id', '?'),
@@ -1171,6 +1307,25 @@ $$;
 
 comment on function portal.record_change() is
   'Records an insert, update or delete in audit_log. Attached after the fact, so it cannot be skipped.';
+
+-- A household erased takes its addresses out of the trail with it. Before the delete, because
+-- the foreign key's `set null` runs with it and after that there is no telling whose rows they
+-- were. As owner, because the trail has no update policy for anybody else.
+create or replace function portal.forget_actor_email()
+  returns trigger
+  language plpgsql
+  security definer
+  set search_path = ''
+as $$
+begin
+  update portal.audit_log set actor_email = null where actor_household_id = old.id;
+  return old;
+end;
+$$;
+
+drop trigger if exists forget_actor_email on portal.households;
+create trigger forget_actor_email before delete on portal.households
+  for each row execute function portal.forget_actor_email();
 
 -- Attached to everything that holds member data or committee decisions. Not to audit_log
 -- itself, for obvious reasons.

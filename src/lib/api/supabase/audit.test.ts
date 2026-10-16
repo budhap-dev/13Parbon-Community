@@ -97,6 +97,41 @@ describe('reading the trail the database keeps', () => {
     expect(actorName(row({ households: null, actor_household_id: null }))).toBe('The committee')
   })
 
+  /*
+   * Two grown-ups can sign in to one household with accounts of their own, so the household is
+   * no longer an answer to "who did this". The address they signed in with is.
+   */
+  it('names the person, not only the household, from the address they signed in with', () => {
+    const sens = {
+      name: 'The Sens',
+      contact_name: 'Rina Sen',
+      google_email: 'rina.sen@gmail.com',
+      people: [
+        { name: 'Rina Sen', google_email: null },
+        { name: 'Arjun Sen', google_email: 'arjun.sen@gmail.com' },
+      ],
+    }
+    // A grown-up's own address is theirs.
+    expect(actorName(row({ households: sens, actor_email: 'Arjun.Sen@gmail.com' }))).toBe('Arjun Sen, The Sens')
+    // The household's own is the main contact's.
+    expect(actorName(row({ households: sens, actor_email: 'rina.sen@gmail.com' }))).toBe('Rina Sen, The Sens')
+    // On nobody any more, it is shown as what it is rather than guessed at.
+    expect(actorName(row({ households: sens, actor_email: 'unlinked@gmail.com' }))).toBe('unlinked@gmail.com, The Sens')
+    // A line from before addresses were recorded says what it always said.
+    expect(actorName(row({ households: sens }))).toBe('The Sens')
+  })
+
+  it('keeps the address on the entry, so the screen can show what the name was read from', () => {
+    expect(toEntry(row({ actor_email: 'arjun.sen@gmail.com' })).actorAddress).toBe('arjun.sen@gmail.com')
+    expect(toEntry(row())).not.toHaveProperty('actorAddress')
+  })
+
+  it('asks for each household’s people alongside it, which is where the names are', async () => {
+    const { client, calls } = fakeClient()
+    await auditMethods(async () => client).list({ householdId: 'h', role: 'admin' })
+    expect(calls).toContain('select(*,households(name,contact_name,google_email,people(*)))')
+  })
+
   it('reads an entry with no changes recorded as no changes, not as a crash', () => {
     expect(toEntry(row({ changes: null })).changes).toEqual({})
   })

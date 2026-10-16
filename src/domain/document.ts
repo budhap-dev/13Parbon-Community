@@ -1,3 +1,5 @@
+import { signInAddresses } from './household'
+
 /** A Google account that signed in but matched no household. */
 export type SignInAttempt = {
   id: string
@@ -25,8 +27,9 @@ export type SignInAttempt = {
  */
 export function unresolved(
   attempts: SignInAttempt[] | undefined,
-  households: readonly { googleEmail: string | null }[] = [],
+  households: readonly Parameters<typeof signInAddresses>[0][] = [],
 ): SignInAttempt[] {
-  const onTheList = new Set(households.flatMap((h) => (h.googleEmail ? [h.googleEmail.trim().toLowerCase()] : [])))
+  // A person's own address counts too: linking somebody to a member is an answer as well.
+  const onTheList = new Set(households.flatMap(signInAddresses))
   return attempts?.filter((attempt) => !attempt.resolved && !onTheList.has(attempt.email.trim().toLowerCase())) ?? []
 }

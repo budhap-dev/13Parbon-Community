@@ -190,7 +190,15 @@ export function AdminAuditPage() {
                       {/* The page has always promised this — "who made it, and what it was
                           before" — and the database has always recorded it. It was read out of
                           the database, dropped on the way to the screen, and never shown. */}
-                      <td data-label="Who">{entry.actor}</td>
+                      <td data-label="Who">
+                        {entry.actor}
+                        {/* The address too, so the name can be checked: it is what they signed in with. */}
+                        {entry.actorAddress && !entry.actor.startsWith(entry.actorAddress) ? (
+                          <span className={`${styles.muted} ${styles.tiny}`} style={{ display: 'block', overflowWrap: 'anywhere' }}>
+                            {entry.actorAddress}
+                          </span>
+                        ) : null}
+                      </td>
                       <td data-label="What">
                         <strong>{describeAction(entry.action)}</strong>
                       </td>

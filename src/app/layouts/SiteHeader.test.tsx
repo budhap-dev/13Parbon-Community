@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router'
 import { TestDataProviders } from '@/test/render'
 import { ThemeProvider } from '../theme/ThemeContext'
 import { SiteHeader } from './SiteHeader'
+import { versionLabel } from '../version'
 
 describe('SiteHeader', () => {
   it('links the brand home and lists the public navigation', () => {
@@ -154,8 +155,9 @@ describe('SiteHeader', () => {
       </TestDataProviders>,
     )
     await userEvent.click(screen.getByRole('button', { name: 'Open menu' }))
-    // Comes from package.json at build time, so it can never drift from the release.
-    expect(screen.getByText(new RegExp(`v${__APP_VERSION__.replace(/\./g, '\\.')}$`))).toBeInTheDocument()
+    // Comes from package.json and the commit at build time, so it can never drift from the release.
+    expect(screen.getByText(new RegExp(`${versionLabel.replace(/[.·]/g, '\\$&')}$`))).toBeInTheDocument()
+    expect(versionLabel).toMatch(new RegExp(`^v${__APP_VERSION__.replace(/\./g, '\\.')}( · [0-9a-f]{7})?$`))
   })
 
   /*

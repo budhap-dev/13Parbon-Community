@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { HouseholdDraft, Viewer } from '@/domain/household'
+import { draftOfHousehold, type HouseholdDraft, type Viewer } from '@/domain/household'
 import { createMockApi } from './index'
 
 /**
@@ -262,7 +262,7 @@ describe('the committee managing households', () => {
   it('refuses a sign-in address that already belongs to somebody', async () => {
     const a = api()
     await expect(a.portal.addHousehold({ ...draft, googleEmail: 'rina.sen@gmail.com' }, admin)).rejects.toThrow(
-      /already belongs/i,
+      /already signs in as another household/i,
     )
   })
 
@@ -287,6 +287,54 @@ describe('the committee managing households', () => {
     const last = admins[admins.length - 1]
     await expect(a.portal.updateHousehold(last.id, { ...draft, role: 'member' }, admin)).rejects.toThrow(/last admin/i)
     expect((await a.portal.getHousehold(last.id, admin))?.role).toBe('admin')
+  })
+})
+
+/**
+ * A grown-up's own sign-in address. Mirrors portal.people_guard_sign_in, block for block with
+ * the "A grown-up's own sign-in address" section of verify.sql.
+ */
+describe('a person signing in with an address of their own', () => {
+  /** The Sens as they stand, with Arjun given his own address. */
+  const withArjun = async (a: ReturnType<typeof api>, address = 'arjun.sen@gmail.com') => {
+    const sens = (await a.portal.getHousehold('hh-sen', admin))!
+    const draft = draftOfHousehold(sens)
+    draft.people = draft.people.map((p) => (p.name === 'Arjun Sen' ? { ...p, googleEmail: address } : p))
+    return draft
+  }
+
+  it('is linked by the committee, and then reaches that household', async () => {
+    const a = api()
+    await a.portal.updateHousehold('hh-sen', await withArjun(a), admin)
+    expect(await a.portal.identify('Arjun.Sen@gmail.com')).toEqual({ id: 'hh-sen', name: 'The Sens', role: 'member' })
+  })
+
+  it('cannot be given out by a member, even in their own household', async () => {
+    const a = api()
+    await expect(a.portal.updateHousehold('hh-sen', await withArjun(a), member)).rejects.toThrow(/committee/i)
+    expect(await a.portal.identify('arjun.sen@gmail.com')).toBeNull()
+  })
+
+  it('survives the household saving its own details', async () => {
+    const a = api()
+    await a.portal.updateHousehold('hh-sen', await withArjun(a), admin)
+    const draft = draftOfHousehold((await a.portal.getHousehold('hh-sen', member))!)
+    await a.portal.updateHousehold('hh-sen', { ...draft, phone: '07700 900123' }, member)
+    expect((await a.portal.identify('arjun.sen@gmail.com'))?.id).toBe('hh-sen')
+  })
+
+  it('cannot be an address that already signs in as another household', async () => {
+    const a = api()
+    await expect(a.portal.updateHousehold('hh-sen', await withArjun(a, 'd.chatterjee@gmail.com'), admin)).rejects.toThrow(
+      /already signs in as another household/i,
+    )
+  })
+
+  it('cannot be a superadmin\'s address', async () => {
+    const a = createMockApi({ superadmins: ['owner@gmail.com'] })
+    await expect(a.portal.updateHousehold('hh-sen', await withArjun(a, 'owner@gmail.com'), admin)).rejects.toThrow(
+      /cannot be used/i,
+    )
   })
 })
 

@@ -160,6 +160,7 @@ describe('the portal’s header and footer', () => {
     const footer = await screen.findByRole('contentinfo')
     expect(footer).toHaveTextContent(`© ${new Date().getFullYear()} 13Parbon Community`)
     expect(footer).toHaveTextContent(`Portal v${__APP_VERSION__}`)
+    if (__APP_BUILD__) expect(footer).toHaveTextContent(`· ${__APP_BUILD__}`)
     expect(within(footer).getByRole('link', { name: 'Privacy notice' })).toHaveAttribute('href', '/privacy')
   })
 })

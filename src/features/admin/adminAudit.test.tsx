@@ -61,6 +61,23 @@ describe('what has changed', () => {
    * width of the table, which set the width of the panel, which took the entire screen sideways
    * with the navigation on it. Found 2026-09-17.
    */
+  // Two grown-ups can share a household, so "who" is the person, with the address it was read from.
+  it('says which person in the household made the change', async () => {
+    const entry: AuditEntry = {
+      id: 'au-1',
+      at: '2026-10-16T10:00:00',
+      action: 'update households',
+      actorHouseholdId: 'hh-sen',
+      actor: 'Arjun Sen, The Sens',
+      actorAddress: 'arjun.sen@gmail.com',
+      subject: { kind: 'households', id: 'hh-sen' },
+      changes: { phone: { from: '07700 900001', to: '07700 900123' } },
+    }
+    renderAt('/admin/audit', admin, { ...createMockApi(), audit: { list: async () => [entry] } })
+    const who = await screen.findByText('Arjun Sen, The Sens')
+    expect(within(who).getByText('arjun.sen@gmail.com')).toBeInTheDocument()
+  })
+
   it('cuts a very long value down, and keeps the whole of it on the row', async () => {
     const api = withAuditTrail(createMockApi())
     const message = (await api.contact.listMessages({ householdId: 'hh-chatterjee', role: 'admin' })).find(

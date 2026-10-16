@@ -168,6 +168,29 @@ whoever owns it would be matched to a household and shown its contents.
    should get nothing back. That is the whole point of step 3, and it is the one thing worth
    testing by hand.
 
+## More than one person in a household
+
+A household's own Google address is the first way in. Any adult in it can also have one of their
+own (`portal.people.google_email`), so a couple can each sign in with their own account. Both land
+in the same household, with that household's role.
+
+- **From a knock:** on People, under *Tried to sign in, not on the list*, press **Link to a member**,
+  pick the adult and confirm. If that household is on the committee, the dialog says so first,
+  because the person it lets in becomes an admin too.
+- **By hand:** in a household's form, each adult has a *Their own Google sign-in* field. Only the
+  committee sees it; the household sees the address, read-only.
+
+The database enforces the rest: one address belongs to one household only, a member cannot add or
+change one (an ordinary save of their own household keeps it), a child never has one, and nobody
+but the superadmin can put a superadmin's address on anyone. The column and those rules are in
+`portal.sql`.
+
+The change log (History) names the person, not just the household: each line records the address
+they signed in with, shown as "Arjun Sen, The Sens", with the address beneath. Lines written before
+this change still show only the household. Erasing a household also clears its addresses from the log.
+
+On a database set up before 2026-10-16, re-run `portal.sql`, then `feedback.sql`, then `verify.sql`.
+
 ## The one account nobody else can remove
 
 Every admin can demote or remove every other admin. That is right for a committee, and wrong for

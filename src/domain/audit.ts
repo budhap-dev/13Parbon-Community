@@ -19,6 +19,11 @@ export type AuditEntry = {
    * a household since erased.
    */
   actor: string
+  /**
+   * The Google address they signed in with, where the database recorded one. Two grown-ups
+   * can sign in to one household, so the household alone does not say which of them it was.
+   */
+  actorAddress?: string
   /** What was done, in the same words `can()` uses, so the two can be read against each other. */
   action: string
   /** What it was done to: a table and a row. */
