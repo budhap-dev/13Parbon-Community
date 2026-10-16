@@ -122,6 +122,31 @@
   outline-offset: 2px;
 }
 
+.closeCross {
+  display: none;
+}
+
+/* A touch screen, where there is no Esc key to press: a cross, at a size a thumb can find. */
+@media (pointer: coarse) {
+  .close {
+    display: grid;
+    place-items: center;
+    min-width: 40px;
+    min-height: 40px;
+    padding: 0;
+    border-color: transparent;
+    border-radius: 10px;
+  }
+
+  .closeKey {
+    display: none;
+  }
+
+  .closeCross {
+    display: block;
+  }
+}
+
 .results {
   flex: 1 1 auto;
   min-height: 0;

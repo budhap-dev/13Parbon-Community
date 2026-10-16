@@ -251,6 +251,9 @@ export function PortalLayout() {
   const phone = useSyncExternalStore(onPhone, isPhone, () => false)
   const navsRef = useRef<HTMLDivElement>(null)
   const pillReady = useSlidingPill(navsRef, `${pathname}|${onTheCommittee}|${tools.length}|${Boolean(who)}`)
+  // The bottom bar's highlight slides the same way. Keyed on the phone too: the bar comes and goes with it.
+  const tabsRef = useRef<HTMLElement>(null)
+  const tabPillReady = useSlidingPill(tabsRef, `${pathname}|${onTheCommittee}|${phone}|${Boolean(who)}`)
   if (!who) return null
 
   // The ones still wanting an answer, which is what each screen itself shows. Counting all of
@@ -492,7 +495,14 @@ export function PortalLayout() {
         * screen, rather than behind the menu at the top of a long table.
         */}
       {onTheCommittee && phone ? (
-        <nav aria-label="Quick links" className={styles.tabBar} inert={menuOpen || undefined}>
+        <nav
+          ref={tabsRef}
+          aria-label="Quick links"
+          className={styles.tabBar}
+          data-pill={tabPillReady || undefined}
+          inert={menuOpen || undefined}
+        >
+          <span aria-hidden="true" className={styles.tabPill} />
           {quickLinks.map((item) => (
             <NavLink
               key={item.to}

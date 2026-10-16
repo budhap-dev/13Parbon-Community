@@ -27,8 +27,9 @@ export function useSlidingPill(box: RefObject<HTMLElement | null>, where: unknow
       }
       const outer = el.getBoundingClientRect()
       const r = on.getBoundingClientRect()
-      el.style.setProperty('--pill-x', `${r.left - outer.left + el.scrollLeft}px`)
-      el.style.setProperty('--pill-y', `${r.top - outer.top + el.scrollTop}px`)
+      // Less the box's own border: the pill is placed from inside it, the measures from outside.
+      el.style.setProperty('--pill-x', `${r.left - outer.left - el.clientLeft + el.scrollLeft}px`)
+      el.style.setProperty('--pill-y', `${r.top - outer.top - el.clientTop + el.scrollTop}px`)
       el.style.setProperty('--pill-w', `${r.width}px`)
       el.style.setProperty('--pill-h', `${r.height}px`)
       el.style.setProperty('--pill-o', '1')
