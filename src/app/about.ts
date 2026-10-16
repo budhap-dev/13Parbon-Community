@@ -86,6 +86,20 @@ export const about = {
     { role: 'Media Secretary', name: 'Mrs. Kuhu Panda' },
     { role: 'Event Secretary', name: 'Mr. Budhaditya Pandit' },
   ],
+  /* The roles offered for the committee until the committee keeps its own list in the portal. */
+  committeeRoles: [
+    'President',
+    'Vice President',
+    'Secretary',
+    'Asst. Secretary',
+    'Treasurer',
+    'Asst. Treasurer',
+    'Cultural Secretary',
+    'Event Secretary',
+    'Marketing and Publicity Secretary',
+    'Media Secretary',
+    'Committee Member',
+  ],
   /*
    * The members' roll: names only. Nothing here says where anyone lives, how old they are or
    * how to reach them, and it is the committee's to keep current — take a name out the day

@@ -36,6 +36,7 @@ export type IconName =
   | 'search'
   | 'info'
   | 'help'
+  | 'grip'
 
 const paths: Record<IconName, ReactElement> = {
   users: (
@@ -176,6 +177,8 @@ const paths: Record<IconName, ReactElement> = {
     </>
   ),
   message: <path d="M4 5h16v12H8l-4 4z" />,
+  // Two columns of dots: something to take hold of and drag.
+  grip: <path strokeWidth={3.5} d="M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01" />,
   trash: (
     <>
       <path d="M4 7h16M10 7V5h4v2M6 7l1 13h10l1-13" />

@@ -43,6 +43,13 @@ describe('laying saved content over what the code says', () => {
     expect(mergeSettings({ festivals: [] }, defaultSettings).festivals).toEqual([])
   })
 
+  it('takes the committee’s roles, tidied, and the code’s list when none were saved', () => {
+    expect(mergeSettings({ showNews: true }, defaultSettings).committeeRoles).toEqual(defaultSettings.committeeRoles)
+    const merged = mergeSettings({ committeeRoles: [' Treasurer ', 'treasurer', '', 7, 'Youth Lead'] }, defaultSettings)
+    expect(merged.committeeRoles).toEqual(['Treasurer', 'Youth Lead'])
+    expect(mergeSettings({ committeeRoles: 'Treasurer' }, defaultSettings).committeeRoles).toEqual(defaultSettings.committeeRoles)
+  })
+
   it('never lets a script out as a link', () => {
     const merged = mergeSettings(
       {

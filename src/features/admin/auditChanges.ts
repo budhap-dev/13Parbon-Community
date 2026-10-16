@@ -16,6 +16,7 @@ const NAMES: Record<string, string> = {
   ...Object.fromEntries(Object.entries(SITE_TEXT_FIELDS).map(([key, { label }]) => [key, label])),
   faq: SITE_SECTIONS.faq,
   committee: SITE_SECTIONS.committee,
+  committeeRoles: 'The committee’s roles',
   members: SITE_SECTIONS.roll,
   festivals: SITE_SECTIONS.festivals,
   story: SITE_SECTIONS.story,

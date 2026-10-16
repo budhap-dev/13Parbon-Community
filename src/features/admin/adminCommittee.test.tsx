@@ -28,7 +28,35 @@ describe('the committee, on People', () => {
     expect(screen.getByRole('tab', { name: 'Committee' })).toHaveAttribute('aria-selected', 'true')
     const list = await committee()
     expect(within(list).getByLabelText('Role 1')).toHaveValue('Secretary')
-    expect(within(list).getByLabelText('Name 1')).toHaveValue('Mr. Dalim Ghosh')
+    expect(within(list).getByLabelText('Title 1')).toHaveValue('Mr.')
+    expect(within(list).getByLabelText('Name 1')).toHaveValue('Dalim Ghosh')
+  })
+
+  it('offers the roles and the households’ grown-ups to choose from', async () => {
+    renderAt('/admin/people?tab=committee')
+    const list = await committee()
+    const role = within(list).getByLabelText('Role 1')
+    expect(within(role).getByRole('option', { name: 'Treasurer' })).toBeInTheDocument()
+
+    const name = within(list).getByLabelText('Name 1')
+    // Somebody saved before the households knew them is kept, and said to be.
+    expect(within(within(name).getByRole('group', { name: 'Not in a household' })).getByRole('option', { name: 'Dalim Ghosh' })).toBeInTheDocument()
+    expect(within(name).getByRole('option', { name: 'Rina Sen' })).toBeInTheDocument()
+    // Children are not on the list.
+    expect(within(name).queryByRole('option', { name: 'Mira Sen' })).not.toBeInTheDocument()
+
+    await userEvent.selectOptions(name, 'Rina Sen')
+    await userEvent.selectOptions(within(list).getByLabelText('Title 1'), 'Mrs.')
+    expect(within(list).getAllByText('Mrs. Rina Sen')[0]).toBeInTheDocument()
+  })
+
+  it('takes a role that is not on the list', async () => {
+    renderAt('/admin/people?tab=committee')
+    const list = await committee()
+    await userEvent.selectOptions(within(list).getByLabelText('Role 1'), 'Another role…')
+    await userEvent.type(within(list).getByLabelText('Role 1, in your words'), 'Youth Lead')
+    expect(within(list).getAllByText('Youth Lead')[0]).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Save the committee' })).toBeEnabled()
   })
 
   it('says the order is not a ranking, because somebody will wonder', async () => {
@@ -51,16 +79,20 @@ describe('the committee, on People', () => {
     expect(rows()).toBe(before)
   })
 
-  it('moves somebody down the list, and up again', async () => {
+  it('moves somebody along with the arrow keys, keeping hold of them', async () => {
     renderAt('/admin/people?tab=committee')
     const list = await committee()
-    const second = (within(list).getByLabelText('Name 2') as HTMLInputElement).value
+    const second = (within(list).getByLabelText('Name 2') as HTMLSelectElement).value
 
-    await userEvent.click(within(list).getByRole('button', { name: 'Move Secretary down' }))
+    within(list).getByRole('button', { name: /^Move Secretary\./ }).focus()
+    await userEvent.keyboard('{ArrowRight}')
     expect(within(list).getByLabelText('Name 1')).toHaveValue(second)
-    expect(within(list).getByLabelText('Name 2')).toHaveValue('Mr. Dalim Ghosh')
-    // The first can go no higher.
-    expect(within(list).getAllByRole('button', { name: /up$/ })[0]).toBeDisabled()
+    expect(within(list).getByLabelText('Name 2')).toHaveValue('Dalim Ghosh')
+    expect(within(list).getByRole('button', { name: /^Move Secretary\./ })).toHaveFocus()
+
+    await userEvent.keyboard('{ArrowLeft}{ArrowLeft}')
+    // The first can go no further.
+    expect(within(list).getByLabelText('Name 1')).toHaveValue('Dalim Ghosh')
   })
 
   it('will not save a blank row, and saves a change', async () => {
@@ -72,10 +104,50 @@ describe('the committee, on People', () => {
     // A blank row is not a change, so there is still nothing to save.
     expect(save).toBeDisabled()
 
-    await userEvent.clear(within(list).getByLabelText('Name 1'))
-    await userEvent.type(within(list).getByLabelText('Name 1'), 'Mrs. Mitra')
+    await userEvent.selectOptions(within(list).getByLabelText('Name 1'), 'Ruma Mitra')
     await userEvent.click(save)
     expect(await screen.findByText(/Saved. The About page changes/)).toBeInTheDocument()
+  })
+
+  it('keeps its own list of roles, which the cards offer', async () => {
+    renderAt('/admin/people?tab=committee')
+    const list = await committee()
+    const roles = screen.getByRole('list', { name: 'Roles to choose from' })
+    expect(within(roles).getByLabelText('Role name 1')).toHaveValue('President')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Add a role' }))
+    const added = within(roles).getAllByLabelText(/^Role name \d+$/).at(-1)!
+    expect(added).toHaveFocus()
+    await userEvent.type(added, 'Youth Lead')
+
+    expect(within(within(list).getByLabelText('Role 1')).getByRole('option', { name: 'Youth Lead' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Save the committee' })).toBeEnabled()
+  })
+
+  it('renames a role on the cards that hold it', async () => {
+    renderAt('/admin/people?tab=committee')
+    const list = await committee()
+    const roles = screen.getByRole('list', { name: 'Roles to choose from' })
+    const secretary = within(roles).getByDisplayValue('Secretary')
+    // Who holds a role is said by name, and a role nobody holds is said to be unused.
+    expect(within(roles).getByText('Mr. Dalim Ghosh')).toBeInTheDocument()
+    expect(within(roles).getAllByText('Not in use').length).toBeGreaterThan(0)
+
+    await userEvent.clear(secretary)
+    await userEvent.type(secretary, 'General Secretary')
+    await userEvent.tab()
+    expect(within(list).getByLabelText('Role 1')).toHaveValue('General Secretary')
+  })
+
+  it('takes a role off the list without taking it off a card', async () => {
+    renderAt('/admin/people?tab=committee')
+    const list = await committee()
+    await userEvent.click(screen.getByRole('button', { name: 'Remove the role Treasurer' }))
+    await confirmRemove()
+
+    const role = within(list).getByLabelText('Role 3')
+    expect(role).toHaveValue('Treasurer')
+    expect(within(within(role).getByRole('group', { name: 'Not on the list' })).getByRole('option', { name: 'Treasurer' })).toBeInTheDocument()
   })
 
   it('takes an address from before the move to the committee’s new home', async () => {
