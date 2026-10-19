@@ -99,6 +99,11 @@
   border-radius: 50%;
 }
 
+/* Following the calendar: a calendar, in the colours it would give today (set inline). */
+.swatchCalendar {
+  border-color: var(--color-accent);
+}
+
 .swatchDot {
   width: 12px;
   height: 12px;

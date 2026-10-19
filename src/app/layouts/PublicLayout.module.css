@@ -294,6 +294,36 @@
 }
 
 /*
+ * The narrowest phones, 320px across: the name, the home button and the menu button did not
+ * fit side by side, and the menu button hung two pixels off the edge, so the page scrolled
+ * sideways. Closer together and a size smaller, and neither button gives way.
+ */
+@media (max-width: 380px) {
+  .bar {
+    gap: 10px;
+  }
+
+  .brand {
+    gap: 8px;
+    font-size: var(--text-xl);
+  }
+
+  .emblem {
+    width: 34px;
+    height: 34px;
+  }
+
+  .compact .homeButton,
+  .compact .menuButton {
+    flex: none;
+  }
+
+  .compact .homeButton {
+    margin-right: 0;
+  }
+}
+
+/*
  * The menu becomes a panel that slides in from the right. It stays in the document when
  * closed so the movement can be animated, and is taken out of reach with visibility so
  * nothing inside it can be tabbed to while it is off screen.

@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react'
 import { Icon } from '@/components/Icon'
+import { formatCivil } from '@/domain/bengaliDate'
 import { useTheme } from '../theme/ThemeContext'
 import { type ThemeName } from '../theme/themes'
 import styles from './ThemeSwitcher.module.css'
@@ -28,12 +29,23 @@ export function ThemeSwitcher({
 } = {}) {
   // The list comes from the context, so this draws the festivals on the public site and the
   // committee's own quiet set inside the portal, without knowing which is which.
-  const { theme, setTheme, options: themes } = useTheme()
+  const { theme, setTheme, options: themes, scope, following, follow, season, seasonal, siteTheme } = useTheme()
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
   const panelId = useId()
   const current = themes.find((t) => t.id === theme) ?? themes[0]
+  // On the public site the first choice is no choice: the committee's colours, and each
+  // festival's own around its days.
+  const offersCalendar = scope === 'public'
+  const followingCalendar = offersCalendar && following
+  // What following would wear today, for its swatch: not whatever the viewer has on now.
+  const followed = themes.find((t) => t.id === siteTheme) ?? themes[0]
+  const followHint = !seasonal
+    ? 'The colours the committee has chosen'
+    : season
+      ? `${themes.find((t) => t.id === season.theme)?.name ?? season.theme} colours for ${season.name}, until ${formatCivil(season.end, { day: 'numeric', month: 'long' })}`
+      : 'Our colours now, and each festival’s own around its days'
 
   useEffect(() => {
     if (!open) return
@@ -47,10 +59,14 @@ export function ThemeSwitcher({
     return () => document.removeEventListener('pointerdown', onPointerDown)
   }, [open, panelId])
 
-  const choose = (name: ThemeName) => {
-    setTheme(name)
+  const close = () => {
     setOpen(false)
     buttonRef.current?.focus({ preventScroll: true })
+  }
+
+  const choose = (name: ThemeName) => {
+    setTheme(name)
+    close()
   }
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -74,7 +90,10 @@ export function ThemeSwitcher({
       >
         <Icon name="palette" size={20} />
         <span className={styles.triggerLabel}>Theme</span>
-        <span className={styles.srOnly}>, currently {current.name}</span>
+        <span className={styles.srOnly}>
+          , currently {followingCalendar ? `following the ${seasonal ? 'calendar' : 'website'}, ` : ''}
+          {current.name}
+        </span>
       </button>
 
       <div
@@ -86,8 +105,33 @@ export function ThemeSwitcher({
         role="radiogroup"
         aria-label="Theme"
       >
+        {offersCalendar ? (
+          <button
+            type="button"
+            role="radio"
+            aria-checked={followingCalendar}
+            className={followingCalendar ? styles.optionSelected : styles.option}
+            onClick={() => {
+              follow()
+              close()
+            }}
+          >
+            <span
+              className={`${styles.swatch} ${styles.swatchCalendar}`}
+              style={{ background: followed.swatch[0], borderColor: followed.swatch[1], color: followed.swatch[1] }}
+              aria-hidden="true"
+            >
+              <Icon name="calendar" size={18} />
+            </span>
+            <span className={styles.optionText}>
+              <span className={styles.optionName}>{seasonal ? 'Follow the calendar' : 'Follow the website'}</span>
+              <span className={styles.optionDescription}>{followHint}</span>
+            </span>
+            {followingCalendar ? <Icon name="check" size={18} className={styles.check} /> : null}
+          </button>
+        ) : null}
         {themes.map((option) => {
-          const selected = option.id === theme
+          const selected = option.id === theme && !followingCalendar
           return (
             <button
               key={option.id}

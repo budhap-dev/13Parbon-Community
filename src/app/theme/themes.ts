@@ -91,6 +91,15 @@ export const THEME_STORAGE_KEY = '13parbon:theme'
  */
 export const SITE_THEME_STORAGE_KEY = '13parbon:site-theme'
 export const PORTAL_THEME_STORAGE_KEY = '13parbon:portal-theme'
+/**
+ * What the site wears outside a festival's days, whether the committee lets the festivals in,
+ * and the last day of the festival being worn, if one is. Kept beside SITE_THEME_STORAGE_KEY so
+ * a visitor returning after a festival is over opens in the committee's colours, not the
+ * festival's: index.html reads the last day, and this file works the season out for itself.
+ */
+export const SITE_THEME_BASE_KEY = '13parbon:site-theme-base'
+export const SITE_SEASONS_KEY = '13parbon:site-seasons'
+export const SITE_THEME_UNTIL_KEY = '13parbon:site-theme-until'
 
 /**
  * Which set of looks an address belongs to: the committee's quiet ones under /portal and /admin,
@@ -155,6 +164,15 @@ export function storeTheme(
   }
 }
 
+/** Forgets the viewer's own choice, so the committee's — and the calendar's — shows again. */
+export function forgetTheme(scope: ThemeScope = 'public', storage: Pick<Storage, 'removeItem'> | null = safeStorage()): void {
+  try {
+    storage?.removeItem(keyFor(scope))
+  } catch {
+    // Blocked storage held nothing to forget.
+  }
+}
+
 /** The committee's choice as this browser last heard it, if it ever has. */
 export function readSiteTheme(storage: Pick<Storage, 'getItem'> | null = safeStorage()): ThemeName | null {
   try {
@@ -168,6 +186,32 @@ export function readSiteTheme(storage: Pick<Storage, 'getItem'> | null = safeSto
 export function storeSiteTheme(name: ThemeName, storage: Pick<Storage, 'setItem'> | null = safeStorage()): void {
   try {
     storage?.setItem(SITE_THEME_STORAGE_KEY, name)
+  } catch {
+    // Private mode or blocked storage. The next visit just starts from what the code says.
+  }
+}
+
+export type RememberedSeason = { base: ThemeName | null; seasonal: boolean | null }
+
+export function readSiteSeason(storage: Pick<Storage, 'getItem'> | null = safeStorage()): RememberedSeason {
+  try {
+    const base = storage?.getItem(SITE_THEME_BASE_KEY)
+    const seasonal = storage?.getItem(SITE_SEASONS_KEY)
+    return { base: isThemeForScope(base, 'public') ? base : null, seasonal: seasonal === 'on' ? true : seasonal === 'off' ? false : null }
+  } catch {
+    return { base: null, seasonal: null }
+  }
+}
+
+export function storeSiteSeason(
+  { base, seasonal, until }: { base: ThemeName; seasonal: boolean; until: string | null },
+  storage: Pick<Storage, 'setItem' | 'removeItem'> | null = safeStorage(),
+): void {
+  try {
+    storage?.setItem(SITE_THEME_BASE_KEY, base)
+    storage?.setItem(SITE_SEASONS_KEY, seasonal ? 'on' : 'off')
+    if (until) storage?.setItem(SITE_THEME_UNTIL_KEY, until)
+    else storage?.removeItem(SITE_THEME_UNTIL_KEY)
   } catch {
     // Private mode or blocked storage. The next visit just starts from what the code says.
   }

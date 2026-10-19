@@ -282,6 +282,18 @@ export type SiteSettings = {
    * so the committee can get the list right before any of it is seen.
    */
   showSponsors: boolean
+  /**
+   * Whether the Bengali calendar is on the public website: the year's pujas, festivals and
+   * cultural days by the Bengali date, with the community's own evenings among them. Off until
+   * the committee has looked the dates over against a panjika.
+   */
+  showCalendar: boolean
+  /**
+   * The site in a festival's colours from five days before it to five days after, by the Bengali
+   * calendar, and in `defaultTheme` the rest of the year. A visitor who has picked a theme of
+   * their own keeps it.
+   */
+  seasonalThemes: boolean
   /** Who each home page section is for. */
   home: Record<HomeSection, SectionAudience>
   /**
@@ -409,6 +421,14 @@ export const SETTING_LABELS: Record<keyof Omit<SiteSettings, ContentKey>, { labe
   showSponsors: {
     label: 'Sponsors',
     note: 'The Sponsors page, in the navigation, their logos on the home page, and “sponsored by” on a festival’s evenings. Turn it on once the list on the Sponsors screen is right.',
+  },
+  showCalendar: {
+    label: 'Bengali calendar',
+    note: 'The Calendar page, in the navigation: the year’s pujas, festivals and cultural days by the Bengali date, with our own published evenings among them. Off until the committee has looked the dates over.',
+  },
+  seasonalThemes: {
+    label: 'Festival colours by the calendar',
+    note: 'The website in each festival’s own theme from five days before it to five days after — Boishakhi for Poila Boishakh, Deepavali for Kali Puja and so on — and in the default theme the rest of the year. Visitors who picked a theme of their own keep it.',
   },
   showMemberSignIn: {
     label: 'Member sign-in',
@@ -572,6 +592,8 @@ export function mergeSettings(stored: unknown, defaults: SiteSettings): SiteSett
     showPhotos: bool('showPhotos'),
     showQuizzes: bool('showQuizzes'),
     showSponsors: bool('showSponsors'),
+    showCalendar: bool('showCalendar'),
+    seasonalThemes: bool('seasonalThemes'),
     home,
     homeOrder: Array.isArray(row.homeOrder) ? tidyHomeOrder(row.homeOrder) : defaults.homeOrder,
     heroCard: readHeroCard(row.heroCard) ?? defaults.heroCard,
