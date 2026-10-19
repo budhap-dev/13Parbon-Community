@@ -4,7 +4,7 @@ import { createMemoryRouter, RouterProvider } from 'react-router'
 import { vi } from 'vitest'
 import { defaultSettings } from '@/app/defaults'
 import { routes } from '@/app/router'
-import { SITE_THEME_STORAGE_KEY, THEME_STORAGE_KEY } from '@/app/theme/themes'
+import { SITE_THEME_STORAGE_KEY, THEME_PICK_MARK, THEME_PICK_MARK_KEY, THEME_STORAGE_KEY } from '@/app/theme/themes'
 import type { SiteSettings } from '@/domain/settings'
 import type { ApiClient } from '@/lib/api'
 import { previewAccounts } from '@/lib/auth/previewAccounts'
@@ -348,6 +348,7 @@ describe('the colours a visitor arrives to', () => {
 
   it('leaves alone somebody who has chosen their own', async () => {
     localStorage.setItem(THEME_STORAGE_KEY, 'saraswati')
+    localStorage.setItem(THEME_PICK_MARK_KEY, THEME_PICK_MARK)
     renderAt('/', { api: apiWith({ defaultTheme: 'holi' }) })
     await screen.findByRole('region', { name: 'Who we are' })
     // Long enough for the settings to have arrived and been ignored.

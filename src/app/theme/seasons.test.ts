@@ -45,6 +45,16 @@ describe('the festivals’ colours by the calendar', () => {
     expect(themeOn('2027-04-15')).toBe('poila-boishakh')
   })
 
+  it('carries on into 1434, the next year entered', () => {
+    expect(themeOn('2027-09-29')).toBe('mahalaya')
+    expect(themeOn('2027-10-07')).toBe('festival')
+    expect(themeOn('2027-10-14')).toBe('kojagori')
+    expect(themeOn('2027-10-28')).toBe('deepavali')
+    expect(themeOn('2028-01-31')).toBe('saraswati')
+    expect(themeOn('2028-03-11')).toBe('holi')
+    expect(themeOn('2028-04-14')).toBe('poila-boishakh')
+  })
+
   it('keeps Borodin on Christmas every year, the panjika or not', () => {
     expect(seasonFor('2026-12-20')).toMatchObject({ theme: 'borodin', name: 'Borodin' })
     expect(themeOn('2026-12-19')).toBeNull()

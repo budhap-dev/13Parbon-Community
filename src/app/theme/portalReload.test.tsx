@@ -46,10 +46,21 @@ describe('the first paint, before the app has loaded', () => {
   })
 
   it('leaves the public site as it was', () => {
-    expect(firstPaint('/events', { '13parbon:theme': 'holi', [PORTAL_THEME_STORAGE_KEY]: 'slate' })).toBe('holi')
+    const picked = { '13parbon:theme': 'holi', '13parbon:theme-picked': 'with-calendar' }
+    expect(firstPaint('/events', { ...picked, [PORTAL_THEME_STORAGE_KEY]: 'slate' })).toBe('holi')
     expect(firstPaint('/')).toBeUndefined()
     // Only the portal's own addresses: a page whose name merely begins with the word is public.
     expect(firstPaint('/administration')).toBeUndefined()
+  })
+
+  it('passes over a public pick made before Follow the calendar, for the site’s colours', () => {
+    expect(firstPaint('/events', { '13parbon:theme': 'holi', '13parbon:site-theme': 'deepavali' })).toBe('deepavali')
+  })
+
+  it('opens in the committee’s colours once a festival’s last day has gone', () => {
+    const worn = { '13parbon:site-theme': 'deepavali', '13parbon:site-theme-base': 'borodin' }
+    expect(firstPaint('/', { ...worn, '13parbon:site-theme-until': '2000-01-01' })).toBe('borodin')
+    expect(firstPaint('/', { ...worn, '13parbon:site-theme-until': '2999-01-01' })).toBe('deepavali')
   })
 
   it('knows the same portal themes as the app does', () => {

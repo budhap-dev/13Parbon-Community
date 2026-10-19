@@ -4,7 +4,15 @@ import { ThemeProvider, useTheme } from './ThemeContext'
 import { defaultSettings } from '@/app/defaults'
 import type { ApiClient } from '@/lib/api'
 import { TestDataProviders, createTestApi } from '@/test/render'
-import { SITE_SEASONS_KEY, SITE_THEME_BASE_KEY, SITE_THEME_STORAGE_KEY, SITE_THEME_UNTIL_KEY, THEME_STORAGE_KEY } from './themes'
+import {
+  SITE_SEASONS_KEY,
+  SITE_THEME_BASE_KEY,
+  SITE_THEME_STORAGE_KEY,
+  SITE_THEME_UNTIL_KEY,
+  THEME_PICK_MARK,
+  THEME_PICK_MARK_KEY,
+  THEME_STORAGE_KEY,
+} from './themes'
 
 function Probe() {
   const { theme, setTheme } = useTheme()
@@ -36,6 +44,7 @@ describe('ThemeProvider', () => {
 
   it('prefers the stored theme over the initial one', () => {
     localStorage.setItem(THEME_STORAGE_KEY, 'saraswati')
+    localStorage.setItem(THEME_PICK_MARK_KEY, THEME_PICK_MARK)
     render(
       <ThemeProvider initialTheme="festival">
         <Probe />
@@ -88,8 +97,20 @@ describe('ThemeProvider', () => {
       await waitFor(() => expect(document.documentElement.dataset.theme).toBe('borodin'))
     })
 
+    it('passes over a theme picked before there was a calendar to follow, once', async () => {
+      // Picked from the menu before this release: no mark beside it.
+      localStorage.setItem(THEME_STORAGE_KEY, 'holi')
+      render(
+        <TestDataProviders api={committee({})} now={KALI_PUJA}>
+          <span />
+        </TestDataProviders>,
+      )
+      await waitFor(() => expect(document.documentElement.dataset.theme).toBe('deepavali'))
+    })
+
     it('leaves a visitor’s own choice alone', async () => {
       localStorage.setItem(THEME_STORAGE_KEY, 'holi')
+      localStorage.setItem(THEME_PICK_MARK_KEY, THEME_PICK_MARK)
       render(
         <TestDataProviders api={committee({})} now={KALI_PUJA}>
           <span />

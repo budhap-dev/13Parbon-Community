@@ -84,6 +84,13 @@ describe('themes', () => {
     expect(readStoredTheme()).toBe('saraswati')
   })
 
+  it('passes over a public pick made before Follow the calendar, which carries no mark', () => {
+    localStorage.setItem(THEME_STORAGE_KEY, 'saraswati')
+    expect(readStoredTheme()).toBeNull()
+    storeTheme('saraswati')
+    expect(readStoredTheme()).toBe('saraswati')
+  })
+
   it('ignores garbage in storage', () => {
     localStorage.setItem(THEME_STORAGE_KEY, 'disco')
     expect(readStoredTheme()).toBeNull()

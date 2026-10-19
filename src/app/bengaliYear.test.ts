@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { addCivilDays, monthLength, monthStarts, toBengali } from '@/domain/bengaliDate'
 import { RITUAL_YEARS, rituals } from './bengaliYear'
+import { year1433 } from './bengaliYear1433'
+import { year1434 } from './bengaliYear1434'
 
 const byId = (id: string, year = '2026') => rituals.find((ritual) => ritual.id === id && ritual.date.startsWith(year))!
 
@@ -10,21 +12,31 @@ const bengaliOf = (id: string, year?: string) => {
   return { month, day }
 }
 
-/** The last day of a month of 1433. */
-const lastOf = (month: number) => ({ month, day: monthLength(1433, month) })
+/** The last day of a month. */
+const lastOf = (month: number, year = 1433) => ({ month, day: monthLength(year, month) })
 
-describe('the rituals of 1433', () => {
-  it('fall in the year, and a multi-day one is in order with its named days inside it', () => {
-    const [first, next] = [monthStarts(1433)[0], monthStarts(1433)[12]]
-    for (const ritual of rituals) {
-      // Poila Boishakh 1434 is the one entry on the year after's first day.
-      expect(ritual.date >= first && ritual.date <= next, ritual.id).toBe(true)
-      if (ritual.until) expect(ritual.until > ritual.date, ritual.id).toBe(true)
-      for (const day of ritual.days ?? []) {
-        expect(day.date >= ritual.date && day.date <= (ritual.until ?? ritual.date), `${ritual.id} ${day.name}`).toBe(true)
+describe('the years entered', () => {
+  it('has each year’s entries in that year, a multi-day one in order with its named days inside it', () => {
+    for (const [year, list] of [[1433, year1433], [1434, year1434]] as const) {
+      const [first, next] = [monthStarts(year)[0], monthStarts(year)[12]]
+      for (const ritual of list) {
+        // The next year's Poila Boishakh is the one entry on the year after's first day.
+        expect(ritual.date >= first && ritual.date <= next, `${year} ${ritual.id}`).toBe(true)
+        if (ritual.until) expect(ritual.until > ritual.date, ritual.id).toBe(true)
+        for (const day of ritual.days ?? []) {
+          expect(day.date >= ritual.date && day.date <= (ritual.until ?? ritual.date), `${ritual.id} ${day.name}`).toBe(true)
+        }
       }
     }
-    expect(RITUAL_YEARS).toContain(1433)
+    expect(RITUAL_YEARS).toEqual([1433, 1434])
+    expect(rituals).toHaveLength(year1433.length + year1434.length)
+  })
+
+  it('has every occasion of 1433 again in 1434, once', () => {
+    const ids = (list: typeof rituals) => [...new Set(list.map((ritual) => ritual.id))].sort()
+    expect(ids(year1434)).toEqual(ids(year1433))
+    // Poila Boishakh is twice in each: its own, and the next year's at the end.
+    expect(year1434.filter((ritual) => ritual.id !== 'poila-boishakh')).toHaveLength(ids(year1434).length - 1)
   })
 
   it('has no two entries sharing an id in the same year', () => {
@@ -85,6 +97,25 @@ describe('the rituals of 1433', () => {
         expect(nextMonth.day, `${ritual.id} ${time.label}`).toBe(1)
       }
     }
+  })
+
+  it('keeps 1434’s fixed days and sankrantis where the months put them', () => {
+    expect(bengaliOf('rabindra-jayanti', '2027')).toEqual({ month: 0, day: 25 })
+    expect(bengaliOf('nazrul-jayanti', '2027')).toEqual({ month: 1, day: 11 })
+    expect(bengaliOf('nabanna', '2027')).toEqual({ month: 7, day: 1 })
+    expect(bengaliOf('poila-boishakh', '2028')).toEqual({ month: 0, day: 1 })
+    expect(bengaliOf('manasa-puja', '2027')).toEqual(lastOf(3, 1434))
+    expect(bengaliOf('vishwakarma-puja', '2027')).toEqual(lastOf(4, 1434))
+    expect(bengaliOf('kartik-puja', '2027')).toEqual(lastOf(6, 1434))
+    expect(bengaliOf('poush-sankranti', '2028')).toEqual(lastOf(8, 1434))
+    expect(bengaliOf('charak', '2028')).toEqual(lastOf(11, 1434))
+  })
+
+  it('has Durga Puja 1434 over six days, Sandhi Puja on a day of its own', () => {
+    const puja = byId('durga-puja', '2027')
+    expect(puja.days?.map((day) => day.date)).toEqual([0, 1, 2, 3, 4, 5].map((n) => addCivilDays(puja.date, n)))
+    expect(puja.days?.[3].name).toBe('Sandhi Puja')
+    expect(puja.until).toBe(puja.days?.at(-1)?.date)
   })
 
   it('has Durga Puja run Shashthi to Dashami on five days running', () => {
