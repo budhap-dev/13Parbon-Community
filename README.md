@@ -4,7 +4,7 @@
 
 **New to the project? Start with [what this app does](docs/FEATURES.md)** — every screen, every rule, and the decisions behind them, in one place.
 
-Read the [project story](docs/STORY.md) for the vision and the [portal plan](docs/PLAN.md) for structure, architecture and delivery phases. [Photographs](docs/PHOTOS.md) covers how pictures from an event reach the gallery, and why they are not kept in this repository. [Member login](docs/MEMBER-LOGIN.md) is the parked story for sign-in and the committee's back office, and [Feedback](docs/FEEDBACK.md) covers what the public can send in, how the committee reviews it, and why signing in to leave feedback is a different door from signing in as a member.
+Read the [project story](docs/STORY.md) for the vision and the [portal plan](docs/PLAN.md) for structure, architecture and delivery phases. [Photographs](docs/PHOTOS.md) covers how pictures from an event reach the gallery, and why they are not kept in this repository. [Member login](docs/MEMBER-LOGIN.md) is the parked story for sign-in and the committee's back office, and [Feedback](docs/FEEDBACK.md) covers what the public can send in, how the committee reviews it, and why signing in to leave feedback is a different door from signing in as a member. [The Bengali calendar](docs/CALENDAR.md) explains the two panjikas, Bisuddha Siddhanta and the Gupta Press Surya Siddhanta, which one the site starts on, and what the switch between them changes.
 
 ## Stack
 

@@ -6,6 +6,13 @@ import type { Ritual } from '@/domain/ritual'
  * Taken from the West Bengal holiday notification 4188-F(P2) for 2026 and from drikpanchang set
  * to Kolkata, in October 2026. January to April 2027 rests on drikpanchang alone until the
  * state's 2027 list is out; check those against it when it is.
+ *
+ * The `guptaPress` dates and times are the Surya Siddhanta panjika's, read in October 2026 from
+ * the Benimadhab Sil text at benimadhabsilpanjika.com and the Gupta Press times quoted in Aaj Tak
+ * Bangla, TV9 Bangla, Sangbad Pratidin and Asianet Bangla; the two almanacs agree on the days and
+ * to a minute or two on the times. A time printed for the night ("রাত্রি ঘ ১২।৪৪" on 26 Magh) is
+ * after midnight, the next civil day, as here. Rath Yatra and Janmashtami have their dates only:
+ * the times quoted for them did not hang together. The pujas without one were not found in print.
  */
 export const durgaPuja =
   'Five days of the goddess’s visit home: anjali in the morning, bhog at lunchtime, arati and dhunuchi at dusk, and sindoor khela before she leaves.'
@@ -16,6 +23,7 @@ export const year1433: Ritual[] = [
     name: 'Poila Boishakh',
     bengaliName: 'পয়লা বৈশাখ',
     kind: 'festival',
+    bengaliDate: { month: 0, day: 1 },
     date: '2026-04-15',
     description: 'The Bengali New Year, 1433. New clothes, a visit to the temple, sweets, and shopkeepers opening the year’s new account books.',
     times: [
@@ -39,6 +47,7 @@ export const year1433: Ritual[] = [
     name: 'Rabindra Jayanti',
     bengaliName: 'রবীন্দ্র জয়ন্তী',
     kind: 'cultural',
+    bengaliDate: { month: 0, day: 25 },
     date: '2026-05-09',
     description: 'Pochishe Boishakh, Rabindranath Tagore’s birthday by the Bengali calendar. Morning songs, recitation and dance drama.',
   },
@@ -47,6 +56,7 @@ export const year1433: Ritual[] = [
     name: 'Nazrul Jayanti',
     bengaliName: 'নজরুল জয়ন্তী',
     kind: 'cultural',
+    bengaliDate: { month: 1, day: 11 },
     date: '2026-05-26',
     description: 'Egaroi Joishtho, the birthday of Kazi Nazrul Islam, the rebel poet. His songs and poems, sung and read aloud.',
   },
@@ -60,6 +70,7 @@ export const year1433: Ritual[] = [
     times: [
       { label: 'Shashthi tithi', from: '2026-06-19T16:59+05:30', to: '2026-06-20T15:46+05:30' },
     ],
+    guptaPress: { date: '2026-06-20', times: [{ label: 'Shashthi tithi', from: '2026-06-19T22:16+05:30', to: '2026-06-20T20:57+05:30' }] },
   },
   {
     id: 'snan-yatra',
@@ -71,6 +82,7 @@ export const year1433: Ritual[] = [
     times: [
       { label: 'Purnima tithi', from: '2026-06-29T03:06+05:30', to: '2026-06-30T05:26+05:30' },
     ],
+    guptaPress: { date: '2026-06-29', times: [{ label: 'Purnima tithi', from: '2026-06-29T02:46+05:30', to: '2026-06-30T04:46+05:30' }] },
   },
   {
     id: 'rath-yatra',
@@ -82,6 +94,7 @@ export const year1433: Ritual[] = [
     times: [
       { label: 'Dwitiya tithi', from: '2026-07-15T11:50+05:30', to: '2026-07-16T08:52+05:30' },
     ],
+    guptaPress: { date: '2026-07-16' },
   },
   {
     id: 'ulto-rath',
@@ -99,6 +112,7 @@ export const year1433: Ritual[] = [
     name: 'Manasa Puja',
     bengaliName: 'মনসা পূজা',
     kind: 'puja',
+    bengaliDate: { month: 3, day: 0 },
     date: '2026-08-17',
     description: 'On the last day of Shrabon, a puja to Manasa, goddess of snakes, kept above all in rural Bengal, where it is also Jhapan.',
     times: [
@@ -130,12 +144,14 @@ export const year1433: Ritual[] = [
       { label: 'Ashtami tithi', from: '2026-09-04T02:25+05:30', to: '2026-09-05T00:13+05:30' },
       { label: 'Nishita puja', from: '2026-09-04T23:13+05:30', to: '2026-09-04T23:59+05:30' },
     ],
+    guptaPress: { date: '2026-09-04' },
   },
   {
     id: 'vishwakarma-puja',
     name: 'Vishwakarma Puja',
     bengaliName: 'বিশ্বকর্মা পূজা',
     kind: 'puja',
+    bengaliDate: { month: 4, day: 0 },
     date: '2026-09-17',
     description: 'On the last day of Bhadro, a puja to the god of craftsmen for tools, machines and workshops. The sky fills with kites.',
     times: [
@@ -152,6 +168,7 @@ export const year1433: Ritual[] = [
     times: [
       { label: 'Amavasya tithi', from: '2026-10-09T21:35+05:30', to: '2026-10-10T21:19+05:30' },
     ],
+    guptaPress: { date: '2026-10-10', times: [{ label: 'Amavasya tithi', from: '2026-10-09T20:58+05:30', to: '2026-10-10T20:32+05:30' }] },
   },
   {
     id: 'durga-puja',
@@ -177,6 +194,25 @@ export const year1433: Ritual[] = [
       { label: 'Dashami tithi', from: '2026-10-20T12:50+05:30', to: '2026-10-21T14:11+05:30' },
       { label: 'Bijoya, aparahna', from: '2026-10-21T12:30+05:30', to: '2026-10-21T14:48+05:30' },
     ],
+    guptaPress: {
+      date: '2026-10-16',
+      until: '2026-10-21',
+      // Saptami holds at sunrise on the 18th too, by a few minutes; the almanac names no puja for it.
+      days: [
+        { date: '2026-10-16', name: 'Maha Shashthi', bengaliName: 'মহাষষ্ঠী' },
+        { date: '2026-10-17', name: 'Maha Saptami', bengaliName: 'মহাসপ্তমী' },
+        { date: '2026-10-19', name: 'Maha Ashtami', bengaliName: 'মহাষ্টমী' },
+        { date: '2026-10-20', name: 'Maha Navami', bengaliName: 'মহানবমী' },
+        { date: '2026-10-21', name: 'Bijoya Dashami', bengaliName: 'বিজয়া দশমী' },
+      ],
+      times: [
+        { label: 'Saptami tithi', from: '2026-10-17T03:45+05:30', to: '2026-10-18T05:52+05:30' },
+        { label: 'Ashtami tithi', from: '2026-10-18T05:52+05:30', to: '2026-10-19T07:49+05:30' },
+        { label: 'Sandhi Puja', from: '2026-10-19T07:25+05:30', to: '2026-10-19T08:13+05:30' },
+        { label: 'Navami tithi', from: '2026-10-19T07:49+05:30', to: '2026-10-20T09:29+05:30' },
+        { label: 'Dashami tithi', from: '2026-10-20T09:29+05:30', to: '2026-10-21T10:46+05:30' },
+      ],
+    },
   },
   {
     id: 'lakshmi-puja',
@@ -189,6 +225,7 @@ export const year1433: Ritual[] = [
       { label: 'Purnima tithi', from: '2026-10-25T11:55+05:30', to: '2026-10-26T09:41+05:30' },
       { label: 'Nishita puja', from: '2026-10-25T22:56+05:30', to: '2026-10-25T23:46+05:30' },
     ],
+    guptaPress: { date: '2026-10-25', times: [{ label: 'Purnima tithi', from: '2026-10-25T10:59+05:30', to: '2026-10-26T09:50+05:30' }] },
   },
   {
     id: 'kali-puja',
@@ -201,6 +238,7 @@ export const year1433: Ritual[] = [
       { label: 'Amavasya tithi', from: '2026-11-08T11:27+05:30', to: '2026-11-09T12:31+05:30' },
       { label: 'Nishita puja', from: '2026-11-08T22:55+05:30', to: '2026-11-08T23:46+05:30' },
     ],
+    guptaPress: { date: '2026-11-08', times: [{ label: 'Amavasya tithi', from: '2026-11-08T10:48+05:30', to: '2026-11-09T11:27+05:30' }] },
   },
   {
     id: 'bhai-phonta',
@@ -213,12 +251,14 @@ export const year1433: Ritual[] = [
       { label: 'Dwitiya tithi', from: '2026-11-10T14:00+05:30', to: '2026-11-11T15:53+05:30' },
       { label: 'Phonta, aparahna', from: '2026-11-11T12:27+05:30', to: '2026-11-11T14:41+05:30' },
     ],
+    guptaPress: { date: '2026-11-11', times: [{ label: 'Dwitiya tithi', from: '2026-11-10T12:37+05:30', to: '2026-11-11T14:11+05:30' }] },
   },
   {
     id: 'kartik-puja',
     name: 'Kartik Puja',
     bengaliName: 'কার্তিক পূজা',
     kind: 'puja',
+    bengaliDate: { month: 6, day: 0 },
     date: '2026-11-16',
     description: 'On the last day of Kartik, a puja to Kartik, the gods’ handsome general, often left on the doorstep of newly married couples.',
     times: [
@@ -230,6 +270,7 @@ export const year1433: Ritual[] = [
     name: 'Nabanna',
     bengaliName: 'নবান্ন',
     kind: 'festival',
+    bengaliDate: { month: 7, day: 1 },
     date: '2026-11-17',
     description: 'The new rice of the harvest, cooked and offered first, at the start of Agrahayan. Each village keeps its own day; this is the first of the month.',
   },
@@ -260,6 +301,7 @@ export const year1433: Ritual[] = [
     name: 'Poush Sankranti',
     bengaliName: 'পৌষ সংক্রান্তি',
     kind: 'festival',
+    bengaliDate: { month: 8, day: 0 },
     date: '2027-01-14',
     description: 'The last day of Poush, the winter harvest: pithe puli made from new rice and date-palm jaggery.',
     times: [
@@ -277,6 +319,7 @@ export const year1433: Ritual[] = [
       { label: 'Panchami tithi', from: '2027-02-11T03:04+05:30', to: '2027-02-12T03:18+05:30' },
       { label: 'Puja muhurat', from: '2027-02-11T06:11+05:30', to: '2027-02-11T11:51+05:30' },
     ],
+    guptaPress: { date: '2027-02-11', times: [{ label: 'Panchami tithi', from: '2027-02-11T00:44+05:30', to: '2027-02-12T00:24+05:30' }] },
   },
   {
     id: 'bhasha-dibas',
@@ -337,6 +380,7 @@ export const year1433: Ritual[] = [
     name: 'Neel Puja',
     bengaliName: 'নীল পূজা',
     kind: 'puja',
+    bengaliDate: { month: 11, day: -1 },
     date: '2027-04-13',
     description: 'Mothers fast and pray to Shiva as Neelkantha for their children, on the day before Charak.',
   },
@@ -356,6 +400,7 @@ export const year1433: Ritual[] = [
     name: 'Charak and Choitro Sankranti',
     bengaliName: 'চড়ক / চৈত্র সংক্রান্তি',
     kind: 'festival',
+    bengaliDate: { month: 11, day: 0 },
     date: '2027-04-14',
     description: 'The last day of the Bengali year: the Charak fair and the gajan devotees of Shiva, and the Choitro sales before the new year.',
     times: [
@@ -379,6 +424,7 @@ export const year1433: Ritual[] = [
     name: 'Poila Boishakh',
     bengaliName: 'পয়লা বৈশাখ',
     kind: 'festival',
+    bengaliDate: { month: 0, day: 1 },
     date: '2027-04-15',
     description: 'The Bengali New Year, 1434. New clothes, a visit to the temple, sweets, and shopkeepers opening the year’s new account books.',
     times: [

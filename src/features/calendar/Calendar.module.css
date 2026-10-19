@@ -36,6 +36,142 @@
   text-wrap: pretty;
 }
 
+/* Which Bengali calendar: two halves of one pill, the chosen one filled in the accent. */
+
+.choice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin: 4px 0 0;
+  padding: 0;
+  border: 0;
+  min-inline-size: 0;
+}
+
+.choiceLegend {
+  float: left;
+  padding: 0;
+  font-size: var(--text-sm);
+  color: var(--color-fg-muted);
+}
+
+.choiceOptions {
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  /* A sideways drag is the switch's; up and down still scrolls the page. */
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+  padding: 3px;
+  border: 1.5px solid var(--color-border-strong);
+  border-radius: 28px;
+  background: var(--color-bg-raised);
+}
+
+/* The Bengali name over the English, so both halves fit a phone without wrapping. */
+.choiceOption {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  min-height: 44px;
+  padding: 6px 18px;
+  line-height: 1.25;
+  white-space: nowrap;
+  text-align: center;
+  border-radius: 24px;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-fg-muted);
+  cursor: pointer;
+  transition:
+    background-color 0.15s,
+    color 0.25s,
+    scale 0.15s;
+}
+
+.choiceOption:active {
+  scale: 0.97;
+}
+
+.choiceOption:hover {
+  color: var(--color-fg);
+  background: var(--color-hover-wash);
+}
+
+/* Before the halves are measured, the chosen one fills itself. */
+.choiceOptions:not([data-measured]) .choiceOption:has(.choiceInput:checked) {
+  color: var(--color-on-accent);
+  background: var(--color-accent);
+}
+
+/* After, the pill does the filling, and the half it sits on — or is dragged nearer — reads over it. */
+.choiceOption[data-lit],
+.choiceOption[data-lit]:hover {
+  color: var(--color-on-accent);
+  background: transparent;
+}
+
+.choiceThumb {
+  position: absolute;
+  z-index: -1;
+  top: 3px;
+  bottom: 3px;
+  left: 0;
+  width: var(--thumb-width);
+  border-radius: 24px;
+  background: var(--color-accent);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.18);
+  translate: var(--thumb-x) 0;
+}
+
+.choiceOptions[data-dragging] {
+  cursor: grabbing;
+}
+
+/* Under the finger it follows exactly, and lifts a little. */
+.choiceOptions[data-dragging] .choiceThumb {
+  transition: none;
+  box-shadow: 0 4px 14px rgb(0 0 0 / 0.28);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* A little past and back, like a switch with a spring in it — no further than the pill's own padding. */
+  .choiceThumb {
+    transition:
+      translate 0.38s cubic-bezier(0.34, 1.2, 0.5, 1),
+      width 0.38s cubic-bezier(0.34, 1.2, 0.5, 1);
+  }
+}
+
+.choiceOption:has(.choiceInput:focus-visible) {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* The radio itself is kept for the keyboard and the screen reader, and the pill drawn instead. */
+.choiceInput {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.choiceBengali {
+  font-family: var(--font-script);
+  font-weight: 400;
+}
+
+@media (max-width: 420px) {
+  .choiceOption {
+    padding: 6px 14px;
+  }
+}
+
 /*
  * Every special day in the one colour, the theme's own accent, so it suits whichever theme is on.
  * The shape on a bar and the word in the list say which kind it is.
@@ -110,10 +246,27 @@
   min-height: 44px;
 }
 
+/*
+ * The drawing beside the name only; everything after the name runs the full width of the card,
+ * under the drawing, rather than leaving a column of empty space down the left.
+ */
 .todayItem {
-  display: flex;
-  gap: 16px;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px 16px;
+  align-items: center;
+}
+
+.todayBody {
+  display: contents;
+}
+
+.todayBody > * {
+  grid-column: 1 / -1;
+}
+
+.todayBody > .todayName {
+  grid-column: 2;
 }
 
 /* The drawing for an occasion: a round medallion, the line in the kind's colour. */
@@ -152,22 +305,47 @@
 .times {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 12px;
   margin: 2px 0 0;
   font-size: var(--text-sm);
+}
+
+/* On a wide screen the times sit side by side, so a puja with seven of them is not a narrow tower. */
+@media (min-width: 720px) {
+  .times {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px 32px;
+  }
 }
 
 .time {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  align-items: flex-start;
+  gap: 4px;
 }
 
-.time dt {
-  font-weight: 600;
+/* Each time's name as a tag: a tithi, the window, washed in the kind's colour; the puja's own moment filled with it. */
+.timeLabel {
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+.timeLabel[data-span='tithi'] {
+  /* Mixed with the card, not with nothing, so a theme's pattern does not show through behind the words. */
+  background: color-mix(in srgb, var(--kind) 22%, var(--color-bg-raised));
+  color: var(--color-fg);
+}
+
+.timeLabel[data-span='moment'] {
+  background: var(--kind);
+  color: var(--on-kind);
 }
 
 .time dd {
+  align-self: stretch;
   margin: 0;
 }
 
@@ -191,6 +369,15 @@
 /* Drawn towards the text colour, lighter on the dark themes and darker on the light, to read on a washed card. */
 .zone[data-zone='india'] {
   color: color-mix(in srgb, var(--color-green) 70%, var(--color-fg));
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+.comingMissing {
+  font-size: var(--text-sm);
+  color: var(--color-fg-muted);
 }
 
 .zoneName {
@@ -762,9 +949,12 @@
   padding: 0;
 }
 
+/* As in Today: the drawing beside the name and its line, the rest the full width beneath. */
 .agendaItem {
-  display: flex;
-  gap: 14px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px 14px;
+  align-items: center;
   padding: 16px 0;
   border-bottom: 1px solid var(--color-border-faint);
   scroll-margin-top: 96px;
@@ -782,10 +972,20 @@
 }
 
 .agendaBody {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 0;
+  display: contents;
+}
+
+.agendaBody > * {
+  grid-column: 1 / -1;
+}
+
+.agendaBody > .agendaName,
+.agendaBody > .agendaMeta {
+  grid-column: 2;
+}
+
+.agendaPicture {
+  grid-row: span 2;
 }
 
 .agendaName {
