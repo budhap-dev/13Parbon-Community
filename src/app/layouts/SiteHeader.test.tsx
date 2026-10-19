@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
+import { afterEach, vi } from 'vitest'
 import { TestDataProviders } from '@/test/render'
 import { ThemeProvider } from '../theme/ThemeContext'
 import { SiteHeader } from './SiteHeader'
@@ -119,7 +120,7 @@ describe('SiteHeader', () => {
     expect(screen.queryByRole('link', { name: /Cultural programme/ })).not.toBeInTheDocument()
   })
 
-  it('offers one tap home from every page but the home page', async () => {
+  it('offers one tap home from every page, and on the home page one back to the top', async () => {
     const { unmount } = render(
       <TestDataProviders>
         <MemoryRouter initialEntries={['/about']}>
@@ -141,7 +142,50 @@ describe('SiteHeader', () => {
         </MemoryRouter>
       </TestDataProviders>,
     )
-    expect(screen.queryByRole('link', { name: 'Back to the home page' })).not.toBeInTheDocument()
+    // Still there, so the share and menu buttons beside it do not move: the page you are on.
+    const home = screen.getByRole('link', { name: 'Home page, back to the top' })
+    expect(home).toHaveAttribute('aria-current', 'page')
+    vi.mocked(window.scrollTo).mockClear()
+    await userEvent.click(home)
+    expect(window.scrollTo).toHaveBeenCalledWith({ top: 0, behavior: 'smooth' })
+  })
+
+  describe('sharing the page, for the installed app', () => {
+    const renderOn = (path: string) =>
+      render(
+        <TestDataProviders>
+          <MemoryRouter initialEntries={[path]}>
+            <ThemeProvider>
+              <SiteHeader />
+            </ThemeProvider>
+          </MemoryRouter>
+        </TestDataProviders>,
+      )
+
+    afterEach(() => {
+      Reflect.deleteProperty(navigator, 'share')
+      vi.restoreAllMocks()
+    })
+
+    it('hands the page being looked at to the phone’s share sheet', async () => {
+      const share = vi.fn().mockResolvedValue(undefined)
+      Object.defineProperty(navigator, 'share', { value: share, configurable: true })
+      document.title = 'Calendar · 13Parbon Community'
+      renderOn('/calendar')
+      await userEvent.click(screen.getByRole('button', { name: 'Share this page' }))
+      expect(share).toHaveBeenCalledWith({ title: 'Calendar · 13Parbon Community', text: undefined, url: window.location.href })
+    })
+
+    it('copies the link where there is no share sheet, and says so', async () => {
+      const user = userEvent.setup()
+      const write = vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue(undefined)
+      renderOn('/events')
+      await user.click(screen.getByRole('button', { name: 'Share this page' }))
+      expect(write).toHaveBeenCalledWith(window.location.href)
+      expect(await screen.findByText('Link copied')).toHaveAttribute('aria-live', 'polite')
+      // Not a status: the header is on every page, and leaves that role to the page's own message.
+      expect(screen.queryByRole('status')).not.toBeInTheDocument()
+    })
   })
 
   it('stamps the version at the foot of the drawer', async () => {
