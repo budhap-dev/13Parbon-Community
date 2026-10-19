@@ -120,6 +120,7 @@
 }
 
 /* Drawer chrome: only ever seen once the menu becomes a panel. */
+.shareWrap,
 .homeButton,
 .scrim,
 .scrimOn,
@@ -293,12 +294,64 @@
   color: var(--color-fg);
 }
 
+/* On the home page: the page you are on, in the accent, like the current link in the menu. */
+.compact .homeButton[aria-current='page'] {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
 /*
- * The narrowest phones, 320px across: the name, the home button and the menu button did not
- * fit side by side, and the menu button hung two pixels off the edge, so the page scrolled
- * sideways. Closer together and a size smaller, and neither button gives way.
+ * Share, on a phone: one tap to pass the page on, and in the installed app the only way to, as
+ * there is no browser bar. A third button needs the tighter bar below on every phone, and on the
+ * narrowest the name gives way to the emblem, which still reads as the community and goes home.
  */
-@media (max-width: 380px) {
+.compact .shareWrap {
+  display: inline-flex;
+  position: relative;
+  flex: none;
+}
+
+.shareButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-fg);
+  cursor: pointer;
+}
+
+.shareButton:hover {
+  border-color: var(--color-fg);
+}
+
+.shareButton:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* "Link copied", under the button for a moment, where there was no share sheet to open. */
+.shareNote {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--color-ink);
+  color: var(--color-on-ink);
+  font-size: var(--text-sm);
+  white-space: nowrap;
+}
+
+/*
+ * Phones: the name, the home, share and menu buttons side by side. Closer together and a size
+ * smaller, so none of them gives way — at 320px across the menu button once hung off the edge
+ * and the page scrolled sideways.
+ */
+@media (max-width: 480px) {
   .bar {
     gap: 10px;
   }
@@ -320,6 +373,12 @@
 
   .compact .homeButton {
     margin-right: 0;
+  }
+}
+
+@media (max-width: 340px) {
+  .wordmark {
+    display: none;
   }
 }
 

@@ -6,6 +6,7 @@ import { Icon } from '@/components/Icon'
 import { Backdrop } from '../theme/backdrops'
 import { useTheme } from '../theme/ThemeContext'
 import { NextEventStrip } from '@/components/NextEventStrip'
+import { useShare } from '@/components/useShare'
 import { publicNav } from '../nav'
 import { site } from '../site'
 import { versionLabel } from '../version'
@@ -87,6 +88,7 @@ export function SiteHeader() {
   const compact = phone || crowded
   const linksRef = useRef<HTMLUListElement>(null)
   const pillReady = useSlidingPill(linksRef, `${pathname}|${compact}|${links.length}`)
+  const { share, result: shared, message: shareMessage } = useShare()
 
   /*
    * While the drawer is open it owns the screen: Escape closes it, the page behind does not
@@ -127,14 +129,45 @@ export function SiteHeader() {
       <Container ref={barRef} className={styles.bar}>
         <Link to="/" className={styles.brand} aria-label={`${site.name} home`}>
           <img src={site.emblem} alt="" width={40} height={40} className={styles.emblem} />
-          <span>{site.wordmark}</span>
+          <span className={styles.wordmark}>{site.wordmark}</span>
         </Link>
 
-        {!isHome ? (
-          <Link to="/" className={styles.homeButton} aria-label="Back to the home page">
-            <Icon name="home" size={22} />
-          </Link>
-        ) : null}
+        {/*
+          On every page, the home page too, so the buttons beside it never shift: with share
+          there, the home button leaving on the home page looked like the button had vanished.
+          There it says it is the page you are on, and takes you back to the top.
+        */}
+        <Link
+          to="/"
+          className={styles.homeButton}
+          aria-label={isHome ? 'Home page, back to the top' : 'Back to the home page'}
+          aria-current={isHome ? 'page' : undefined}
+          onClick={(event) => {
+            if (!isHome) return
+            event.preventDefault()
+            const still = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+            window.scrollTo({ top: 0, behavior: still ? 'auto' : 'smooth' })
+          }}
+        >
+          <Icon name="home" size={22} />
+        </Link>
+
+        {/*
+          Passing the page on, from the phone's header (see .shareWrap): the share sheet on a
+          phone, the link copied where there is none. Installed on a phone, the site has no
+          browser bar, so this is the only way to.
+        */}
+        <span className={styles.shareWrap}>
+          <button type="button" className={styles.shareButton} onClick={() => void share({ title: document.title })}>
+            <Icon name="share" size={20} />
+            <span className={styles.srOnly}>Share this page</span>
+          </button>
+          {/* Live but not a status: it is in the header of every page, and a page's own status
+              message is the one that page is about. */}
+          <span aria-live="polite" className={shared === 'idle' ? styles.srOnly : styles.shareNote}>
+            {shareMessage}
+          </span>
+        </span>
 
         <button
           ref={toggleRef}

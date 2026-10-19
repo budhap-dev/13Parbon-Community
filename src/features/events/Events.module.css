@@ -426,6 +426,8 @@
     margin-left: calc(-1 * var(--page-pad, 16px));
     margin-right: calc(-1 * var(--page-pad, 16px));
     padding: 0 var(--page-pad, 16px);
+    /* Snap to the page's gutter, not the screen's edge, or the first chip sits against it. */
+    scroll-padding: 0 var(--page-pad, 16px);
     overflow-x: auto;
     scroll-snap-type: x proximity;
     scrollbar-width: none;

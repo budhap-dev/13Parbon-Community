@@ -569,7 +569,7 @@
   color: var(--color-fg-muted);
 }
 
-/* On a phone a cell has room for the numbers and a line for each thing on. */
+/* On a phone a cell has room for the numbers and a dot for each thing on. */
 @container (max-width: 640px) {
   .weekdayEnglish {
     display: none;
@@ -622,17 +622,35 @@
     font-size: var(--text-lg);
   }
 
-  .laneEmpty,
-  .bar {
-    height: 4px;
-    padding: 0;
+  /*
+   * A dot for each thing on, under the numbers, rather than the bar: at a phone's size the bar
+   * was a thin line straight across the day, and read as the date struck through. The washed
+   * square and the drawing on its first day already say a puja runs on.
+   */
+  .lanes {
+    flex-direction: row;
+    gap: 3px;
+    padding: 0 4px;
   }
 
-  .bar[data-overflow='true'] {
+  .laneEmpty {
     display: none;
   }
 
-  .laneEmpty:nth-child(n + 3) {
+  .lanes .bar {
+    flex: none;
+    width: 7px;
+    height: 7px;
+    margin: 0;
+    padding: 0;
+    border-radius: 50%;
+  }
+
+  .dayLink:hover .lanes .bar {
+    box-shadow: none;
+  }
+
+  .bar[data-overflow='true'] {
     display: none;
   }
 

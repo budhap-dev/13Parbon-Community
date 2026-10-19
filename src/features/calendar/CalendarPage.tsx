@@ -234,7 +234,8 @@ const CELL_MARKS = 2
 
 /**
  * The drawings in a day's corner, for what begins on it: the start of a puja that runs over days,
- * not every day of it — the bar says it carries on. Two at most; on a phone, one.
+ * not every day of it — the bar, or on a phone the dot, says it carries on. Two at most; on a
+ * phone, one.
  */
 function CellPictures({ entries }: { entries: CalendarEntry[] }) {
   if (entries.length === 0) return null
