@@ -70,6 +70,7 @@
         var chosen = localStorage.getItem('13parbon:portal-theme')
         // Elsewhere, the visitor's own choice, or failing that the committee's as this browser last heard it —
         // a festival's colours, around its days, included.
+        // A visitor's own pick counts only if made since Follow the calendar (THEME_PICK_MARK_KEY).
         // A festival's colours stop on its last day; after it, the committee's own (seasons.ts).
         var until = localStorage.getItem('13parbon:site-theme-until')
         var now = new Date()
@@ -79,7 +80,7 @@
           : localStorage.getItem('13parbon:site-theme')
         var theme = portal
           ? portalThemes.indexOf(chosen) >= 0 ? chosen : 'paper'
-          : localStorage.getItem('13parbon:theme') || site
+          : (localStorage.getItem('13parbon:theme-picked') === 'with-calendar' && localStorage.getItem('13parbon:theme')) || site
         if (theme) document.documentElement.dataset.theme = theme
       } catch (error) {
         // Storage blocked: no choice to read, but the portal still is not the festivals.

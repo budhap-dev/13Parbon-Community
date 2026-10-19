@@ -84,6 +84,16 @@ export const defaultPortalTheme: ThemeName = 'paper'
 /** Separate keys, so choosing Slate for the back office does not repaint the public site. */
 export const THEME_STORAGE_KEY = '13parbon:theme'
 /**
+ * Set beside a visitor's own pick from the release that added Follow the calendar on.
+ *
+ * A pick without it was made before there was a calendar to follow — often just trying the
+ * themes out — and it would have kept that visitor out of every festival's colours for good.
+ * So those are passed over once, and everybody starts on the calendar; a theme picked since
+ * carries this and is kept. index.html makes the same test before the page has loaded.
+ */
+export const THEME_PICK_MARK_KEY = '13parbon:theme-picked'
+export const THEME_PICK_MARK = 'with-calendar'
+/**
  * The committee's choice of colours, as this browser last heard it.
  *
  * Kept so the second visit opens in the right colours straight away. Without it every page
@@ -146,6 +156,7 @@ export function readStoredTheme(
 ): ThemeName | null {
   try {
     const value = storage?.getItem(keyFor(scope))
+    if (scope === 'public' && storage?.getItem(THEME_PICK_MARK_KEY) !== THEME_PICK_MARK) return null
     return isThemeForScope(value, scope) ? value : null
   } catch {
     return null
@@ -159,6 +170,7 @@ export function storeTheme(
 ): void {
   try {
     storage?.setItem(keyFor(scope), name)
+    if (scope === 'public') storage?.setItem(THEME_PICK_MARK_KEY, THEME_PICK_MARK)
   } catch {
     // Private mode or blocked storage. The choice just will not persist.
   }
@@ -168,6 +180,7 @@ export function storeTheme(
 export function forgetTheme(scope: ThemeScope = 'public', storage: Pick<Storage, 'removeItem'> | null = safeStorage()): void {
   try {
     storage?.removeItem(keyFor(scope))
+    if (scope === 'public') storage?.removeItem(THEME_PICK_MARK_KEY)
   } catch {
     // Blocked storage held nothing to forget.
   }

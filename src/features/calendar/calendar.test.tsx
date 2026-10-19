@@ -136,16 +136,23 @@ describe('the calendar page', () => {
     await waitFor(() => expect(item.closest('li')).toHaveFocus())
   })
 
+  it('has 1434’s pujas too, with their times', async () => {
+    renderAt('/calendar?month=1434-06')
+    const puja = (await screen.findByRole('heading', { level: 4, name: /Durga Puja/ })).closest('li')!
+    expect(puja).toHaveTextContent('Sandhi Puja')
+    expect(puja).toHaveTextContent('Fri 8 Oct, 1:33 am – 2:21 am UK time · Fri 8 Oct, 6:03 am – 6:51 am in Kolkata')
+  })
+
   it('draws the days of a year whose panjika is not entered, and says so', async () => {
-    renderAt('/calendar?month=1434-01')
-    expect(await screen.findByRole('heading', { level: 2, name: /Boishakh 1434/ })).toBeInTheDocument()
-    expect(screen.getByText(/The panjika for 1434 is not entered yet/)).toBeInTheDocument()
+    renderAt('/calendar?month=1435-01')
+    expect(await screen.findByRole('heading', { level: 2, name: /Boishakh 1435/ })).toBeInTheDocument()
+    expect(screen.getByText(/The panjika for 1435 is not entered yet/)).toBeInTheDocument()
     expect(screen.getByRole('table')).toBeInTheDocument()
   })
 
   it('goes no further than the year after the last one entered', async () => {
-    renderAt('/calendar?month=1434-12')
-    expect(await screen.findByRole('heading', { level: 2, name: /Choitro 1434/ })).toBeInTheDocument()
+    renderAt('/calendar?month=1435-12')
+    expect(await screen.findByRole('heading', { level: 2, name: /Choitro 1435/ })).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: /^Next month/ })).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: /^Previous month/ })).toBeInTheDocument()
   })
