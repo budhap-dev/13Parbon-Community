@@ -9,7 +9,8 @@ describe('the lines pages are passed on with', () => {
   it('gives an evening its what, when and where, and says first if it is off', () => {
     const event = {
       title: 'Bijoya Sammilani',
-      startsAt: '2026-10-24T16:00:00Z',
+      // A local time, so it reads the same in any time zone the tests run in.
+      startsAt: '2026-10-24T17:00:00',
       venue: 'Leeds Civic Hall',
       summary: 'Sweets and songs.',
       status: 'published',
