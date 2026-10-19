@@ -3,6 +3,7 @@ import { site } from '@/app/site'
 import { useSettings } from '@/app/SettingsContext'
 import { SponsoredBy } from '@/features/sponsors/SponsoredBy'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
+import { eventShareLine } from '@/app/shareLines'
 import { Button } from '@/components/Button'
 import { Container } from '@/components/Container'
 import { CoverImage } from '@/components/CoverImage'
@@ -26,7 +27,7 @@ function sameDay(a: string, b: string): boolean {
 export function EventPage() {
   const { slug = '' } = useParams()
   const { data: event, isPending, isError, refetch } = useEvent(slug)
-  useDocumentTitle(event?.title)
+  useDocumentTitle(event?.title, event ? eventShareLine(event) : undefined)
 
   if (isPending) {
     return (
@@ -79,7 +80,7 @@ export function EventView({ event }: { event: Event }) {
           <Link to="/events" className={styles.crumb}>
             ← All events
           </Link>
-          <ShareButton title={`${event.title} · ${site.name}`} text={event.summary} size="sm" />
+          <ShareButton title={`${event.title} · ${site.name}`} text={eventShareLine(event)} size="sm" />
         </div>
         <h1 id="event-title" className={styles.detailTitle}>
           {event.title}

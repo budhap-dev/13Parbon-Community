@@ -7,6 +7,7 @@ import { Backdrop } from '../theme/backdrops'
 import { useTheme } from '../theme/ThemeContext'
 import { NextEventStrip } from '@/components/NextEventStrip'
 import { useShare } from '@/components/useShare'
+import { pageDescription } from '../useDocumentTitle'
 import { publicNav } from '../nav'
 import { site } from '../site'
 import { versionLabel } from '../version'
@@ -158,7 +159,7 @@ export function SiteHeader() {
           browser bar, so this is the only way to.
         */}
         <span className={styles.shareWrap}>
-          <button type="button" className={styles.shareButton} onClick={() => void share({ title: document.title })}>
+          <button type="button" className={styles.shareButton} onClick={() => void share({ title: document.title, text: pageDescription() })}>
             <Icon name="share" size={20} />
             <span className={styles.srOnly}>Share this page</span>
           </button>

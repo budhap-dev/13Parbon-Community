@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Link, useLocation } from 'react-router'
 import { useSettings } from '@/app/SettingsContext'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
+import { SHARE_LINES } from '@/app/shareLines'
 import { Container } from '@/components/Container'
 import { SponsorLogo } from '@/components/SponsorLogo'
 import { TAKEDOWN_PROMISE } from '@/domain/contact'
@@ -23,7 +24,7 @@ function NameHeading({ level, className, children }: { level: 2 | 3; className: 
 }
 
 export function SponsorsPage() {
-  useDocumentTitle('Our sponsors')
+  useDocumentTitle('Our sponsors', SHARE_LINES.sponsors)
   const { sponsors, festivals } = useSettings()
   const groups = groupByLevel(sponsors)
   const festivalName = new Map(festivals.map((f) => [f.id, f.name]))

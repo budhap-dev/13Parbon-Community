@@ -51,12 +51,21 @@ describe('the calendar page', () => {
     expect(within(today).getByText(/Maha Ashtami: Durga Puja/)).toBeInTheDocument()
   })
 
-  it('gives today’s times in UK time with Kolkata’s beside them, and only today’s', async () => {
+  it('is passed on with the month shown and what is on in it', async () => {
+    document.head.insertAdjacentHTML('beforeend', '<meta name="description" content="The site’s own line." />')
+    renderAt('/calendar')
+    await screen.findByRole('heading', { level: 1, name: 'Calendar' })
+    expect(document.querySelector<HTMLMetaElement>('meta[name="description"]')!.content).toBe(
+      'Kartik 1433 in the Bengali calendar from 13Parbon Community: Durga Puja, Kojagari Lakshmi Puja, Kali Puja and more, with the times in the UK and India.',
+    )
+  })
+
+  it('gives today’s times in UK time and India’s, and only today’s', async () => {
     renderAt('/calendar')
     const today = await screen.findByRole('region', { name: 'Today' })
     const sandhi = within(today).getByText('Sandhi Puja').closest('div')!
     // 10:27 in Kolkata is 5:57 in the morning here, in British Summer Time.
-    expect(sandhi).toHaveTextContent('Mon 19 Oct, 5:57 am – 6:45 am UK time · Mon 19 Oct, 10:27 am – 11:15 am in Kolkata')
+    expect(sandhi).toHaveTextContent('UK Mon 19 Oct, 5:57 am – 6:45 amIndia Mon 19 Oct, 10:27 am – 11:15 am')
     expect(within(today).getByText('Navami tithi')).toBeInTheDocument()
     expect(within(today).queryByText('Shashthi tithi')).not.toBeInTheDocument()
   })
@@ -64,7 +73,7 @@ describe('the calendar page', () => {
   it('shows a sankranti as a moment, with no end', async () => {
     renderAt('/calendar?month=1433-07')
     const kartik = (await screen.findByRole('heading', { level: 4, name: /Kartik Puja/ })).closest('li')!
-    expect(kartik).toHaveTextContent('Vrishchika sankrantiMon 16 Nov, 2:18 pm UK time · Mon 16 Nov, 7:48 pm in Kolkata')
+    expect(kartik).toHaveTextContent('Vrishchika sankrantiUK Mon 16 Nov, 2:18 pmIndia Mon 16 Nov, 7:48 pm')
   })
 
   it('marks today in the grid, and links a day to what is on it', async () => {
@@ -140,7 +149,7 @@ describe('the calendar page', () => {
     renderAt('/calendar?month=1434-06')
     const puja = (await screen.findByRole('heading', { level: 4, name: /Durga Puja/ })).closest('li')!
     expect(puja).toHaveTextContent('Sandhi Puja')
-    expect(puja).toHaveTextContent('Fri 8 Oct, 1:33 am – 2:21 am UK time · Fri 8 Oct, 6:03 am – 6:51 am in Kolkata')
+    expect(puja).toHaveTextContent('UK Fri 8 Oct, 1:33 am – 2:21 amIndia Fri 8 Oct, 6:03 am – 6:51 am')
   })
 
   it('draws the days of a year whose panjika is not entered, and says so', async () => {

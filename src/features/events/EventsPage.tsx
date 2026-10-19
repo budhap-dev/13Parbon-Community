@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
+import { SHARE_LINES } from '@/app/shareLines'
 import { Container } from '@/components/Container'
 import { LoadFailed } from '@/components/LoadFailed'
 import { EventCard } from '@/components/EventCard'
@@ -92,7 +93,7 @@ function yearAhead(festivals: Festival[], upcoming: Event[], past: Event[], now:
 }
 
 export function EventsPage() {
-  useDocumentTitle('Events')
+  useDocumentTitle('Events', SHARE_LINES.events)
   const [params] = useSearchParams()
   const festivalId = params.get('festival')
   const { data: festivals } = useFestivals()

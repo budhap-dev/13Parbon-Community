@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { Link, useLocation, useSearchParams } from 'react-router'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
+import { calendarShareLine } from '@/app/shareLines'
 import { RITUAL_YEARS, rituals } from '@/app/bengaliYear'
 import { Container } from '@/components/Container'
 import { LoadFailed } from '@/components/LoadFailed'
@@ -112,8 +113,8 @@ function Picture({ entry, className }: { entry: CalendarEntry; className: string
 }
 
 /**
- * When it begins and ends, in UK time with Kolkata's beside it. The tithi is one moment the
- * world over; it is only the clock that differs.
+ * When it begins and ends, in UK time and India's, a line and a colour each so the two clocks are
+ * not read as one. The tithi is one moment the world over; it is only the clock that differs.
  */
 function Times({ entry, on }: { entry: CalendarEntry; on?: string }) {
   const times = (entry.times ?? []).filter((time) => !on || touchesDay(time, on))
@@ -124,10 +125,18 @@ function Times({ entry, on }: { entry: CalendarEntry; on?: string }) {
       {times.map((time) => (
         <div key={`${time.label}-${time.from}`} className={styles.time}>
           <dt>{time.label}</dt>
-          <dd>
-            {formatSpan(time, 'uk')}
-            {evening ? null : <span className={styles.kolkata}> UK time · {formatSpan(time, 'kolkata')} in Kolkata</span>}
-          </dd>
+          {evening ? (
+            <dd>{formatSpan(time, 'uk')}</dd>
+          ) : (
+            <dd className={styles.zones}>
+              <span className={styles.zone} data-zone="uk">
+                <span className={styles.zoneName}>UK</span> {formatSpan(time, 'uk')}
+              </span>
+              <span className={styles.zone} data-zone="india">
+                <span className={styles.zoneName}>India</span> {formatSpan(time, 'kolkata')}
+              </span>
+            </dd>
+          )}
         </div>
       ))}
     </dl>
@@ -516,6 +525,15 @@ function YearAtAGlance({ year, current, shown, entries }: { year: number; curren
   )
 }
 
+/** What is on in a month, by name, once each and leaving out our own evenings: for its share line. */
+function occasionsIn(shown: MonthRef, entries: CalendarEntry[]): string[] {
+  const view = monthView(shown)
+  return entriesBetween(entries, view.first, view.last)
+    .filter((entry) => entry.kind !== 'evening')
+    .map((entry) => entry.name)
+    .filter((name, i, all) => all.indexOf(name) === i)
+}
+
 /**
  * The Bengali year: the pujas, festivals and cultural days by the West Bengal calendar, with
  * the community's own evenings among them.
@@ -525,7 +543,6 @@ function YearAtAGlance({ year, current, shown, entries }: { year: number; curren
  * for any year; the rituals are only for the years the committee has entered and checked.
  */
 export function CalendarPage() {
-  useDocumentTitle('Calendar')
   const [params] = useSearchParams()
   const { hash } = useLocation()
   const today = civilDate(useNow())
@@ -545,6 +562,8 @@ export function CalendarPage() {
     const unique = evenings.filter((entry, i) => evenings.findIndex((e) => e.key === entry.key) === i)
     return [...rituals.map(ritualEntry), ...unique]
   }, [upcoming.data, past.data])
+
+  useDocumentTitle('Calendar', calendarShareLine(`${monthName(shown)} ${shown.year}`, occasionsIn(shown, entries)))
 
   // Which way the last move went, so the new month slides in from that side.
   const [moved, setMoved] = useState({ key: shownKey, direction: 0 })

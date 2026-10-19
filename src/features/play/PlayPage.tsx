@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
+import { SHARE_LINES } from '@/app/shareLines'
 import { Button } from '@/components/Button'
 import { LoadFailed } from '@/components/LoadFailed'
 import { formatLongDate } from '@/domain/dates'
@@ -25,7 +26,7 @@ import styles from './Play.module.css'
  * household chose to show.
  */
 export function PlayPage() {
-  useDocumentTitle('Vote and play')
+  useDocumentTitle('Vote and play', SHARE_LINES.play)
   const viewer = useViewer()
   const who = useSignedIn()
   const now = useNow()

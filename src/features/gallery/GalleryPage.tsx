@@ -1,6 +1,7 @@
 import { Link } from 'react-router'
 import { useSettings } from '@/app/SettingsContext'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
+import { SHARE_LINES } from '@/app/shareLines'
 import { Container } from '@/components/Container'
 import { LoadFailed } from '@/components/LoadFailed'
 import { formatMonthYear } from '@/domain/dates'
@@ -10,7 +11,7 @@ import styles from './Gallery.module.css'
 
 export function GalleryPage() {
   const { text } = useSettings()
-  useDocumentTitle('Gallery')
+  useDocumentTitle('Gallery', SHARE_LINES.gallery)
   const { data: albums, isPending, isError, refetch } = useAlbums()
 
   return (

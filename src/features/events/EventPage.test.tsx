@@ -1,4 +1,5 @@
 import { screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { Route, Routes } from 'react-router'
 import { renderWithProviders } from '@/test/render'
 import { EventPage } from './EventPage'
@@ -47,6 +48,18 @@ describe('EventPage', () => {
     // Passing the event on is how people are actually invited to it.
     expect(screen.getByRole('button', { name: /Share/ })).toBeInTheDocument()
     expect(document.title).toBe('Cultural programme · 13Parbon Community')
+  })
+
+  it('passes the event on with what, when and where, for the message it is sent in', async () => {
+    const share = vi.fn().mockResolvedValue(undefined)
+    Object.defineProperty(navigator, 'share', { value: share, configurable: true })
+    try {
+      renderEvent('mahalaya-cultural-programme-2026')
+      await userEvent.click(await screen.findByRole('button', { name: /Share/ }))
+      expect(share.mock.calls[0][0].text).toMatch(/^Cultural programme: Saturday 10 October, 1:30 pm at .+\. \S/)
+    } finally {
+      Reflect.deleteProperty(navigator, 'share')
+    }
   })
 
   it('shows the venue on a map, and offers directions', async () => {
