@@ -10,7 +10,9 @@ import { year1434 } from './bengaliYear1434'
  * page are worked out by, and a puja on one panjika beside dates from another would be a day out
  * somewhere. The Gupta Press and Benimadhab Sil almanacs, on many kitchen walls, keep the older
  * Surya Siddhanta tables and put some of these a day either side: Durga Puja 2026 a day earlier,
- * and the sankranti days (Manasa, Kartik Puja, Poush Sankranti) often a day later.
+ * and the sankranti days (Manasa, Kartik Puja, Poush Sankranti) often a day later. A reader can
+ * switch the page to theirs: a ritual's `guptaPress` is its date and times as read there, and its
+ * `bengaliDate` lets a sankranti day move with that panjika's months. See docs/CALENDAR.md.
  *
  * Where each year was taken from, and what in it is less sure, is at the top of its own file.
  *

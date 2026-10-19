@@ -22,9 +22,9 @@ import { durgaPuja, year1433 } from './bengaliYear1433'
  */
 
 /** The names and what it is, which do not change from year to year: only the dates do. */
-function like(id: string): Pick<Ritual, 'id' | 'name' | 'bengaliName' | 'kind' | 'description'> {
-  const { name, bengaliName, kind, description } = year1433.find((ritual) => ritual.id === id)!
-  return { id, name, bengaliName, kind, description }
+function like(id: string): Pick<Ritual, 'id' | 'name' | 'bengaliName' | 'kind' | 'description' | 'bengaliDate'> {
+  const { name, bengaliName, kind, description, bengaliDate } = year1433.find((ritual) => ritual.id === id)!
+  return { id, name, bengaliName, kind, description, bengaliDate }
 }
 
 const ist = (at: string) => `${at}+05:30`

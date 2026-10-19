@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { Link, useLocation, useSearchParams } from 'react-router'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { calendarShareLine } from '@/app/shareLines'
@@ -8,14 +8,17 @@ import { LoadFailed } from '@/components/LoadFailed'
 import {
   BENGALI_MONTHS,
   BENGALI_WEEKDAYS,
+  PANJIKAS,
   bengaliDigits,
   civilDate,
   formatBengaliDate,
   formatCivil,
+  monthCertainty,
   monthLength,
   monthStarts,
   toBengali,
   addCivilDays,
+  type Panjika,
 } from '@/domain/bengaliDate'
 import {
   comingUp,
@@ -38,6 +41,7 @@ import { usePastEvents, useUpcomingEvents } from '@/lib/api'
 import { useNow } from '@/lib/clock'
 import { KindMark } from './KindMark'
 import { RitualIcon } from './RitualIcon'
+import { readPanjika, savePanjika } from './panjikaChoice'
 import styles from './Calendar.module.css'
 
 const ENGLISH_WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
@@ -54,6 +58,16 @@ const clampMonth = (ref: MonthRef) =>
 const monthName = ({ month }: MonthRef) => BENGALI_MONTHS[month].name
 const bengaliMonthName = ({ month }: MonthRef) => BENGALI_MONTHS[month].bengaliName
 
+/** "Jagaddhatri Puja and Rash Purnima" */
+const listOf = (names: string[]) => new Intl.ListFormat('en-GB', { type: 'conjunction' }).format(names)
+
+/**
+ * By Benimadhab Sil, the pujas not yet read from the almanac, by their Bisuddha dates, from one day
+ * to another: they are left out of the page, and a note says so wherever they would have been.
+ */
+const notEnteredBetween = (panjika: Panjika, from: string, to: string) =>
+  rituals.filter((ritual) => ritual.date >= from && ritual.date <= to && ritualEntry(ritual, panjika) === null).map((ritual) => ritual.name)
+
 /** "Sat 17 Oct", or "Sat 17 – Wed 21 Oct" for an entry that runs over days. */
 function dayRange(entry: CalendarEntry): string {
   const one = (iso: string) => formatCivil(iso, { weekday: 'short', day: 'numeric', month: 'short' })
@@ -69,8 +83,8 @@ function monthSpan(first: string, last: string): string {
   return `${formatCivil(first, sameYear ? { day: 'numeric', month: 'long' } : { day: 'numeric', month: 'long', year: 'numeric' })} – ${formatCivil(last, { day: 'numeric', month: 'long', year: 'numeric' })}`
 }
 
-const monthOf = (iso: string): MonthRef => {
-  const { year, month } = toBengali(iso)
+const monthOf = (iso: string, panjika: Panjika): MonthRef => {
+  const { year, month } = toBengali(iso, panjika)
   return { year, month }
 }
 
@@ -112,6 +126,23 @@ function Picture({ entry, className }: { entry: CalendarEntry; className: string
   )
 }
 
+/** "Fri 16 Oct, 11:15 pm –" and "Sun 18 Oct, 1:22 am", each kept whole, so a line breaks only after the dash. */
+function Span({ text }: { text: string }) {
+  const [from, to] = text.split(' – ')
+  // One element around both halves: in the flex row beside "UK", two would be two items that never wrap.
+  return (
+    <span>
+      <span className={styles.nowrap}>{to ? `${from} –` : from}</span>
+      {to ? (
+        <>
+          {' '}
+          <span className={styles.nowrap}>{to}</span>
+        </>
+      ) : null}
+    </span>
+  )
+}
+
 /**
  * When it begins and ends, in UK time and India's, a line and a colour each so the two clocks are
  * not read as one. The tithi is one moment the world over; it is only the clock that differs.
@@ -124,16 +155,21 @@ function Times({ entry, on }: { entry: CalendarEntry; on?: string }) {
     <dl className={styles.times}>
       {times.map((time) => (
         <div key={`${time.label}-${time.from}`} className={styles.time}>
-          <dt>{time.label}</dt>
+          {/* A tithi is the window; anything else — Sandhi Puja, a muhurat, a sankranti — is the moment itself. */}
+          <dt className={styles.timeLabel} data-span={/tithi/i.test(time.label) ? 'tithi' : 'moment'}>
+            {time.label}
+          </dt>
           {evening ? (
-            <dd>{formatSpan(time, 'uk')}</dd>
+            <dd>
+              <Span text={formatSpan(time, 'uk')} />
+            </dd>
           ) : (
             <dd className={styles.zones}>
               <span className={styles.zone} data-zone="uk">
-                <span className={styles.zoneName}>UK</span> {formatSpan(time, 'uk')}
+                <span className={styles.zoneName}>UK</span> <Span text={formatSpan(time, 'uk')} />
               </span>
               <span className={styles.zone} data-zone="india">
-                <span className={styles.zoneName}>India</span> {formatSpan(time, 'kolkata')}
+                <span className={styles.zoneName}>India</span> <Span text={formatSpan(time, 'kolkata')} />
               </span>
             </dd>
           )}
@@ -144,20 +180,23 @@ function Times({ entry, on }: { entry: CalendarEntry; on?: string }) {
 }
 
 /** Where an entry in "coming up" goes: an evening to its page, the rest to their month. */
-function entryHref(entry: CalendarEntry): string {
-  return entry.href ?? `/calendar?month=${monthParam(monthOf(entry.start))}#entry-${entry.key}`
+function entryHref(entry: CalendarEntry, panjika: Panjika): string {
+  return entry.href ?? `/calendar?month=${monthParam(monthOf(entry.start, panjika))}#entry-${entry.key}`
 }
 
-function TodayPanel({ today, entries }: { today: string; entries: CalendarEntry[] }) {
+function TodayPanel({ today, entries, panjika }: { today: string; entries: CalendarEntry[]; panjika: Panjika }) {
   const now = entriesOn(entries, today)
   const next = comingUp(entries, today)
+  // What Benimadhab Sil leaves out of the same stretch, so it is not missing without a word.
+  const horizon = next.length === 3 ? next[2].start : addCivilDays(today, 30)
+  const missing = notEnteredBetween(panjika, addCivilDays(today, 1), horizon)
   return (
     <section className={styles.today} aria-labelledby="today-title">
       <h2 id="today-title" className={styles.todayTitle}>
         Today
       </h2>
       <p className={styles.todayDate}>
-        <span lang="bn">আজ {formatBengaliDate(toBengali(today))}</span>
+        <span lang="bn">আজ {formatBengaliDate(toBengali(today, panjika))}</span>
         <span aria-hidden="true"> · </span>
         {/* In two halves: with the year in it, en-GB puts a comma after the weekday. */}
         <span>
@@ -171,7 +210,7 @@ function TodayPanel({ today, entries }: { today: string; entries: CalendarEntry[
             return (
               <li key={entry.key} className={styles.todayItem} data-kind={entry.kind}>
                 <Picture entry={entry} className={styles.todayPicture} />
-                <div>
+                <div className={styles.todayBody}>
                   <p className={styles.todayName}>
                     {day ? (
                       <>
@@ -207,12 +246,17 @@ function TodayPanel({ today, entries }: { today: string; entries: CalendarEntry[
             {next.map((entry) => (
               <li key={entry.key} data-kind={entry.kind}>
                 <KindMark kind={entry.kind} className={styles.mark} />
-                <Link to={entryHref(entry)}>{entry.name}</Link>
+                <Link to={entryHref(entry, panjika)}>{entry.name}</Link>
                 <span className="sr-only">, {kindLabel(entry.kind)},</span>{' '}
                 <span className={styles.comingDate}>{dayRange(entry)}</span>
               </li>
             ))}
           </ul>
+          {missing.length > 0 ? (
+            <p className={styles.comingMissing}>
+              {listOf(missing)} {missing.length > 1 ? 'are' : 'is'} not in Benimadhab Sil dates yet.
+            </p>
+          ) : null}
         </div>
       ) : null}
     </section>
@@ -220,8 +264,8 @@ function TodayPanel({ today, entries }: { today: string; entries: CalendarEntry[
 }
 
 /** What a day cell says to a screen reader: "২ কার্তিক, Monday 19 October. Today. Maha Ashtami, Durga Puja." */
-function cellLabel(day: string, today: string, on: CalendarEntry[]): string {
-  const bengali = toBengali(day)
+function cellLabel(day: string, today: string, on: CalendarEntry[], panjika: Panjika): string {
+  const bengali = toBengali(day, panjika)
   const parts = [
     `${bengaliDigits(bengali.day)} ${BENGALI_MONTHS[bengali.month].bengaliName}, ${formatCivil(day, { weekday: 'long', day: 'numeric', month: 'long' })}.`,
   ]
@@ -263,8 +307,20 @@ function CellPictures({ entries }: { entries: CalendarEntry[] }) {
   )
 }
 
-function MonthGrid({ shown, today, entries, direction }: { shown: MonthRef; today: string; entries: CalendarEntry[]; direction: number }) {
-  const view = monthView(shown)
+function MonthGrid({
+  shown,
+  today,
+  entries,
+  direction,
+  panjika,
+}: {
+  shown: MonthRef
+  today: string
+  entries: CalendarEntry[]
+  direction: number
+  panjika: Panjika
+}) {
+  const view = monthView(shown, panjika)
   const inMonth = entriesBetween(entries, view.first, view.last)
   const lanes = laneOf(inMonth)
   const laneCount = Math.max(0, ...lanes.values()) + (inMonth.length > 0 ? 1 : 0)
@@ -299,7 +355,7 @@ function MonthGrid({ shown, today, entries, direction }: { shown: MonthRef; toda
                 if (day < view.first || day > view.last) {
                   // A day of the month either side: there to read, faded, and not this month's —
                   // so not a link, and left out for a screen reader, which has the caption.
-                  const theirs = toBengali(day)
+                  const theirs = toBengali(day, panjika)
                   const gregorian = Number(day.slice(8))
                   return (
                     <td key={d} className={styles.outside}>
@@ -319,7 +375,7 @@ function MonthGrid({ shown, today, entries, direction }: { shown: MonthRef; toda
                   )
                 }
                 const on = entriesOn(inMonth, day)
-                const bengali = toBengali(day)
+                const bengali = toBengali(day, panjika)
                 const gregorianDay = Number(day.slice(8))
                 const showMonth = gregorianDay === 1 || day === view.first
                 const content = (
@@ -377,13 +433,13 @@ function MonthGrid({ shown, today, entries, direction }: { shown: MonthRef; toda
                     style={{ '--cell': w * 7 + d } as CSSProperties}
                   >
                     {on.length > 0 ? (
-                      <a href={`#entry-${on[0].key}`} className={styles.dayLink} aria-label={cellLabel(day, today, on)}>
+                      <a href={`#entry-${on[0].key}`} className={styles.dayLink} aria-label={cellLabel(day, today, on, panjika)}>
                         {content}
                       </a>
                     ) : (
                       <span className={styles.dayPlain}>
                         {content}
-                        <span className="sr-only">{cellLabel(day, today, on)}</span>
+                        <span className="sr-only">{cellLabel(day, today, on, panjika)}</span>
                       </span>
                     )}
                   </td>
@@ -404,6 +460,7 @@ function Agenda({
   eveningsPending,
   eveningsFailed,
   onRetry,
+  panjika,
 }: {
   shown: MonthRef
   entries: CalendarEntry[]
@@ -411,9 +468,12 @@ function Agenda({
   eveningsPending: boolean
   eveningsFailed: boolean
   onRetry: () => void
+  panjika: Panjika
 }) {
-  const view = monthView(shown)
+  const view = monthView(shown, panjika)
   const inMonth = entriesBetween(entries, view.first, view.last)
+  const certainty = monthCertainty(shown.year, shown.month, panjika)
+  const notEntered = covered ? notEnteredBetween(panjika, view.first, view.last) : []
   const before = monthName(shiftMonth(shown, -1))
   const after = monthName(shiftMonth(shown, 1))
   return (
@@ -421,8 +481,24 @@ function Agenda({
       <h3 className={styles.agendaTitle}>In {monthName(shown)}</h3>
       {!covered ? (
         <p className={styles.note}>
-          The panjika for {shown.year} is not entered yet, so pujas and festivals will appear here once the committee has checked them. The
-          dates of the days are right.
+          The panjika for {shown.year} is not entered yet, so pujas and festivals will appear here once the committee has checked them.
+          {certainty === 'printed' ? ' The dates of the days are right.' : null}
+        </p>
+      ) : null}
+      {certainty !== 'printed' ? (
+        <p className={styles.note}>
+          We have worked out {monthName(shown)} {shown.year} by the Benimadhab Sil almanac’s own rules, but not yet checked it against a printed
+          copy.
+          {certainty === 'close'
+            ? ' It starts or ends close to midnight, so the printed almanac may put that day one day earlier or later.'
+            : null}
+        </p>
+      ) : null}
+      {notEntered.length > 0 ? (
+        <p className={styles.note}>
+          Not here yet in Benimadhab Sil dates: {listOf(notEntered)}. We have not read {notEntered.length > 1 ? 'their dates' : 'its date'} from
+          the almanac yet, and would rather leave {notEntered.length > 1 ? 'them' : 'it'} out than show the wrong day. Choose Bisuddha
+          Siddhanta above to see {notEntered.length > 1 ? 'them' : 'it'}.
         </p>
       ) : null}
       {inMonth.length > 0 ? (
@@ -437,9 +513,22 @@ function Agenda({
                 <p className={styles.agendaMeta}>
                   <KindMark kind={entry.kind} className={styles.mark} />{' '}
                   <span className={styles.kindWord}>{kindLabel(entry.kind)}</span> · {dayRange(entry)} ·{' '}
-                  <span lang="bn">{formatBengaliDate(toBengali(entry.start))}</span>
-                  {entry.start < view.first ? ` · continues from ${before}` : ''}
-                  {entry.end > view.last ? ` · continues into ${after}` : ''}
+                  <span lang="bn" className={styles.nowrap}>
+                    {formatBengaliDate(toBengali(entry.start, panjika))}
+                  </span>
+                  {/* The space outside each piece, so a line can break before it. */}
+                  {entry.start < view.first ? (
+                    <>
+                      {' '}
+                      <span className={styles.nowrap}>· continues from {before}</span>
+                    </>
+                  ) : null}
+                  {entry.end > view.last ? (
+                    <>
+                      {' '}
+                      <span className={styles.nowrap}>· continues into {after}</span>
+                    </>
+                  ) : null}
                 </p>
                 {entry.description ? <p className={styles.agendaText}>{entry.description}</p> : null}
                 <Times entry={entry} />
@@ -478,8 +567,20 @@ function Agenda({
   )
 }
 
-function YearAtAGlance({ year, current, shown, entries }: { year: number; current: MonthRef; shown: MonthRef; entries: CalendarEntry[] }) {
-  const starts = monthStarts(year)
+function YearAtAGlance({
+  year,
+  current,
+  shown,
+  entries,
+  panjika,
+}: {
+  year: number
+  current: MonthRef
+  shown: MonthRef
+  entries: CalendarEntry[]
+  panjika: Panjika
+}) {
+  const starts = monthStarts(year, panjika)
   return (
     <section className={styles.glance} aria-labelledby="glance-title">
       <h2 id="glance-title" className={styles.glanceTitle}>
@@ -489,7 +590,7 @@ function YearAtAGlance({ year, current, shown, entries }: { year: number; curren
         {BENGALI_MONTHS.map((month, i) => {
           const ref = { year, month: i }
           const first = starts[i]
-          const last = addCivilDays(first, monthLength(year, i) - 1)
+          const last = addCivilDays(first, monthLength(year, i, panjika) - 1)
           const names = entriesBetween(entries, first, last)
             .filter((entry) => entry.kind !== 'evening' && entry.start >= first)
             .map((entry) => entry.name)
@@ -526,8 +627,8 @@ function YearAtAGlance({ year, current, shown, entries }: { year: number; curren
 }
 
 /** What is on in a month, by name, once each and leaving out our own evenings: for its share line. */
-function occasionsIn(shown: MonthRef, entries: CalendarEntry[]): string[] {
-  const view = monthView(shown)
+function occasionsIn(shown: MonthRef, entries: CalendarEntry[], panjika: Panjika): string[] {
+  const view = monthView(shown, panjika)
   return entriesBetween(entries, view.first, view.last)
     .filter((entry) => entry.kind !== 'evening')
     .map((entry) => entry.name)
@@ -535,8 +636,142 @@ function occasionsIn(shown: MonthRef, entries: CalendarEntry[]): string[] {
 }
 
 /**
+ * Which panjika the days are counted by. A pair of radios, so the arrow keys move between them as
+ * they would in any form, with one accent pill that slides to the chosen half — tapped, or
+ * dragged across with a finger and let go nearer the other half.
+ *
+ * The halves are not the same width, so both are measured and the pill is drawn between them,
+ * again when the fonts arrive or the page reflows. Until they have been measured — and where
+ * nothing can be, as in tests — the chosen half fills itself and there is nothing to drag.
+ */
+function PanjikaSwitch({ panjika, onChange }: { panjika: Panjika; onChange: (panjika: Panjika) => void }) {
+  const options = useRef<HTMLDivElement>(null)
+  const [halves, setHalves] = useState<{ x: number; width: number }[] | null>(null)
+  // While dragging, how far across the pill is: 0 on the first half, 1 on the second.
+  const [dragged, setDragged] = useState<number | null>(null)
+  const gesture = useRef<{ pointer: number; startX: number; from: number; at: number; moving: boolean } | null>(null)
+  // A drag ends with a click on whichever half the finger was over; that is not a choice.
+  const ignoreClicksUntil = useRef(0)
+  const chosen = PANJIKAS.findIndex((option) => option.id === panjika)
+
+  useLayoutEffect(() => {
+    const box = options.current
+    if (!box) return
+    const measure = () => {
+      const inside = box.getBoundingClientRect().left + box.clientLeft
+      const rects = [...box.querySelectorAll('label')].map((label) => label.getBoundingClientRect())
+      if (rects.length === 2 && rects.every((rect) => rect.width > 0)) setHalves(rects.map((rect) => ({ x: rect.left - inside, width: rect.width })))
+    }
+    measure()
+    if (typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(measure)
+    for (const label of box.querySelectorAll('label')) observer.observe(label)
+    return () => observer.disconnect()
+  }, [])
+
+  const at = dragged ?? chosen
+  const thumb = halves && {
+    x: halves[0].x + at * (halves[1].x - halves[0].x),
+    width: halves[0].width + at * (halves[1].width - halves[0].width),
+  }
+  const lit = dragged === null ? chosen : Math.round(dragged)
+
+  return (
+    <fieldset className={styles.choice}>
+      <legend className={styles.choiceLegend}>Panjika</legend>
+      <div
+        ref={options}
+        className={styles.choiceOptions}
+        data-measured={thumb ? 'true' : undefined}
+        data-dragging={dragged === null ? undefined : 'true'}
+        onPointerDown={(event) => {
+          if (!halves || event.button !== 0) return
+          gesture.current = { pointer: event.pointerId, startX: event.clientX, from: chosen, at: chosen, moving: false }
+        }}
+        onPointerMove={(event) => {
+          const drag = gesture.current
+          if (!drag || drag.pointer !== event.pointerId || !halves) return
+          const moved = event.clientX - drag.startX
+          // A few pixels of wobble is still a tap.
+          if (!drag.moving && Math.abs(moved) < 6) return
+          if (!drag.moving) {
+            drag.moving = true
+            event.currentTarget.setPointerCapture?.(event.pointerId)
+          }
+          drag.at = Math.min(1, Math.max(0, drag.from + moved / (halves[1].x - halves[0].x)))
+          setDragged(drag.at)
+        }}
+        onPointerUp={(event) => {
+          const drag = gesture.current
+          gesture.current = null
+          if (!drag || drag.pointer !== event.pointerId || !drag.moving) return
+          ignoreClicksUntil.current = event.timeStamp + 400
+          setDragged(null)
+          const landed = PANJIKAS[Math.round(drag.at)].id
+          if (landed !== panjika) onChange(landed)
+          options.current?.querySelector<HTMLInputElement>(`input[value="${landed}"]`)?.focus({ preventScroll: true })
+        }}
+        onPointerCancel={() => {
+          gesture.current = null
+          setDragged(null)
+        }}
+        onClickCapture={(event) => {
+          if (event.timeStamp < ignoreClicksUntil.current) event.preventDefault()
+        }}
+      >
+        {thumb ? (
+          <span
+            className={styles.choiceThumb}
+            aria-hidden="true"
+            style={{ '--thumb-x': `${thumb.x}px`, '--thumb-width': `${thumb.width}px` } as CSSProperties}
+          />
+        ) : null}
+        {PANJIKAS.map((option, i) => (
+          <label key={option.id} className={styles.choiceOption} data-lit={thumb && i === lit ? 'true' : undefined}>
+            <input
+              type="radio"
+              name="panjika"
+              value={option.id}
+              checked={panjika === option.id}
+              onChange={() => onChange(option.id)}
+              className={styles.choiceInput}
+            />
+            <span lang="bn" className={styles.choiceBengali}>
+              {option.bengaliName}
+            </span>{' '}
+            <span>{option.name}</span>
+          </label>
+        ))}
+      </div>
+    </fieldset>
+  )
+}
+
+/** What the dates follow, under the switch: it changes with it. */
+function PanjikaNote({ panjika }: { panjika: Panjika }) {
+  if (panjika === 'surya')
+    return (
+      <p className={styles.panjika}>
+        Dates follow the Surya Siddhanta panjika printed by Benimadhab Sil, which Gupta Press agrees with to a minute or two. The West
+        Bengal holiday list follows the Bisuddha Siddhanta, where about a third of the months start a day earlier and some pujas fall a
+        day either side: choose it above to see its dates. A few pujas are not in yet; each month says which. We often hold our own
+        evening on the nearest weekend.
+      </p>
+    )
+  return (
+    <p className={styles.panjika}>
+      Dates follow the Bisuddha Siddhanta panjika for Kolkata, as the West Bengal holiday list does. The Benimadhab Sil and Gupta Press
+      almanacs, which many families and some UK temples follow, can be a day either side: choose Benimadhab Sil above to see their dates.
+      We often hold our own evening on the nearest weekend.
+    </p>
+  )
+}
+
+/**
  * The Bengali year: the pujas, festivals and cultural days by the West Bengal calendar, with
- * the community's own evenings among them.
+ * the community's own evenings among them. It opens on the Benimadhab Sil panjika, the Surya
+ * Siddhanta; the reader can switch to the Bisuddha Siddhanta, and the page remembers it in
+ * their browser; see docs/CALENDAR.md.
  *
  * It opens on the Bengali month it is today, and the month shown is in the address, so one can
  * be sent to somebody and Back goes to the month before. The days are worked out from the sun
@@ -546,7 +781,12 @@ export function CalendarPage() {
   const [params] = useSearchParams()
   const { hash } = useLocation()
   const today = civilDate(useNow())
-  const current = monthOf(today)
+  const [panjika, setPanjika] = useState<Panjika>(readPanjika)
+  const choose = (next: Panjika) => {
+    setPanjika(next)
+    savePanjika(next)
+  }
+  const current = monthOf(today, panjika)
   const shown = clampMonth(readMonthParam(params.get('month')) ?? clampMonth(current))
   const shownKey = monthParam(shown)
 
@@ -560,16 +800,20 @@ export function CalendarPage() {
       .map(eveningEntry)
       .filter((entry): entry is CalendarEntry => entry !== null)
     const unique = evenings.filter((entry, i) => evenings.findIndex((e) => e.key === entry.key) === i)
-    return [...rituals.map(ritualEntry), ...unique]
-  }, [upcoming.data, past.data])
+    const shown = rituals.map((ritual) => ritualEntry(ritual, panjika)).filter((entry): entry is CalendarEntry => entry !== null)
+    return [...shown, ...unique]
+  }, [upcoming.data, past.data, panjika])
 
-  useDocumentTitle('Calendar', calendarShareLine(`${monthName(shown)} ${shown.year}`, occasionsIn(shown, entries)))
+  useDocumentTitle('Calendar', calendarShareLine(`${monthName(shown)} ${shown.year}`, occasionsIn(shown, entries, panjika)))
 
   // Which way the last move went, so the new month slides in from that side.
-  const [moved, setMoved] = useState({ key: shownKey, direction: 0 })
-  if (moved.key !== shownKey) {
+  // Switching panjika can change the month too, on the days the two disagree on it; that is not
+  // a move, so the grid redraws where it is rather than sliding in from a side.
+  const [moved, setMoved] = useState({ key: shownKey, panjika, direction: 0 })
+  if (moved.key !== shownKey || moved.panjika !== panjika) {
     const from = readMonthParam(moved.key)
-    setMoved({ key: shownKey, direction: from ? Math.sign(compareMonths(shown, from)) : 0 })
+    const direction = moved.panjika === panjika && from ? Math.sign(compareMonths(shown, from)) : 0
+    setMoved({ key: shownKey, panjika, direction })
   }
 
   // Moving to another month takes focus to its heading and says where it is; the first drawing
@@ -579,9 +823,14 @@ export function CalendarPage() {
   const heading = useRef<HTMLHeadingElement>(null)
   const [announced, setAnnounced] = useState('')
   const lastKey = useRef(shownKey)
+  const lastPanjika = useRef(panjika)
   useEffect(() => {
+    const switched = lastPanjika.current !== panjika
+    lastPanjika.current = panjika
     if (lastKey.current === shownKey) return
     lastKey.current = shownKey
+    // Nor does focus leave the switch for the month's heading when the month changed with it.
+    if (switched) return
     setAnnounced(`${monthName(shown)} ${shown.year}`)
     // Sent to one occasion in it — "Coming up" in another month — that is where to land; the
     // router has already scrolled to it, and moving to the month's top would undo that.
@@ -596,9 +845,9 @@ export function CalendarPage() {
       const still = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
       section.current?.scrollIntoView?.({ block: 'start', behavior: still ? 'auto' : 'smooth' })
     }
-  }, [shownKey, shown, hash])
+  }, [shownKey, shown, hash, panjika])
 
-  const view = monthView(shown)
+  const view = monthView(shown, panjika)
   const previous = shiftMonth(shown, -1)
   const next = shiftMonth(shown, 1)
   const hasPrevious = compareMonths(previous, FIRST_MONTH) >= 0
@@ -614,13 +863,11 @@ export function CalendarPage() {
         </p>
         <h1 className={styles.title}>Calendar</h1>
         <p className={styles.intro}>Pujas, festivals and our own evenings through the Bengali year, with the English date beside every day.</p>
-        <p className={styles.panjika}>
-          Dates follow the Bisuddha Siddhanta panjika for Kolkata, as the West Bengal holiday list does. The Gupta Press almanac, and some UK
-          temples, can be a day either side, and we often hold our own evening on the nearest weekend.
-        </p>
+        <PanjikaSwitch panjika={panjika} onChange={choose} />
+        <PanjikaNote panjika={panjika} />
       </header>
 
-      <TodayPanel today={today} entries={entries} />
+      <TodayPanel today={today} entries={entries} panjika={panjika} />
 
       <section ref={section} className={styles.month} aria-labelledby="month-title">
         <div className={styles.monthHead}>
@@ -682,7 +929,7 @@ export function CalendarPage() {
             ) : null}
           </p>
         </div>
-        <MonthGrid key={shownKey} shown={shown} today={today} entries={entries} direction={moved.direction} />
+        <MonthGrid key={`${shownKey}-${panjika}`} shown={shown} today={today} entries={entries} direction={moved.direction} panjika={panjika} />
         <Agenda
           shown={shown}
           entries={entries}
@@ -693,13 +940,14 @@ export function CalendarPage() {
             void upcoming.refetch()
             void past.refetch()
           }}
+          panjika={panjika}
         />
         <p className="sr-only" aria-live="polite">
           {announced}
         </p>
       </section>
 
-      <YearAtAGlance year={shown.year} current={current} shown={shown} entries={entries} />
+      <YearAtAGlance year={shown.year} current={current} shown={shown} entries={entries} panjika={panjika} />
     </Container>
   )
 }

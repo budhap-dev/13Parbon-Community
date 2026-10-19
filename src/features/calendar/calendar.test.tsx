@@ -1,7 +1,7 @@
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, RouterProvider } from 'react-router'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { routes } from '@/app/router'
 import { defaultSettings } from '@/app/defaults'
 import { publicNav } from '@/app/nav'
@@ -41,6 +41,10 @@ describe('the calendar switch', () => {
 })
 
 describe('the calendar page', () => {
+  // These read the Bisuddha Siddhanta's dates and times; the page opens on Benimadhab Sil's.
+  beforeEach(() => localStorage.setItem('calendar-panjika', 'bisuddha'))
+  afterEach(() => localStorage.clear())
+
   it('opens on the Bengali month it is today, and says what today is', async () => {
     renderAt('/calendar')
     expect(await screen.findByRole('heading', { level: 1, name: 'Calendar' })).toBeInTheDocument()
@@ -183,6 +187,97 @@ describe('the calendar page', () => {
   it('passes the automated accessibility checks', async () => {
     const { container } = renderAt('/calendar')
     await screen.findByRole('heading', { level: 4, name: /Durga Puja/ })
+    await expectNoAxeViolations(container)
+  })
+})
+
+describe('the Benimadhab Sil panjika on the page', () => {
+  afterEach(() => localStorage.clear())
+
+  it('opens on Benimadhab Sil, and switches to the Bisuddha Siddhanta', async () => {
+    renderAt('/calendar')
+    const today = await screen.findByRole('region', { name: 'Today' })
+    expect(screen.getByRole('radio', { name: /Benimadhab Sil/ })).toBeChecked()
+    // Kartik begins a day later by the Surya Siddhanta: today is the 1st, not the 2nd.
+    expect(within(today).getByText('আজ ১ কার্তিক ১৪৩৩')).toBeInTheDocument()
+    expect(screen.getByText(/19 October – 17 November 2026 · 30 days/)).toBeInTheDocument()
+    expect(screen.getByText(/Surya Siddhanta panjika printed by Benimadhab Sil/)).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('radio', { name: /Bisuddha Siddhanta/ }))
+    expect(within(today).getByText('আজ ২ কার্তিক ১৪৩৩')).toBeInTheDocument()
+    expect(screen.getByText(/Dates follow the Bisuddha Siddhanta panjika for Kolkata/)).toBeInTheDocument()
+  })
+
+  it('moves a sankranti day with the almanac’s months, without a time it does not print', async () => {
+    localStorage.setItem('calendar-panjika', 'surya')
+    renderAt('/calendar?month=1433-07')
+    const kartik = (await screen.findByRole('heading', { level: 4, name: /Kartik Puja/ })).closest('li')!
+    expect(kartik).toHaveTextContent('Tue 17 Nov')
+    expect(kartik).not.toHaveTextContent('Vrishchika sankranti')
+  })
+
+  it('gives Durga Puja its Benimadhab Sil days and times', async () => {
+    localStorage.setItem('calendar-panjika', 'surya')
+    renderAt('/calendar?month=1433-06')
+    const puja = (await screen.findByRole('heading', { level: 4, name: /Durga Puja/ })).closest('li')!
+    expect(puja).toHaveTextContent('Fri 16 – Wed 21 Oct')
+    expect(puja).toHaveTextContent('Sat 17 Oct মহাসপ্তমী Maha Saptami')
+    expect(puja).toHaveTextContent('India Mon 19 Oct, 7:25 am – 8:13 am')
+    expect(screen.queryByText(/not yet checked it against a printed copy/)).not.toBeInTheDocument()
+  })
+
+  it('says when a month is only worked out, not yet read in the almanac', async () => {
+    localStorage.setItem('calendar-panjika', 'surya')
+    renderAt('/calendar?month=1434-12')
+    expect(await screen.findByText(/We have worked out Choitro 1434 by the Benimadhab Sil almanac’s own rules.*one day earlier or later/)).toBeInTheDocument()
+  })
+
+  it('leaves out a puja not yet read in the almanac, and says so', async () => {
+    localStorage.setItem('calendar-panjika', 'surya')
+    renderAt('/calendar?month=1433-08')
+    await screen.findByRole('heading', { level: 4, name: /Nabanna/ })
+    expect(screen.queryByRole('heading', { level: 4, name: /Jagaddhatri Puja/ })).not.toBeInTheDocument()
+    expect(screen.getByText(/Not here yet in Benimadhab Sil dates: Jagaddhatri Puja and Rash Purnima\./)).toBeInTheDocument()
+  })
+
+  it('keeps focus on the switch when switching changes the month as well', async () => {
+    // 18 October 2026 is 30 Ashwin by Benimadhab Sil and 1 Kartik by the Bisuddha Siddhanta.
+    renderAt('/calendar', api(), new Date('2026-10-18T09:00:00'))
+    expect(await screen.findByRole('heading', { level: 2, name: /Ashwin 1433/ })).toBeInTheDocument()
+    const bisuddha = screen.getByRole('radio', { name: /Bisuddha Siddhanta/ })
+    await userEvent.click(bisuddha)
+    expect(await screen.findByRole('heading', { level: 2, name: /Kartik 1433/ })).toBeInTheDocument()
+    expect(bisuddha).toHaveFocus()
+  })
+
+  it('still takes focus to the month heading on a real move after a switch', async () => {
+    renderAt('/calendar')
+    await userEvent.click(await screen.findByRole('radio', { name: /Bisuddha Siddhanta/ }))
+    await userEvent.click(screen.getByRole('link', { name: /^Next month/ }))
+    await waitFor(() => expect(screen.getByRole('heading', { level: 2, name: /Agrahayan 1433/ })).toHaveFocus())
+  })
+
+  it('says under Coming up what Benimadhab Sil leaves out of it', async () => {
+    localStorage.setItem('calendar-panjika', 'surya')
+    // From 12 November it is Kartik Puja, Nabanna, then Poush Sankranti in January: Jagaddhatri and
+    // Rash Purnima fall between, not read from the almanac yet.
+    renderAt('/calendar', api(), new Date('2026-11-12T09:00:00'))
+    const today = await screen.findByRole('region', { name: 'Today' })
+    expect(within(today).getByText('Jagaddhatri Puja and Rash Purnima are not in Benimadhab Sil dates yet.')).toBeInTheDocument()
+  })
+
+  it('remembers the choice for the next visit', async () => {
+    const first = renderAt('/calendar')
+    await userEvent.click(await screen.findByRole('radio', { name: /Bisuddha Siddhanta/ }))
+    first.unmount()
+    renderAt('/calendar')
+    expect(await screen.findByRole('radio', { name: /Bisuddha Siddhanta/ })).toBeChecked()
+  })
+
+  it('passes the automated accessibility checks', async () => {
+    localStorage.setItem('calendar-panjika', 'surya')
+    const { container } = renderAt('/calendar')
+    await screen.findByRole('radio', { name: /Benimadhab Sil/ })
     await expectNoAxeViolations(container)
   })
 })

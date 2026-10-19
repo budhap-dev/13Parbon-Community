@@ -1,4 +1,4 @@
-import { addCivilDays, civilDate, monthLength, monthStarts, weekdayOf } from './bengaliDate'
+import { addCivilDays, civilDate, civilDaysBetween, fromBengali, monthLength, monthStarts, toBengali, weekdayOf, type Panjika } from './bengaliDate'
 import { isCancelled, type Event } from './event'
 
 /**
@@ -54,6 +54,20 @@ export type Ritual = {
   description: string
   /** When it begins and ends by the panjika, where it has a time rather than a whole day. */
   times?: RitualTime[]
+  /**
+   * For a day kept on a date of the Bengali calendar rather than by a tithi, that date, so it
+   * moves with the panjika: Poila Boishakh on 1 Boishakh, Nazrul Jayanti on 11 Joishtho, Poush
+   * Sankranti on the last day of Poush. Month 0 is Boishakh. Day 0 is the last of the month, the
+   * day of its sankranti, and -1 the day before that.
+   */
+  bengaliDate?: { month: number; day: number }
+  /**
+   * The day by the Gupta Press almanac, for one kept by tithi, once the committee has read it
+   * there: its date, its last day, and its days and times where they are given. The days, left
+   * out, move with the date. Without this the day is not shown by the Gupta Press panjika at all,
+   * because a puja a day out is worse than no puja.
+   */
+  guptaPress?: { date: string; until?: string; days?: RitualDay[]; times?: RitualTime[] }
 }
 
 /** A ritual or an evening, as the calendar draws it. */
@@ -74,8 +88,18 @@ export type CalendarEntry = {
   href?: string
 }
 
-export function ritualEntry(ritual: Ritual): CalendarEntry {
-  return {
+/**
+ * A ritual as the calendar draws it, by either panjika, or null when that panjika's date for it
+ * has not been entered.
+ *
+ * The dates in the data are the Bisuddha Siddhanta's. By the Gupta Press one, a day kept on a
+ * Bengali date falls by that panjika's months, without a time: no sankranti time has been found
+ * in print, and the sums can be most of an hour from it. A day kept by tithi is what was read in
+ * the almanac. A cultural day with no Bengali date — Ekushe February — is on its English date,
+ * the same by either.
+ */
+export function ritualEntry(ritual: Ritual, panjika: Panjika = 'bisuddha'): CalendarEntry | null {
+  const entry = {
     key: `${ritual.id}-${ritual.date.slice(0, 4)}`,
     kind: ritual.kind,
     name: ritual.name,
@@ -87,6 +111,26 @@ export function ritualEntry(ritual: Ritual): CalendarEntry {
     times: ritual.times,
     icon: ritual.id,
   }
+  if (panjika === 'bisuddha') return entry
+  if (ritual.bengaliDate) {
+    const date = onBengaliDate(toBengali(ritual.date).year, ritual.bengaliDate, panjika)
+    return { ...entry, start: date, end: date, times: undefined }
+  }
+  const almanac = ritual.guptaPress
+  if (!almanac) return ritual.kind === 'cultural' ? entry : null
+  const moved = civilDaysBetween(ritual.date, almanac.date)
+  return {
+    ...entry,
+    start: almanac.date,
+    end: almanac.until ?? (ritual.until ? addCivilDays(ritual.until, moved) : almanac.date),
+    days: almanac.days ?? ritual.days?.map((day) => ({ ...day, date: addCivilDays(day.date, moved) })),
+    times: almanac.times,
+  }
+}
+
+/** A Bengali date in a year, by a panjika, where day 0 is the last of the month. */
+function onBengaliDate(year: number, { month, day }: { month: number; day: number }, panjika: Panjika): string {
+  return fromBengali({ year, month, day: day > 0 ? day : monthLength(year, month, panjika) + day }, panjika)
 }
 
 /**
@@ -189,9 +233,9 @@ export type MonthView = {
   weeks: string[][]
 }
 
-export function monthView({ year, month }: MonthRef): MonthView {
-  const first = monthStarts(year)[month]
-  const length = monthLength(year, month)
+export function monthView({ year, month }: MonthRef, panjika: Panjika = 'bisuddha'): MonthView {
+  const first = monthStarts(year, panjika)[month]
+  const length = monthLength(year, month, panjika)
   const start = addCivilDays(first, -weekdayOf(first))
   const days = Math.ceil((weekdayOf(first) + length) / 7) * 7
   const cells = Array.from({ length: days }, (_, i) => addCivilDays(start, i))
