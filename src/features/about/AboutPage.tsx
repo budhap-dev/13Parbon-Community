@@ -3,6 +3,7 @@ import { Link } from 'react-router'
 import { site } from '@/app/site'
 import { useSettings } from '@/app/SettingsContext'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
+import { SHARE_LINES } from '@/app/shareLines'
 import { Button } from '@/components/Button'
 import { Container } from '@/components/Container'
 import { Icon } from '@/components/Icon'
@@ -16,7 +17,7 @@ export function AboutPage() {
   // Faces for the names already printed here, where their owners have added one. The committee's
   // own saved copy stands in until these have been read, or where they cannot be.
   const photoOf = photoByName(usePublicPhotos().data ?? [])
-  useDocumentTitle('About us')
+  useDocumentTitle('About us', SHARE_LINES.about)
 
   return (
     <Container className={styles.page}>

@@ -171,9 +171,15 @@ describe('SiteHeader', () => {
       const share = vi.fn().mockResolvedValue(undefined)
       Object.defineProperty(navigator, 'share', { value: share, configurable: true })
       document.title = 'Calendar · 13Parbon Community'
+      // The page's own line, which the page sets, goes in the message above the link.
+      document.head.insertAdjacentHTML('beforeend', '<meta name="description" content="Kartik 1433 in the Bengali calendar." />')
       renderOn('/calendar')
       await userEvent.click(screen.getByRole('button', { name: 'Share this page' }))
-      expect(share).toHaveBeenCalledWith({ title: 'Calendar · 13Parbon Community', text: undefined, url: window.location.href })
+      expect(share).toHaveBeenCalledWith({
+        title: 'Calendar · 13Parbon Community',
+        text: 'Kartik 1433 in the Bengali calendar.',
+        url: window.location.href,
+      })
     })
 
     it('copies the link where there is no share sheet, and says so', async () => {

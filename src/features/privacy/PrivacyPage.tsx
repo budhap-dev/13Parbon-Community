@@ -1,12 +1,13 @@
 import { Link } from 'react-router'
 import { useSettings } from '@/app/SettingsContext'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
+import { SHARE_LINES } from '@/app/shareLines'
 import { Container } from '@/components/Container'
 import styles from './Privacy.module.css'
 
 export function PrivacyPage() {
   const { text, privacy } = useSettings()
-  useDocumentTitle('Privacy')
+  useDocumentTitle('Privacy', SHARE_LINES.privacy)
   return (
     <Container className={styles.page}>
       <h1 className={styles.title}>Privacy</h1>

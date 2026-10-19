@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
+import { albumShareLine } from '@/app/shareLines'
 import { Container } from '@/components/Container'
 import { LoadFailed } from '@/components/LoadFailed'
 import { Lightbox } from '@/components/Lightbox'
@@ -13,7 +14,11 @@ export function AlbumPage() {
   const { slug = '' } = useParams()
   const { data: album, isPending, isError, refetch } = useAlbum(slug)
   const [open, setOpen] = useState<number | null>(null)
-  useDocumentTitle(album?.title)
+  const photoCount = album?.media.filter((m) => m.type === 'photo').length ?? 0
+  useDocumentTitle(
+    album?.title,
+    album ? albumShareLine(album.title, photoCount) : undefined,
+  )
 
   if (isPending) {
     return (

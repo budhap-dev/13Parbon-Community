@@ -2,6 +2,7 @@ import { useId, useState, type FormEvent } from "react";
 import { useSearchParams } from "react-router";
 import { useSettings } from "@/app/SettingsContext";
 import { useDocumentTitle } from "@/app/useDocumentTitle";
+import { SHARE_LINES } from "@/app/shareLines";
 import { Button } from "@/components/Button";
 import { Container } from "@/components/Container";
 import { Icon } from "@/components/Icon";
@@ -18,7 +19,7 @@ const empty: ContactInput = { name: "", email: "", subject: "", message: "", kin
 
 export function ContactPage() {
   const { text, social } = useSettings()
-  useDocumentTitle("Contact us");
+  useDocumentTitle("Contact us", SHARE_LINES.contact);
   const id = useId();
   /**
    * Arriving from the gallery's takedown notice, the form already knows why.

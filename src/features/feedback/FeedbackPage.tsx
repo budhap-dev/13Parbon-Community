@@ -1,6 +1,7 @@
 import { useId, useState, type ClipboardEvent, type FormEvent } from 'react'
 import { useSettings } from '@/app/SettingsContext'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
+import { SHARE_LINES } from '@/app/shareLines'
 import { Button } from '@/components/Button'
 import { Container } from '@/components/Container'
 import { LoadFailed } from '@/components/LoadFailed'
@@ -27,7 +28,7 @@ import styles from './Feedback.module.css'
  * going to a person, not straight onto the website.
  */
 export function FeedbackPage() {
-  useDocumentTitle('Feedback')
+  useDocumentTitle('Feedback', SHARE_LINES.feedback)
   const id = useId()
   const { text } = useSettings()
   const { delivers } = useApi()
