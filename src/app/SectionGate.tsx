@@ -19,7 +19,7 @@ import { NotFoundPage } from '@/features/placeholder'
  * works for anybody who knows the address" — because a member who is already signed in should
  * not be locked out of their own household by a switch about a link in the header.
  */
-export function SectionGate({ setting }: { setting: 'showPhotos' | 'showNews' | 'showFeedback' | 'showQuizzes' | 'showSponsors' }) {
+export function SectionGate({ setting }: { setting: 'showPhotos' | 'showNews' | 'showFeedback' | 'showQuizzes' | 'showSponsors' | 'showCalendar' }) {
   const settings = useSettings()
   const loaded = useSettingsLoaded()
   const { failed } = useSettingsFailed()

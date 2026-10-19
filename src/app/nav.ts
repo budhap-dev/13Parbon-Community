@@ -19,6 +19,7 @@ export function publicNav(settings: SiteSettings): NavItem[] {
   return [
     { label: 'Home', to: '/', end: true },
     { label: 'Events', to: '/events' },
+    ...(settings.showCalendar ? [{ label: 'Calendar', to: '/calendar' }] : []),
     ...(settings.showPhotos ? [{ label: 'Gallery', to: '/gallery' }] : []),
     ...(settings.showNews ? [{ label: 'News', to: '/news' }] : []),
     ...(settings.showQuizzes ? [{ label: 'Quizzes', to: '/quizzes' }] : []),

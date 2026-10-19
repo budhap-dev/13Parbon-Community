@@ -140,6 +140,11 @@ export const site = {
    */
   showSponsors: false,
   /**
+   * The Bengali calendar. Off until somebody on the committee has checked the year's dates
+   * against a printed panjika: a puja a day out is worse than no calendar.
+   */
+  showCalendar: false,
+  /**
    * The next-event banner pinned under the wordmark on the home page. Parked for now at the
    * committee's request; the component and its styles are untouched, so setting this to true
    * brings it back exactly as it was.

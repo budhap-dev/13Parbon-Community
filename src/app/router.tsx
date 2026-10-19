@@ -1,6 +1,7 @@
 import { createBrowserRouter, type RouteObject } from 'react-router'
 import { RouteError } from '@/components/RouteError'
 import { AboutPage } from '@/features/about'
+import { CalendarPage } from '@/features/calendar'
 import { ContactPage } from '@/features/contact'
 import { EventPage, EventPreviewPage, EventsPage } from '@/features/events'
 import { FeedbackPage } from '@/features/feedback'
@@ -78,6 +79,11 @@ export const routes: RouteObject[] = [
         // behind the one switch.
         element: <SectionGate setting="showSponsors" />,
         children: [{ path: 'sponsors', Component: SponsorsPage }],
+      },
+      {
+        // The Bengali calendar, off until the committee has checked the year's dates.
+        element: <SectionGate setting="showCalendar" />,
+        children: [{ path: 'calendar', Component: CalendarPage }],
       },
       { path: 'about', Component: AboutPage },
       { path: 'contact', Component: ContactPage },
