@@ -12,19 +12,29 @@ Both count the year the same way. A month begins when the sun enters the next si
 sidereal zodiac (its *sankranti*), and a puja is kept by its *tithi*, the moon's twelve-degree
 steps away from the sun. They disagree about **where the sun and moon are**.
 
-### Bisuddha Siddhanta: the default
+### Bisuddha Siddhanta
 
 *Bisuddha* means "corrected". This panjika works from the sun and moon as they really are, using
 modern astronomy. It is the one followed by drikpanchang, Belur Math and the West Bengal
 government's holiday list, so the dates in the news and the state holidays are its dates.
 
-It is the default because it is the one the site's puja dates and times were entered from. A
-puja from one panjika shown next to Bengali dates from the other would be a day out somewhere.
+The site's puja data is entered from it first: every puja has a Bisuddha date and times.
 
 The code is `sankrantiAt` in [src/domain/bengaliDate.ts](../src/domain/bengaliDate.ts). It is
 tested against drikpanchang's month grids for 1431 to 1434.
 
-### Surya Siddhanta: Gupta Press and Benimadhab Sil
+### Surya Siddhanta: Benimadhab Sil and Gupta Press, the default
+
+The calendar page opens on this one, named on the page as **Benimadhab Sil**, at the owner's
+request (19 October 2026). Gupta Press prints the same panjika, and agrees with Benimadhab Sil on
+every day and on the times to within a minute or two. Most of the dates here were read from the
+Benimadhab Sil text. The default is `DEFAULT_PANJIKA` in
+[src/domain/bengaliDate.ts](../src/domain/bengaliDate.ts).
+
+**Because it is the default, a puja not yet read from the almanac is missing from what most
+people see first.** It is listed under its month as "not here yet", and Bisuddha still has it.
+In October 2026, 9 pujas of 1433 and 21 of 1434 were missing in this way: see "What has been read
+so far" below.
 
 This is the old Sanskrit astronomy, with mean motions counted from the creation and corrected
 from a table of 24 sines. It is printed by the Gupta Press and Benimadhab Sil almanacs that hang
@@ -67,7 +77,7 @@ So the page takes from the print whatever has been read, and uses the sums only 
 
 ## What the switch changes
 
-| | Bisuddha Siddhanta | Gupta Press |
+| | Bisuddha Siddhanta | Benimadhab Sil (Gupta Press) |
 |---|---|---|
 | Bengali date on each day; where months start and end | from the real sun | from the Surya Siddhanta's sun, worked out |
 | Days kept on a Bengali date: Poila Boishakh, Rabindra and Nazrul Jayanti, Nabanna | as entered | worked out from its months |
@@ -84,7 +94,7 @@ put some pujas on a day the almanac does not, and *a puja a day out is worse tha
 
 So each puja carries a `guptaPress` date in the data (see `Ritual` in
 [src/domain/ritual.ts](../src/domain/ritual.ts)) once someone has read it in the printed
-almanac. Until then the Gupta Press view leaves the puja out and lists it under the month as
+almanac. Until then the Benimadhab Sil view leaves the puja out and lists it under the month as
 "not yet entered".
 
 Days kept on a Bengali date or a sankranti have a `bengaliDate` field, and those are worked out.
@@ -125,5 +135,5 @@ in their English dates.
 ## How the choice is kept
 
 It is each visitor's own choice, kept in their browser (`calendar-panjika` in local storage).
-Everyone starts on the Bisuddha Siddhanta. It is not a portal setting and it is not in the page
+Everyone starts on Benimadhab Sil. It is not a portal setting and it is not in the page
 address, so a shared link opens on whichever panjika the person receiving it last chose.

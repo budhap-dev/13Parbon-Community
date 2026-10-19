@@ -62,7 +62,7 @@ const bengaliMonthName = ({ month }: MonthRef) => BENGALI_MONTHS[month].bengaliN
 const listOf = (names: string[]) => new Intl.ListFormat('en-GB', { type: 'conjunction' }).format(names)
 
 /**
- * By Gupta Press, the pujas not yet read from the almanac, by their Bisuddha dates, from one day
+ * By Benimadhab Sil, the pujas not yet read from the almanac, by their Bisuddha dates, from one day
  * to another: they are left out of the page, and a note says so wherever they would have been.
  */
 const notEnteredBetween = (panjika: Panjika, from: string, to: string) =>
@@ -187,7 +187,7 @@ function entryHref(entry: CalendarEntry, panjika: Panjika): string {
 function TodayPanel({ today, entries, panjika }: { today: string; entries: CalendarEntry[]; panjika: Panjika }) {
   const now = entriesOn(entries, today)
   const next = comingUp(entries, today)
-  // What Gupta Press leaves out of the same stretch, so it is not missing without a word.
+  // What Benimadhab Sil leaves out of the same stretch, so it is not missing without a word.
   const horizon = next.length === 3 ? next[2].start : addCivilDays(today, 30)
   const missing = notEnteredBetween(panjika, addCivilDays(today, 1), horizon)
   return (
@@ -254,7 +254,7 @@ function TodayPanel({ today, entries, panjika }: { today: string; entries: Calen
           </ul>
           {missing.length > 0 ? (
             <p className={styles.comingMissing}>
-              {listOf(missing)} {missing.length > 1 ? 'are' : 'is'} not in Gupta Press dates yet.
+              {listOf(missing)} {missing.length > 1 ? 'are' : 'is'} not in Benimadhab Sil dates yet.
             </p>
           ) : null}
         </div>
@@ -487,7 +487,7 @@ function Agenda({
       ) : null}
       {certainty !== 'printed' ? (
         <p className={styles.note}>
-          We have worked out {monthName(shown)} {shown.year} by the Gupta Press almanac’s own rules, but not yet checked it against a printed
+          We have worked out {monthName(shown)} {shown.year} by the Benimadhab Sil almanac’s own rules, but not yet checked it against a printed
           copy.
           {certainty === 'close'
             ? ' It starts or ends close to midnight, so the printed almanac may put that day one day earlier or later.'
@@ -496,7 +496,7 @@ function Agenda({
       ) : null}
       {notEntered.length > 0 ? (
         <p className={styles.note}>
-          Not here yet in Gupta Press dates: {listOf(notEntered)}. We have not read {notEntered.length > 1 ? 'their dates' : 'its date'} from
+          Not here yet in Benimadhab Sil dates: {listOf(notEntered)}. We have not read {notEntered.length > 1 ? 'their dates' : 'its date'} from
           the almanac yet, and would rather leave {notEntered.length > 1 ? 'them' : 'it'} out than show the wrong day. Choose Bisuddha
           Siddhanta above to see {notEntered.length > 1 ? 'them' : 'it'}.
         </p>
@@ -752,24 +752,26 @@ function PanjikaNote({ panjika }: { panjika: Panjika }) {
   if (panjika === 'surya')
     return (
       <p className={styles.panjika}>
-        Dates follow the Surya Siddhanta panjika printed by Gupta Press and Benimadhab Sil. About a third of its months start a day later
-        than the Bisuddha Siddhanta’s, and some pujas fall a day either side. A few pujas are not in yet; each month says which. We often
-        hold our own evening on the nearest weekend.
+        Dates follow the Surya Siddhanta panjika printed by Benimadhab Sil, which Gupta Press agrees with to a minute or two. The West
+        Bengal holiday list follows the Bisuddha Siddhanta, where about a third of the months start a day earlier and some pujas fall a
+        day either side: choose it above to see its dates. A few pujas are not in yet; each month says which. We often hold our own
+        evening on the nearest weekend.
       </p>
     )
   return (
     <p className={styles.panjika}>
-      Dates follow the Bisuddha Siddhanta panjika for Kolkata, as the West Bengal holiday list does. The Gupta Press almanac, which some UK
-      temples follow, can be a day either side: choose it above to see its dates. We often hold our own evening on the nearest weekend.
+      Dates follow the Bisuddha Siddhanta panjika for Kolkata, as the West Bengal holiday list does. The Benimadhab Sil and Gupta Press
+      almanacs, which many families and some UK temples follow, can be a day either side: choose Benimadhab Sil above to see their dates.
+      We often hold our own evening on the nearest weekend.
     </p>
   )
 }
 
 /**
  * The Bengali year: the pujas, festivals and cultural days by the West Bengal calendar, with
- * the community's own evenings among them. The reader can follow the Gupta Press panjika in
- * place of the Bisuddha Siddhanta, and the page remembers it in their browser; see
- * docs/CALENDAR.md.
+ * the community's own evenings among them. It opens on the Benimadhab Sil panjika, the Surya
+ * Siddhanta; the reader can switch to the Bisuddha Siddhanta, and the page remembers it in
+ * their browser; see docs/CALENDAR.md.
  *
  * It opens on the Bengali month it is today, and the month shown is in the address, so one can
  * be sent to somebody and Back goes to the month before. The days are worked out from the sun

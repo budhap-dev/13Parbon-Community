@@ -148,16 +148,19 @@ export function sankrantiAt(bengaliYear: number, month: number): Date {
 }
 
 /**
- * Which panjika: the Bisuddha Siddhanta, which drikpanchang, Belur Math and the West Bengal
- * holiday list follow; or the Surya Siddhanta, which the Gupta Press and Benimadhab Sil almanacs
- * on so many kitchen walls follow.
+ * Which panjika: the Surya Siddhanta, which the Benimadhab Sil and Gupta Press almanacs on so many
+ * kitchen walls follow, and which the calendar page opens on; or the Bisuddha Siddhanta, which
+ * drikpanchang, Belur Math and the West Bengal holiday list follow. The page's own default first.
  */
 export type Panjika = 'bisuddha' | 'surya'
 
 export const PANJIKAS: readonly { id: Panjika; name: string; bengaliName: string }[] = [
+  { id: 'surya', name: 'Benimadhab Sil', bengaliName: 'বেণীমাধব শীল' },
   { id: 'bisuddha', name: 'Bisuddha Siddhanta', bengaliName: 'বিশুদ্ধ সিদ্ধান্ত' },
-  { id: 'surya', name: 'Gupta Press', bengaliName: 'গুপ্তপ্রেস' },
 ]
+
+/** What the calendar page opens on, until a reader chooses. */
+export const DEFAULT_PANJIKA: Panjika = 'surya'
 
 export const isPanjika = (value: unknown): value is Panjika => PANJIKAS.some((p) => p.id === value)
 

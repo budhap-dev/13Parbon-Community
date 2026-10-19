@@ -1,4 +1,4 @@
-import { isPanjika, type Panjika } from '@/domain/bengaliDate'
+import { DEFAULT_PANJIKA, isPanjika, type Panjika } from '@/domain/bengaliDate'
 
 /** Which panjika the reader last chose on the calendar page, kept in this browser only. */
 export const PANJIKA_KEY = 'calendar-panjika'
@@ -6,9 +6,9 @@ export const PANJIKA_KEY = 'calendar-panjika'
 export function readPanjika(storage: Pick<Storage, 'getItem'> | null = safeStorage()): Panjika {
   try {
     const saved = storage?.getItem(PANJIKA_KEY)
-    return isPanjika(saved) ? saved : 'bisuddha'
+    return isPanjika(saved) ? saved : DEFAULT_PANJIKA
   } catch {
-    return 'bisuddha'
+    return DEFAULT_PANJIKA
   }
 }
 

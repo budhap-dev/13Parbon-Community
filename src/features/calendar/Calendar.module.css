@@ -172,6 +172,13 @@
   }
 }
 
+/* The narrowest phones: "Benimadhab Sil" and "Bisuddha Siddhanta" side by side need the room. */
+@media (max-width: 360px) {
+  .choiceOption {
+    padding: 6px 8px;
+  }
+}
+
 /*
  * Every special day in the one colour, the theme's own accent, so it suits whichever theme is on.
  * The shape on a bar and the word in the list say which kind it is.
