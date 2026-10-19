@@ -5,8 +5,9 @@ const minutesBefore = (printed: string, ours: Date) => (ist(printed).getTime() -
 
 /*
  * Against the Surya Siddhanta panjika as printed for 1433 (see src/app/bengaliYear1433.ts). The
- * sums come out 6 to 15 minutes before the print, every time; nobody has said why — a meridian,
- * a correction — so the page shows printed times and not these.
+ * sums come out before the print every time: 6 to 15 minutes in June, October and February, and
+ * 25 to 31 in July and August, so it moves through the year. Nobody has said why — a meridian, a
+ * correction, a different moon — so the page shows printed times and not these.
  */
 describe('the Surya Siddhanta', () => {
   it('ends tithis a few minutes before the almanac does', () => {

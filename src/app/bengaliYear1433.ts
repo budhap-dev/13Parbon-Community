@@ -11,8 +11,11 @@ import type { Ritual } from '@/domain/ritual'
  * the Benimadhab Sil text at benimadhabsilpanjika.com and the Gupta Press times quoted in Aaj Tak
  * Bangla, TV9 Bangla, Sangbad Pratidin and Asianet Bangla; the two almanacs agree on the days and
  * to a minute or two on the times. A time printed for the night ("রাত্রি ঘ ১২।৪৪" on 26 Magh) is
- * after midnight, the next civil day, as here. Rath Yatra and Janmashtami have their dates only:
- * the times quoted for them did not hang together. The pujas without one were not found in print.
+ * after midnight, the next civil day, as here. Jhulan's Ekadashi is Gupta Press's, by Anandabazar,
+ * and agrees with Benimadhab Sil's Ekadashi table to two minutes; Ulto Rath's day is the news's,
+ * with Surya Siddhanta times, and fits the same table. Rath Yatra, Janmashtami and Ulto Rath have
+ * their dates only: a start or an end was missing, or one end did not fit the other. The pujas
+ * without one were not found in print by 19 October 2026.
  */
 export const durgaPuja =
   'Five days of the goddess’s visit home: anjali in the morning, bhog at lunchtime, arati and dhunuchi at dusk, and sindoor khela before she leaves.'
@@ -106,6 +109,7 @@ export const year1433: Ritual[] = [
     times: [
       { label: 'Dashami tithi', from: '2026-07-23T07:03+05:30', to: '2026-07-24T09:12+05:30' },
     ],
+    guptaPress: { date: '2026-07-24' },
   },
   {
     id: 'manasa-puja',
@@ -132,6 +136,11 @@ export const year1433: Ritual[] = [
       { label: 'Purnima tithi', from: '2026-08-27T09:08+05:30', to: '2026-08-28T09:48+05:30' },
       { label: 'Rakhi', from: '2026-08-28T05:18+05:30', to: '2026-08-28T09:48+05:30' },
     ],
+    guptaPress: {
+      date: '2026-08-23',
+      until: '2026-08-28',
+      times: [{ label: 'Ekadashi tithi', from: '2026-08-23T01:57+05:30', to: '2026-08-24T03:59+05:30' }],
+    },
   },
   {
     id: 'janmashtami',

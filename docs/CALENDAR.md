@@ -33,7 +33,7 @@ Benimadhab Sil text. The default is `DEFAULT_PANJIKA` in
 
 **Because it is the default, a puja not yet read from the almanac is missing from what most
 people see first.** It is listed under its month as "not here yet", and Bisuddha still has it.
-In October 2026, 9 pujas of 1433 and 21 of 1434 were missing in this way: see "What has been read
+On 19 October 2026, 7 pujas of 1433 and 21 of 1434 were missing in this way: see "What has been read
 so far" below.
 
 This is the old Sanskrit astronomy, with mean motions counted from the creation and corrected
@@ -55,8 +55,9 @@ rules exactly as Reingold and Dershowitz set them out in *Calendrical Calculatio
 
 They were checked against the 1433 almanac in October 2026.
 
-- **Tithis:** every printed tithi time is 6 to 15 minutes after the sums (13 tithis checked).
-  Nobody publishes why. It may be the meridian or a correction.
+- **Tithis:** every printed tithi time is after the sums. The gap is 6 to 15 minutes in June,
+  October and February, and 25 to 31 minutes in July and August (16 tithis checked), so it moves
+  through the year. Nobody publishes why. It may be the meridian, a correction or a different moon.
 - **The sun:** Ambubachi, the sun entering Ardra, is printed 14 minutes after the sums.
 - **Months:** 10 of the 12 months of 1433 start where the sums say. Bhadro and Ashwin do not: the
   sums put their sankrantis at 23:11 and 23:39, just before midnight, and the almanac starts both
@@ -107,15 +108,24 @@ Give a new ritual one of the two fields, whichever fits how it is kept.
 - **Source:** the Benimadhab Sil text transcribed at benimadhabsilpanjika.com, and the Gupta
   Press times quoted in Aaj Tak Bangla, TV9 Bangla, Sangbad Pratidin and Asianet Bangla. The two
   almanacs agree on every day, and on the times to within a minute or two.
-- **Entered:** all twelve month starts, plus Jamai Shashthi, Snan Yatra, Rath Yatra, Janmashtami,
-  Mahalaya, Durga Puja, Kojagari Lakshmi Puja, Kali Puja, Bhai Phonta and Saraswati Puja.
+- **Entered:** all twelve month starts, plus Jamai Shashthi, Snan Yatra, Rath Yatra, Ulto Rath,
+  Jhulan, Janmashtami, Mahalaya, Durga Puja, Kojagari Lakshmi Puja, Kali Puja, Bhai Phonta and
+  Saraswati Puja. Jhulan (23 to 28 August) is Gupta Press's as quoted in Anandabazar, and its
+  Ekadashi agrees with Benimadhab Sil's own table to two minutes.
 - **Two differences from Bisuddha:** Durga Puja starts a day earlier, with Shashthi on 16 Oct and
   Nabapatrika and Saptami on 17 Oct. Sandhi Puja is at 7:25 to 8:13 am in India, not 10:27 to
   11:15 am.
-- **Dates only:** Rath Yatra and Janmashtami. The times quoted for them were 20 to 60 minutes
-  away from every other printed time, so they were left out.
-- **Not found in print yet:** Akshaya Tritiya, Ulto Rath, Jhulan, Jagaddhatri, Rash Purnima,
-  Shivratri, Dol, Basanti and Annapurna Puja, and Ram Navami.
+- **Dates only:** Rath Yatra, Janmashtami and Ulto Rath. For each, either a start or an end time
+  was missing, or one end did not fit the other: Janmashtami's end is an hour from its start's
+  gap. Jhulan's Purnima start was left out for the same reason.
+- **Not found in print yet:** Jagaddhatri, Rash Purnima, Shivratri, Dol, Basanti and Annapurna
+  Puja, Ram Navami, and Akshaya Tritiya.
+  - Akshaya Tritiya: the times are printed, but the article does not say which of two days is
+    kept.
+  - Basanti Puja: only its Shashthi (12 April) has been found.
+  - Shivratri: 6 March can be worked out from the Amavasya table but is not printed.
+  - The rest: no articles yet. Anandabazar and ABP Ananda quote these almanacs nearer each
+    festival, so look there then.
 
 **1434: nothing yet.** Neither almanac was out in October 2026.
 
