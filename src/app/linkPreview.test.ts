@@ -120,12 +120,13 @@ describe('the navigation and what crawlers are told', () => {
    * will think of the sitemap at that moment, because they will be thinking about the news.
    */
   it('names the pages a switch could reveal that the sitemap has not accounted for', () => {
-    const everything = publicNav({ ...defaultSettings, showPhotos: true, showNews: true })
+    const everything = publicNav({ ...defaultSettings, showPhotos: true, showNews: true, showCalendar: true })
     const unaccounted = everything.map((item) => item.to).filter((to) => !accountedFor(to))
 
     // Change this list only by adding the page to public/sitemap.xml, or by deciding out loud
     // that crawlers should not have it and saying so in robots.txt.
-    expect(unaccounted).toEqual(['/news'])
+    // /calendar waits on the committee checking the year's dates; list it the day it goes on.
+    expect(unaccounted).toEqual(['/calendar', '/news'])
   })
 })
 

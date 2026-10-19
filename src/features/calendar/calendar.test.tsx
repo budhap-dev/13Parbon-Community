@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
@@ -124,6 +124,16 @@ describe('the calendar page', () => {
     await userEvent.click(next)
     expect(await screen.findByRole('heading', { level: 2, name: /Agrahayan 1433/ })).toBeInTheDocument()
     expect(window.scrollTo).not.toHaveBeenCalled()
+  })
+
+  it('lands on an occasion in another month from Coming up, not on that month’s heading', async () => {
+    // 16 October is Ashwin's last day but one; Lakshmi Puja is in Kartik.
+    const { router } = renderAt('/calendar', api(), new Date('2026-10-16T09:00:00'))
+    const today = await screen.findByRole('region', { name: 'Today' })
+    await userEvent.click(within(today).getByRole('link', { name: 'Kojagari Lakshmi Puja' }))
+    expect(router.state.location.search).toBe('?month=1433-07')
+    const item = await screen.findByRole('heading', { level: 4, name: /Kojagari Lakshmi Puja/ })
+    await waitFor(() => expect(item.closest('li')).toHaveFocus())
   })
 
   it('draws the days of a year whose panjika is not entered, and says so', async () => {

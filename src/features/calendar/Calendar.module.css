@@ -40,7 +40,7 @@
  * Every special day in the one colour, the theme's own accent, so it suits whichever theme is on.
  * The shape on a bar and the word in the list say which kind it is.
  */
-[data-kind] {
+.page [data-kind] {
   --kind: var(--color-accent);
   --on-kind: var(--color-on-accent);
 }
@@ -96,6 +96,18 @@
   gap: 12px;
   list-style: none;
   padding: 0;
+}
+
+/* Links that stand on their own, tall enough to tap. */
+.comingList {
+  gap: 0;
+}
+
+.comingList a,
+.glanceMonth a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
 }
 
 .todayItem {
@@ -230,7 +242,6 @@
   color: var(--color-on-accent);
   text-decoration: none;
   transition:
-    transform 0.18s ease,
     box-shadow 0.18s ease,
     background-color 0.18s ease;
 }
@@ -238,14 +249,12 @@
 .step:hover {
   background: var(--color-accent-hover);
   color: var(--color-on-accent);
-  transform: translateY(-2px);
   box-shadow:
     0 5px 0 color-mix(in srgb, var(--color-accent) 55%, black),
     0 16px 28px rgba(0, 0, 0, 0.32);
 }
 
 .step:active {
-  transform: translateY(2px);
   box-shadow:
     0 1px 0 color-mix(in srgb, var(--color-accent) 55%, black),
     0 4px 10px rgba(0, 0, 0, 0.25);
@@ -259,15 +268,6 @@
 .stepArrow {
   font-size: var(--text-xl);
   line-height: 1;
-  transition: transform 0.18s ease;
-}
-
-.step[data-step='previous']:hover .stepArrow {
-  transform: translateX(-3px);
-}
-
-.step[data-step='next']:hover .stepArrow {
-  transform: translateX(3px);
 }
 
 /* The Bengali name first, as the heading has it, with the English under it. */
@@ -289,7 +289,6 @@
 
 .stepEnglish {
   font-size: var(--text-sm);
-  opacity: 0.85;
 }
 
 .monthTitle {
@@ -353,6 +352,10 @@
   font-weight: 400;
 }
 
+.weekdayShort {
+  display: none;
+}
+
 .weekdayEnglish {
   margin-inline-start: 6px;
   color: var(--color-fg-muted);
@@ -411,14 +414,25 @@
 }
 
 .dayLink:focus-visible {
-  outline: 2px solid var(--color-focus);
-  outline-offset: -2px;
+  outline: none;
+}
+
+/* Focus rings the whole day, outside it, in the text colour: unlike today's ring or the accent. */
+.day:has(.dayLink:focus-visible) {
+  outline: 3px solid var(--color-fg);
+  outline-offset: 2px;
 }
 
 /* A day with something on: washed in the colour of the first thing, its border too. */
 .day[data-kind] {
   border-color: color-mix(in srgb, var(--kind) 70%, var(--color-border-strong));
   background: color-mix(in srgb, var(--kind) 14%, var(--color-bg-raised));
+}
+
+/* The wash takes the muted text below a readable contrast on the red and magenta themes. */
+.day[data-kind] .gregorianDay,
+.day[data-kind] .more {
+  color: var(--color-fg);
 }
 
 .day[data-today='true'] {
@@ -569,8 +583,16 @@
 
   .day,
   .outside {
-    height: 94px;
+    height: 100px;
     border-radius: 10px;
+  }
+
+  .weekdayLong {
+    display: none;
+  }
+
+  .weekdayShort {
+    display: inline;
   }
 
   .cellPictures {
@@ -638,8 +660,41 @@
   }
 }
 
+/*
+ * The narrower phones, 360px and 375px across: the days closer together and the numbers a size
+ * smaller, so the grid still fits rather than giving way to the list.
+ */
+@container (max-width: 359px) {
+  .grid {
+    border-spacing: 2px;
+    margin: -2px;
+    width: calc(100% + 4px);
+  }
+
+  .dayNumbers {
+    padding: 0 3px;
+  }
+
+  .bengaliDay {
+    font-size: var(--text-md);
+  }
+
+  .weekday {
+    font-size: var(--text-xs);
+  }
+
+  .cellPicture {
+    width: 22px;
+    height: 22px;
+  }
+
+  .gregorianMonth {
+    display: none;
+  }
+}
+
 /* Too narrow for seven days side by side: the list below carries the month on its own. */
-@container (max-width: 339px) {
+@container (max-width: 299px) {
   .gridWrap {
     display: none;
   }
@@ -675,6 +730,9 @@
 }
 
 .agendaItem:target {
+  margin-inline: -12px;
+  padding-inline: 12px;
+  border-radius: var(--radius-tile);
   background: var(--color-hover-wash);
 }
 
@@ -762,8 +820,9 @@
 .glanceItem {
   display: grid;
   grid-template-columns: minmax(170px, 1fr) minmax(130px, 1fr) 3fr;
-  gap: 4px 20px;
-  padding: 12px 0;
+  gap: 0 20px;
+  align-items: center;
+  padding: 2px 0;
   border-bottom: 1px solid var(--color-border-faint);
 }
 
@@ -865,11 +924,38 @@
   }
 
   .bar {
-    transition: filter 0.15s ease;
+    transition: box-shadow 0.15s ease;
+  }
+
+  .step {
+    transition:
+      transform 0.18s ease,
+      box-shadow 0.18s ease,
+      background-color 0.18s ease;
+  }
+
+  .step:hover {
+    transform: translateY(-2px);
+  }
+
+  .step:active {
+    transform: translateY(2px);
+  }
+
+  .stepArrow {
+    transition: transform 0.18s ease;
+  }
+
+  .step[data-step='previous']:hover .stepArrow {
+    transform: translateX(-3px);
+  }
+
+  .step[data-step='next']:hover .stepArrow {
+    transform: translateX(3px);
   }
 
   .dayLink:hover .bar {
-    filter: brightness(1.15) saturate(1.2);
+    box-shadow: inset 0 0 0 1.5px var(--on-kind);
   }
 }
 

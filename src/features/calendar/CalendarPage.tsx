@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
-import { Link, useSearchParams } from 'react-router'
+import { Link, useLocation, useSearchParams } from 'react-router'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { RITUAL_YEARS, rituals } from '@/app/bengaliYear'
 import { Container } from '@/components/Container'
@@ -40,6 +40,8 @@ import { RitualIcon } from './RitualIcon'
 import styles from './Calendar.module.css'
 
 const ENGLISH_WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+/** For a phone's narrow columns, where বৃহস্পতি runs into Friday: Thursday as almanacs shorten it. */
+const SHORT_WEEKDAYS = ['রবি', 'সোম', 'মঙ্গল', 'বুধ', 'বৃহঃ', 'শুক্র', 'শনি']
 
 /** The months the page will go to: the first year entered, to the end of the year after the last. */
 const FIRST_MONTH: MonthRef = { year: Math.min(...RITUAL_YEARS), month: 0 }
@@ -238,11 +240,15 @@ function CellPictures({ entries }: { entries: CalendarEntry[] }) {
   if (entries.length === 0) return null
   return (
     <span className={styles.cellPictures} aria-hidden="true">
-      {entries.slice(0, 2).map((entry) => (
-        <span key={entry.key} className={styles.cellPicture} data-kind={entry.kind}>
-          {entry.icon ? <RitualIcon id={entry.icon} /> : <KindMark kind={entry.kind} />}
-        </span>
-      ))}
+      {entries
+        // One of each drawing: our evening for Mahalaya and Mahalaya itself share one.
+        .filter((entry, i, all) => all.findIndex((other) => (other.icon ?? other.kind) === (entry.icon ?? entry.kind)) === i)
+        .slice(0, 2)
+        .map((entry) => (
+          <span key={entry.key} className={styles.cellPicture} data-kind={entry.kind}>
+            {entry.icon ? <RitualIcon id={entry.icon} /> : <KindMark kind={entry.kind} />}
+          </span>
+        ))}
     </span>
   )
 }
@@ -262,8 +268,11 @@ function MonthGrid({ shown, today, entries, direction }: { shown: MonthRef; toda
           <tr>
             {BENGALI_WEEKDAYS.map((name, i) => (
               <th key={name} scope="col" className={styles.weekday}>
-                <span lang="bn" aria-hidden="true">
+                <span lang="bn" aria-hidden="true" className={styles.weekdayLong}>
                   {name}
+                </span>
+                <span lang="bn" aria-hidden="true" className={styles.weekdayShort}>
+                  {SHORT_WEEKDAYS[i]}
                 </span>
                 <span className={styles.weekdayEnglish} aria-hidden="true">
                   {ENGLISH_WEEKDAYS[i].slice(0, 3)}
@@ -292,7 +301,7 @@ function MonthGrid({ shown, today, entries, direction }: { shown: MonthRef; toda
                           </span>
                           <span className={styles.gregorianDay}>
                             {gregorian}
-                            {gregorian === 1 ? ` ${formatCivil(day, { month: 'short' })}` : ''}
+                            {gregorian === 1 ? <span className={styles.gregorianMonth}> {formatCivil(day, { month: 'short' })}</span> : null}
                           </span>
                         </span>
                       </span>
@@ -311,7 +320,7 @@ function MonthGrid({ shown, today, entries, direction }: { shown: MonthRef; toda
                       </span>
                       <span className={styles.gregorianDay}>
                         {gregorianDay}
-                        {showMonth ? ` ${formatCivil(day, { month: 'short' })}` : ''}
+                        {showMonth ? <span className={styles.gregorianMonth}> {formatCivil(day, { month: 'short' })}</span> : null}
                       </span>
                     </span>
                     {laneCount > 0 ? (
@@ -517,6 +526,7 @@ function YearAtAGlance({ year, current, shown, entries }: { year: number; curren
 export function CalendarPage() {
   useDocumentTitle('Calendar')
   const [params] = useSearchParams()
+  const { hash } = useLocation()
   const today = civilDate(useNow())
   const current = monthOf(today)
   const shown = clampMonth(readMonthParam(params.get('month')) ?? clampMonth(current))
@@ -552,14 +562,21 @@ export function CalendarPage() {
   useEffect(() => {
     if (lastKey.current === shownKey) return
     lastKey.current = shownKey
+    setAnnounced(`${monthName(shown)} ${shown.year}`)
+    // Sent to one occasion in it — "Coming up" in another month — that is where to land; the
+    // router has already scrolled to it, and moving to the month's top would undo that.
+    const target = hash ? document.getElementById(decodeURIComponent(hash.slice(1))) : null
+    if (target) {
+      target.focus({ preventScroll: true })
+      return
+    }
     heading.current?.focus({ preventScroll: true })
     const top = section.current?.getBoundingClientRect().top ?? 0
     if (top < 0 || top > window.innerHeight * 0.6) {
       const still = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
       section.current?.scrollIntoView?.({ block: 'start', behavior: still ? 'auto' : 'smooth' })
     }
-    setAnnounced(`${monthName(shown)} ${shown.year}`)
-  }, [shownKey, shown])
+  }, [shownKey, shown, hash])
 
   const view = monthView(shown)
   const previous = shiftMonth(shown, -1)

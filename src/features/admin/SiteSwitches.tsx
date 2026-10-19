@@ -442,9 +442,10 @@ export function SiteSwitches({
             ))}
           </select>
           <p id="defaultTheme-note" className={styles.hint}>
-            What somebody sees on a first visit. Anybody who has picked their own colours from the
-            palette in the header keeps them — including you, so if nothing seems to change here,
-            that is why.
+            What somebody sees on a first visit, outside the festivals: with “Festival colours by the
+            calendar” on, each festival’s own theme takes over from five days before it to five days
+            after. Anybody who has picked their own colours from the palette in the header keeps
+            them — including you, so if nothing seems to change here, that is why.
           </p>
         </div>
       </Section>

@@ -25,6 +25,7 @@ export const defaultSettings: SiteSettings = {
   showQuizzes: site.showQuizzes,
   showSponsors: site.showSponsors,
   showCalendar: site.showCalendar,
+  seasonalThemes: site.seasonalThemes,
   home: { ...site.home },
   homeOrder: [...HOME_BLOCKS],
   // What the card did before it was a choice: the next evening, and nothing when there is none.

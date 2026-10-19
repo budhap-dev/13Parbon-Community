@@ -68,10 +68,18 @@
       try {
         var portalThemes = ['paper', 'linen', 'sage', 'mist', 'slate', 'midnight', 'marigold', 'lagoon', 'peacock']
         var chosen = localStorage.getItem('13parbon:portal-theme')
-        // Elsewhere, the visitor's own choice, or failing that the committee's as this browser last heard it.
+        // Elsewhere, the visitor's own choice, or failing that the committee's as this browser last heard it —
+        // a festival's colours, around its days, included.
+        // A festival's colours stop on its last day; after it, the committee's own (seasons.ts).
+        var until = localStorage.getItem('13parbon:site-theme-until')
+        var now = new Date()
+        var today = now.getFullYear() + '-' + ('0' + (now.getMonth() + 1)).slice(-2) + '-' + ('0' + now.getDate()).slice(-2)
+        var site = until && today > until
+          ? localStorage.getItem('13parbon:site-theme-base')
+          : localStorage.getItem('13parbon:site-theme')
         var theme = portal
           ? portalThemes.indexOf(chosen) >= 0 ? chosen : 'paper'
-          : localStorage.getItem('13parbon:theme') || localStorage.getItem('13parbon:site-theme')
+          : localStorage.getItem('13parbon:theme') || site
         if (theme) document.documentElement.dataset.theme = theme
       } catch (error) {
         // Storage blocked: no choice to read, but the portal still is not the festivals.

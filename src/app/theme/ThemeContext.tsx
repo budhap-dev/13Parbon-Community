@@ -1,11 +1,17 @@
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { civilDate } from '@/domain/bengaliDate'
+import { useNow } from '@/lib/clock'
 import { useSettings, useSettingsLoaded } from '../SettingsContext'
+import { seasonFor, type Season } from './seasons'
 import {
   applyTheme,
   defaultFor,
+  forgetTheme,
+  readSiteSeason,
   readSiteTheme,
   readStoredTheme,
   scopeForPath,
+  storeSiteSeason,
   storeSiteTheme,
   storeTheme,
   themesFor,
@@ -22,6 +28,16 @@ type ThemeContextValue = {
   /** The looks on offer here, for the switcher to draw. */
   options: ThemeMeta[]
   setScope: (scope: ThemeScope) => void
+  /** On the public site: true while the viewer has not picked a theme, so the season's shows. */
+  following: boolean
+  /** Forgets the viewer's pick, so the committee's colours — and the festivals' — come back. */
+  follow: () => void
+  /** The festival whose colours the site is in today, if the committee's switch allows it. */
+  season: Season | null
+  /** Whether the committee lets the festivals' colours in at all. */
+  seasonal: boolean
+  /** What following the calendar wears today: the season's theme, or the committee's. */
+  siteTheme: ThemeName
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null)
@@ -66,11 +82,32 @@ export function ThemeProvider({ initialTheme, children }: Props) {
    * every visit, so the last answer is remembered and used until the real one lands.
    */
   const [remembered] = useState(() => readSiteTheme())
-  const siteTheme: ThemeName = loaded ? settings.defaultTheme : (remembered ?? settings.defaultTheme)
+  const [rememberedSeason] = useState(() => readSiteSeason())
+  /*
+   * And the calendar's: a festival's own colours from five days before it to five days after,
+   * ahead of the committee's choice, where the committee has left the switch on.
+   */
+  const today = civilDate(useNow())
+  const inSeason = useMemo(() => seasonFor(today), [today])
+  const season = settings.seasonalThemes ? inSeason : null
+  const committee: ThemeName = season?.theme ?? settings.defaultTheme
+  /*
+   * Until the settings land, the committee's colours as last heard, with today's festival worked
+   * out here rather than remembered — what was worn last time may be a festival that is over.
+   */
+  const beforeSettings: ThemeName = rememberedSeason.base
+    ? rememberedSeason.seasonal === false
+      ? rememberedSeason.base
+      : (inSeason?.theme ?? rememberedSeason.base)
+    : (remembered ?? committee)
+  const siteTheme: ThemeName = loaded ? committee : beforeSettings
 
+  // What was worn, for index.html to open the next visit in, and what it will be once it is over.
   useEffect(() => {
-    if (loaded) storeSiteTheme(settings.defaultTheme)
-  }, [loaded, settings.defaultTheme])
+    if (!loaded) return
+    storeSiteTheme(committee)
+    storeSiteSeason({ base: settings.defaultTheme, seasonal: settings.seasonalThemes, until: season?.end ?? null })
+  }, [loaded, committee, settings.defaultTheme, settings.seasonalThemes, season?.end])
 
   const theme = scope === 'portal' ? chosen.portal : (chosen.public ?? siteTheme)
 
@@ -86,8 +123,15 @@ export function ThemeProvider({ initialTheme, children }: Props) {
     [scope],
   )
 
+  const follow = useCallback(() => {
+    setChosen((now) => ({ ...now, public: null }))
+    forgetTheme('public')
+  }, [])
+
   return (
-    <ThemeContext.Provider value={{ theme, setTheme, scope, setScope, options: themesFor(scope) }}>
+    <ThemeContext.Provider
+      value={{ theme, setTheme, scope, setScope, options: themesFor(scope), following: chosen.public === null, follow, season, seasonal: settings.seasonalThemes, siteTheme }}
+    >
       {children}
     </ThemeContext.Provider>
   )
