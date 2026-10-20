@@ -82,4 +82,6 @@ export const defaultSettings: SiteSettings = {
   tools: site.tools.map((tool) => ({ ...tool })),
   // None until the committee adds them. There is nothing a developer should be typing in here.
   sponsors: [],
+  // The committee writes these in the portal, each with the days it is up for.
+  newsflashes: [],
 }

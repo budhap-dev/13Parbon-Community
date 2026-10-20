@@ -82,6 +82,7 @@ const committeeSections: Section[] = [
       { label: 'News and newsletters', to: '/admin/writing', icon: 'book' },
       { label: 'Photographs', to: '/admin/media', icon: 'image' },
       { label: 'Sponsors', to: '/admin/sponsors', icon: 'badge' },
+      { label: 'Newsflash', to: '/admin/newsflash', icon: 'info' },
       { label: 'Home and About pages', to: '/admin/pages', icon: 'file' },
       { label: 'Site settings', to: '/admin/content', icon: 'layout' },
     ],

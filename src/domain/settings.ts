@@ -18,6 +18,7 @@ import {
   type Tool,
   type ValueCard,
 } from './siteContent'
+import { readNewsflashes, type Newsflash } from './newsflash'
 import { readSponsors, type Sponsor } from './sponsors'
 
 /**
@@ -366,6 +367,8 @@ export type SiteSettings = {
   tools: Tool[]
   /** Who helps pay for the year, in the committee's order. See `domain/sponsors`. */
   sponsors: Sponsor[]
+  /** The ribbons under the header, each with its own dates. See `domain/newsflash`. */
+  newsflashes: Newsflash[]
 }
 
 /** The lists and blocks, which are everything that is neither a switch nor an audience. */
@@ -388,6 +391,7 @@ type ContentKey =
   | 'privacy'
   | 'tools'
   | 'sponsors'
+  | 'newsflashes'
 
 export type SettingsDraft = SiteSettings
 
@@ -461,7 +465,7 @@ export function validateSettings(draft: SettingsDraft): boolean {
   // The same for the rest: what is in each list is tidied on the way out of the database, so
   // all that is asked here is that a list is a list. A save that sent a string where the
   // festivals go would otherwise replace four festivals with none.
-  const lists = [draft.homeOrder, draft.social, draft.festivals, draft.story, draft.values, draft.tools, draft.sponsors]
+  const lists = [draft.homeOrder, draft.social, draft.festivals, draft.story, draft.values, draft.tools, draft.sponsors, draft.newsflashes]
   if (!lists.every(Array.isArray)) return false
   if (!isSiteTheme(draft.defaultTheme) || typeof draft.volunteerFormUrl !== 'string') return false
   if (!readHeroCard(draft.heroCard)) return false
@@ -614,5 +618,6 @@ export function mergeSettings(stored: unknown, defaults: SiteSettings): SiteSett
     privacy: readPrivacy(row.privacy, defaults.privacy),
     tools: readTools(row.tools) ?? defaults.tools,
     sponsors: readSponsors(row.sponsors) ?? defaults.sponsors,
+    newsflashes: readNewsflashes(row.newsflashes) ?? defaults.newsflashes,
   }
 }
