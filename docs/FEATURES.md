@@ -218,7 +218,8 @@ The Bengali year month by month, from two years before this one to two years aft
 published evenings among them. Puja times are given in UK time and India's, on separate coloured
 lines. A switch moves between the two panjikas, Benimadhab Sil (the default) and Bisuddha
 Siddhanta; the visitor's pick is kept in their own browser. A year picker between the month
-arrows jumps to the same month in another year. Any month can be shared. Behind `showCalendar`,
+arrows jumps to the same month in another year, and a Today button beside it, shown away from
+the current month, comes back. Any month can be shared. Behind `showCalendar`,
 on since 20 October 2026.
 
 Why there are two panjikas, where each date came from and what is still missing from print is
