@@ -10,6 +10,17 @@ it is in the sitemap. The committee is checking the 1433 dates against their own
 panjikas, Jagaddhatri, Nabanna and Basanti/Annapurna first. A date found wrong is fixed in
 [src/domain/ritual.ts](../src/domain/ritual.ts).
 
+## Which years
+
+The page goes from Boishakh two years before the current Bengali year to Choitro two years
+after it (`YEARS_EITHER_SIDE` in the calendar page), and a year picker between the month arrows
+lists them. The window rolls on by itself each Poila Boishakh. The days and months are worked
+out from the sun for any year; the pujas are only there for the years entered in
+`src/app/bengaliYear*.ts`, and a year without them shows its days, says so, and is marked
+"days only" in the picker. So each April, enter the new year at the far end.
+
+The sums behind the days use NASA's ΔT fit for 2005 to 2050, so they hold to about 1457.
+
 ---
 
 ## The two panjikas
@@ -76,7 +87,7 @@ So the page takes from the print whatever has been read, and uses the sums only 
   not been read is summed, and the page says under each month that it is *worked out, not yet
   checked*. Where a sankranti at either end falls within 90 minutes of midnight, it says the month
   may start or end a day either side. Today 1433 is printed, except where Choitro ends (1
-  Boishakh 1434, which no source gave). 1434 and 1435 are summed.
+  Boishakh 1434, which no source gave). 1431, 1432, 1434 and 1435 are summed.
 - **Puja times:** only printed times are shown. Sankranti times are not shown in the Gupta Press
   view, because none has been found in print and the sums can be most of an hour out.
 
@@ -134,6 +145,16 @@ Give a new ritual one of the two fields, whichever fits how it is kept.
     festival, so look there then.
 
 **1434: nothing yet.** Neither almanac was out in October 2026.
+
+**1431, 1432 and 1435: Bisuddha only.** Entered in October 2026 from drikpanchang, and for the
+two past years checked against the West Bengal holiday lists. The old Benimadhab Sil almanacs
+were not found online, so on that panjika those years show their days and list the pujas as
+not yet entered. What is less sure in each is at the top of its file. Two things to know:
+
+- **Durga Puja 1431 (2024)** is 9 to 13 October here, by drikpanchang and Belur Math. The
+  state's list put Ashtami and Navami both on the 11th and Dashami on the 12th.
+- **1435 has no Basanti Puja, Annapurna Puja or Ram Navami.** 2029 has an extra lunar month,
+  Adhik Chaitra, so the spring Navaratri falls in Boishakh 1436 (Ram Navami on 23 April 2029).
 
 **Watch out when reading the almanac:** a time printed for the night ("রাত্রি ঘ ১২।৪৪" on 26
 Magh) is after midnight, which is the next civil day. Several newspaper articles get this wrong

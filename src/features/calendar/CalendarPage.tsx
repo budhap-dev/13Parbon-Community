@@ -1,11 +1,13 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from 'react'
 import { Link, useLocation, useSearchParams } from 'react-router'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { calendarShareLine } from '@/app/shareLines'
 import { RITUAL_YEARS, rituals } from '@/app/bengaliYear'
 import { Container } from '@/components/Container'
+import { Icon } from '@/components/Icon'
 import { LoadFailed } from '@/components/LoadFailed'
 import {
+  BANGABDA_OFFSET,
   BENGALI_MONTHS,
   BENGALI_WEEKDAYS,
   PANJIKAS,
@@ -48,12 +50,30 @@ const ENGLISH_WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday'
 /** For a phone's narrow columns, where বৃহস্পতি runs into Friday: Thursday as almanacs shorten it. */
 const SHORT_WEEKDAYS = ['রবি', 'সোম', 'মঙ্গল', 'বুধ', 'বৃহঃ', 'শুক্র', 'শনি']
 
-/** The months the page will go to: the first year entered, to the end of the year after the last. */
-const FIRST_MONTH: MonthRef = { year: Math.min(...RITUAL_YEARS), month: 0 }
-const LAST_MONTH: MonthRef = { year: Math.max(...RITUAL_YEARS) + 1, month: 11 }
+/**
+ * How many years either side of this one the page will go to. It rolls on by itself each Poila
+ * Boishakh; a year in it that has not been entered still has its days, and says so.
+ */
+const YEARS_EITHER_SIDE = 2
 
-const clampMonth = (ref: MonthRef) =>
-  compareMonths(ref, FIRST_MONTH) < 0 ? FIRST_MONTH : compareMonths(ref, LAST_MONTH) > 0 ? LAST_MONTH : ref
+/** The months the page will go to: Boishakh two years back to Choitro two years on. */
+type MonthRange = { first: MonthRef; last: MonthRef }
+
+const rangeAround = (currentYear: number): MonthRange => ({
+  first: { year: currentYear - YEARS_EITHER_SIDE, month: 0 },
+  last: { year: currentYear + YEARS_EITHER_SIDE, month: 11 },
+})
+
+const clampMonth = (ref: MonthRef, { first, last }: MonthRange) =>
+  compareMonths(ref, first) < 0 ? first : compareMonths(ref, last) > 0 ? last : ref
+
+const inRange = (ref: MonthRef, { first, last }: MonthRange) => compareMonths(ref, first) >= 0 && compareMonths(ref, last) <= 0
+
+/** "2026–27": the English years a Bengali one runs over, from mid-April to mid-April. */
+const englishYears = (year: number) => {
+  const start = year + BANGABDA_OFFSET
+  return `${start}–${String(start + 1).slice(-2)}`
+}
 
 const monthName = ({ month }: MonthRef) => BENGALI_MONTHS[month].name
 const bengaliMonthName = ({ month }: MonthRef) => BENGALI_MONTHS[month].bengaliName
@@ -567,18 +587,126 @@ function Agenda({
   )
 }
 
+/**
+ * Which Bengali year, between the month arrows: a button that opens the years as a list of links,
+ * each its Bengali number large with the English years under it. Drawn here rather than left to
+ * the browser, whose own list is small and plain on a computer. Another year opens on the same
+ * month in it, so Durga Puja next year is one choice away; focus comes back to the button.
+ */
+function YearPicker({ shown, range, onPick }: { shown: MonthRef; range: MonthRange; onPick: () => void }) {
+  const [open, setOpen] = useState(false)
+  const root = useRef<HTMLDivElement>(null)
+  const button = useRef<HTMLButtonElement>(null)
+  const listId = useId()
+  const years: number[] = []
+  for (let year = range.first.year; year <= range.last.year; year += 1) years.push(year)
+
+  const links = () => [...(root.current?.querySelectorAll<HTMLAnchorElement>('a') ?? [])]
+
+  useEffect(() => {
+    if (!open) return
+    // Opened on the year shown, so the arrow keys start from there.
+    links().find((link) => link.getAttribute('aria-current'))?.focus({ preventScroll: true })
+    const onPointerDown = (event: PointerEvent) => {
+      if (!root.current?.contains(event.target as Node)) setOpen(false)
+    }
+    document.addEventListener('pointerdown', onPointerDown)
+    return () => document.removeEventListener('pointerdown', onPointerDown)
+  }, [open])
+
+  const close = () => {
+    setOpen(false)
+    button.current?.focus({ preventScroll: true })
+  }
+
+  const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (!open) return
+    if (event.key === 'Escape') {
+      event.preventDefault()
+      close()
+      return
+    }
+    const all = links()
+    const at = all.indexOf(document.activeElement as HTMLAnchorElement)
+    const to =
+      event.key === 'ArrowDown' ? Math.min(at + 1, all.length - 1)
+      : event.key === 'ArrowUp' ? Math.max(at - 1, 0)
+      : event.key === 'Home' ? 0
+      : event.key === 'End' ? all.length - 1
+      : null
+    if (to === null) return
+    event.preventDefault()
+    all[to]?.focus()
+  }
+
+  return (
+    <div
+      ref={root}
+      className={styles.yearPicker}
+      onKeyDown={onKeyDown}
+      onBlur={(event) => {
+        // Tabbing on past the last year closes the list.
+        if (open && !root.current?.contains(event.relatedTarget as Node | null)) setOpen(false)
+      }}>
+      <button
+        ref={button}
+        type="button"
+        className={styles.yearButton}
+        aria-expanded={open}
+        aria-controls={listId}
+        onClick={() => setOpen((value) => !value)}>
+        <span className="sr-only">Bengali year </span>
+        <span lang="bn" className={styles.yearBengali}>
+          {bengaliDigits(shown.year)}
+        </span>
+        <span className={styles.yearEnglish}>{englishYears(shown.year)}</span>
+        <span className={styles.yearChevron} aria-hidden="true" />
+      </button>
+      <ul id={listId} className={styles.yearList} hidden={!open} aria-label="Bengali years">
+        {years.map((year) => {
+          const isShown = year === shown.year
+          return (
+            <li key={year}>
+              <Link
+                to={`/calendar?month=${monthParam({ year, month: shown.month })}`}
+                preventScrollReset
+                className={styles.yearOption}
+                aria-current={isShown ? 'true' : undefined}
+                onClick={() => {
+                  if (!isShown) onPick()
+                  close()
+                }}>
+                <span lang="bn" className={styles.yearOptionBengali}>
+                  {bengaliDigits(year)}
+                </span>
+                <span className={styles.yearOptionEnglish}>
+                  {englishYears(year)}
+                  {RITUAL_YEARS.includes(year) ? null : <span className={styles.yearDaysOnly}> · days only</span>}
+                </span>
+                {isShown ? <Icon name="check" size={20} className={styles.yearCheck} /> : null}
+              </Link>
+            </li>
+          )
+        })}
+      </ul>
+    </div>
+  )
+}
+
 function YearAtAGlance({
   year,
   current,
   shown,
   entries,
   panjika,
+  range,
 }: {
   year: number
   current: MonthRef
   shown: MonthRef
   entries: CalendarEntry[]
   panjika: Panjika
+  range: MonthRange
 }) {
   const starts = monthStarts(year, panjika)
   return (
@@ -596,7 +724,7 @@ function YearAtAGlance({
             .map((entry) => entry.name)
           const isCurrent = compareMonths(ref, current) === 0
           const isShown = compareMonths(ref, shown) === 0
-          const reachable = compareMonths(ref, FIRST_MONTH) >= 0 && compareMonths(ref, LAST_MONTH) <= 0
+          const reachable = inRange(ref, range)
           return (
             <li key={month.name} className={styles.glanceItem} data-current={isCurrent ? 'true' : undefined}>
               <span className={styles.glanceMonth}>
@@ -787,7 +915,8 @@ export function CalendarPage() {
     savePanjika(next)
   }
   const current = monthOf(today, panjika)
-  const shown = clampMonth(readMonthParam(params.get('month')) ?? clampMonth(current))
+  const range = rangeAround(current.year)
+  const shown = clampMonth(readMonthParam(params.get('month')) ?? current, range)
   const shownKey = monthParam(shown)
 
   const upcoming = useUpcomingEvents(50)
@@ -824,14 +953,20 @@ export function CalendarPage() {
   const [announced, setAnnounced] = useState('')
   const lastKey = useRef(shownKey)
   const lastPanjika = useRef(panjika)
+  // A year picked from the list keeps focus on the list: arrowing through a closed select picks
+  // as it goes, and focus leaving after the first step would take the rest of the years with it.
+  const picked = useRef(false)
   useEffect(() => {
     const switched = lastPanjika.current !== panjika
     lastPanjika.current = panjika
+    const fromPicker = picked.current
+    picked.current = false
     if (lastKey.current === shownKey) return
     lastKey.current = shownKey
     // Nor does focus leave the switch for the month's heading when the month changed with it.
     if (switched) return
     setAnnounced(`${monthName(shown)} ${shown.year}`)
+    if (fromPicker) return
     // Sent to one occasion in it — "Coming up" in another month — that is where to land; the
     // router has already scrolled to it, and moving to the month's top would undo that.
     const target = hash ? document.getElementById(decodeURIComponent(hash.slice(1))) : null
@@ -850,8 +985,8 @@ export function CalendarPage() {
   const view = monthView(shown, panjika)
   const previous = shiftMonth(shown, -1)
   const next = shiftMonth(shown, 1)
-  const hasPrevious = compareMonths(previous, FIRST_MONTH) >= 0
-  const hasNext = compareMonths(next, LAST_MONTH) <= 0
+  const hasPrevious = inRange(previous, range)
+  const hasNext = inRange(next, range)
   const covered = RITUAL_YEARS.includes(shown.year)
   const isCurrent = compareMonths(shown, current) === 0
 
@@ -890,6 +1025,22 @@ export function CalendarPage() {
             ) : (
               <span />
             )}
+            <div className={styles.yearGroup}>
+              <YearPicker shown={shown} range={range} onPick={() => (picked.current = true)} />
+              {/* The way home from wherever the arrows and the years have gone, there only when it is needed. */}
+              {!isCurrent ? (
+                <Link
+                  to={`/calendar?month=${monthParam(current)}`}
+                  preventScrollReset
+                  className={styles.todayButton}
+                  aria-label={`Today, back to ${monthName(current)} ${current.year}`}>
+                  <span lang="bn" className={styles.todayButtonBengali}>
+                    আজ
+                  </span>
+                  <span>Today</span>
+                </Link>
+              ) : null}
+            </div>
             {hasNext ? (
               <Link
                 to={`/calendar?month=${monthParam(next)}`}
@@ -919,14 +1070,6 @@ export function CalendarPage() {
           </h2>
           <p className={styles.monthSpan}>
             {monthSpan(view.first, view.last)} · {view.length} days
-            {!isCurrent ? (
-              <>
-                {' · '}
-                <Link to={`/calendar?month=${monthParam(clampMonth(current))}`} preventScrollReset>
-                  Back to this month
-                </Link>
-              </>
-            ) : null}
           </p>
         </div>
         <MonthGrid key={`${shownKey}-${panjika}`} shown={shown} today={today} entries={entries} direction={moved.direction} panjika={panjika} />
@@ -947,7 +1090,7 @@ export function CalendarPage() {
         </p>
       </section>
 
-      <YearAtAGlance year={shown.year} current={current} shown={shown} entries={entries} panjika={panjika} />
+      <YearAtAGlance year={shown.year} current={current} shown={shown} entries={entries} panjika={panjika} range={range} />
     </Container>
   )
 }

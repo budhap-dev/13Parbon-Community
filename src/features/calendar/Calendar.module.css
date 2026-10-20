@@ -441,10 +441,224 @@
 }
 
 .monthNav {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
   gap: 12px;
   margin-bottom: 8px;
+}
+
+.monthNav > :first-child {
+  justify-self: start;
+}
+
+.monthNav > :last-child {
+  justify-self: end;
+}
+
+/*
+ * The year, between the arrows: a quiet outlined pill beside their solid ones, so it reads as a
+ * choice rather than a step, opening a list of the years drawn in the theme's own colours.
+ */
+/* The year and, away from this month, the way back to it, together in the middle. */
+.yearGroup {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  justify-self: center;
+  max-width: 100%;
+}
+
+.yearPicker {
+  position: relative;
+  max-width: 100%;
+}
+
+/* Today: solid like the arrows, since it is a step too, the one that comes home. */
+.todayButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  min-height: 52px;
+  padding: 0 20px;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
+  box-shadow:
+    0 3px 0 color-mix(in srgb, var(--color-accent) 55%, black),
+    0 10px 22px rgba(0, 0, 0, 0.3);
+  color: var(--color-on-accent);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.todayButton:hover {
+  background: var(--color-accent-hover);
+  color: var(--color-on-accent);
+}
+
+.todayButton:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 4px;
+}
+
+.todayButtonBengali {
+  font-family: var(--font-script);
+  font-size: var(--text-lg);
+  font-weight: 400;
+}
+
+.yearButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 100%;
+  min-height: 52px;
+  padding: 0 22px;
+  border: 2px solid var(--color-accent);
+  border-radius: var(--radius-pill);
+  background: var(--color-bg-raised);
+  color: var(--color-fg);
+  font: inherit;
+  cursor: pointer;
+}
+
+.yearButton:hover {
+  border-color: var(--color-accent-hover);
+}
+
+.yearButton:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+.yearBengali {
+  font-family: var(--font-script);
+  font-size: var(--text-xl);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.yearEnglish {
+  font-size: var(--text-lg);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.yearChevron {
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  margin: -4px 2px 0 4px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg);
+  transition: transform 0.18s ease;
+}
+
+.yearButton[aria-expanded='true'] .yearChevron {
+  margin-top: 4px;
+  transform: rotate(-135deg);
+}
+
+.yearList {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  z-index: 20;
+  min-width: max(100%, 260px);
+  margin: 0;
+  padding: 8px;
+  list-style: none;
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  background: var(--color-bg-raised);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
+  transform: translateX(-50%);
+}
+
+.yearList[hidden] {
+  display: none;
+}
+
+.yearOption {
+  display: grid;
+  /* The Bengali years in a column of their own, so the English ones line up beside them. */
+  grid-template-columns: 56px 1fr auto;
+  align-items: center;
+  gap: 14px;
+  min-height: 56px;
+  padding: 6px 16px;
+  border-radius: 14px;
+  color: var(--color-fg);
+  text-decoration: none;
+}
+
+.yearOption:hover {
+  background: color-mix(in srgb, var(--color-accent) 14%, transparent);
+  color: var(--color-fg);
+}
+
+.yearOption:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: -3px;
+}
+
+.yearOption[aria-current='true'] {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+.yearOptionBengali {
+  font-family: var(--font-script);
+  font-size: var(--text-xl);
+  font-weight: 700;
+}
+
+.yearOptionEnglish {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.yearDaysOnly {
+  font-size: var(--text-sm);
+  font-weight: 400;
+  opacity: 0.8;
+}
+
+.yearCheck {
+  flex-shrink: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .yearChevron {
+    transition: none;
+  }
+}
+
+/* Too narrow for three across: the year on a line of its own, above the arrows. */
+@container (max-width: 560px) {
+  .monthNav {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .yearGroup {
+    grid-column: 1 / -1;
+    order: -1;
+  }
+
+  /* Tighter, so the year and Today still sit side by side on a small phone. */
+  .yearButton {
+    gap: 8px;
+    padding: 0 16px;
+  }
+
+  .todayButton {
+    padding: 0 14px;
+  }
 }
 
 /* Solid buttons in the theme's accent, standing off the page. */

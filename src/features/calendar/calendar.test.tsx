@@ -130,7 +130,7 @@ describe('the calendar page', () => {
     expect(router.state.location.search).toBe('?month=1433-08')
     const heading = await screen.findByRole('heading', { level: 2, name: /Agrahayan 1433/ })
     expect(heading).toHaveFocus()
-    await userEvent.click(screen.getByRole('link', { name: 'Back to this month' }))
+    await userEvent.click(screen.getByRole('link', { name: 'Today, back to Kartik 1433' }))
     expect(await screen.findByRole('heading', { level: 2, name: /Kartik 1433/ })).toBeInTheDocument()
   })
 
@@ -161,17 +161,28 @@ describe('the calendar page', () => {
   })
 
   it('draws the days of a year whose panjika is not entered, and says so', async () => {
-    renderAt('/calendar?month=1435-01')
-    expect(await screen.findByRole('heading', { level: 2, name: /Boishakh 1435/ })).toBeInTheDocument()
-    expect(screen.getByText(/The panjika for 1435 is not entered yet/)).toBeInTheDocument()
+    // Kartik 1435, when the page goes as far as 1437.
+    renderAt('/calendar?month=1437-01', api(), new Date('2028-10-20T09:00:00'))
+    expect(await screen.findByRole('heading', { level: 2, name: /Boishakh 1437/ })).toBeInTheDocument()
+    expect(screen.getByText(/The panjika for 1437 is not entered yet/)).toBeInTheDocument()
     expect(screen.getByRole('table')).toBeInTheDocument()
   })
 
-  it('goes no further than the year after the last one entered', async () => {
-    renderAt('/calendar?month=1435-12')
+  it('goes two years either side of this one, and no further', async () => {
+    const { unmount } = renderAt('/calendar?month=1435-12')
     expect(await screen.findByRole('heading', { level: 2, name: /Choitro 1435/ })).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: /^Next month/ })).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: /^Previous month/ })).toBeInTheDocument()
+    unmount()
+
+    renderAt('/calendar?month=1431-01')
+    expect(await screen.findByRole('heading', { level: 2, name: /Boishakh 1431/ })).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /^Previous month/ })).not.toBeInTheDocument()
+  })
+
+  it('brings a month past the end back to the last one', async () => {
+    renderAt('/calendar?month=1440-03')
+    expect(await screen.findByRole('heading', { level: 2, name: /Choitro 1435/ })).toBeInTheDocument()
   })
 
   it('keeps the rituals when our own evenings cannot be fetched', async () => {
@@ -192,6 +203,108 @@ describe('the calendar page', () => {
     const { container } = renderAt('/calendar')
     await screen.findByRole('heading', { level: 4, name: /Durga Puja/ })
     await expectNoAxeViolations(container)
+  })
+})
+
+describe('the year picker', () => {
+  beforeEach(() => localStorage.setItem('calendar-panjika', 'bisuddha'))
+  afterEach(() => localStorage.clear())
+
+  const button = () => screen.findByRole('button', { name: /^Bengali year/ })
+  const openList = async () => {
+    await userEvent.click(await button())
+    return screen.getByRole('list', { name: 'Bengali years' })
+  }
+
+  it('shows the year shown, and opens on this year and two either side', async () => {
+    renderAt('/calendar')
+    expect(await button()).toHaveTextContent('Bengali year ১৪৩৩2026–27')
+    expect(await button()).toHaveAttribute('aria-expanded', 'false')
+    const list = await openList()
+    expect(await button()).toHaveAttribute('aria-expanded', 'true')
+    expect(within(list).getAllByRole('link').map((link) => link.textContent)).toEqual([
+      '১৪৩১2024–25',
+      '১৪৩২2025–26',
+      '১৪৩৩2026–27',
+      '১৪৩৪2027–28',
+      '১৪৩৫2028–29',
+    ])
+    expect(within(list).getByRole('link', { current: true })).toHaveTextContent('১৪৩৩')
+    // Opened on the year shown, so the arrow keys start there.
+    expect(within(list).getByRole('link', { current: true })).toHaveFocus()
+  })
+
+  it('opens the same month in the year chosen, in the address, and gives focus back to the button', async () => {
+    const { router } = renderAt('/calendar')
+    const list = await openList()
+    await userEvent.click(within(list).getByRole('link', { name: /১৪৩৫/ }))
+    expect(await screen.findByRole('heading', { level: 2, name: /Kartik 1435/ })).toBeInTheDocument()
+    expect(router.state.location.search).toBe('?month=1435-07')
+    expect(screen.queryByRole('list', { name: 'Bengali years' })).not.toBeInTheDocument()
+    expect(await button()).toHaveFocus()
+    expect(await button()).toHaveTextContent('১৪৩৫')
+    expect(screen.getByText('Kartik 1435', { selector: '[aria-live]' })).toBeInTheDocument()
+  })
+
+  it('goes through the years with the arrow keys, and Escape shuts it', async () => {
+    const { router } = renderAt('/calendar')
+    await openList()
+    await userEvent.keyboard('{ArrowDown}')
+    expect(screen.getByRole('link', { name: /১৪৩৪/ })).toHaveFocus()
+    await userEvent.keyboard('{End}{ArrowDown}')
+    expect(screen.getByRole('link', { name: /১৪৩৫/ })).toHaveFocus()
+    await userEvent.keyboard('{Home}')
+    expect(screen.getByRole('link', { name: /১৪৩১/ })).toHaveFocus()
+    await userEvent.keyboard('{Escape}')
+    expect(screen.queryByRole('list', { name: 'Bengali years' })).not.toBeInTheDocument()
+    expect(await button()).toHaveFocus()
+    expect(router.state.location.search).toBe('')
+
+    await userEvent.keyboard('{Enter}')
+    await userEvent.keyboard('{ArrowUp}{Enter}')
+    expect(await screen.findByRole('heading', { level: 2, name: /Kartik 1432/ })).toBeInTheDocument()
+  })
+
+  it('has a Today button beside it away from this month, and none on it', async () => {
+    const { router } = renderAt('/calendar')
+    await button()
+    expect(screen.queryByRole('link', { name: /^Today/ })).not.toBeInTheDocument()
+
+    await userEvent.click(within(await openList()).getByRole('link', { name: /১৪৩১/ }))
+    const today = await screen.findByRole('link', { name: 'Today, back to Kartik 1433' })
+    expect(today).toHaveTextContent('আজToday')
+    await userEvent.click(today)
+    expect(router.state.location.search).toBe('?month=1433-07')
+    await waitFor(() => expect(screen.getByRole('heading', { level: 2, name: /Kartik 1433/ })).toHaveFocus())
+    expect(screen.queryByRole('link', { name: /^Today/ })).not.toBeInTheDocument()
+  })
+
+  it('shuts when a tap lands outside it', async () => {
+    renderAt('/calendar')
+    await openList()
+    await userEvent.click(screen.getByRole('heading', { level: 1, name: 'Calendar' }))
+    expect(screen.queryByRole('list', { name: 'Bengali years' })).not.toBeInTheDocument()
+  })
+
+  it('moves focus to the month for the arrows, as before', async () => {
+    renderAt('/calendar')
+    await userEvent.click(await screen.findByRole('link', { name: /^Next month/ }))
+    await waitFor(() => expect(screen.getByRole('heading', { level: 2, name: /Agrahayan 1433/ })).toHaveFocus())
+  })
+
+  it('has no automatic accessibility violations, shut or open', async () => {
+    const { container } = renderAt('/calendar?month=1431-06')
+    await button()
+    await expectNoAxeViolations(container)
+    await openList()
+    await expectNoAxeViolations(container)
+  })
+
+  it('rolls on with the years, and says which have only their days', async () => {
+    renderAt('/calendar', api(), new Date('2028-10-20T09:00:00'))
+    const links = within(await openList()).getAllByRole('link').map((link) => link.textContent)
+    expect(links[0]).toBe('১৪৩৩2026–27')
+    expect(links.at(-1)).toBe('১৪৩৭2030–31 · days only')
   })
 })
 

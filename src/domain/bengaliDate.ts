@@ -55,7 +55,7 @@ export const BENGALI_MONTHS: readonly BengaliMonth[] = [
 export const BENGALI_WEEKDAYS = ['রবি', 'সোম', 'মঙ্গল', 'বুধ', 'বৃহস্পতি', 'শুক্র', 'শনি'] as const
 
 /** The Bengali year begins this many years after the Christian one, give or take April. */
-const BANGABDA_OFFSET = 593
+export const BANGABDA_OFFSET = 593
 
 const DAY_MS = 86_400_000
 const IST_MS = 5.5 * 3_600_000
