@@ -83,6 +83,13 @@ describe('the newsflash ribbon', () => {
     expect(screen.queryByRole('region', { name: 'News from the committee' })).not.toBeInTheDocument()
   })
 
+  it('has no button on the page it points to, and keeps the rest of the newsflash there', async () => {
+    renderAt('/calendar', withSettings({ showCalendar: true, newsflashes: tidyNewsflashes([flash({})]) }))
+    const strip = await ribbon()
+    expect(within(strip).getByText('The Bengali calendar is here')).toBeInTheDocument()
+    expect(within(strip).queryByRole('link', { name: 'See the calendar' })).not.toBeInTheDocument()
+  })
+
   it('has no button when it takes people nowhere', async () => {
     renderAt('/', withSettings({ newsflashes: tidyNewsflashes([flash({ to: '' })]) }))
     expect(within(await ribbon()).queryByRole('link')).not.toBeInTheDocument()

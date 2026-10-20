@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router'
+import { Link, useLocation } from 'react-router'
 import { useSettings } from '@/app/SettingsContext'
 import { newsflashesUp, stillClosed, type Newsflash, type NewsflashColour } from '@/domain/newsflash'
 import { useNow } from '@/lib/clock'
@@ -30,6 +30,12 @@ function writeClosed(ids: string[]) {
   }
 }
 
+/** Whether a newsflash's link is this page: "/calendar" and "/calendar/" alike, any "#part" aside. */
+function isHere(to: string, pathname: string): boolean {
+  const page = (path: string) => path.split('#')[0].replace(/\/+$/, '') || '/'
+  return page(to) === page(pathname)
+}
+
 const ICONS: Record<NewsflashColour, IconName> = {
   theme: 'sparkle',
   gold: 'sparkle',
@@ -45,6 +51,7 @@ const ICONS: Record<NewsflashColour, IconName> = {
 export function NewsflashRibbon() {
   const { newsflashes } = useSettings()
   const now = useNow()
+  const { pathname } = useLocation()
   const [closed, setClosed] = useState<string[]>(readClosed)
   const [at, setAt] = useState(0)
 
@@ -65,7 +72,8 @@ export function NewsflashRibbon() {
     <section className={styles.ribbon} data-colour={flash.colour} data-animation={flash.animation} aria-label="News from the committee">
       <Container className={styles.inner}>
         <Body flash={flash} />
-        {flash.to ? (
+        {/* No button on the page it points to: it would only take them where they already are. */}
+        {flash.to && !isHere(flash.to, pathname) ? (
           <Link to={flash.to} className={styles.button}>
             {flash.button || 'Take a look'}
             <Icon name="chevronRight" size={16} />
