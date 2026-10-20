@@ -194,6 +194,17 @@ things to put your name down for.
 indistinguishable from never having announced it, and that is how people end up outside a hall
 on a Saturday.
 
+### Calendar (`/calendar`)
+
+The Bengali year month by month, 1433 and 1434: today's Bengali date, the pujas, festivals and
+cultural days, and our own published evenings among them. Puja times are given in UK time and
+India's, on separate coloured lines. A switch moves between the two panjikas, Benimadhab Sil
+(the default) and Bisuddha Siddhanta; the visitor's pick is kept in their own browser. Any month
+can be shared. Behind `showCalendar`, on since 20 October 2026.
+
+Why there are two panjikas, where each date came from and what is still missing from print is
+all in [CALENDAR.md](CALENDAR.md).
+
 ### Gallery (`/gallery`, `/gallery/:slug`)
 
 Albums with covers, a lightbox, and a standing notice that any photograph will be taken down on
@@ -412,8 +423,8 @@ role.
 
 | On the screen | Field | What it changes |
 |---|---|---|
-| What the public site shows | `showPhotos`, `showNews`, `showNextEventStrip`, `showFeedback`, `showMemberSignIn` | Whole sections, on or off. |
-| The colours a visitor arrives to | `defaultTheme` | The look a first visit opens in. A visitor's own choice still wins. |
+| What the public site shows | `showPhotos`, `showNews`, `showNextEventStrip`, `showFeedback`, `showQuizzes`, `showSponsors`, `showCalendar`, `showMemberSignIn` | Whole sections, on or off. |
+| The colours a visitor arrives to | `defaultTheme`, `seasonalThemes` | The look a first visit opens in, and whether the site wears each festival's theme around its days. A visitor's own choice still wins. |
 | The words on the public pages | `text` | The home page title, tagline, mission, the invitation at the foot of the home page, town, venue, address, email, gallery note. |
 | Ways to reach us, and to help | `social`, `volunteerFormUrl` | The footer, the contact page, and where the Volunteer button on an event goes. |
 | The home page | `homeOrder`, `home` | The order of the sections, and who each is for (public / members / committee). |
@@ -453,7 +464,7 @@ Six design decisions here are worth knowing:
 5. **A festival's id never changes.** It is what an evening is filed under and what the address
    bar says. Renaming one keeps its id; a new one takes its id from its name.
 6. **A switch takes the page with it, not just the link.** `SectionGate` makes `/gallery`,
-   `/news` and `/feedback` answer as *not found* when their switch is off. Sign-in is
+   `/news`, `/feedback`, `/quizzes`, `/sponsors` and `/calendar` answer as *not found* when their switch is off. Sign-in is
    deliberately excluded — a member already signed in should not be locked out of their own
    household by a switch about a header link.
 
@@ -559,7 +570,11 @@ repeating texture under the page (`--bg-texture-a`/`-b`: a gamchha check for Boi
 for Mahalaya, snow for Borodin), its own corners (`--radius-card/panel/tile`) and its own button
 shape (`--button-radius`, a pill when unset).
 
-Which one a first visit opens in is the committee's (`defaultTheme`, under Content). The
+Which one a first visit opens in is the committee's (`defaultTheme`, under Content). With
+`seasonalThemes` on, the site follows the calendar instead: each festival's theme from five days
+before it to five days after, taking its dates from the calendar's, and the default the rest of
+the year. "Follow the calendar" is the first choice in the picker; a visitor who picks a theme
+of their own keeps it. The
 browser remembers the committee's last answer under its own key, and the inline script in
 `index.html` reads it before the first paint, so a returning visitor does not see Festival red
 flash to Holi magenta while the settings load.

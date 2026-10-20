@@ -81,7 +81,7 @@ export const routes: RouteObject[] = [
         children: [{ path: 'sponsors', Component: SponsorsPage }],
       },
       {
-        // The Bengali calendar, off until the committee has checked the year's dates.
+        // The Bengali calendar, on since October 2026. The switch takes the page away again.
         element: <SectionGate setting="showCalendar" />,
         children: [{ path: 'calendar', Component: CalendarPage }],
       },

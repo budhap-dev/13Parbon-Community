@@ -125,8 +125,7 @@ describe('the navigation and what crawlers are told', () => {
 
     // Change this list only by adding the page to public/sitemap.xml, or by deciding out loud
     // that crawlers should not have it and saying so in robots.txt.
-    // /calendar waits on the committee checking the year's dates; list it the day it goes on.
-    expect(unaccounted).toEqual(['/calendar', '/news'])
+    expect(unaccounted).toEqual(['/news'])
   })
 })
 
@@ -134,7 +133,7 @@ describe('the sitemap', () => {
   it('lists only pages that exist and are meant to be found', () => {
     // The listed URLs, not the whole file: the comment in it names the pages left out.
     const listed = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1].replace(origin, ''))
-    expect(listed).toEqual(['/', '/events', '/about', '/contact', '/privacy'])
+    expect(listed).toEqual(['/', '/events', '/calendar', '/about', '/contact', '/privacy'])
     // /join was removed and the other two are parked: sending a crawler to any of them is a
     // dead end.
     for (const gone of ['/join', '/gallery', '/news']) {
