@@ -1,8 +1,19 @@
 import { describe, expect, it } from 'vitest'
 import { addCivilDays, monthLength, monthStarts, toBengali } from '@/domain/bengaliDate'
 import { RITUAL_YEARS, rituals } from './bengaliYear'
+import { year1431 } from './bengaliYear1431'
+import { year1432 } from './bengaliYear1432'
 import { year1433 } from './bengaliYear1433'
 import { year1434 } from './bengaliYear1434'
+import { year1435 } from './bengaliYear1435'
+
+const YEARS = [
+  [1431, year1431],
+  [1432, year1432],
+  [1433, year1433],
+  [1434, year1434],
+  [1435, year1435],
+] as const
 
 const byId = (id: string, year = '2026') => rituals.find((ritual) => ritual.id === id && ritual.date.startsWith(year))!
 
@@ -17,7 +28,7 @@ const lastOf = (month: number, year = 1433) => ({ month, day: monthLength(year, 
 
 describe('the years entered', () => {
   it('has each year’s entries in that year, a multi-day one in order with its named days inside it', () => {
-    for (const [year, list] of [[1433, year1433], [1434, year1434]] as const) {
+    for (const [year, list] of YEARS) {
       const [first, next] = [monthStarts(year)[0], monthStarts(year)[12]]
       for (const ritual of list) {
         // The next year's Poila Boishakh is the one entry on the year after's first day.
@@ -28,15 +39,25 @@ describe('the years entered', () => {
         }
       }
     }
-    expect(RITUAL_YEARS).toEqual([1433, 1434])
-    expect(rituals).toHaveLength(year1433.length + year1434.length)
+    expect(RITUAL_YEARS).toEqual(YEARS.map(([year]) => year))
+    expect(rituals).toHaveLength(YEARS.reduce((sum, [, list]) => sum + list.length, 0))
   })
 
-  it('has every occasion of 1433 again in 1434, once', () => {
-    const ids = (list: typeof rituals) => [...new Set(list.map((ritual) => ritual.id))].sort()
-    expect(ids(year1434)).toEqual(ids(year1433))
-    // Poila Boishakh is twice in each: its own, and the next year's at the end.
-    expect(year1434.filter((ritual) => ritual.id !== 'poila-boishakh')).toHaveLength(ids(year1434).length - 1)
+  it('has every occasion of 1433 in every other year, once', () => {
+    const ids = (list: readonly (typeof rituals)[number][]) => [...new Set(list.map((ritual) => ritual.id))].sort()
+    // 1435 has an extra Chaitra in 2029, which puts the spring Navaratri into Boishakh 1436.
+    const spring = ['basanti-puja', 'annapurna-puja', 'ram-navami']
+    for (const [year, list] of YEARS) {
+      const expected = ids(year1433).filter((id) => year !== 1435 || !spring.includes(id))
+      expect(ids(list), `${year}`).toEqual(expected)
+      // 1433 alone has two Poila Boishakhs, its own and 1434's; the one Poila Boishakh test below.
+      expect(list.filter((ritual) => ritual.id !== 'poila-boishakh'), `${year}`).toHaveLength(expected.length - 1)
+    }
+  })
+
+  it('has one Poila Boishakh for each year from 1431 to 1436', () => {
+    const days = rituals.filter((ritual) => ritual.id === 'poila-boishakh').map((ritual) => ritual.date)
+    expect(days).toEqual([1431, 1432, 1433, 1434, 1435, 1436].map((year) => monthStarts(year)[0]))
   })
 
   it('has no two entries sharing an id in the same year', () => {
@@ -109,6 +130,24 @@ describe('the years entered', () => {
     expect(bengaliOf('kartik-puja', '2027')).toEqual(lastOf(6, 1434))
     expect(bengaliOf('poush-sankranti', '2028')).toEqual(lastOf(8, 1434))
     expect(bengaliOf('charak', '2028')).toEqual(lastOf(11, 1434))
+  })
+
+  it('keeps every year’s fixed days and sankrantis where the months put them', () => {
+    for (const [year, list] of YEARS) {
+      const on = (id: string) => {
+        const { month, day } = toBengali(list.find((ritual) => ritual.id === id)!.date)
+        return { month, day }
+      }
+      const last = (month: number) => ({ month, day: monthLength(year, month) })
+      expect(on('rabindra-jayanti'), `${year}`).toEqual({ month: 0, day: 25 })
+      expect(on('nazrul-jayanti'), `${year}`).toEqual({ month: 1, day: 11 })
+      expect(on('nabanna'), `${year}`).toEqual({ month: 7, day: 1 })
+      expect(on('manasa-puja'), `${year}`).toEqual(last(3))
+      expect(on('vishwakarma-puja'), `${year}`).toEqual(last(4))
+      expect(on('kartik-puja'), `${year}`).toEqual(last(6))
+      expect(on('poush-sankranti'), `${year}`).toEqual(last(8))
+      expect(on('charak'), `${year}`).toEqual(last(11))
+    }
   })
 
   it('has Durga Puja 1434 over six days, Sandhi Puja on a day of its own', () => {

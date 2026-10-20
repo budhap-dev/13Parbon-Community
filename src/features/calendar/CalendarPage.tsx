@@ -1,11 +1,12 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
-import { Link, useLocation, useSearchParams } from 'react-router'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { calendarShareLine } from '@/app/shareLines'
 import { RITUAL_YEARS, rituals } from '@/app/bengaliYear'
 import { Container } from '@/components/Container'
 import { LoadFailed } from '@/components/LoadFailed'
 import {
+  BANGABDA_OFFSET,
   BENGALI_MONTHS,
   BENGALI_WEEKDAYS,
   PANJIKAS,
@@ -48,12 +49,30 @@ const ENGLISH_WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday'
 /** For a phone's narrow columns, where বৃহস্পতি runs into Friday: Thursday as almanacs shorten it. */
 const SHORT_WEEKDAYS = ['রবি', 'সোম', 'মঙ্গল', 'বুধ', 'বৃহঃ', 'শুক্র', 'শনি']
 
-/** The months the page will go to: the first year entered, to the end of the year after the last. */
-const FIRST_MONTH: MonthRef = { year: Math.min(...RITUAL_YEARS), month: 0 }
-const LAST_MONTH: MonthRef = { year: Math.max(...RITUAL_YEARS) + 1, month: 11 }
+/**
+ * How many years either side of this one the page will go to. It rolls on by itself each Poila
+ * Boishakh; a year in it that has not been entered still has its days, and says so.
+ */
+const YEARS_EITHER_SIDE = 2
 
-const clampMonth = (ref: MonthRef) =>
-  compareMonths(ref, FIRST_MONTH) < 0 ? FIRST_MONTH : compareMonths(ref, LAST_MONTH) > 0 ? LAST_MONTH : ref
+/** The months the page will go to: Boishakh two years back to Choitro two years on. */
+type MonthRange = { first: MonthRef; last: MonthRef }
+
+const rangeAround = (currentYear: number): MonthRange => ({
+  first: { year: currentYear - YEARS_EITHER_SIDE, month: 0 },
+  last: { year: currentYear + YEARS_EITHER_SIDE, month: 11 },
+})
+
+const clampMonth = (ref: MonthRef, { first, last }: MonthRange) =>
+  compareMonths(ref, first) < 0 ? first : compareMonths(ref, last) > 0 ? last : ref
+
+const inRange = (ref: MonthRef, { first, last }: MonthRange) => compareMonths(ref, first) >= 0 && compareMonths(ref, last) <= 0
+
+/** "2026–27": the English years a Bengali one runs over, from mid-April to mid-April. */
+const englishYears = (year: number) => {
+  const start = year + BANGABDA_OFFSET
+  return `${start}–${String(start + 1).slice(-2)}`
+}
 
 const monthName = ({ month }: MonthRef) => BENGALI_MONTHS[month].name
 const bengaliMonthName = ({ month }: MonthRef) => BENGALI_MONTHS[month].bengaliName
@@ -567,18 +586,48 @@ function Agenda({
   )
 }
 
+/**
+ * Which Bengali year: a plain select between the month arrows, so a phone gives its own wheel.
+ * Another year opens on the same month in it, so Durga Puja next year is one choice away.
+ */
+function YearPicker({ shown, range, onPick }: { shown: MonthRef; range: MonthRange; onPick: () => void }) {
+  const navigate = useNavigate()
+  const years: number[] = []
+  for (let year = range.first.year; year <= range.last.year; year += 1) years.push(year)
+  return (
+    <label className={styles.yearPicker}>
+      <span className="sr-only">Bengali year</span>
+      <select
+        className={styles.yearSelect}
+        value={shown.year}
+        onChange={(event) => {
+          onPick()
+          navigate(`/calendar?month=${monthParam({ year: Number(event.target.value), month: shown.month })}`, { preventScrollReset: true })
+        }}>
+        {years.map((year) => (
+          <option key={year} value={year}>
+            {`${bengaliDigits(year)} · ${englishYears(year)}${RITUAL_YEARS.includes(year) ? '' : ' (days only)'}`}
+          </option>
+        ))}
+      </select>
+    </label>
+  )
+}
+
 function YearAtAGlance({
   year,
   current,
   shown,
   entries,
   panjika,
+  range,
 }: {
   year: number
   current: MonthRef
   shown: MonthRef
   entries: CalendarEntry[]
   panjika: Panjika
+  range: MonthRange
 }) {
   const starts = monthStarts(year, panjika)
   return (
@@ -596,7 +645,7 @@ function YearAtAGlance({
             .map((entry) => entry.name)
           const isCurrent = compareMonths(ref, current) === 0
           const isShown = compareMonths(ref, shown) === 0
-          const reachable = compareMonths(ref, FIRST_MONTH) >= 0 && compareMonths(ref, LAST_MONTH) <= 0
+          const reachable = inRange(ref, range)
           return (
             <li key={month.name} className={styles.glanceItem} data-current={isCurrent ? 'true' : undefined}>
               <span className={styles.glanceMonth}>
@@ -787,7 +836,8 @@ export function CalendarPage() {
     savePanjika(next)
   }
   const current = monthOf(today, panjika)
-  const shown = clampMonth(readMonthParam(params.get('month')) ?? clampMonth(current))
+  const range = rangeAround(current.year)
+  const shown = clampMonth(readMonthParam(params.get('month')) ?? current, range)
   const shownKey = monthParam(shown)
 
   const upcoming = useUpcomingEvents(50)
@@ -824,14 +874,20 @@ export function CalendarPage() {
   const [announced, setAnnounced] = useState('')
   const lastKey = useRef(shownKey)
   const lastPanjika = useRef(panjika)
+  // A year picked from the list keeps focus on the list: arrowing through a closed select picks
+  // as it goes, and focus leaving after the first step would take the rest of the years with it.
+  const picked = useRef(false)
   useEffect(() => {
     const switched = lastPanjika.current !== panjika
     lastPanjika.current = panjika
+    const fromPicker = picked.current
+    picked.current = false
     if (lastKey.current === shownKey) return
     lastKey.current = shownKey
     // Nor does focus leave the switch for the month's heading when the month changed with it.
     if (switched) return
     setAnnounced(`${monthName(shown)} ${shown.year}`)
+    if (fromPicker) return
     // Sent to one occasion in it — "Coming up" in another month — that is where to land; the
     // router has already scrolled to it, and moving to the month's top would undo that.
     const target = hash ? document.getElementById(decodeURIComponent(hash.slice(1))) : null
@@ -850,8 +906,8 @@ export function CalendarPage() {
   const view = monthView(shown, panjika)
   const previous = shiftMonth(shown, -1)
   const next = shiftMonth(shown, 1)
-  const hasPrevious = compareMonths(previous, FIRST_MONTH) >= 0
-  const hasNext = compareMonths(next, LAST_MONTH) <= 0
+  const hasPrevious = inRange(previous, range)
+  const hasNext = inRange(next, range)
   const covered = RITUAL_YEARS.includes(shown.year)
   const isCurrent = compareMonths(shown, current) === 0
 
@@ -890,6 +946,7 @@ export function CalendarPage() {
             ) : (
               <span />
             )}
+            <YearPicker shown={shown} range={range} onPick={() => (picked.current = true)} />
             {hasNext ? (
               <Link
                 to={`/calendar?month=${monthParam(next)}`}
@@ -922,7 +979,7 @@ export function CalendarPage() {
             {!isCurrent ? (
               <>
                 {' · '}
-                <Link to={`/calendar?month=${monthParam(clampMonth(current))}`} preventScrollReset>
+                <Link to={`/calendar?month=${monthParam(current)}`} preventScrollReset>
                   Back to this month
                 </Link>
               </>
@@ -947,7 +1004,7 @@ export function CalendarPage() {
         </p>
       </section>
 
-      <YearAtAGlance year={shown.year} current={current} shown={shown} entries={entries} panjika={panjika} />
+      <YearAtAGlance year={shown.year} current={current} shown={shown} entries={entries} panjika={panjika} range={range} />
     </Container>
   )
 }

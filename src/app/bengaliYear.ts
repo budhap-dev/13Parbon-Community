@@ -1,6 +1,9 @@
 import type { Ritual } from '@/domain/ritual'
+import { year1431 } from './bengaliYear1431'
+import { year1432 } from './bengaliYear1432'
 import { year1433 } from './bengaliYear1433'
 import { year1434 } from './bengaliYear1434'
+import { year1435 } from './bengaliYear1435'
 
 /**
  * The pujas, festivals and cultural days of the Bengali year, as the calendar page shows them.
@@ -25,9 +28,13 @@ import { year1434 } from './bengaliYear1434'
  *
  * Add a year in a file of its own, as 1434 is, and its number to RITUAL_YEARS — the page says a
  * year without its number has not been entered, and draws only its days. An id is the same thing
- * from year to year, so keep it when the dates move. Each year ends with the next one's Poila
- * Boishakh, so the next file starts the day after.
+ * from year to year, so keep it when the dates move. From 1433 on, each year ends with the next
+ * one's Poila Boishakh, so the next file starts the day after; 1431 and 1432, entered after
+ * them, each start with their own and end with Charak.
+ *
+ * The page goes two years either side of the current one, so each Poila Boishakh a new year
+ * comes into reach at the far end: enter it then. See docs/CALENDAR.md.
  */
-export const RITUAL_YEARS = [1433, 1434]
+export const RITUAL_YEARS = [1431, 1432, 1433, 1434, 1435]
 
-export const rituals: Ritual[] = [...year1433, ...year1434]
+export const rituals: Ritual[] = [...year1431, ...year1432, ...year1433, ...year1434, ...year1435]

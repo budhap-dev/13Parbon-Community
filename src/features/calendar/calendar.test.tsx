@@ -161,17 +161,28 @@ describe('the calendar page', () => {
   })
 
   it('draws the days of a year whose panjika is not entered, and says so', async () => {
-    renderAt('/calendar?month=1435-01')
-    expect(await screen.findByRole('heading', { level: 2, name: /Boishakh 1435/ })).toBeInTheDocument()
-    expect(screen.getByText(/The panjika for 1435 is not entered yet/)).toBeInTheDocument()
+    // Kartik 1435, when the page goes as far as 1437.
+    renderAt('/calendar?month=1437-01', api(), new Date('2028-10-20T09:00:00'))
+    expect(await screen.findByRole('heading', { level: 2, name: /Boishakh 1437/ })).toBeInTheDocument()
+    expect(screen.getByText(/The panjika for 1437 is not entered yet/)).toBeInTheDocument()
     expect(screen.getByRole('table')).toBeInTheDocument()
   })
 
-  it('goes no further than the year after the last one entered', async () => {
-    renderAt('/calendar?month=1435-12')
+  it('goes two years either side of this one, and no further', async () => {
+    const { unmount } = renderAt('/calendar?month=1435-12')
     expect(await screen.findByRole('heading', { level: 2, name: /Choitro 1435/ })).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: /^Next month/ })).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: /^Previous month/ })).toBeInTheDocument()
+    unmount()
+
+    renderAt('/calendar?month=1431-01')
+    expect(await screen.findByRole('heading', { level: 2, name: /Boishakh 1431/ })).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /^Previous month/ })).not.toBeInTheDocument()
+  })
+
+  it('brings a month past the end back to the last one', async () => {
+    renderAt('/calendar?month=1440-03')
+    expect(await screen.findByRole('heading', { level: 2, name: /Choitro 1435/ })).toBeInTheDocument()
   })
 
   it('keeps the rituals when our own evenings cannot be fetched', async () => {
@@ -192,6 +203,63 @@ describe('the calendar page', () => {
     const { container } = renderAt('/calendar')
     await screen.findByRole('heading', { level: 4, name: /Durga Puja/ })
     await expectNoAxeViolations(container)
+  })
+})
+
+describe('the year picker', () => {
+  beforeEach(() => localStorage.setItem('calendar-panjika', 'bisuddha'))
+  afterEach(() => localStorage.clear())
+
+  const picker = () => screen.findByRole('combobox', { name: 'Bengali year' })
+
+  it('offers this year and two either side, with the English years each runs over', async () => {
+    renderAt('/calendar')
+    const select = await picker()
+    expect(select).toHaveValue('1433')
+    expect(within(select).getAllByRole('option').map((option) => option.textContent)).toEqual([
+      '১৪৩১ · 2024–25',
+      '১৪৩২ · 2025–26',
+      '১৪৩৩ · 2026–27',
+      '১৪৩৪ · 2027–28',
+      '১৪৩৫ · 2028–29',
+    ])
+  })
+
+  it('opens the same month in the year chosen, in the address', async () => {
+    const { router } = renderAt('/calendar')
+    await userEvent.selectOptions(await picker(), '1435')
+    expect(await screen.findByRole('heading', { level: 2, name: /Kartik 1435/ })).toBeInTheDocument()
+    expect(router.state.location.search).toBe('?month=1435-07')
+    expect(await picker()).toHaveValue('1435')
+  })
+
+  it('keeps focus on the list, so the arrow keys can go on through the years', async () => {
+    renderAt('/calendar')
+    const select = await picker()
+    select.focus()
+    await userEvent.selectOptions(select, '1434')
+    expect(await screen.findByRole('heading', { level: 2, name: /Kartik 1434/ })).toBeInTheDocument()
+    expect(await picker()).toHaveFocus()
+    expect(screen.getByText('Kartik 1434', { selector: '[aria-live]' })).toBeInTheDocument()
+  })
+
+  it('moves focus to the month for the arrows, as before', async () => {
+    renderAt('/calendar')
+    await userEvent.click(await screen.findByRole('link', { name: /^Next month/ }))
+    await waitFor(() => expect(screen.getByRole('heading', { level: 2, name: /Agrahayan 1433/ })).toHaveFocus())
+  })
+
+  it('has no automatic accessibility violations with the list in it', async () => {
+    const { container } = renderAt('/calendar?month=1431-06')
+    await picker()
+    await expectNoAxeViolations(container)
+  })
+
+  it('rolls on with the years, and says which have only their days', async () => {
+    renderAt('/calendar', api(), new Date('2028-10-20T09:00:00'))
+    const options = within(await picker()).getAllByRole('option').map((option) => option.textContent)
+    expect(options[0]).toBe('১৪৩৩ · 2026–27')
+    expect(options.at(-1)).toBe('১৪৩৭ · 2030–31 (days only)')
   })
 })
 

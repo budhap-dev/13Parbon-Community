@@ -213,11 +213,13 @@ rules are in [newsflash.ts](../src/domain/newsflash.ts).
 
 ### Calendar (`/calendar`)
 
-The Bengali year month by month, 1433 and 1434: today's Bengali date, the pujas, festivals and
-cultural days, and our own published evenings among them. Puja times are given in UK time and
-India's, on separate coloured lines. A switch moves between the two panjikas, Benimadhab Sil
-(the default) and Bisuddha Siddhanta; the visitor's pick is kept in their own browser. Any month
-can be shared. Behind `showCalendar`, on since 20 October 2026.
+The Bengali year month by month, from two years before this one to two years after (1431 to
+1435 in 1433): today's Bengali date, the pujas, festivals and cultural days, and our own
+published evenings among them. Puja times are given in UK time and India's, on separate coloured
+lines. A switch moves between the two panjikas, Benimadhab Sil (the default) and Bisuddha
+Siddhanta; the visitor's pick is kept in their own browser. A year picker between the month
+arrows jumps to the same month in another year. Any month can be shared. Behind `showCalendar`,
+on since 20 October 2026.
 
 Why there are two panjikas, where each date came from and what is still missing from print is
 all in [CALENDAR.md](CALENDAR.md).
