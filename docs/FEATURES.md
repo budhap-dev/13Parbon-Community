@@ -194,6 +194,23 @@ things to put your name down for.
 indistinguishable from never having announced it, and that is how people end up outside a hall
 on a Saturday.
 
+### The newsflash, on every page
+
+A ribbon under the header for news the committee wants everybody to see: a new feature, a night
+the site is down for maintenance, a change of venue. Each has a kind in the committee's own
+words (in English, and in Bengali if they like), a headline in either language or both, a line,
+an optional button to a page on this site, a colour (the website's theme, which changes with the
+festival, or a fixed Gold, Dark or Alert), an animation (drops in, shine, pulse, twinkle, changing
+colour, zoom, a news ticker, a nudging arrow, or none; all of them still for anybody whose device
+asks for less motion), and the day and time it goes up and comes down. The
+Bengali headline and the English one sit on lines of their own.
+
+**Up to three at once**, sharing the one ribbon with "1 of 3" arrows; any marked "show this one
+first" lead, then the earliest to go up. A fourth whose days overlap three others will not save.
+A visitor can close one unless the committee has said they cannot (maintenance, anything urgent),
+and their browser remembers which they closed. Written under **Newsflash** in the portal; the
+rules are in [newsflash.ts](../src/domain/newsflash.ts).
+
 ### Calendar (`/calendar`)
 
 The Bengali year month by month, 1433 and 1434: today's Bengali date, the pujas, festivals and
@@ -329,6 +346,13 @@ Three tabs, each saving independently:
 - **Writing** — news posts and newsletters. Unpublishing keeps the piece and its original date
   so it can go back up where it belongs; deleting is separate and asks first.
 
+### Newsflash (`/admin/newsflash`)
+
+The ribbons under the public header: each one's kind, headlines, line, button, colour and days,
+with a preview drawn as it is typed. A card that is not finished says what is missing and stops
+the save; so does a fourth newsflash that would be up beside three others. Its own screen, like
+Sponsors, because it is something the committee comes back to through the year.
+
 ### Photographs (`/admin/media`)
 
 Albums, uploads, captions, drag-to-reorder, choosing an album's cover, and deletion. Deleting
@@ -434,6 +458,7 @@ role.
 | This year's theme, in photographs | `collage` | The then-and-now collage on an event's page: photographs, captions, credit. |
 | The privacy notice | `privacy` | The privacy page. See the note below. |
 | Other tools the committee runs | `tools` | Links in the portal's sidebar. |
+| Newsflash | `newsflashes` | The ribbons under the header, each with its own days. On its own screen. |
 
 **Still code, on purpose:** the name, the wordmark and the logo. They are baked into
 `index.html`, the share card and the sitemap, which link previews and search engines read

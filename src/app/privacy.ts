@@ -39,7 +39,7 @@ export const privacy = {
     {
       title: 'Cookies and tracking',
       body: [
-        'The site sets no cookies of its own. Your choice of theme, and of panjika on the calendar page, is stored in your own browser and never sent to us.',
+        'The site sets no cookies of its own. Your choice of theme, your choice of panjika on the calendar page, and which newsflashes you have closed are stored in your own browser and never sent to us.',
         'We count page views using Vercel Web Analytics, run by the company that hosts this site. It records which page was opened, roughly where in the world from, and what kind of device and browser it was, so we can see which pages are read. It uses no cookies, keeps no IP addresses, builds no profile of you, and cannot follow you to any other website. We only ever see totals, never a person.',
         'The map on our contact page is served by OpenStreetMap, which does not track visitors. Following the directions link hands the venue address to your own maps app.',
       ],

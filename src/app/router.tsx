@@ -26,6 +26,7 @@ import {
   AdminOverviewPage,
   AdminPeoplePage,
   AdminSponsorsPage,
+  AdminNewsflashPage,
   AdminWritingPage,
 } from '@/features/admin'
 import { DashboardPage, HelpPage, HouseholdPage } from '@/features/portal'
@@ -125,6 +126,7 @@ export const routes: RouteObject[] = [
           { path: '/admin/content', Component: AdminContentPage },
           { path: '/admin/pages', Component: AdminPagesPage },
           { path: '/admin/sponsors', Component: AdminSponsorsPage },
+          { path: '/admin/newsflash', Component: AdminNewsflashPage },
           { path: '/admin/media', Component: AdminMediaPage },
           { path: '/admin/messages', Component: AdminMessagesPage },
           { path: '/admin/feedback', Component: AdminFeedbackPage },
