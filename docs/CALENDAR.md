@@ -4,6 +4,12 @@ West Bengal's Bengali calendar is printed in two panjikas, and they do not alway
 day. The calendar page shows both, with a switch between them. This note says what each is,
 which the site starts on, and what moves when you switch.
 
+The page is at [13parbon.org.uk/calendar](https://13parbon.org.uk/calendar). It went on for
+the public on 20 October 2026 (`showCalendar`, under **Content → The pages** in the portal), and
+it is in the sitemap. The committee is checking the 1433 dates against their own printed
+panjikas, Jagaddhatri, Nabanna and Basanti/Annapurna first. A date found wrong is fixed in
+[src/domain/ritual.ts](../src/domain/ritual.ts).
+
 ---
 
 ## The two panjikas

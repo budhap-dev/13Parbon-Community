@@ -424,7 +424,7 @@ export const SETTING_LABELS: Record<keyof Omit<SiteSettings, ContentKey>, { labe
   },
   showCalendar: {
     label: 'Bengali calendar',
-    note: 'The Calendar page, in the navigation: the year’s pujas, festivals and cultural days by the Bengali date, with our own published evenings among them. Off until the committee has looked the dates over.',
+    note: 'The Calendar page, in the navigation: the year’s pujas, festivals and cultural days by the Bengali date, with our own published evenings among them. On since October 2026, while the committee checks the dates against their printed panjikas.',
   },
   seasonalThemes: {
     label: 'Festival colours by the calendar',

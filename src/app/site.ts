@@ -140,10 +140,10 @@ export const site = {
    */
   showSponsors: false,
   /**
-   * The Bengali calendar. Off until somebody on the committee has checked the year's dates
-   * against a printed panjika: a puja a day out is worse than no calendar.
+   * The Bengali calendar. On since October 2026; the committee is checking the year's dates
+   * against their printed panjikas, because a puja a day out is worse than no calendar.
    */
-  showCalendar: false,
+  showCalendar: true,
   /**
    * Each festival's theme around its days, from the calendar's dates. On from the start: unlike
    * the Calendar page, a colour a day early does no harm.

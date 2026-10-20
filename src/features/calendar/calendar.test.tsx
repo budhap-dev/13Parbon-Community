@@ -27,10 +27,14 @@ function renderAt(path: string, client: ApiClient = api(), now = ASHTAMI) {
 }
 
 describe('the calendar switch', () => {
-  it('is off to begin with: no link, and the page is not there', async () => {
-    expect(defaultSettings.showCalendar).toBe(false)
-    expect(publicNav(defaultSettings).map((item) => item.to)).not.toContain('/calendar')
-    renderAt('/calendar', api({}))
+  it('is on to begin with', () => {
+    expect(defaultSettings.showCalendar).toBe(true)
+    expect(publicNav(defaultSettings).map((item) => item.to)).toContain('/calendar')
+  })
+
+  it('takes away the link and the page when it is turned off', async () => {
+    expect(publicNav({ ...defaultSettings, showCalendar: false }).map((item) => item.to)).not.toContain('/calendar')
+    renderAt('/calendar', api({ showCalendar: false }))
     expect(await screen.findByRole('heading', { level: 1, name: /not found|cannot find|nothing here/i })).toBeInTheDocument()
   })
 
