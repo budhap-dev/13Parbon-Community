@@ -1,4 +1,5 @@
 import { adults, children, type Household } from './household'
+import { hasPaid, membershipYearOf } from './payments'
 
 /**
  * The committee's working list, as a spreadsheet.
@@ -19,7 +20,7 @@ export const COMMITTEE_COLUMNS = [
   'Adults',
   'Children',
   'Membership',
-  'Paid to',
+  'Paid this year',
   'Role',
 ] as const
 
@@ -40,8 +41,11 @@ function field(value: string | number | undefined): string {
   return `"${safe.replace(/"/g, '""')}"`
 }
 
-/** The whole list as CSV, ready to be saved. */
-export function committeeCsv(households: Household[]): string {
+/**
+ * The whole list as CSV, ready to be saved. "Paid this year" is the membership year `year`
+ * (April to March) — the one it is now, unless a test says otherwise.
+ */
+export function committeeCsv(households: Household[], year: number = membershipYearOf(new Date())): string {
   const rows = [...households]
     .sort((a, b) => a.name.localeCompare(b.name))
     .map((h) =>
@@ -53,7 +57,7 @@ export function committeeCsv(households: Household[]): string {
         adults(h),
         children(h),
         h.membership.status === 'active' ? 'Active' : 'Lapsed',
-        h.membership.paidTo || '',
+        hasPaid(h, year) ? 'Yes' : 'No',
         h.role === 'admin' ? 'Committee' : 'Member',
       ]
         .map(field)

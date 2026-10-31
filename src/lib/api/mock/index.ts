@@ -735,6 +735,7 @@ export function createMockApi({
           googleEmail: draft.googleEmail ?? null,
           memberSince: draft.memberSince || now().toISOString().slice(0, 10),
           membership: { status: draft.membershipStatus ?? 'active', paidTo: draft.membershipPaidTo || null },
+          payments: [],
           role: listed(draft.googleEmail) ? 'admin' : (draft.role ?? 'member'),
         }
         portal.households.push(household)
@@ -805,6 +806,17 @@ export function createMockApi({
         return delay(undefined, latencyMs)
       },
 
+      setPaid: (householdId, year, paid, viewer) => {
+        if (!isAdmin(viewer)) return Promise.reject(new NotAllowed('only the committee can record a payment'))
+        const household = portal.households.find((h) => h.id === householdId)
+        if (!household) return Promise.reject(new NotAllowed('no such household'))
+        const others = (household.payments ?? []).filter((payment) => payment.year !== year)
+        const had = household.payments?.find((payment) => payment.year === year)
+        household.payments = (
+          paid ? [...others, had ?? { year, paidOn: now().toISOString().slice(0, 10) }] : others
+        ).sort((a, b) => b.year - a.year)
+        return delay(household, latencyMs)
+      },
       updateHousehold: (id, draft, viewer) => {
         const existing = portal.households.find((h) => h.id === id)
         // Not found and not allowed give the same answer, as everywhere else here.

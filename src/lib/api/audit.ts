@@ -1,5 +1,6 @@
 import { diff, isEmpty, type AuditEntry } from '@/domain/audit'
 import { isAdmin, type Viewer } from '@/domain/household'
+import { hasPaid, yearLabel } from '@/domain/payments'
 import type { ApiClient } from './types'
 
 /**
@@ -22,11 +23,12 @@ import type { ApiClient } from './types'
  * saying person 3's name moved by one position is noise.
  */
 function flatten(household: Record<string, unknown>): Record<string, unknown> {
-  const { people, membership, ...rest } = household
+  const { people, membership, payments, ...rest } = household
   return {
     ...rest,
     people: JSON.stringify(people),
     membership: JSON.stringify(membership),
+    ...(payments === undefined ? {} : { payments: JSON.stringify(payments) }),
   }
 }
 
@@ -488,6 +490,19 @@ export function withAuditTrail(base: ApiClient, now: () => Date = () => new Date
         const attempt = await base.portal.resolveSignInAttempt(id, viewer)
         record(viewer, 'signInAttempts:resolve', { kind: 'sign_in_attempts', id }, { resolved: false }, { resolved: true })
         return attempt
+      },
+      setPaid: async (householdId, year, paid, viewer) => {
+        const was = await base.portal.getHousehold(householdId, viewer).then((h) => (h ? hasPaid(h, year) : false))
+        const household = await base.portal.setPaid(householdId, year, paid, viewer)
+        // The same line the trigger writes: a row added or taken away, for that household and year.
+        record(
+          viewer,
+          paid ? 'payment:record' : 'payment:remove',
+          { kind: 'membership_payments', id: `${householdId}:${year}` },
+          { household: household.name, year: yearLabel(year), paid: was },
+          { household: household.name, year: yearLabel(year), paid },
+        )
+        return household
       },
       deleteHousehold: async (id, viewer) => {
         // Read before the row is gone, or there is nothing left to say what was removed.

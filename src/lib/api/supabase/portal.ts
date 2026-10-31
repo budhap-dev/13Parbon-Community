@@ -62,6 +62,7 @@ export function withSupabasePortal(
         await methods.deleteHousehold(id)
         await takeDown(before, null)
       },
+      setPaid: (householdId, year, paid, viewer) => methods.setPaid(householdId, year, paid, viewer),
       resolveSignInAttempt: (id) => methods.resolveSignInAttempt(id),
       recordAttendance: (draft) => methods.recordAttendance(draft),
       exportHousehold: (id) => methods.exportHousehold(id),

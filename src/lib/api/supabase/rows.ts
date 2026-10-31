@@ -24,7 +24,11 @@ export type HouseholdRow = {
   role: 'member' | 'admin'
   /** From PostgREST's embedded select: `select=*,people(*)`. */
   people?: PersonRow[] | null
+  /** The same, from `membership-payments.sql`'s table. Absent on a database it has not reached. */
+  membership_payments?: PaymentRow[] | null
 }
+
+export type PaymentRow = { year: number; paid_on: string }
 
 export type PersonRow = {
   id: string
@@ -41,8 +45,14 @@ export type PersonRow = {
   google_email?: string | null
 }
 
-/** Everything this app reads about a household, including the people in it. */
-export const HOUSEHOLD_SELECT = '*,people(*)'
+/** Everything this app reads about a household, including the people in it and the years paid. */
+export const HOUSEHOLD_SELECT = '*,people(*),membership_payments(year,paid_on)'
+
+/**
+ * The same, for a database `membership-payments.sql` has not reached: asked for a table that is
+ * not there, PostgREST refuses the whole read, and the portal would go with it.
+ */
+export const HOUSEHOLD_SELECT_WITHOUT_PAYMENTS = '*,people(*)'
 
 export function toPerson(row: PersonRow): Person {
   return {
@@ -72,6 +82,13 @@ export function toHousehold(row: HouseholdRow): Household {
     interests: row.interests ?? [],
     memberSince: row.member_since,
     membership: { status: row.membership_status, paidTo: row.membership_paid_to },
+    ...(Array.isArray(row.membership_payments)
+      ? {
+          payments: row.membership_payments
+            .map((payment) => ({ year: payment.year, paidOn: payment.paid_on }))
+            .sort((a, b) => b.year - a.year),
+        }
+      : {}),
     role: row.role,
   }
 }

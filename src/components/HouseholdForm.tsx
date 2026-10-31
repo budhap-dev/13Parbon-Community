@@ -504,19 +504,8 @@ export function HouseholdForm({ household, prefill, viewer, onSave, saving, save
                   </select>
                 </div>
 
-                <div className={styles.field}>
-                  <label className={styles.label} htmlFor={`${ids}-paidTo`}>
-                    Paid up to
-                  </label>
-                  <input
-                    id={`${ids}-paidTo`}
-                    className={styles.input}
-                    type="date"
-                    value={draft.membershipPaidTo ?? ''}
-                    onChange={(e) => set('membershipPaidTo', e.target.value)}
-                  />
-                </div>
-
+                {/* No "Paid up to" here any more: payments are ticked year by year on the
+                    household's record, above this form. The old date rides along unchanged. */}
                 <div className={styles.field}>
                   <label className={styles.label} htmlFor={`${ids}-since`}>
                     Member since

@@ -303,6 +303,11 @@ export interface ApiClient {
      */
     updateHousehold(id: string, draft: HouseholdDraft, viewer: Viewer): Promise<Household>
     /**
+     * Marks a household paid, or not paid, for one membership year (April to March, named by the
+     * April it starts in). Admin only. Marking a year already marked is the same answer twice.
+     */
+    setPaid(householdId: string, year: number, paid: boolean, viewer: Viewer): Promise<Household>
+    /**
      * Everything held about one household, for handing to them when they ask.
      *
      * A household may take its own; the committee may take any — and should, before deleting

@@ -6,6 +6,7 @@ import { daysUntil, describeCountdown, formatDateWithYear, formatLongDate, forma
 import { describeSize, householdInitials, householdPhoto } from '@/domain/household'
 import { useAnnouncements, useHousehold, useNextEvent, usePolls, useQuizzes } from '@/lib/api'
 import { stateOf } from '@/domain/polls'
+import { hasPaid, membershipYearOf, yearLabel, yearSpan } from '@/domain/payments'
 import { useSignedIn } from '@/lib/auth/session'
 import { useNow } from '@/lib/clock'
 import styles from './Portal.module.css'
@@ -24,6 +25,9 @@ export function DashboardPage() {
   const { data: quizzes } = useQuizzes()
 
   const countdown = event ? describeCountdown(daysUntil(event.startsAt, now)) : null
+  const year = membershipYearOf(now)
+  // Undefined where the year's record could not be read, which falls back to the old date.
+  const paidThisYear = household?.payments ? hasPaid(household, year) : undefined
 
   return (
     <div className={styles.page}>
@@ -130,10 +134,24 @@ export function DashboardPage() {
                     {household.membership.status === 'active' ? 'Active' : 'Lapsed'}
                   </h2>
                 </div>
-                <span className={styles.bizChip}>{household.membership.status === 'active' ? 'Paid' : 'Renew'}</span>
+                <span className={styles.bizChip}>
+                  {paidThisYear === undefined
+                    ? household.membership.status === 'active'
+                      ? 'Paid'
+                      : 'Renew'
+                    : paidThisYear
+                      ? 'Paid'
+                      : 'Due'}
+                </span>
               </div>
               <p className={styles.bizNote}>
-                {household.membership.paidTo ? (
+                {paidThisYear !== undefined ? (
+                  paidThisYear ? (
+                    `Paid for ${yearLabel(year)}, ${yearSpan(year)}.`
+                  ) : (
+                    `Not paid yet for ${yearLabel(year)}, ${yearSpan(year)}. The committee ticks it off when your payment reaches them.`
+                  )
+                ) : household.membership.paidTo ? (
                   <>
                     {household.membership.status === 'active' ? 'Runs to ' : 'Ran out '}
                     {formatDateWithYear(household.membership.paidTo)}.

@@ -106,7 +106,7 @@ describe('reading a household', () => {
   it('asks for the people alongside it, in one request', async () => {
     const { client, calls } = fakeClient()
     await householdMethods(async () => client).getHousehold('hh-1')
-    expect(calls).toContain('households.select(*,people(*))')
+    expect(calls).toContain('households.select(*,people(*),membership_payments(year,paid_on))')
   })
 
   it('says the household could not be read, rather than that it is not there, when the read fails', async () => {

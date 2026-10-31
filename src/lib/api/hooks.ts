@@ -248,6 +248,18 @@ export function useAddHousehold() {
   })
 }
 
+/** Marks a household paid, or not, for one membership year. Refreshes the same tree as a save. */
+export function useSetPaid() {
+  const api = useApi()
+  const viewer = useViewer()
+  const queries = useQueryClient()
+  return useMutation({
+    mutationFn: ({ householdId, year, paid }: { householdId: string; year: number; paid: boolean }) =>
+      api.portal.setPaid(householdId, year, paid, viewer),
+    onSuccess: () => queries.invalidateQueries({ queryKey: ['portal'] }),
+  })
+}
+
 export function useUpdateHousehold() {
   const api = useApi()
   const viewer = useViewer()
