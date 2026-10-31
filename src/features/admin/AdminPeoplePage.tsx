@@ -645,7 +645,7 @@ export function AdminPeoplePage() {
                                 ) : null}
                               </strong>
                               <span className={`${styles.muted} ${styles.tiny}`}>
-                                {[household.contactName, household.email ?? household.phone].filter(Boolean).join(' · ')}
+                                {household.email ?? household.phone}
                               </span>
                             </span>
                           </span>
@@ -684,8 +684,8 @@ export function AdminPeoplePage() {
                             <RowMenu
                               about={household.name}
                               items={[
-                                ...(household.email ? [{ label: `Email ${household.contactName}`, href: `mailto:${household.email}` }] : []),
-                                ...(household.phone ? [{ label: `Call ${household.contactName}`, href: `tel:${household.phone}` }] : []),
+                                ...(household.email ? [{ label: `Email ${household.name}`, href: `mailto:${household.email}` }] : []),
+                                ...(household.phone ? [{ label: `Call ${household.name}`, href: `tel:${household.phone}` }] : []),
                                 ...(household.id !== who?.householdId
                                   ? [
                                       {

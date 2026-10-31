@@ -105,7 +105,7 @@ export function buildSearchIndex(sources: SearchSources): SearchItem[] {
       kind: 'household',
       key: `household:${household.id}`,
       title: household.name,
-      detail: line(household.contactName, household.email ?? household.phone),
+      detail: line(household.email ?? household.phone),
       to: `/admin/people?open=${household.id}`,
       text: householdText(household),
     })
