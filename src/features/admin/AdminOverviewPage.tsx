@@ -345,7 +345,7 @@ export function AdminOverviewPage() {
                     <strong>{household.name}</strong>
                   </Link>
                   <span className={`${styles.muted} ${styles.tiny}`}>
-                    {[household.contactName, household.phone].filter(Boolean).join(' · ')}
+                    {household.phone}
                   </span>
                 </span>
                 <PaidSwitch household={household} year={year} />
