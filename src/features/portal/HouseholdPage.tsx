@@ -6,9 +6,11 @@ import { HouseholdForm } from '@/components/HouseholdForm'
 import { LoadFailed } from '@/components/LoadFailed'
 import { adults, children, householdInitials, householdPhoto } from '@/domain/household'
 import { formatDateWithYear } from '@/domain/dates'
+import { hasPaid, membershipYearOf, yearLabel } from '@/domain/payments'
 import { useHousehold, useUpdateHousehold, useViewer } from '@/lib/api'
 import { can } from '@/lib/auth/permissions'
 import { useSignedIn } from '@/lib/auth/session'
+import { useNow } from '@/lib/clock'
 import { Icon } from '@/components/Icon'
 import people from './HouseholdPeople.module.css'
 import styles from './Portal.module.css'
@@ -19,6 +21,7 @@ export function HouseholdPage() {
   useDocumentTitle('My household')
   const who = useSignedIn()
   const viewer = useViewer()
+  const year = membershipYearOf(useNow())
   const { data: household, isPending, isError, refetch } = useHousehold(who?.householdId)
   const save = useUpdateHousehold()
   const [editing, setEditing] = useState(false)
@@ -166,10 +169,17 @@ export function HouseholdPage() {
             <span className={styles.bizChip}>{paid ? 'Paid' : 'Renew'}</span>
           </div>
           <dl className={styles.bizFacts}>
-            <div>
-              <dt>{paid ? 'Runs to' : 'Ran out'}</dt>
-              <dd>{household.membership.paidTo ? formatDateWithYear(household.membership.paidTo) : 'Not recorded'}</dd>
-            </div>
+            {household.payments ? (
+              <div>
+                <dt>{yearLabel(year)}</dt>
+                <dd>{hasPaid(household, year) ? 'Paid' : 'Not paid yet'}</dd>
+              </div>
+            ) : (
+              <div>
+                <dt>{paid ? 'Runs to' : 'Ran out'}</dt>
+                <dd>{household.membership.paidTo ? formatDateWithYear(household.membership.paidTo) : 'Not recorded'}</dd>
+              </div>
+            )}
             <div>
               <dt>Member since</dt>
               <dd>{formatDateWithYear(household.memberSince)}</dd>

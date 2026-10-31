@@ -4,6 +4,7 @@ import { NotAllowed } from '../mock'
 import {
   fromDraft,
   HOUSEHOLD_SELECT,
+  HOUSEHOLD_SELECT_WITHOUT_PAYMENTS,
   peopleRows,
   personChanges,
   toAttempt,
@@ -111,16 +112,16 @@ export function householdMethods(getClient: () => Promise<SupabaseClient>) {
       // A household this person may not see comes back as no rows and no error, exactly as one
       // that does not exist does, so throwing on the error tells nobody anything they could not
       // see. It only stops a dropped connection reading as "we could not find your household".
-      const { data, error } = await table(client, 'households').select(HOUSEHOLD_SELECT).eq('id', id).maybeSingle()
+      const { data, error } = await withPayments((select) => table(client, 'households').select(select).eq('id', id).maybeSingle())
       if (error) throw new Error(`The household could not be read: ${error.message}`)
-      return data ? toHousehold(data as HouseholdRow) : null
+      return data ? toHousehold(data as unknown as HouseholdRow) : null
     },
 
     listHouseholds: async () => {
       const client = await rowsOf()
-      const { data, error } = await table(client, 'households').select(HOUSEHOLD_SELECT).order('name')
+      const { data, error } = await withPayments((select) => table(client, 'households').select(select).order('name'))
       if (error) throw new Error(`The households could not be read: ${error.message}`)
-      return ((data ?? []) as HouseholdRow[]).map(toHousehold)
+      return ((data ?? []) as unknown as HouseholdRow[]).map(toHousehold)
     },
 
     addHousehold: async (draft: HouseholdDraft, viewer: Viewer) => {
@@ -128,7 +129,7 @@ export function householdMethods(getClient: () => Promise<SupabaseClient>) {
       const client = await rowsOf()
       const { data, error } = await table(client, 'households')
         .insert(fromDraft(draft, isAdmin(viewer)))
-        .select(HOUSEHOLD_SELECT)
+        .select('id')
         .single()
       if (error || !data) refuse('only the committee can add a household', error)
 
@@ -150,6 +151,21 @@ export function householdMethods(getClient: () => Promise<SupabaseClient>) {
 
       await savePeople(client, id, draft)
       return (await reread(client, id))!
+    },
+
+    setPaid: async (householdId: string, year: number, paid: boolean, viewer: Viewer) => {
+      // The policies refuse a member anyway; this says so in words before it gets that far.
+      if (!isAdmin(viewer)) throw new NotAllowed('only the committee can record a payment')
+      const client = await rowsOf()
+      const { error } = paid
+        ? // Ticking a year already ticked is the same answer, not a clash.
+          await table(client, 'membership_payments')
+            .upsert({ household_id: householdId, year }, { onConflict: 'household_id,year', ignoreDuplicates: true })
+        : await table(client, 'membership_payments').delete().eq('household_id', householdId).eq('year', year)
+      if (error) refuse('only the committee can record a payment', error)
+      const household = await reread(client, householdId)
+      if (!household) throw new NotAllowed('no such household')
+      return household
     },
 
     deleteHousehold: async (id: string) => {
@@ -309,10 +325,25 @@ type VoteRow = { option: number; voted_at: string; polls: { title: string; optio
 type ScoreRow = { score: number; total: number; show_name: boolean; played_at: string; quizzes: { title: string } | { title: string }[] | null }
 type SuggestionRow = { kind: 'question' | 'poll'; prompt: string; status: 'pending' | 'approved' | 'rejected'; created_at: string }
 
+/**
+ * A read of households with the years they paid, or without them where the database has no such
+ * table yet. Only that one refusal is retried; anything else is the read's own answer.
+ */
+async function withPayments<R extends { error: { code?: string; message: string } | null }>(
+  read: (select: string) => PromiseLike<R>,
+): Promise<R> {
+  const answer = await read(HOUSEHOLD_SELECT)
+  // PGRST200 is PostgREST finding no relationship to embed; 42P01 is Postgres finding no table.
+  if (answer.error && (answer.error.code === 'PGRST200' || answer.error.code === '42P01')) {
+    return read(HOUSEHOLD_SELECT_WITHOUT_PAYMENTS)
+  }
+  return answer
+}
+
 async function reread(client: SupabaseClient, id: string): Promise<Household | null> {
-  const { data, error } = await table(client, 'households').select(HOUSEHOLD_SELECT).eq('id', id).maybeSingle()
+  const { data, error } = await withPayments((select) => table(client, 'households').select(select).eq('id', id).maybeSingle())
   if (error) throw new Error(`The household could not be read: ${error.message}`)
-  return data ? toHousehold(data as HouseholdRow) : null
+  return data ? toHousehold(data as unknown as HouseholdRow) : null
 }
 
 /**

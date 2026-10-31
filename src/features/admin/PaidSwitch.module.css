@@ -1,0 +1,52 @@
+.wrap {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 2px;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  /* A press that hits the 46px track or the word beside it is the same press. */
+  min-height: 34px;
+}
+
+.button:disabled {
+  cursor: progress;
+  opacity: 0.7;
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+  border-radius: 8px;
+}
+
+.paid,
+.unpaid {
+  font-size: var(--portal-text-sm, 0.875rem);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.paid {
+  color: var(--color-green, #8fc39b);
+}
+
+.unpaid {
+  color: var(--portal-amber);
+}
+
+.error {
+  flex-basis: 100%;
+  font-size: var(--portal-text-xs, 0.75rem);
+  color: var(--error);
+}

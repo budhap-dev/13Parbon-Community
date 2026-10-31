@@ -92,7 +92,8 @@ describe('a household nobody has recorded a renewal date for', () => {
         ...api.portal,
         getHousehold: async (id, viewer) => {
           const household = await api.portal.getHousehold(id, viewer)
-          return household ? { ...household, membership: { status: 'active', paidTo: null } } : null
+          // No yearly record either, as on a database membership-payments.sql has not reached.
+          return household ? { ...household, membership: { status: 'active', paidTo: null }, payments: undefined } : null
         },
       },
     }
@@ -589,7 +590,7 @@ describe('the committee managing households', () => {
   it('will not erase a household on one click', async () => {
     renderAt('/admin/people', admin)
     const [, table] = await screen.findAllByRole('table')
-    await userEvent.click(within(table).getByRole('row', { name: /The Sens/ }).querySelector('button')!)
+    await userEvent.click(within(within(table).getByRole('row', { name: /The Sens/ })).getByRole('button', { name: 'Edit The Sens' }))
 
     await userEvent.click(await screen.findByRole('button', { name: 'Remove this household' }))
     // The confirm stays shut until the name is typed, so this cannot go to a misclick.
@@ -602,7 +603,7 @@ describe('the committee managing households', () => {
   it('offers the copy in the same place, before anything is erased', async () => {
     renderAt('/admin/people', admin)
     const [, table] = await screen.findAllByRole('table')
-    await userEvent.click(within(table).getByRole('row', { name: /The Sens/ }).querySelector('button')!)
+    await userEvent.click(within(within(table).getByRole('row', { name: /The Sens/ })).getByRole('button', { name: 'Edit The Sens' }))
     await userEvent.click(await screen.findByRole('button', { name: 'Remove this household' }))
 
     // "You should have taken a copy first" is a poor thing to say afterwards.
@@ -613,7 +614,7 @@ describe('the committee managing households', () => {
   it('erases the household, and it leaves the list', async () => {
     renderAt('/admin/people', admin)
     const [, table] = await screen.findAllByRole('table')
-    await userEvent.click(within(table).getByRole('row', { name: /The Sens/ }).querySelector('button')!)
+    await userEvent.click(within(within(table).getByRole('row', { name: /The Sens/ })).getByRole('button', { name: 'Edit The Sens' }))
     await userEvent.click(await screen.findByRole('button', { name: 'Remove this household' }))
     await userEvent.type(screen.getByLabelText(/Type .* to confirm/), 'The Sens')
     await userEvent.click(screen.getByRole('button', { name: 'Remove permanently' }))
@@ -627,7 +628,7 @@ describe('the committee managing households', () => {
     renderAt('/admin/people', admin)
     const [, table] = await screen.findAllByRole('table')
     const own = within(table).getByRole('row', { name: /The Chatterjees/ })
-    await userEvent.click(own.querySelector('button')!)
+    await userEvent.click(within(own).getByRole('button', { name: 'Edit The Chatterjees' }))
 
     await screen.findByLabelText('Household name')
     expect(screen.queryByRole('button', { name: 'Remove this household' })).not.toBeInTheDocument()
@@ -645,6 +646,49 @@ describe('the committee managing households', () => {
     const [, after] = await screen.findAllByRole('table')
     const updated = within(after).getByRole('row', { name: /The Sens/ })
     expect(within(updated).getByText('Admin')).toBeInTheDocument()
+  })
+})
+
+describe('membership payments', () => {
+  it('lists on the overview who has not paid for this year, and not the lapsed', async () => {
+    renderAt('/admin', admin)
+    const panel = (await screen.findByRole('heading', { name: 'Not paid for 2026–27' })).closest('section')!
+    await within(panel).findByText('The Ghoshes')
+    // Paid for 2026–27 in the fixtures.
+    expect(within(panel).queryByText('The Sens')).not.toBeInTheDocument()
+    // Paid last year only, which is not this year.
+    expect(within(panel).getByText('The Banerjees')).toBeInTheDocument()
+    // Lapsed, so not chased.
+    expect(within(panel).queryByText('The Palits')).not.toBeInTheDocument()
+  })
+
+  it('ticks a household off from the overview, and keeps it there to untick', async () => {
+    renderAt('/admin', admin)
+    const tick = await screen.findByRole('switch', { name: 'The Ghoshes paid for 2026–27' })
+    expect(tick).toHaveAttribute('aria-checked', 'false')
+    await userEvent.click(tick)
+    await waitFor(() => expect(screen.getByRole('switch', { name: 'The Ghoshes paid for 2026–27' })).toHaveAttribute('aria-checked', 'true'))
+  })
+
+  it('is a switch on each row of People, and a filter for those not paid', async () => {
+    renderAt('/admin/people?show=unpaid', admin)
+    const [, table] = await screen.findAllByRole('table')
+    expect(within(table).queryByRole('row', { name: /The Sens/ })).not.toBeInTheDocument()
+    expect(within(table).getByRole('switch', { name: 'The Ghoshes paid for 2026–27' })).toHaveAttribute('aria-checked', 'false')
+  })
+
+  it('shows each year on the household’s record', async () => {
+    renderAt('/admin/people?open=hh-sen', admin)
+    expect(await screen.findByRole('heading', { name: 'Paid for 2026–27' })).toBeInTheDocument()
+    const years = screen.getByRole('heading', { name: 'Payments by year' }).closest('section')!
+    expect(within(years).getByRole('switch', { name: 'The Sens paid for 2025–26' })).toHaveAttribute('aria-checked', 'true')
+    expect(within(years).getByRole('switch', { name: 'The Sens paid for 2024–25' })).toHaveAttribute('aria-checked', 'false')
+  })
+
+  it('tells a member whether their own household has paid, and nobody else’s', async () => {
+    renderAt('/portal', member)
+    expect(await screen.findByText(/Paid for 2026–27/)).toBeInTheDocument()
+    expect(screen.queryByRole('switch')).not.toBeInTheDocument()
   })
 })
 

@@ -86,7 +86,21 @@ export type Household = {
   /** ISO 8601 date. */
   memberSince: string
   membership: Membership
+  /**
+   * The membership years this household has paid for, newest first. See `payments.ts`.
+   *
+   * Absent where they could not be read — a database `membership-payments.sql` has not reached
+   * yet — which every screen reads as nothing recorded, the same as an empty list.
+   */
+  payments?: MembershipPayment[]
   role: Role
+}
+
+/** One year paid for. `year` is the April it starts in: 2026 is April 2026 to March 2027. */
+export type MembershipPayment = {
+  year: number
+  /** ISO 8601 date the committee ticked it. */
+  paidOn: string
 }
 
 export function adults(household: Pick<Household, 'people'>): number {

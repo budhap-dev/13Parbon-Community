@@ -29,16 +29,24 @@ import {
   useViewer,
 } from '@/lib/api'
 import { useSignedIn } from '@/lib/auth/session'
+import { useNow } from '@/lib/clock'
+import { hasPaid, membershipYearOf, yearLabel, yearSpan, yearsFor } from '@/domain/payments'
 import styles from '@/features/portal/Portal.module.css'
 import { CommitteePanel } from './AdminCommittee'
 import { LinkToMember } from './LinkToMember'
+import { PaidSwitch } from './PaidSwitch'
 import { PhotoMono } from '@/components/PersonPhoto'
 
-type FilterKey = 'all' | 'paid' | 'lapsed' | 'never' | 'admins'
-/** The chips over the list, each with how many it would leave. */
-const FILTERS: Record<FilterKey, { label: string; keep: (h: Household) => boolean }> = {
+type FilterKey = 'all' | 'paid' | 'unpaid' | 'lapsed' | 'never' | 'admins'
+const FILTER_KEYS: FilterKey[] = ['all', 'paid', 'unpaid', 'lapsed', 'never', 'admins']
+/**
+ * The chips over the list, each with how many it would leave. Paid and not paid are for this
+ * membership year; not paid leaves out a lapsed household, the same as the overview's list.
+ */
+const filtersFor = (year: number): Record<FilterKey, { label: string; keep: (h: Household) => boolean }> => ({
   all: { label: 'Everyone', keep: () => true },
-  paid: { label: 'Paid', keep: (h) => h.membership.status === 'active' },
+  paid: { label: `Paid ${yearLabel(year)}`, keep: (h) => hasPaid(h, year) },
+  unpaid: { label: 'Not paid', keep: (h) => h.membership.status === 'active' && !hasPaid(h, year) },
   lapsed: { label: 'Lapsed', keep: (h) => h.membership.status !== 'active' },
   /*
    * Nobody in it with a Google account, which is not the same as nobody having signed in. It
@@ -48,12 +56,14 @@ const FILTERS: Record<FilterKey, { label: string; keep: (h: Household) => boolea
    */
   never: { label: 'No Google account', keep: (h) => signInAddresses(h).length === 0 },
   admins: { label: 'Admins', keep: (h) => h.role === 'admin' },
-}
+})
 
 export function AdminPeoplePage() {
   useDocumentTitle('People')
   const who = useSignedIn()
   const viewer = useViewer()
+  const year = membershipYearOf(useNow())
+  const FILTERS = filtersFor(year)
   const { data: households, isPending, isError, refetch } = useHouseholds()
   const { data: allAttempts, isError: attemptsFailed, refetch: refetchAttempts } = useSignInAttempts()
   // Resolved ones are kept, so a second knock does not read as a first — but the screen is
@@ -130,7 +140,11 @@ export function AdminPeoplePage() {
 
   const neverSignedIn = households?.filter((h) => !h.googleEmail).length ?? 0
   const [query, setQuery] = useState('')
-  const [filter, setFilter] = useState<FilterKey>('all')
+  // `?show=unpaid` is where the overview's list of who has not paid sends somebody.
+  const [filter, setFilter] = useState<FilterKey>(() => {
+    const asked = params.get('show') as FilterKey | null
+    return asked && FILTER_KEYS.includes(asked) ? asked : 'all'
+  })
   const counted = (households ?? []).filter((household) => householdMatches(household, query))
   const shown = counted.filter(FILTERS[filter].keep)
 
@@ -191,7 +205,10 @@ export function AdminPeoplePage() {
   )
 
   if (open) {
-    const paid = open.membership.status === 'active'
+    // The household as it is now, not as it was when it was opened: a switch below changes it.
+    const current = households?.find((h) => h.id === open.id) ?? open
+    const paid = hasPaid(current, year)
+    const active = open.membership.status === 'active'
     return (
       <div className={styles.page}>
         <div className={styles.top}>
@@ -242,15 +259,15 @@ export function AdminPeoplePage() {
               <div>
                 <p className={styles.bizEyebrow}>Membership</p>
                 <h2 id="editing-membership" className={styles.bizName}>
-                  {paid ? 'Paid' : 'Lapsed'}
+                  {paid ? `Paid for ${yearLabel(year)}` : `Not paid for ${yearLabel(year)}`}
                 </h2>
               </div>
               <span className={styles.bizChip}>{open.role === 'admin' ? 'Committee' : 'Member'}</span>
             </div>
             <dl className={styles.bizFacts}>
               <div>
-                <dt>Paid up to</dt>
-                <dd>{open.membership.paidTo ? formatDateWithYear(open.membership.paidTo) : 'Not recorded'}</dd>
+                <dt>Membership</dt>
+                <dd>{active ? 'Active' : 'Lapsed'}</dd>
               </div>
               <div>
                 <dt>Member since</dt>
@@ -259,6 +276,31 @@ export function AdminPeoplePage() {
             </dl>
           </section>
         </div>
+
+        {/* Each year on its own switch, saved as it is pressed — apart from the form below and
+            its Save, because a payment is ticked off on a different day from a change of address. */}
+        <section className={styles.panel} aria-labelledby="payments-title">
+          <div className={styles.panelHead}>
+            <h2 id="payments-title" className={styles.panelTitle}>
+              Payments by year
+            </h2>
+            <span className={`${styles.muted} ${styles.tiny}`}>Each year runs April to March</span>
+          </div>
+          <div className={styles.list}>
+            {yearsFor(current, year).map((y) => (
+              <div key={y} className={styles.listItem}>
+                <span className={styles.listBody}>
+                  <strong>
+                    {yearLabel(y)}
+                    {y === year ? <span className={`${styles.muted} ${styles.tiny}`}> (this year)</span> : null}
+                  </strong>
+                  <span className={`${styles.muted} ${styles.tiny}`}>{yearSpan(y)}</span>
+                </span>
+                <PaidSwitch household={current} year={y} showDate />
+              </div>
+            ))}
+          </div>
+        </section>
 
         <HouseholdForm
           household={open}
@@ -522,7 +564,7 @@ export function AdminPeoplePage() {
             </div>
             {households?.length ? (
               <div className={styles.filterChips} role="group" aria-label="Show">
-                {(Object.keys(FILTERS) as FilterKey[]).map((key) => (
+                {FILTER_KEYS.map((key) => (
                   <button
                     key={key}
                     type="button"
@@ -580,7 +622,7 @@ export function AdminPeoplePage() {
                       <th>Household</th>
                       <th>Google account</th>
                       <th>Size</th>
-                      <th>Membership</th>
+                      <th>Paid {yearLabel(year)}</th>
                       <th>Role</th>
                       <th>
                         <span className="sr-only">Edit</span>
@@ -620,9 +662,10 @@ export function AdminPeoplePage() {
                         <td data-label="Size" className={`${styles.num} ${styles.muted} ${styles.nowrap}`}>
                           {describeSize(household)}
                         </td>
-                        <td data-label="Membership">
-                          <span className={household.membership.status === 'active' ? styles.pillLive : styles.pillPast}>
-                            {household.membership.status === 'active' ? 'Paid' : 'Lapsed'}
+                        <td data-label={`Paid ${yearLabel(year)}`}>
+                          <span className={styles.actions} style={{ paddingTop: 0, alignItems: 'center' }}>
+                            <PaidSwitch household={household} year={year} />
+                            {household.membership.status === 'active' ? null : <span className={styles.pillPast}>Lapsed</span>}
                           </span>
                         </td>
                         <td data-label="Role">

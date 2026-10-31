@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link } from 'react-router'
 import { useDocumentTitle } from '@/app/useDocumentTitle'
 import { useSettings } from '@/app/SettingsContext'
@@ -8,10 +9,12 @@ import { daysUntil, formatLongDate, formatTime } from '@/domain/dates'
 import { peopleAt } from '@/domain/attendance'
 import { unresolved } from '@/domain/document'
 import { waiting } from '@/domain/feedback'
+import { membershipYearOf, stillToPay, yearLabel, yearSpan } from '@/domain/payments'
 import { useAllEvents, useAllFeedback, useAttendance, useContactMessages, useHouseholds, useSignInAttempts } from '@/lib/api'
 import { useSignedIn } from '@/lib/auth/session'
 import { useNow } from '@/lib/clock'
 import styles from '@/features/portal/Portal.module.css'
+import { PaidSwitch } from './PaidSwitch'
 
 /**
  * One of the four things that can be waiting, as a link to the screen that deals with it. The
@@ -88,6 +91,15 @@ export function AdminOverviewPage() {
   const admins = households?.filter((h) => h.role === 'admin').length ?? 0
   const unhandled = messages?.filter((m) => !m.handledBy) ?? []
   const decisions = (attempts?.length ?? 0) + unhandled.length + unapproved.length
+  const year = membershipYearOf(now)
+  /*
+   * Read once, when the list arrives, and not again on every tick: a household ticked here stays
+   * on the list, showing Paid, until the screen is next opened. One that vanished the moment it
+   * was pressed would take the switch with it, and an accidental press could not be undone.
+   */
+  const [unpaidIds, setUnpaidIds] = useState<string[] | null>(null)
+  if (households && unpaidIds === null) setUnpaidIds(stillToPay(households, year).map((h) => h.id))
+  const unpaid = (unpaidIds ?? []).flatMap((id) => households?.find((h) => h.id === id) ?? [])
 
   /** The next evening on the calendar, drafts included: a draft three days out is the news. */
   const next = (eventsQuery.data ?? [])
@@ -300,6 +312,48 @@ export function AdminOverviewPage() {
           ) : null}
         </div>
       </div>
+
+      <section className={styles.panel} aria-labelledby="unpaid-title">
+        <div className={styles.panelHead}>
+          <h2 id="unpaid-title" className={styles.panelTitle}>
+            Not paid for {yearLabel(year)}
+          </h2>
+          <span className={`${styles.muted} ${styles.tiny}`}>
+            {householdsQuery.isSuccess && unpaidIds !== null
+              ? `${countOf(unpaidIds.length)} · ${yearSpan(year)}`
+              : yearSpan(year)}
+          </span>
+        </div>
+        {householdsQuery.isPending ? (
+          <div className={styles.list} aria-busy="true">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className={styles.listItem}>
+                <span className={styles.skeleton} />
+              </div>
+            ))}
+          </div>
+        ) : householdsQuery.isError ? (
+          <p className={styles.emptyQuiet}>The households could not be read, so who has paid is not known just now.</p>
+        ) : unpaid.length === 0 ? (
+          <p className={styles.emptyQuiet}>Every active household has paid for {yearLabel(year)}.</p>
+        ) : (
+          <div className={`${styles.list} ${styles.boxed}`} tabIndex={0} role="region" aria-label="Households still to pay">
+            {unpaid.map((household) => (
+              <div key={household.id} className={styles.listItem}>
+                <span className={styles.listBody}>
+                  <Link to={`/admin/people?open=${household.id}`}>
+                    <strong>{household.name}</strong>
+                  </Link>
+                  <span className={`${styles.muted} ${styles.tiny}`}>
+                    {[household.contactName, household.phone].filter(Boolean).join(' · ')}
+                  </span>
+                </span>
+                <PaidSwitch household={household} year={year} />
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
 
       <p className={`${styles.muted} ${styles.tiny}`}>
         Members: {figure(householdsQuery, () => countOf(memberCount))}

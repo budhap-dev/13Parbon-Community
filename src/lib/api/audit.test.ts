@@ -41,7 +41,7 @@ const READS = [
 const AUDITED = [
   'contact.markHandled', 'contact.deleteMessage',
   'feedback.review', 'feedback.remove',
-  'portal.addHousehold', 'portal.updateHousehold', 'portal.deleteHousehold', 'portal.resolveSignInAttempt', 'portal.recordAttendance',
+  'portal.addHousehold', 'portal.updateHousehold', 'portal.deleteHousehold', 'portal.setPaid', 'portal.resolveSignInAttempt', 'portal.recordAttendance',
   'gallery.createAlbum', 'gallery.updateAlbum', 'gallery.addMedia', 'gallery.setCover', 'gallery.setCaption',
   'gallery.reorder', 'gallery.deleteMedia',
   'settings.save', 'events.save', 'events.create', 'events.archive', 'events.remove',
@@ -137,6 +137,7 @@ describe('every audited write', () => {
       ['quizzes.remove', () => a.quizzes.remove('quiz-draft', admin)],
       ['suggestions.review', () => a.suggestions.review('sg-1', 'approved', admin)],
       ['suggestions.remove', () => a.suggestions.remove('sg-2', admin)],
+      ['portal.setPaid', () => a.portal.setPaid('hh-banerjee', 2026, true, admin)],
     ]
 
     for (const [name, run] of writes) {

@@ -14,6 +14,7 @@ import { changeLines } from './auditChanges'
 const SUBJECTS: Record<string, string> = {
   households: 'a household',
   people: 'somebody in a household',
+  membership_payments: 'a membership payment',
   documents: 'a document',
   contact_messages: 'a message',
   event_attendance: 'an attendance count',
@@ -63,6 +64,7 @@ const DOING: Record<string, string> = {
 
 const THINGS: Record<string, string> = {
   household: 'a household',
+  payment: 'a membership payment',
   album: 'an album',
   announcement: 'a notice',
   attendance: 'an attendance count',

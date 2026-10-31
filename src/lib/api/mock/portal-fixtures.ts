@@ -26,6 +26,7 @@ export function buildPortalFixtures() {
       interests: ['Cooking', 'Stage and sound'],
       memberSince: '2024-04-01',
       membership: { status: 'active', paidTo: '2027-03-31' },
+      payments: [{ year: 2026, paidOn: '2026-04-12' }, { year: 2025, paidOn: '2025-05-02' }],
       role: 'member',
     },
     {
@@ -38,6 +39,7 @@ export function buildPortalFixtures() {
       interests: ['Sound', 'Photos'],
       memberSince: '2021-01-10',
       membership: { status: 'active', paidTo: '2027-03-31' },
+      payments: [{ year: 2026, paidOn: '2026-04-03' }, { year: 2025, paidOn: '2025-04-20' }],
       role: 'admin',
     },
     {
@@ -55,6 +57,7 @@ export function buildPortalFixtures() {
       interests: ['Cooking'],
       memberSince: '2022-03-14',
       membership: { status: 'active', paidTo: '2027-03-31' },
+      payments: [{ year: 2025, paidOn: '2025-06-01' }],
       role: 'admin',
     },
     {

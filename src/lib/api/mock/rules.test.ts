@@ -579,3 +579,21 @@ describe('the faces the public website may show', () => {
     expect(await a.people.publicPhotos()).toEqual([{ name: 'Rina Sen', photo }])
   })
 })
+
+describe('membership payments', () => {
+  it('are the committee’s to record, not a member’s', async () => {
+    const a = createMockApi()
+    await expect(a.portal.setPaid('hh-sen', 2027, true, { householdId: 'hh-sen', role: 'member' })).rejects.toThrow(/committee/)
+  })
+
+  it('tick on and off, and ticking twice is one payment', async () => {
+    const a = createMockApi()
+    const admin = { householdId: 'hh-chatterjee', role: 'admin' } as const
+    await a.portal.setPaid('hh-ghosh', 2026, true, admin)
+    const twice = await a.portal.setPaid('hh-ghosh', 2026, true, admin)
+    expect(twice.payments?.filter((p) => p.year === 2026)).toHaveLength(1)
+    const off = await a.portal.setPaid('hh-ghosh', 2026, false, admin)
+    expect(off.payments?.some((p) => p.year === 2026)).toBe(false)
+  })
+})
+
