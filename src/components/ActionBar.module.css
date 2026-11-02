@@ -9,18 +9,18 @@
 }
 
 /*
- * Just under the portal's bar, on a wash of the surface it sits on so what scrolls beneath it
- * does not show through the buttons.
+ * Flush under the portal's bar, on the solid surface it sits on: a gap above it, or a see-through
+ * wash, let what scrolls beneath show round and through the buttons. In a dialog the bar height
+ * is below zero, and it sticks to the dialog's top.
  */
 .barSticky {
   position: sticky;
-  top: calc(var(--portal-bar-height, 60px) + 8px);
+  top: max(0px, var(--portal-bar-height, 60px));
   z-index: 20;
   margin: -6px -8px 0;
   padding: 6px 8px;
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--color-bg-raised, var(--color-bg)) 96%, transparent);
-  backdrop-filter: blur(6px);
+  border-radius: 0 0 12px 12px;
+  background: var(--color-bg-raised, var(--color-bg));
   /* A soft edge underneath, so the bar reads as resting on the form rather than cut into it. */
   box-shadow: 0 8px 14px -12px color-mix(in srgb, var(--color-fg) 45%, transparent);
 }

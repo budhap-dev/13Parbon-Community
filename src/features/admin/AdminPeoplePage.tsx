@@ -688,8 +688,6 @@ export function AdminPeoplePage() {
                             <RowMenu
                               about={household.name}
                               items={[
-                                ...(household.email ? [{ label: `Email ${household.name}`, href: `mailto:${household.email}` }] : []),
-                                ...(household.phone ? [{ label: `Call ${household.name}`, href: `tel:${household.phone}` }] : []),
                                 ...(household.id !== who?.householdId
                                   ? [
                                       {
