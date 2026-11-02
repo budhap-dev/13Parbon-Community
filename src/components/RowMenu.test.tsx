@@ -28,4 +28,13 @@ describe('RowMenu', () => {
     await user.tab()
     expect(screen.queryByRole('link', { name: 'Email Rina' })).not.toBeInTheDocument()
   })
+
+  it('is a red bin rather than a menu when removing is all it holds', async () => {
+    const user = userEvent.setup()
+    const onSelect = vi.fn()
+    render(<RowMenu about="The Sens" items={[{ label: 'Remove…', danger: true, onSelect }]} />)
+    expect(screen.queryByRole('button', { name: 'More for The Sens' })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Remove The Sens' }))
+    expect(onSelect).toHaveBeenCalledOnce()
+  })
 })

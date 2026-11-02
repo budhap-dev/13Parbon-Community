@@ -205,8 +205,7 @@ describe('writing a piece', () => {
     const rows = (await within(news).findAllByRole('row')).length
     const row = (await within(news).findAllByRole('row', { name: /Mahalaya programme/ }))[0]
 
-    await userEvent.click(within(row).getByRole('button', { name: /^More for / }))
-    await userEvent.click(within(row).getByRole('button', { name: 'Delete…' }))
+    await userEvent.click(within(row).getByRole('button', { name: /^Delete / }))
     const asking = await screen.findByRole('dialog')
     // The gentler way is offered in the same breath, as the message screen does.
     expect(asking).toHaveTextContent(/On the website/)
@@ -224,8 +223,7 @@ describe('writing a piece', () => {
     const rows = (await within(news).findAllByRole('row')).length
     const row = (await within(news).findAllByRole('row', { name: /Mahalaya programme/ }))[0]
 
-    await userEvent.click(within(row).getByRole('button', { name: /^More for / }))
-    await userEvent.click(within(row).getByRole('button', { name: 'Delete…' }))
+    await userEvent.click(within(row).getByRole('button', { name: /^Delete / }))
     await userEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Keep it' }))
 
     expect(within(screen.getByRole('region', { name: 'News' })).getAllByRole('row')).toHaveLength(rows)
@@ -296,8 +294,7 @@ describe('the noticeboard', () => {
     const board = await screen.findByRole('region', { name: 'The noticeboard' })
     const rows = (await within(board).findAllByRole('row')).length
 
-    await userEvent.click(within(board).getAllByRole('button', { name: /^More for / })[0])
-    await userEvent.click(within(board).getByRole('button', { name: 'Take off the board…' }))
+    await userEvent.click(within(board).getAllByRole('button', { name: /^Take off the board / })[0])
     const asking = await screen.findByRole('dialog')
     expect(within(asking).getByText(/no version worth keeping/)).toBeInTheDocument()
     // Nothing has gone yet.
@@ -313,8 +310,7 @@ describe('the noticeboard', () => {
     const board = await screen.findByRole('region', { name: 'The noticeboard' })
     const rows = (await within(board).findAllByRole('row')).length
 
-    await userEvent.click(within(board).getAllByRole('button', { name: /^More for / })[0])
-    await userEvent.click(within(board).getByRole('button', { name: 'Take off the board…' }))
+    await userEvent.click(within(board).getAllByRole('button', { name: /^Take off the board / })[0])
     await userEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Take it off' }))
 
     await waitFor(() => expect(within(board).getAllByRole('row')).toHaveLength(rows - 1))
@@ -326,8 +322,7 @@ describe('the noticeboard', () => {
     const board = await screen.findByRole('region', { name: 'The noticeboard' })
     const rows = (await within(board).findAllByRole('row')).length
 
-    await userEvent.click(within(board).getAllByRole('button', { name: /^More for / })[0])
-    await userEvent.click(within(board).getByRole('button', { name: 'Take off the board…' }))
+    await userEvent.click(within(board).getAllByRole('button', { name: /^Take off the board / })[0])
     await screen.findByRole('dialog')
     await userEvent.keyboard('{Escape}')
 

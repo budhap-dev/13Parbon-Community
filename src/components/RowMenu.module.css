@@ -23,7 +23,18 @@
   background: var(--color-hover-wash);
 }
 
-.trigger:focus-visible {
+.bin {
+  composes: trigger;
+  border-color: color-mix(in srgb, var(--error) 55%, transparent);
+  color: var(--error);
+}
+
+.bin:hover {
+  background: color-mix(in srgb, var(--error) 12%, transparent);
+}
+
+.trigger:focus-visible,
+.bin:focus-visible {
   outline: 2px solid var(--color-focus);
   outline-offset: 2px;
 }
