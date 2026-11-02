@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
+import { Icon } from './Icon'
 import styles from './RowMenu.module.css'
 
 /** `danger` marks an item that removes or deletes: red, like every such button in the app. */
@@ -46,6 +47,21 @@ export function RowMenu({ about, items }: { about: string; items: RowMenuItem[] 
   }, [open])
 
   if (items.length === 0) return null
+
+  /*
+   * A menu of one red item is one press too many: the removal itself, as a red bin, still going
+   * through whatever confirm its onSelect opens.
+   */
+  const [only] = items
+  if (items.length === 1 && only.danger && !only.href) {
+    const name = `${only.label.replace(/…$/, '')} ${about}`
+    return (
+      <button type="button" className={styles.bin} aria-label={name} title={name} onClick={only.onSelect}>
+        <Icon name="trash" size={18} />
+      </button>
+    )
+  }
+
   const item = (entry: RowMenuItem): ReactNode =>
     entry.href ? (
       <a href={entry.href} className={styles.item} onClick={() => setOpen(false)}>

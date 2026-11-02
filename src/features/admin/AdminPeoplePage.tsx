@@ -621,7 +621,7 @@ export function AdminPeoplePage() {
                     <tr>
                       <th>Household</th>
                       <th>Google account</th>
-                      <th>Size</th>
+                      <th>Family</th>
                       <th>Paid {yearLabel(year)}</th>
                       <th>Role</th>
                       <th>
@@ -633,6 +633,10 @@ export function AdminPeoplePage() {
                     {shown.map((household) => (
                       <tr key={household.id}>
                         <td data-label="Household">
+                          {/* On a phone card the year's answer sits in the card's corner. */}
+                          <span className={hasPaid(household, year) ? styles.cornerPaid : styles.cornerUnpaid}>
+                            {hasPaid(household, year) ? 'Paid' : 'Not paid'}
+                          </span>
                           <span className={styles.who}>
                             <PhotoMono photo={householdPhoto(household)} className={styles.initials}>
                               {householdInitials(household.name)}
@@ -659,16 +663,16 @@ export function AdminPeoplePage() {
                             return more.length > 0 ? `${first} +${more.length}` : first
                           })()}
                         </td>
-                        <td data-label="Size" className={`${styles.num} ${styles.muted} ${styles.nowrap}`}>
+                        <td data-label="Family" className={`${styles.num} ${styles.muted} ${styles.nowrap}`}>
                           {describeSize(household)}
                         </td>
-                        <td data-label={`Paid ${yearLabel(year)}`}>
+                        <td data-label={yearLabel(year)} className={styles.paidCell}>
                           <span className={styles.actions} style={{ paddingTop: 0, alignItems: 'center' }}>
                             <PaidSwitch household={household} year={year} />
                             {household.membership.status === 'active' ? null : <span className={styles.pillPast}>Lapsed</span>}
                           </span>
                         </td>
-                        <td data-label="Role">
+                        <td data-label="Role" className={styles.roleCell}>
                           <span className={styles.pillTag}>{household.role === 'admin' ? 'Admin' : 'Member'}</span>
                         </td>
                         <td className={styles.rowActions}>

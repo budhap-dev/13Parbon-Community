@@ -1267,6 +1267,12 @@
   }
 }
 
+/* The corner tag on a phone's business card; the table's own column says it on a wider screen. */
+.cornerPaid,
+.cornerUnpaid {
+  display: none;
+}
+
 /*
  * Below 640px a table becomes a stack of cards: each row a card, each cell a line with its
  * column's name beside it, from the cell's own data-label. A table scrolled sideways on a phone
@@ -1570,6 +1576,108 @@
 
   .boxed:has(.businessCards) {
     max-height: none;
+  }
+
+  /* Room at the top for the corner tag, so a long name never runs under it. */
+  .businessCards tbody tr {
+    padding-top: 32px;
+  }
+
+  /*
+   * Paid or not, as a tag in the card's top-right corner, in its own colours rather than the
+   * theme's: amber or green reads on every theme's card. The word beside the switch goes, since
+   * the corner says it, and on a narrow card it ran into the Role column.
+   */
+  .businessCards :is(.cornerPaid, .cornerUnpaid) {
+    position: absolute;
+    top: -32px;
+    right: -20px;
+    z-index: 2;
+    display: block;
+    padding: 5px 14px 6px;
+    border-bottom-left-radius: var(--portal-radius, 14px);
+    font-size: var(--portal-label-size, 11px);
+    font-weight: 800;
+    letter-spacing: var(--portal-label-tracking, 0.08em);
+    line-height: 1.3;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .businessCards .cornerPaid {
+    background: #2f7d4a;
+    color: #ffffff;
+  }
+
+  .businessCards .cornerUnpaid {
+    background: #f2b33d;
+    color: #2a1c00;
+  }
+
+  .businessCards .switchWord {
+    display: none;
+  }
+
+  /*
+   * The switch shares the facts row, at its right after Family and Role, with the year as its
+   * label: its column only as wide as the switch, its press area trimmed so it sits level with
+   * the words and the pill beside it. The buttons stay last.
+   */
+  .businessCards tbody tr,
+  .businessCards tbody tr:hover {
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) auto;
+  }
+
+  /* The year centred over the switch, the pair at the card's right; Role centred between. */
+  .businessCards td.paidCell {
+    order: 1;
+    align-items: center;
+  }
+
+  .businessCards td.roleCell {
+    align-items: center;
+  }
+
+  .businessCards td.rowActions {
+    order: 2;
+  }
+
+  /* An open menu hangs over the next card: above its corner tag, not under it. */
+  .businessCards td.rowActions:has([aria-expanded='true']) {
+    z-index: 3;
+  }
+
+  .businessCards td.paidCell .actions {
+    flex-direction: column;
+    align-items: center !important;
+    gap: 6px;
+  }
+
+  .businessCards td.paidCell [role='switch'] {
+    min-height: 0;
+    padding: 2px 0;
+  }
+
+  /*
+   * The switch in the card's two colours: the theme's accent is the card itself, so its own
+   * track vanished. Off is an outlined track with a pale knob; on is the card turned round.
+   */
+  .businessCards .switch {
+    border-color: color-mix(in srgb, var(--biz-fg) 60%, transparent);
+    background: color-mix(in srgb, var(--biz-fg) 14%, transparent);
+  }
+
+  .businessCards .switch .knob {
+    background: color-mix(in srgb, var(--biz-fg) 75%, transparent);
+  }
+
+  .businessCards .switchOn {
+    border-color: var(--biz-fg);
+    background: var(--biz-fg);
+  }
+
+  .businessCards .switchOn .knob {
+    background: var(--biz-bg);
   }
 
   .scroll:has(.cardsOnPhone) {

@@ -41,7 +41,7 @@ export function PaidSwitch({
         <span className={paid ? styles.switchOn : styles.switch} aria-hidden="true">
           <span className={styles.knob} />
         </span>
-        <span className={paid ? own.paid : own.unpaid}>{paid ? 'Paid' : 'Not paid'}</span>
+        <span className={`${paid ? own.paid : own.unpaid} ${styles.switchWord}`}>{paid ? 'Paid' : 'Not paid'}</span>
       </button>
       {showDate && paid && on && !setPaid.isPending ? (
         <span className={`${styles.muted} ${styles.tiny}`}>ticked {formatDateWithYear(on)}</span>
