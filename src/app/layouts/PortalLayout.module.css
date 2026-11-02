@@ -738,6 +738,8 @@
 
 @media (max-width: 900px) {
   .shell {
+    /* The phone's shorter bar, for whatever sticks under it. */
+    --portal-bar-height: 56px;
     grid-template-columns: minmax(0, 1fr);
   }
 
@@ -753,7 +755,6 @@
 
   .bar {
     gap: 4px;
-    min-height: 56px;
     padding: 0 8px;
   }
 
