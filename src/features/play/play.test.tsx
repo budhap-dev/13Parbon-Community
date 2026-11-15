@@ -337,9 +337,9 @@ describe('the committee’s polls and quizzes', () => {
     renderAt('/admin/play?tab=quizzes', admin)
     await userEvent.click(await screen.findByRole('button', { name: 'New quiz' }))
     await userEvent.type(screen.getByLabelText('Name'), 'Saraswati Puja')
-    const add = screen.getByLabelText('Add a question')
-    await userEvent.selectOptions(add, 'q-swan')
-    await userEvent.selectOptions(screen.getByLabelText('Add a question'), 'q-boishakh')
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Which goddess rides a swan?' }))
+    await userEvent.click(screen.getByRole('checkbox', { name: /Poila Boishakh is the first day/ }))
+    await userEvent.click(screen.getByRole('button', { name: 'Add 2 questions' }))
     await userEvent.click(screen.getByRole('button', { name: 'Move question 2 up' }))
     expect(screen.getByText(/1\. Poila Boishakh is the first day/)).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Move question 1 down' }))
@@ -349,6 +349,20 @@ describe('the committee’s polls and quizzes', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Make the quiz' }))
     expect(await screen.findByText(/Saved as a draft/)).toBeInTheDocument()
     expect(await screen.findByText('Saraswati Puja')).toBeInTheDocument()
+  })
+
+  it('adds every question the filter shows with Select all', async () => {
+    renderAt('/admin/play?tab=quizzes', admin)
+    await userEvent.click(await screen.findByRole('button', { name: 'New quiz' }))
+    const all = screen.getByRole('checkbox', { name: /Select all/ })
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Which goddess rides a swan?' }))
+    expect(all).toHaveProperty('indeterminate', true)
+    await userEvent.click(all)
+    expect(all).toBeChecked()
+    const count = Number(/\((\d+)\)/.exec(all.closest('label')!.textContent!)![1])
+    await userEvent.click(screen.getByRole('button', { name: `Add ${count} questions` }))
+    expect(screen.getByText(new RegExp(`^${count}\\. `))).toBeInTheDocument()
+    expect(screen.getByText(/Nothing left to add/)).toBeInTheDocument()
   })
 
   it('offers a copy of a quiz people have played, and shows its scores', async () => {

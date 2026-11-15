@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { ActionBar } from '@/components/ActionBar'
 import { Button } from '@/components/Button'
 import { ConfirmButton, UNTIL_SAVED } from '@/components/ConfirmButton'
@@ -22,6 +22,7 @@ import {
   PROMPT_MIN,
   QUESTION_OPTIONS_MAX,
   QUIZ_AUDIENCE,
+  QUIZ_QUESTIONS_MAX,
   QUIZ_TITLE_MAX,
   QUIZ_TITLE_MIN,
   questionDraftOf,
@@ -474,7 +475,7 @@ export function QuizForm({
       </fieldset>
 
       {!locked ? (
-        <div className={formStyles.row}>
+        <>
           <Field label="Filter the bank">
             {(p) => (
               <select {...p} className={formStyles.input} value={tag} onChange={(e) => setTag(e.target.value)}>
@@ -487,29 +488,88 @@ export function QuizForm({
               </select>
             )}
           </Field>
-          <Field label="Add a question" hint={available.length === 0 ? 'Nothing left to add — write more in the Question bank tab.' : undefined}>
-            {(p) => (
-              <select
-                {...p}
-                className={formStyles.input}
-                value=""
-                disabled={available.length === 0}
-                onChange={(e) => e.target.value && setDraft({ ...draft, questionIds: [...draft.questionIds, e.target.value] })}
-              >
-                <option value="">Choose one…</option>
-                {available.map((q) => (
-                  <option key={q.id} value={q.id}>
-                    {q.prompt}
-                  </option>
-                ))}
-              </select>
-            )}
-          </Field>
-        </div>
+          <BankPicker
+            available={available}
+            filtered={tag !== ''}
+            room={QUIZ_QUESTIONS_MAX - draft.questionIds.length}
+            onAdd={(ids) => setDraft((d) => ({ ...d, questionIds: [...d.questionIds, ...ids.filter((id) => !d.questionIds.includes(id))] }))}
+          />
+        </>
       ) : null}
 
       <Dates what="quiz" opensAt={draft.opensAt} closesAt={draft.closesAt} error={errors.closesAt} onChange={(d) => setDraft({ ...draft, ...d })} />
     </form>
+  )
+}
+
+/**
+ * The bank's questions as ticks, with Select all over whatever the tag filter shows, so a
+ * quiz fills in one go rather than a question at a time. Ticks survive a change of filter.
+ */
+function BankPicker({ available, filtered, room, onAdd }: { available: BankQuestion[]; filtered: boolean; room: number; onAdd: (ids: string[]) => void }) {
+  const [ticked, setTicked] = useState<string[]>([])
+  const all = useRef<HTMLInputElement>(null)
+  const shown = available.map((q) => q.id)
+  const tickedHere = shown.filter((id) => ticked.includes(id)).length
+  const everything = shown.length > 0 && tickedHere === shown.length
+  // Whatever is ticked, under this tag or another.
+  const chosen = ticked
+  const tooMany = chosen.length > room
+
+  useEffect(() => {
+    if (all.current) all.current.indeterminate = tickedHere > 0 && !everything
+  }, [tickedHere, everything])
+
+  if (shown.length === 0 && ticked.length === 0 && !filtered) {
+    return <p className={formStyles.hint}>Nothing left to add — write more in the Question bank tab.</p>
+  }
+
+  return (
+    <fieldset className={formStyles.field} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
+      <legend className={formStyles.label}>Add questions</legend>
+      <div className={styles.bankTop}>
+        <label className={styles.bankAll}>
+          <input
+            ref={all}
+            type="checkbox"
+            checked={everything}
+            disabled={shown.length === 0}
+            onChange={(e) => setTicked((t) => (e.target.checked ? [...new Set([...t, ...shown])] : t.filter((id) => !shown.includes(id))))}
+          />
+          Select all ({shown.length})
+        </label>
+        <Button
+          variant="green"
+          size="sm"
+          disabled={chosen.length === 0 || tooMany}
+          onClick={() => {
+            onAdd(chosen)
+            setTicked([])
+          }}
+        >
+          {chosen.length === 0 ? 'Add' : `Add ${chosen.length} question${chosen.length === 1 ? '' : 's'}`}
+        </Button>
+      </div>
+      {shown.length === 0 ? (
+        <p className={formStyles.hint}>None left under this tag.</p>
+      ) : (
+        <ul className={styles.bankList}>
+          {available.map((q) => (
+            <li key={q.id}>
+              <label className={styles.bankRow}>
+                <input type="checkbox" checked={ticked.includes(q.id)} onChange={(e) => setTicked((t) => (e.target.checked ? [...t, q.id] : t.filter((x) => x !== q.id)))} />
+                <span className={styles.pickedText}>{q.prompt}</span>
+              </label>
+            </li>
+          ))}
+        </ul>
+      )}
+      {tooMany ? (
+        <p className={formStyles.error}>
+          A quiz holds at most {QUIZ_QUESTIONS_MAX} questions — there is room for {Math.max(room, 0)} more.
+        </p>
+      ) : null}
+    </fieldset>
   )
 }
 
