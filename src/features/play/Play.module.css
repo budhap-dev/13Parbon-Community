@@ -364,6 +364,52 @@
   --tone: #7c3aed;
 }
 
+/* The bank as ticks: Select all and Add on top, then a list that scrolls on its own. */
+.bankTop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+}
+
+.bankAll,
+.bankRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  cursor: pointer;
+}
+
+.bankAll {
+  font-weight: 600;
+  font-size: var(--portal-text-md);
+}
+
+.bankAll input,
+.bankRow input {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  margin: 0;
+}
+
+.bankList {
+  list-style: none;
+  margin: 0;
+  padding: 4px 10px;
+  max-height: 360px;
+  overflow-y: auto;
+  border: 1px solid var(--color-border-faint);
+  border-radius: var(--portal-button-radius, 8px);
+  font-size: var(--text-sm);
+}
+
+.bankList li + li {
+  border-top: 1px solid var(--color-border-faint);
+}
+
 /* ---- The public page ----------------------------------------------------- */
 
 .public {
